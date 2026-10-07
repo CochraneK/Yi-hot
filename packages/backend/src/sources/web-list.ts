@@ -37,6 +37,10 @@ export function parseLooseDate(value: string | null | undefined, utcOffset = "+0
     const [, y, mo, d, h = "00", mi = "00", s = "00"] = m;
     return atOffset(y!, mo!, d!, h, mi, s, utcOffset);
   }
+  // "09.21.2026" (MM.DD.YYYY, month-first, as One Foundation's news listing prints its <time>):
+  // anchored, so it never competes with the year-first forms above; placed in the source's offset.
+  const us = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(v);
+  if (us) return atOffset(us[3]!, us[1]!, us[2]!, "00", "00", "00", utcOffset);
   // "Sep 26, 2026": Date.parse reads it in the host's zone, so take its fields and place them in the offset.
   const en = Date.parse(v.replace(/(\d)(st|nd|rd|th)/, "$1"));
   if (!Number.isFinite(en)) return null;

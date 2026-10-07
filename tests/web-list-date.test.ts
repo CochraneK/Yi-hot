@@ -29,6 +29,15 @@ test("a date that carries its zone keeps it", () => {
   assert.equal(iso("Sat, 26 Sep 2026 10:00:00 +0200", "-07:00"), "2026-09-26T08:00:00.000Z");
 });
 
+test("a month-first dotted date (One Foundation's <time>) is in the source's offset", () => {
+  assert.equal(iso("09.21.2026"), "2026-09-20T16:00:00.000Z");
+  assert.equal(iso("08.05.2026"), "2026-08-04T16:00:00.000Z");
+  assert.equal(iso("9.2.2026"), "2026-09-01T16:00:00.000Z");
+  assert.equal(iso("12.31.2025", "-07:00"), "2025-12-31T07:00:00.000Z");
+  // year-first dotted dates are still read year-first, not as MM.DD.YYYY
+  assert.equal(iso("2026.1.2"), "2026-01-01T16:00:00.000Z");
+});
+
 test("no date at all is null", () => {
   assert.equal(iso(""), null);
   assert.equal(iso("yesterday"), null);

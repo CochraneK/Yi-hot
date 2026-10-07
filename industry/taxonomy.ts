@@ -128,9 +128,9 @@ export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: reado
   { entityId: "ministry-of-civil-affairs", domains: ["mca.gov.cn"] },
   { entityId: "tencent-charity", domains: ["gongyi.qq.com"] },
   { entityId: "china-youth-development-foundation", domains: ["cydf.org.cn"] },
-  { entityId: "one-foundation", domains: ["onefoundation.org.cn"] },
+  { entityId: "one-foundation", domains: ["onefoundation.org.cn", "onefoundation.cn"] },
   { entityId: "foundation-center", domains: ["foundationcenter.org.cn"] },
-  { entityId: "china-rural-development-foundation", domains: ["crdf.org.cn"] },
+  { entityId: "china-rural-development-foundation", domains: ["crdf.org.cn", "cfrd.org.cn", "cfpa.org.cn"] },
   { entityId: "save-the-children", domains: ["savethechildren.org.cn"] },
 ];
 

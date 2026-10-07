@@ -330,6 +330,56 @@
       "tags": ["官方", "维权"],
       "site_fulltext": true,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "web-onefoundation-news",
+      "name": "壹基金·最新活动",
+      "kind": "web_list",
+      "config": {
+        "url": "https://onefoundation.cn/news/",
+        "itemSelector": "a[share-title]",
+        "linkSelector": "a",
+        "titleSelector": "h2",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": ["https://onefoundation.cn/news/"],
+        "_aihot": {
+          "initialBackfillLimit": 12,
+          "initialBackfillMonths": 36
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "one-foundation",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": ["官方", "机构"],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cfpa-news",
+      "name": "中国乡村发展基金会·机构新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://cfpa.org.cn/news/news.aspx",
+        "itemSelector": ".main_list li.clearfix",
+        "linkSelector": "a",
+        "titleSelector": "h3",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": ["http://cfpa.org.cn/news/news_detail.aspx"],
+        "_aihot": {
+          "initialBackfillLimit": 12,
+          "initialBackfillMonths": 36
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "china-rural-development-foundation",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": ["官方", "机构"],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
     }
   ]
 }

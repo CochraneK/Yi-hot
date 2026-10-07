@@ -7,6 +7,10 @@ dist/
 .DS_Store
 .data/
 
+# IDE / session state (kept local only)
+.workbuddy/
+.claude/
+
 # Web production build
 apps/web/build/
 apps/web/.react-router/

@@ -1,34 +1,19 @@
 // Public vocabularies shared by the website, the API and the worker. The categories themselves belong to
-// the industry pack (industry/taxonomy.ts); their keys are external identities (URLs, API, RSS) and never change.
-// How the public API, RSS and MCP differ from the website is the site's (site/site.ts PUBLIC_CATEGORIES).
+// the industry pack (industry/taxonomy.ts); their keys are external identities (URLs, API, RSS).
 import { CATEGORIES } from "@aihot/industry/taxonomy";
-import { PUBLIC_CATEGORIES } from "@aihot/site";
 
-type Category = (typeof CATEGORIES)[number];
-
-export type CategoryKey = Category["key"];
+export type CategoryKey = (typeof CATEGORIES)[number]["key"];
 export const CATEGORY_KEYS = CATEGORIES.map((c) => c.key) as unknown as readonly [CategoryKey, ...CategoryKey[]];
 
 /** Website tab labels. */
 export const CATEGORY_LABELS = Object.fromEntries(CATEGORIES.map((c) => [c.key, c.label])) as Record<CategoryKey, string>;
 
-const MERGE: Partial<Record<string, string>> = PUBLIC_CATEGORIES.merge;
-const FEED_LABELS: Partial<Record<string, string>> = PUBLIC_CATEGORIES.feedLabels;
-
-/** The categories the public API, RSS and MCP know: a merged category is published as the one it joins. */
-export type PublicApiCategoryKey = Exclude<CategoryKey, keyof typeof PUBLIC_CATEGORIES.merge>;
-export const PUBLIC_API_CATEGORY_KEYS = CATEGORIES.filter((c) => !Object.hasOwn(MERGE, c.key)).map((c) => c.key) as unknown as readonly [PublicApiCategoryKey, ...PublicApiCategoryKey[]];
+/** The public API, RSS and MCP use the same categories as the website. */
+export const PUBLIC_API_CATEGORY_KEYS = CATEGORY_KEYS;
+export type PublicApiCategoryKey = CategoryKey;
 
 export function toPublicApiCategory(category: string | null): PublicApiCategoryKey | null {
-  const c = CATEGORIES.find((x) => x.key === category);
-  if (!c) return null;
-  return (MERGE[c.key] ?? c.key) as PublicApiCategoryKey;
-}
-
-/** A public category's name in feeds (<category>, a category feed's title): the site's, else the pack's feed label, else its website label. */
-export function feedCategoryLabel(key: PublicApiCategoryKey): string {
-  const c: { label: string; feedLabel?: string } = CATEGORIES.find((x) => x.key === key)!;
-  return FEED_LABELS[key] ?? c.feedLabel ?? c.label;
+  return isCategoryKey(category) ? category : null;
 }
 
 export function isCategoryKey(value: unknown): value is CategoryKey {
@@ -49,5 +34,18 @@ export function isChannelKey(value: unknown): value is ChannelKey {
   return typeof value === "string" && (CHANNEL_KEYS as readonly string[]).includes(value);
 }
 
+export const LEADERBOARD_PUBLIC_BOARDS = ["overall", "coding", "reasoning", "knowledge", "professional"] as const;
+export type LeaderboardBoardKey = (typeof LEADERBOARD_PUBLIC_BOARDS)[number];
+
+export const LEADERBOARD_BOARD_LABELS: Record<LeaderboardBoardKey, string> = {
+  overall: "综合",
+  coding: "编程",
+  reasoning: "推理",
+  knowledge: "知识",
+  professional: "专业办公",
+};
+
 /** Article ids. Also the local-data import validation pattern. */
 export const ARTICLE_ID_PATTERN = /^[a-zA-Z0-9_-]{1,80}$/;
+
+export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -1,15 +1,16 @@
 // Admin loaders read /api/admin/* with the visitor's own cookie; the web process holds no session.
 import { data, redirect } from "react-router";
-import { API_BASE_URL } from "./api.server.ts";
+
+const API_BASE = process.env.API_BASE_URL || "http://127.0.0.1:3001";
 
 export async function adminGet<T>(request: Request, path: string): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: { accept: "application/json", cookie: request.headers.get("cookie") ?? "", "user-agent": request.headers.get("user-agent") ?? "" },
     signal: AbortSignal.any([request.signal, AbortSignal.timeout(30_000)]),
   });
   if (res.status === 401) {
     const url = new URL(request.url);
-    throw redirect(`/api/auth/login?${new URLSearchParams({ return: url.pathname + url.search })}`);
+    throw redirect(`/admin/login?${new URLSearchParams({ return: url.pathname + url.search })}`);
   }
   if (res.status === 404) throw data({ message: "not_found" }, { status: 404 });
   if (!res.ok) {

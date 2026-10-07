@@ -1,8 +1,7 @@
-import { SITE, SOURCE_DEFAULTS } from "@aihot/site";
+import { SITE } from "@aihot/industry/site";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import type { Route } from "./+types/source-new";
-import type { AdminSourceCreated, AdminSourcePreview } from "@aihot/contracts/admin";
 import { useAdminAction } from "../../features/admin/action";
 import { bj } from "../../features/admin/format";
 import { KIND_LABEL, MODE_LABEL, TIER_LABEL } from "../../features/admin/labels";
@@ -15,18 +14,23 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
   x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
-  mp_account: { ghid: "gh_", nickname: "" },
+  mp_account: { biz: "", name: "" },
   external: {},
 };
 
+interface Preview {
+  ms: number;
+  count: number;
+  items: Array<{ title: string; url: string; publishedAt: string | null; excerpt: string }>;
+}
 
 export default function NewSource() {
   const navigate = useNavigate();
   const { run, pending } = useAdminAction();
-  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: SOURCE_DEFAULTS.siteFulltext, syndicate_fulltext: false, tags: "" });
+  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: true, syndicate_fulltext: false, tags: "" });
   const [config, setConfig] = useState(JSON.stringify(TEMPLATES.rss, null, 2));
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<AdminSourcePreview | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null);
 
   const parsed = () => {
@@ -45,10 +49,10 @@ export default function NewSource() {
         <Card title="信源定义">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="ID" hint="小写字母、数字和连字符，创建后不可改">
-              <Input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value.toLowerCase() })} placeholder="openai-blog" />
+              <Input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value.toLowerCase() })} placeholder="one-foundation" />
             </Field>
             <Field label="名称">
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="OpenAI 博客" />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="壹基金官网" />
             </Field>
             <Field label="类型">
               <Select
@@ -70,7 +74,7 @@ export default function NewSource() {
                 {Object.entries(MODE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
             </Field>
-            <Field label="等级" hint="仅 T1 为一手信源">
+            <Field label="等级">
               <Select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
                 {Object.entries(TIER_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
@@ -80,6 +84,7 @@ export default function NewSource() {
             </Field>
             <div className="flex flex-col justify-end gap-2 text-[13px] text-ink-2">
               {([
+                ["first_party", "一手信源"],
                 ["site_fulltext", "站内可展示全文"],
                 ["syndicate_fulltext", "对外接口可带全文"],
               ] as const).map(([k, label]) => (
@@ -107,7 +112,7 @@ export default function NewSource() {
               onClick={async () => {
                 const c = parsed();
                 if (!c) return;
-                const r = await run<AdminSourcePreview>("POST", "/api/admin/sources/preview", { id: form.id || "draft", kind: form.kind, config: c }, { label: "preview", revalidate: false });
+                const r = await run<Preview>("POST", "/api/admin/sources/preview", { id: form.id || "draft", kind: form.kind, config: c }, { label: "preview", revalidate: false });
                 if (r) setPreview(r);
               }}
             >
@@ -120,15 +125,15 @@ export default function NewSource() {
               onClick={async () => {
                 const c = parsed();
                 if (!c) return;
-                const r = await run<AdminSourceCreated>(
+                const r = await run<{ created: boolean; duplicate?: { id: string; name: string }; source?: { id: string } }>(
                   "POST",
                   "/api/admin/sources",
                   { ...form, tags: form.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean), config: c },
                   { label: "create", revalidate: false },
                 );
                 if (!r) return;
-                if (r.created) navigate(`/admin/sources/${encodeURIComponent(r.source.id)}`);
-                else setDuplicate(r.duplicate);
+                if (!r.created && r.duplicate) setDuplicate(r.duplicate);
+                else if (r.source) navigate(`/admin/sources/${encodeURIComponent(r.source.id)}`);
               }}
             >
               创建

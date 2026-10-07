@@ -21,6 +21,10 @@ function inline(s: string, site: string): string {
   return out;
 }
 
+export function slugifyHeading(text: string, i: number): string {
+  return `s${i + 1}`;
+}
+
 export interface RenderedCopy {
   html: string;
   outline: Array<{ id: string; text: string }>;
@@ -43,7 +47,7 @@ export function renderMarkdown(md: string, site: string): RenderedCopy {
     if (heading) {
       const level = heading[1]!.length;
       const text = heading[2]!.trim();
-      const id = `s${++h}`;
+      const id = slugifyHeading(text, h++);
       if (level === 2) outline.push({ id, text });
       html.push(`<h${level} id="${id}">${inline(text, site)}</h${level}>`);
       i++;
@@ -94,7 +98,7 @@ export interface CopyDocument {
 }
 
 /**
- * Splits a page copy file (site/pages/) into its page parts: the first heading (title), the meta table,
+ * Splits a page copy file (industry/pages/) into its page parts: the first heading (title), the meta table,
  * the page-top statement (页首说明) and the verbatim body starting at the first "## " section.
  */
 export function parseCopyFile(md: string, firstSection = /^## /m): CopyDocument {

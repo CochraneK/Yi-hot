@@ -1,0 +1,544 @@
+{
+  "exportedAt": "2026-09-30",
+  "groups": [
+    {
+      "key": "org",
+      "name": "机构与平台",
+      "blurb": "按机构与平台追踪：谁在做什么、钱和信任去了哪里"
+    },
+    {
+      "key": "field",
+      "name": "公益领域",
+      "blurb": "按领域深挖：乡村、儿童、养老、残障、环保……"
+    },
+    {
+      "key": "genre",
+      "name": "内容形态",
+      "blurb": "按内容类型浏览：政策、机构、项目、数据、研究、故事、观点……"
+    }
+  ],
+  "topics": [
+    {
+      "slug": "tencent-charity",
+      "name": "腾讯公益",
+      "group": "company",
+      "entityId": "tencent-charity",
+      "tags": [
+        "腾讯公益",
+        "entity:tencent-charity"
+      ],
+      "definition": "腾讯公益平台的全部动态：99公益日、腾讯微公益、平台项目与资金流向的持续追踪。",
+      "related": [
+        "alipay-charity",
+        "fundraising",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "alipay-charity",
+      "name": "支付宝公益",
+      "group": "company",
+      "entityId": "alipay-charity",
+      "tags": [
+        "支付宝公益",
+        "entity:alipay-charity"
+      ],
+      "definition": "支付宝与蚂蚁集团公益的全部动态：天天正能量、爱心捐赠与平台机制的持续追踪。",
+      "related": [
+        "tencent-charity",
+        "corporate-charity",
+        "fundraising"
+      ]
+    },
+    {
+      "slug": "one-foundation",
+      "name": "壹基金",
+      "group": "company",
+      "entityId": "one-foundation",
+      "tags": [
+        "壹基金",
+        "entity:one-foundation"
+      ],
+      "definition": "壹基金的全部动态：壹计划、儿童与灾害救助项目、机构治理与财务披露的持续追踪。",
+      "related": [
+        "child-care",
+        "emergency-relief",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "china-charity-federation",
+      "name": "中国慈善联合会",
+      "group": "company",
+      "entityId": "china-charity-federation",
+      "tags": [
+        "中国慈善联合会",
+        "entity:china-charity-federation"
+      ],
+      "definition": "中国慈善联合会（中慈联）的行业服务、标准倡导与全国性公益活动的持续追踪。",
+      "related": [
+        "transparency",
+        "research",
+        "trends"
+      ]
+    },
+    {
+      "slug": "china-rural-development-foundation",
+      "name": "中国乡村发展基金会",
+      "group": "company",
+      "entityId": "china-rural-development-foundation",
+      "tags": [
+        "中国乡村发展基金会",
+        "entity:china-rural-development-foundation"
+      ],
+      "definition": "中国乡村发展基金会（原中国扶贫基金会）的乡村振兴项目、应急救灾与机构动态的持续追踪。",
+      "related": [
+        "rural-revitalization",
+        "emergency-relief",
+        "rural-education"
+      ]
+    },
+    {
+      "slug": "china-youth-development-foundation",
+      "name": "希望工程 / 中国青少年发展基金会",
+      "group": "company",
+      "entityId": "china-youth-development-foundation",
+      "tags": [
+        "中国青少年发展基金会",
+        "entity:china-youth-development-foundation"
+      ],
+      "definition": "中国青少年发展基金会与希望工程的全部动态：助学项目、品牌活动与机构进展的持续追踪。",
+      "related": [
+        "rural-education",
+        "child-care",
+        "fundraising"
+      ]
+    },
+    {
+      "slug": "foundation-center",
+      "name": "基金会中心网",
+      "group": "company",
+      "entityId": "foundation-center",
+      "tags": [
+        "基金会中心网",
+        "entity:foundation-center"
+      ],
+      "definition": "基金会中心网（中基透明指数发布方）的行业数据、透明指数与治理研究的持续追踪。",
+      "related": [
+        "transparency",
+        "research",
+        "organization"
+      ]
+    },
+    {
+      "slug": "ministry-of-civil-affairs",
+      "name": "民政部",
+      "group": "company",
+      "entityId": "ministry-of-civil-affairs",
+      "tags": [
+        "民政部",
+        "entity:ministry-of-civil-affairs"
+      ],
+      "definition": "民政部在慈善、社会组织、养老、社工等领域的政策发布、通知公告与业务动态的持续追踪。",
+      "related": [
+        "policy",
+        "organization",
+        "elderly-care"
+      ]
+    },
+    {
+      "slug": "save-the-children",
+      "name": "救助儿童会",
+      "group": "company",
+      "entityId": "save-the-children",
+      "tags": [
+        "救助儿童会",
+        "entity:save-the-children"
+      ],
+      "definition": "救助儿童会（国际网络及其在华代表处）的全部动态：儿童保护与儿童福利项目、紧急救援、政策倡导，以及机构动态与财务披露的持续追踪。",
+      "related": [
+        "child-care",
+        "international",
+        "emergency-relief"
+      ]
+    },
+    {
+      "slug": "rural-revitalization",
+      "name": "乡村振兴",
+      "group": "field",
+      "tags": [
+        "乡村振兴"
+      ],
+      "definition": "乡村振兴领域的公益项目与政策：产业帮扶、乡建人才、乡村治理与衔接推进期工作。",
+      "related": [
+        "rural-education",
+        "community",
+        "policy"
+      ]
+    },
+    {
+      "slug": "rural-education",
+      "name": "乡村教育 / 助学",
+      "group": "field",
+      "tags": [
+        "乡村教育"
+      ],
+      "definition": "面向乡村与弱势群体的教育公益：助学金、营养午餐、乡村教师支持、留守儿童课业陪伴。",
+      "related": [
+        "child-care",
+        "rural-revitalization",
+        "china-youth-development-foundation"
+      ]
+    },
+    {
+      "slug": "child-care",
+      "name": "儿童关爱",
+      "group": "field",
+      "tags": [
+        "儿童关爱"
+      ],
+      "definition": "儿童领域的公益行动：困境儿童保障、儿童保护、心理健康与成长支持项目。",
+      "related": [
+        "rural-education",
+        "medical-relief",
+        "one-foundation"
+      ]
+    },
+    {
+      "slug": "child-protection",
+      "name": "儿童保护",
+      "group": "field",
+      "tags": [
+        "儿童保护"
+      ],
+      "definition": "儿童保护与权益：未成年人保护法规、反性侵害与防拐、儿童安全防护与权益倡导行动。",
+      "related": [
+        "child-care",
+        "policy",
+        "save-the-children"
+      ]
+    },
+    {
+      "slug": "child-mental-health",
+      "name": "儿童心理",
+      "group": "field",
+      "tags": [
+        "儿童心理"
+      ],
+      "definition": "儿童心理健康与心理援助：儿童情绪与行为支持、灾后心理干预、校园心理健康与心理科普。",
+      "related": [
+        "child-care",
+        "emergency-relief",
+        "rural-education"
+      ]
+    },
+    {
+      "slug": "grant-funding",
+      "name": "资助申请",
+      "group": "field",
+      "tags": [
+        "资助申请"
+      ],
+      "definition": "公益资助与申报：基金会资助项目发布、资助申请指南、公益创投与资金申报动态。",
+      "related": [
+        "fundraising",
+        "research",
+        "corporate-charity"
+      ]
+    },
+    {
+      "slug": "philanthropy",
+      "name": "慈善捐赠",
+      "group": "field",
+      "tags": [
+        "慈善捐赠"
+      ],
+      "definition": "企业家与慈善家的公益捐赠：个人与企业大额捐赠动态、爱心捐赠与慈善家公益实践。",
+      "related": [
+        "corporate-charity",
+        "fundraising",
+        "field-stories"
+      ]
+    },
+    {
+      "slug": "elderly-care",
+      "name": "养老服务",
+      "group": "field",
+      "tags": [
+        "养老服务"
+      ],
+      "definition": "养老领域的公益与政策：居家社区养老、助老服务、老年友好环境与养老设施建设。",
+      "related": [
+        "policy",
+        "community",
+        "ministry-of-civil-affairs"
+      ]
+    },
+    {
+      "slug": "disability-inclusion",
+      "name": "残障融合",
+      "group": "field",
+      "tags": [
+        "残障融合"
+      ],
+      "definition": "残障群体的公益与融合行动：康复支持、无障碍环境、就业融合与权益倡导。",
+      "related": [
+        "child-care",
+        "community",
+        "volunteers"
+      ]
+    },
+    {
+      "slug": "medical-relief",
+      "name": "医疗救助",
+      "group": "field",
+      "tags": [
+        "医疗救助"
+      ],
+      "definition": "医疗领域的公益救助：大病救助、罕见病支持、医疗资源下沉与患者援助项目。",
+      "related": [
+        "child-care",
+        "fundraising",
+        "disability-inclusion"
+      ]
+    },
+    {
+      "slug": "environment",
+      "name": "环境保护",
+      "group": "field",
+      "tags": [
+        "环境保护"
+      ],
+      "definition": "环境领域的公益行动：物种保护、生态修复、垃圾分类倡导与低碳项目。",
+      "related": [
+        "volunteers",
+        "international",
+        "tech4good"
+      ]
+    },
+    {
+      "slug": "emergency-relief",
+      "name": "应急救援",
+      "group": "field",
+      "tags": [
+        "应急救援"
+      ],
+      "definition": "灾害与突发事件领域的公益响应：救灾款物、紧急救援队伍、灾后恢复与心理援助。",
+      "related": [
+        "china-rural-development-foundation",
+        "one-foundation",
+        "volunteers"
+      ]
+    },
+    {
+      "slug": "community",
+      "name": "社区公益",
+      "group": "field",
+      "tags": [
+        "社区公益"
+      ],
+      "definition": "社区层面的公益服务：社区营造、互助网络、邻里服务与社区社会组织培育。",
+      "related": [
+        "elderly-care",
+        "volunteers",
+        "rural-revitalization"
+      ]
+    },
+    {
+      "slug": "transparency",
+      "name": "透明慈善",
+      "group": "field",
+      "tags": [
+        "透明慈善"
+      ],
+      "definition": "行业透明与信任建设：中基透明指数、信息公开规范、审计与评估、行业自律。",
+      "related": [
+        "foundation-center",
+        "china-charity-federation",
+        "research"
+      ]
+    },
+    {
+      "slug": "volunteers",
+      "name": "志愿者",
+      "group": "field",
+      "tags": [
+        "志愿者"
+      ],
+      "definition": "志愿者领域的动态：志愿者服务、队伍建设、激励保障与志愿服务政策。",
+      "related": [
+        "community",
+        "emergency-relief",
+        "environment"
+      ]
+    },
+    {
+      "slug": "corporate-charity",
+      "name": "企业公益",
+      "group": "field",
+      "tags": [
+        "企业公益"
+      ],
+      "definition": "企业与商业力量的公益参与：企业基金会、员工公益、商业向善与平台公益机制。",
+      "related": [
+        "tencent-charity",
+        "alipay-charity",
+        "fundraising"
+      ]
+    },
+    {
+      "slug": "pharma-finance",
+      "name": "公益金融",
+      "group": "field",
+      "tags": [
+        "公益金融"
+      ],
+      "definition": "资本与公益的交叉地带：公益信托、影响力投资、社会企业与可持续金融实践。",
+      "related": [
+        "research",
+        "trends",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "tech4good",
+      "name": "公益科技",
+      "group": "field",
+      "tags": [
+        "公益科技"
+      ],
+      "definition": "技术赋能公益：数字公益平台、数据治理、智能化工具与科技公益项目。",
+      "related": [
+        "trends",
+        "transparency",
+        "environment"
+      ]
+    },
+    {
+      "slug": "international",
+      "name": "国际公益",
+      "group": "field",
+      "tags": [
+        "国际公益"
+      ],
+      "definition": "跨境与国际视角的公益动态：国际组织在华项目、全球议题合作与中外公益交流。",
+      "related": [
+        "environment",
+        "research",
+        "trends"
+      ]
+    },
+    {
+      "slug": "policy",
+      "name": "政策与监管",
+      "group": "genre",
+      "tags": [
+        "政策/监管"
+      ],
+      "definition": "民政部门与监管机构的政策发布、法规解读与通知公告：慈善、社会组织、养老与社工。",
+      "related": [
+        "ministry-of-civil-affairs",
+        "transparency",
+        "elderly-care"
+      ]
+    },
+    {
+      "slug": "organization",
+      "name": "机构动态",
+      "group": "genre",
+      "tags": [
+        "机构动态"
+      ],
+      "definition": "基金会与公益机构自身的动态：人事、合作、年报、备案年检与机构治理。",
+      "related": [
+        "ministry-of-civil-affairs",
+        "transparency",
+        "trends"
+      ]
+    },
+    {
+      "slug": "project",
+      "name": "公益项目",
+      "group": "genre",
+      "tags": [
+        "项目更新"
+      ],
+      "definition": "公益项目与计划的上新、进展与成果：谁在做、做到哪、改变了什么。",
+      "related": [
+        "child-care",
+        "rural-education",
+        "elderly-care"
+      ]
+    },
+    {
+      "slug": "fundraising",
+      "name": "募集与数据",
+      "group": "genre",
+      "tags": [
+        "募集/数据"
+      ],
+      "definition": "募捐活动与资金数据：大型筹款活动进展、资金流向披露与行业募捐数据。",
+      "related": [
+        "tencent-charity",
+        "alipay-charity",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "research",
+      "name": "研究与标准",
+      "group": "genre",
+      "tags": [
+        "研究/报告"
+      ],
+      "definition": "行业研究与标准建设：研究报告、标准规范、评估指数与学术研究。",
+      "related": [
+        "foundation-center",
+        "transparency",
+        "trends"
+      ]
+    },
+    {
+      "slug": "field-stories",
+      "name": "一线与人物",
+      "group": "genre",
+      "tags": [
+        "一线/人物"
+      ],
+      "definition": "公益一线的故事与人物：志愿者、项目负责人与受助者的真实经历。",
+      "related": [
+        "volunteers",
+        "community",
+        "child-care"
+      ]
+    },
+    {
+      "slug": "opinion",
+      "name": "观点与评论",
+      "group": "genre",
+      "tags": [
+        "观点/评论"
+      ],
+      "definition": "公益人物的观点、评论、访谈，以及行业现象与趋势的讨论。",
+      "related": [
+        "trends",
+        "research",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "trends",
+      "name": "行业趋势",
+      "group": "genre",
+      "tags": [
+        "行业趋势"
+      ],
+      "definition": "公益行业的现象与趋势：规模变化、新赛道、新模式与值得讨论的行业议题。",
+      "related": [
+        "research",
+        "tech4good",
+        "pharma-finance"
+      ]
+    }
+  ]
+}

@@ -50,6 +50,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
+      - name: Source discovery tests (offline)
+        run: node --test tests/source-discovery.test.ts
       - name: Build web
         run: npm run build -w @aihot/web
       - name: Web tests

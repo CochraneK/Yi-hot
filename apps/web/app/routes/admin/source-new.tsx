@@ -1,6 +1,6 @@
 import { SITE } from "@aihot/industry/site";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import type { Route } from "./+types/source-new";
 import { useAdminAction } from "../../features/admin/action";
 import { bj } from "../../features/admin/format";
@@ -14,7 +14,7 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
   x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
-  mp_account: { biz: "", name: "" },
+  mp_account: { ghid: "", nickname: "" },
   external: {},
 };
 
@@ -26,9 +26,21 @@ interface Preview {
 
 export default function NewSource() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const requestedKind = params.get("kind");
+  const initialKind = requestedKind && requestedKind in TEMPLATES ? requestedKind : "rss";
+  const requestedUrl = params.get("url") ?? "";
+  const initialUrl = /^https?:\\/\\//i.test(requestedUrl) && requestedUrl.length <= 2048 ? requestedUrl : "";
+  const initialName = (params.get("name") ?? "").slice(0, 200);
   const { run, pending } = useAdminAction();
-  const [form, setForm] = useState({ id: "", name: "", kind: "rss", tier: "T2", participation_mode: "editorial", interval_minutes: 30, first_party: false, site_fulltext: true, syndicate_fulltext: false, tags: "" });
-  const [config, setConfig] = useState(JSON.stringify(TEMPLATES.rss, null, 2));
+  const [form, setForm] = useState({ id: "", name: initialName, kind: initialKind, tier: "T2", participation_mode: "isolated", interval_minutes: 120, first_party: false, site_fulltext: false, syndicate_fulltext: false, tags: "" });
+  const [config, setConfig] = useState(() => {
+    const template = { ...TEMPLATES[initialKind] };
+    if (initialUrl && initialKind === "rss") template.feedUrl = initialUrl;
+    if (initialUrl && initialKind === "web_list") template.url = initialUrl;
+    if (initialUrl && initialKind === "json_list") template.url = initialUrl;
+    return JSON.stringify(template, null, 2);
+  });
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null);

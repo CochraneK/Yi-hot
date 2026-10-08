@@ -27,8 +27,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export const meta: Route.MetaFunction = () => [{ title: `候选信源 · ${SITE.name} 后台` }];
 
-function draftLink(url: string, name: string, isFeed: boolean) {
-  return `/admin/sources/new?${new URLSearchParams({ url, name, kind: isFeed ? "rss" : "web_list" })}`;
+function draftLink(url: string, name: string, kind: "rss" | "web_list" | "json_list") {
+  return `/admin/sources/new?${new URLSearchParams({ url, name, kind })}`;
 }
 
 export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
@@ -97,7 +97,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
                     {candidate.url && (
                       <>
                         <Button tone="ghost" busy={pending === "discover" && url === candidate.url} onClick={() => void inspect(candidate.url!)}>寻找 RSS</Button>
-                        <ButtonLink to={draftLink(candidate.url, candidate.name, candidate.kind_label === "RSS")}>带入新建</ButtonLink>
+                        <ButtonLink to={draftLink(candidate.url, candidate.name, candidate.kind_label === "RSS" ? "rss" : "web_list")}>带入新建</ButtonLink>
                       </>
                     )}
                     {!candidate.url && <Badge tone="muted">仅发现线索</Badge>}
@@ -129,7 +129,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
                     </div>
                     <div className="mt-1 break-all font-mono text-[12px] text-ink-2">{feed.url}</div>
                   </div>
-                  <ButtonLink to={draftLink(feed.url, discovery.pageTitle ?? "待确认来源", feed.format !== "json")}>带入试抓</ButtonLink>
+                  <ButtonLink to={draftLink(feed.url, discovery.pageTitle ?? "待确认来源", feed.format === "json" ? "json_list" : "rss")}>带入试抓</ButtonLink>
                 </div>
               )) : <Empty>网页没有声明 RSS/Atom/JSON Feed。可以换新闻栏目地址，或使用 YiHot 现有 web_list 类型配置专用解析器。</Empty>}
             </div>

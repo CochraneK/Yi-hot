@@ -443,6 +443,20 @@
       ]
     },
     {
+      "slug": "policy-analysis",
+      "name": "政策分析",
+      "group": "genre",
+      "tags": [
+        "政策分析"
+      ],
+      "definition": "对法规政策的第三方深度解读与影响分析：新规要点、执行影响、行业研判与专家点评。",
+      "related": [
+        "policy",
+        "ministry-of-civil-affairs",
+        "research"
+      ]
+    },
+    {
       "slug": "organization",
       "name": "机构动态",
       "group": "genre",

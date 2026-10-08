@@ -380,6 +380,26 @@
       "tags": ["官方", "机构"],
       "site_fulltext": true,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-un-news",
+      "name": "联合国新闻（中文）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml",
+        "allowUrlPrefixes": ["https://news.un.org/"],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "united-nations",
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": ["海外", "政策"],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
     }
   ]
 }

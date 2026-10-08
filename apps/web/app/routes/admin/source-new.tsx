@@ -57,6 +57,7 @@ export default function NewSource() {
 
   return (
     <AdminPage title="新建信源" subtitle="先判重、先预览：优先 RSS/JSON 等稳定协议；首抓成功且有真实条目才算接入完成。一手身份要有运营主体或官方交叉链接证据。">
+      <p className="mb-4 rounded-card bg-bg-sunk px-3 py-2 text-[12.5px] leading-relaxed text-ink-3">新信源创建后默认暂停，须核实采集许可、原标题与日期后在详情页手动启用；候选发现和预览本身不入库。</p>
       <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
         <Card title="信源定义">
           <div className="grid gap-4 sm:grid-cols-2">

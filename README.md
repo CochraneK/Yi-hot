@@ -1,3 +1,4 @@
+> **YiHot 公益情报平台整合方向（2026-10-08）**：本仓库以 AIHOT 上游为基础，目标逐步吸收 [NewsMail](https://github.com/CochraneK/NewsMail) 的信源经验与邮件分发，以及 [charity-intelligence](https://github.com/CochraneK/charity-intelligence) 的公益组织主数据、证据与纵向追踪。详见 [三库整合路线图](docs/INTEGRATION_ROADMAP.md)。当前为分阶段迁移计划，**不代表两个旧库已完成合并，也不改变当前线上服务**。保留上游 AIHOT 的作者、MIT LICENSE/NOTICE 与来源归属。
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">

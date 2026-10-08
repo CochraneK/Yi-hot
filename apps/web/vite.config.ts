@@ -43,6 +43,10 @@ function devEdge(): Plugin {
 }
 
 export default defineConfig({
+  // The trailing slash matters: React Router's SSR manifest concatenates this verbatim with
+  // "assets/…", and it must begin with the same path as react-router.config.ts `basename` (the dev
+  // server checks basename.startsWith(base)).
+  base: "/yihot/",
   plugins: [devEdge(), tailwindcss(), reactRouter()],
   server: { port: 3000, strictPort: true },
   build: {

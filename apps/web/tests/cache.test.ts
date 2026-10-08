@@ -96,7 +96,7 @@ test("public route subsets produce the same complete navigation data; filters st
 });
 
 test("HTML and navigation share freshness; cookies do not personalize public results", async () => {
-  const html = await fetch(`${origin}/`);
+  const html = await fetch(`${origin}/yihot/`);
   assert.equal(html.status, 200);
   assert.equal(html.headers.get("X-Accel-Expires"), `@${deadline}`);
   assert.match(await html.text(), /精选/);
@@ -128,12 +128,12 @@ test("missing routes cannot be hidden by a root-only request; errors and redirec
 });
 
 test("admin data and actions never become public cache entries", async () => {
-  const admin = await fetch(`${origin}/admin/sources.data?_routes=admin-layout`);
+  const admin = await fetch(`${origin}/yihot/admin/sources.data?_routes=admin-layout`);
   assert.equal(admin.status, 202);
   assert.equal(admin.headers.get("Cache-Control"), "private, no-store");
   assert.equal(admin.headers.get("X-Accel-Expires"), "0");
   assert.match(await admin.text(), /admin\/login/);
-  const action = await fetch(`${origin}/hot.data`, { method: "POST" });
+  const action = await fetch(`${origin}/yihot/hot.data`, { method: "POST" });
   assert.equal(action.status, 405);
   assert.equal(action.headers.get("Cache-Control"), "private, no-store");
   assert.equal(action.headers.get("X-Accel-Expires"), "0");
@@ -144,7 +144,7 @@ test("an elapsed release deadline cannot be extended by a fresh page/data respon
   const saved = refreshAt;
   refreshAt = new Date(Date.now() - 1000).toISOString();
   try {
-    for (const pathname of ["/", "/_.data?_routes=routes%2Fhome"]) {
+    for (const pathname of ["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"]) {
       const res = await fetch(origin + pathname);
       assert.equal(res.status, 200);
       assert.equal(res.headers.get("Cache-Control"), "no-cache");
@@ -167,7 +167,7 @@ test("browser freshness shares the selected deadline, including slow sibling loa
   try {
     deadline = Math.floor(Date.now() / 1000) + 20;
     refreshAt = new Date((deadline + 5) * 1000).toISOString();
-    for (const pathname of ["/", "/_.data?_routes=routes%2Fhome"]) {
+    for (const pathname of ["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"]) {
       const res = await fetch(origin + pathname);
       const cc = res.headers.get("Cache-Control")!;
       const browser = Number(cc.match(/(?:^|,)\s*max-age=(\d+)/)![1]);
@@ -183,7 +183,7 @@ test("browser freshness shares the selected deadline, including slow sibling loa
     deadline = Math.floor(Date.now() / 1000) + 2;
     refreshAt = new Date((deadline + 5) * 1000).toISOString();
     metaDelayMs = 2300;
-    await Promise.all(["/", "/_.data?_routes=routes%2Fhome"].map(async (pathname) => {
+    await Promise.all(["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"].map(async (pathname) => {
       const res = await fetch(origin + pathname);
       assert.equal(res.status, 200);
       assert.equal(res.headers.get("Cache-Control"), "no-cache");

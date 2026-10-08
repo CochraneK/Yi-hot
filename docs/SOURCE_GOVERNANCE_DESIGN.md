@@ -63,7 +63,7 @@
 
 **库存基线（静态文件，非线上情况）**
 - `yihot/industry/sources.json`：16 条 seed；具有 `source_id`，不得在数据迁移时更换它们以免文章引用断裂；
-- `NewsMail/info_sources.md`：100 行原始来源/关键词候选，82 条 HTTP(S) 网址记录，67 个精确主机名（根据 2026-10-08 静态读取）；
+- `NewsMail/info_sources.md`：99 行原始来源/关键词候选，82 条 HTTP(S) 网址记录，67 个精确主机名（根据 2026-10-08 静态读取）；
 - `charity-intelligence/compliance/source-register.yaml`：101 条有域名的登记，68 conditional、27 pending_retest、6 blocked（**2026-09-07 的历史检查**，不能当今时今日的站点实时状态）；
 - `NewsMail` 部分记录是“微信公众号关键词”、“微博热榜关键词”、“行业汇总网址”，不能按一行一个 publisher 导入；出现同一网址绑定不同机构名的候选时一律进入 `REVIEW_CONFLICT`。
 

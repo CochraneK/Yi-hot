@@ -5,6 +5,8 @@
 > **注意：这是目标架构与迁移账本，不是已经完成的代码/数据合并。**
 > 避免将旧版 `docs/legacy/CHARITY-INTELLIGENCE-CONTRACT.md` 所描述的“两个永远独立的系统”误解为最终产品目标；该合同仅可作为早期非破坏性对接过渡方案。
 
+> **统一信源唯一规范（M0）**：[SOURCE_GOVERNANCE_DESIGN.md](SOURCE_GOVERNANCE_DESIGN.md)。Source/Channel/Connector/Publisher/Collection 的正交定义优先于本路线图中的简写；本文负责仓库整合，规范文档负责信源设计与状态机。
+
 ## 1. 明确分工（MECE）
 
 | 能力域 | 最优继承来源 | 未来唯一权威位置 | 不重复做什么 |

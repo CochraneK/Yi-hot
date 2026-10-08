@@ -82,7 +82,7 @@ const server = createServer((req, res) => {
 function pageCache(req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) {
   const url = new URL(req.url ?? "/", "http://web.local");
   const pathname = decodeURIComponent(url.pathname).replace(/\.data$/, "");
-  const publicRead = (req.method === "GET" || req.method === "HEAD") && !/^\/admin(?:\/|$)/i.test(pathname);
+  const publicRead = (req.method === "GET" || req.method === "HEAD") && !/^\/(?:yihot\/)?admin(?:\/|$)/i.test(pathname);
   if (publicRead && url.pathname.endsWith(".data")) {
     url.searchParams.delete("_routes");
     req.url = url.pathname + url.search;
@@ -120,27 +120,42 @@ function pageCache(req: import("node:http").IncomingMessage, res: import("node:h
   }) as typeof res.writeHead;
 }
 
+/** The app lives under this prefix so the host can carry other projects. */
+const PREFIX = "/yihot";
+
 async function handle(req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) {
   const raw = req.url ?? "/";
   const qi = raw.indexOf("?");
   const pathname = qi >= 0 ? raw.slice(0, qi) : raw;
   const search = qi >= 0 ? raw.slice(qi) : "";
 
-  const decision = resolveRedirect(pathname, search);
+  // What the app sees: the path with the prefix stripped. Api-owned resources (api/, feed, icons,
+  // sitemaps) stay reachable at the root too — browser fetches and api-generated absolute links hit
+  // them there — so they are matched before anything below is moved under the prefix.
+  const prefixed = pathname === PREFIX || pathname.startsWith(PREFIX + "/");
+  const internal = prefixed ? (pathname.slice(PREFIX.length) || "/") : pathname;
+
+  if (pathname === "/" || pathname === PREFIX) {
+    res.writeHead(301, { Location: PREFIX + "/", "Cache-Control": "public, max-age=86400" });
+    return res.end();
+  }
+
+  const decision = resolveRedirect(internal, search);
   if (decision) {
     for (const [k, v] of Object.entries(decision.headers)) res.setHeader(k, v);
-    if (decision.location) res.setHeader("Location", decision.location);
+    // Redirect locations in the shared table are root-anchored; point them back under the prefix.
+    if (decision.location) res.setHeader("Location", decision.location.startsWith("/") ? PREFIX + decision.location : decision.location);
     res.statusCode = decision.status;
     return res.end(decision.location ? undefined : decision.status === 410 ? "Gone" : "Not found");
   }
 
-  if (isApiOwned(pathname)) {
+  if (isApiOwned(internal)) {
     // The visitor's address, decided here: the one the trusted proxy saw (the last X-Forwarded-For
     // entry), or this connection's own. Both headers carry only that.
     const forwarded = String(req.headers["x-forwarded-for"] ?? "").split(",").map((v) => v.trim()).filter(Boolean);
     const client = TRUST_PROXY && forwarded.length ? forwarded[forwarded.length - 1]! : (req.socket.remoteAddress ?? "");
     const headers = { ...req.headers, "x-forwarded-for": client, "x-real-ip": client };
-    const upstream = httpRequest({ hostname: API.hostname, port: API.port, path: raw, method: req.method, headers }, (up) => {
+    const upstream = httpRequest({ hostname: API.hostname, port: API.port, path: internal + search, method: req.method, headers }, (up) => {
       res.writeHead(up.statusCode ?? 502, up.headers);
       up.pipe(res);
     });
@@ -151,7 +166,14 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
     return req.pipe(upstream);
   }
 
-  if ((req.method === "GET" || req.method === "HEAD") && pathname.includes(".") && (await serveStatic(pathname, res))) return;
+  // Unprefixed paths that are not api resources are the old site layout (or old cached asset urls):
+  // move them under the prefix so existing links keep working.
+  if (!prefixed) {
+    res.writeHead(301, { Location: PREFIX + pathname + search, "Cache-Control": "public, max-age=86400" });
+    return res.end();
+  }
+
+  if ((req.method === "GET" || req.method === "HEAD") && internal.includes(".") && (await serveStatic(internal, res))) return;
   pageCache(req, res);
   return ssr(req, res);
 }

@@ -67,6 +67,22 @@ async function serveStatic(pathname: string, res: import("node:http").ServerResp
   return true;
 }
 
+/** The root path is a multi-project portal page, shipped in the source tree next to this server. */
+const PORTAL_FILE = path.join(import.meta.dirname, "portal.html");
+
+async function servePortal(res: import("node:http").ServerResponse): Promise<boolean> {
+  const info = await stat(PORTAL_FILE).catch(() => null);
+  if (!info?.isFile()) return false;
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": info.size,
+    "Cache-Control": "public, max-age=300",
+    "X-Content-Type-Options": "nosniff",
+  });
+  createReadStream(PORTAL_FILE).pipe(res);
+  return true;
+}
+
 // One bad request must never take the process down: answer it and keep serving.
 const server = createServer((req, res) => {
   handle(req, res).catch((error: unknown) => {
@@ -135,7 +151,13 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   const prefixed = pathname === PREFIX || pathname.startsWith(PREFIX + "/");
   const internal = prefixed ? (pathname.slice(PREFIX.length) || "/") : pathname;
 
-  if (pathname === "/" || pathname === PREFIX) {
+  if (pathname === "/") {
+    // The bare root is the multi-project portal page; fall back to the old redirect if it is gone.
+    if (await servePortal(res)) return;
+    res.writeHead(301, { Location: PREFIX + "/", "Cache-Control": "public, max-age=86400" });
+    return res.end();
+  }
+  if (pathname === PREFIX) {
     res.writeHead(301, { Location: PREFIX + "/", "Cache-Control": "public, max-age=86400" });
     return res.end();
   }

@@ -8,9 +8,10 @@
 
 ## 内容类型
 
-`itemType` 必须七选一：
+`itemType` 必须八选一：
 
-- `policy_release`：主管部门（民政部等）发布的新政策、规范性文件、公告通知与政策解读
+- `policy_release`：主管部门（民政部等）发布的新政策、规范性文件、公告通知与主管部门自行发布的官方解读
+- `policy_analysis`：第三方（专家、智库、媒体、行业机构）对已有法规政策的深度解读、影响分析、执行评估与专家点评
 - `organization_event`：基金会与公益机构自身的人事、合作、年报、备案年检、评估等动态
 - `project_update`：公益项目与计划的新设、开展、进展与受益成果
 - `fundraising_data`：募捐活动、捐赠数据、资金流向与财务披露
@@ -18,9 +19,9 @@
 - `field_story`：公益一线的工作故事、志愿者与受助者故事、公益人物报道
 - `opinion_analysis`：观点、行业判断、评论、复盘或长访谈
 
-优先级：发了政策或文件选 policy_release；机构自身动态选 organization_event；项目进展选 project_update；募捐或财务数据选 fundraising_data；研究报告选 research_report；一线故事选 field_story；访谈与观点选 opinion_analysis。
+优先级：主管部门发文或官方解读选 policy_release；第三方对政策的分析解读选 policy_analysis；机构自身动态选 organization_event；项目进展选 project_update；募捐或财务数据选 fundraising_data；研究报告选 research_report；一线故事选 field_story；访谈与观点选 opinion_analysis。
 
-输出前检查 `itemType` 与第一个分类标签是否自洽：`policy_release` 对应“政策/监管”，`organization_event` 对应“机构动态”，`project_update` 对应“项目更新”，`fundraising_data` 对应“募集/数据”，`research_report` 对应“研究/报告”，`field_story` 对应“一线/人物”，`opinion_analysis` 对应“观点/评论”或“行业趋势”。如果二者冲突，按当前材料的核心事件修正后再输出。
+输出前检查 `itemType` 与第一个分类标签是否自洽：`policy_release` 对应“政策/监管”，`policy_analysis` 对应“政策分析”，`organization_event` 对应“机构动态”，`project_update` 对应“项目更新”，`fundraising_data` 对应“募集/数据”，`research_report` 对应“研究/报告”，`field_story` 对应“一线/人物”，`opinion_analysis` 对应“观点/评论”或“行业趋势”。如果二者冲突，按当前材料的核心事件修正后再输出。
 
 ## 作者角色
 
@@ -32,7 +33,7 @@
 
 ## 标签
 
-`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：政策/监管、机构动态、项目更新、募集/数据、研究/报告、一线/人物、观点/评论、行业趋势、非公益/其他、其他。
+`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：政策/监管、政策分析、机构动态、项目更新、募集/数据、研究/报告、一线/人物、观点/评论、行业趋势、非公益/其他、其他。
 
 其后可选 0–5 个适用标签，并且只能来自以下两个白名单：
 

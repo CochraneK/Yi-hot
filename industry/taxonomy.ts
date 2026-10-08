@@ -8,7 +8,8 @@
  * 没归上类的资料在日报里放进最后一节。
  */
 export const CATEGORIES = [
-  { key: "policy", label: "政策/监管", section: "政策与监管", guide: "民政部等主管部门发布的管理办法、规范性文件、公告通知与政策解读" },
+  { key: "policy", label: "政策/监管", section: "政策与监管", guide: "民政部等主管部门发布的管理办法、规范性文件、公告通知，以及主管部门自行发布的官方解读；第三方对政策的深度分析见「政策分析」" },
+  { key: "policy-analysis", label: "政策分析", section: "政策分析", guide: "第三方（专家、智库、媒体、行业机构）对已有法规政策的深度解读、影响分析、执行评估与专家点评" },
   { key: "organization", label: "机构", section: "机构动态", guide: "基金会、慈善组织、公益机构的人事、合作、年报、备案年检、评估等机构自身动态" },
   { key: "project", label: "项目", section: "项目动态", guide: "公益项目与计划的新设、开展、进展、受益情况和项目成果" },
   { key: "fundraising", label: "募集", section: "募集与数据", guide: "募捐活动、筹款数据、资金流向、财务披露与公开募捐进展" },
@@ -21,13 +22,13 @@ export const CATEGORIES = [
  * 内容理解一步给每篇资料判的“内容类型”（写在 prompts/content-understanding.md 里，改了类型要同步改那份提示词）。
  * 评分提示词（prompts/selection-score.md）按类型给五个维度不同的权重。
  */
-export const ITEM_TYPES = ["policy_release", "organization_event", "project_update", "fundraising_data", "research_report", "field_story", "opinion_analysis"] as const;
+export const ITEM_TYPES = ["policy_release", "policy_analysis", "organization_event", "project_update", "fundraising_data", "research_report", "field_story", "opinion_analysis"] as const;
 
 // ── 标签词表 ────────────────────────────────────────────────────────────────────────────
 
 /** 每篇资料的第一个标签必须是这些“分类标签”之一。 */
 export const CATEGORY_TAGS = [
-  "政策/监管", "机构动态", "项目更新", "募集/数据", "研究/报告", "一线/人物", "观点/评论", "行业趋势",
+  "政策/监管", "政策分析", "机构动态", "项目更新", "募集/数据", "研究/报告", "一线/人物", "观点/评论", "行业趋势",
   "非公益/其他", "其他",
 ] as const;
 
@@ -43,6 +44,7 @@ export const ENTITY_TAGS = ["腾讯公益", "支付宝公益", "阿里公益", "
 /** 模型常写的近义词，统一成词表里的写法。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
   政策: "政策/监管", 监管: "政策/监管", 法规: "政策/监管", 法律法规: "政策/监管", 公告: "政策/监管", 通知: "政策/监管", 文件: "政策/监管",
+  政策评析: "政策分析", 政策点评: "政策分析", 政策深读: "政策分析", 政策影响分析: "政策分析", 新规解读: "政策分析",
   机构新闻: "机构动态", 基金会动态: "机构动态", 组织动态: "机构动态",
   项目动态: "项目更新", 项目进展: "项目更新", 计划: "项目更新",
   募捐: "募集/数据", 筹资: "募集/数据", 捐赠: "募集/数据", 筹款: "募集/数据",
@@ -82,7 +84,7 @@ export const TAG_SYNONYMS: Readonly<Record<string, string>> = {
 
 /** 模型漏了分类标签时，按内容类型补一个。 */
 export const CATEGORY_BY_ITEM_TYPE: Readonly<Record<string, string>> = {
-  policy_release: "政策/监管", organization_event: "机构动态", project_update: "项目更新", fundraising_data: "募集/数据",
+  policy_release: "政策/监管", policy_analysis: "政策分析", organization_event: "机构动态", project_update: "项目更新", fundraising_data: "募集/数据",
   research_report: "研究/报告", field_story: "一线/人物", opinion_analysis: "观点/评论",
 };
 

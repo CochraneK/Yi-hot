@@ -135,6 +135,7 @@ const CreateSchema = z
     id: z.string().regex(/^[a-z0-9][a-z0-9-]{2,79}$/),
     name: z.string().min(1).max(200),
     kind: z.enum(["rss", "web_list", "json_list", "x_search", "mp_account", "external"]),
+    enabled: z.boolean().default(false), // All newly created sources start paused until reviewed.
     config: z.record(z.string(), z.unknown()),
     tier: z.enum(["T1", "T1_5", "T2", "EXCLUDE_MP"]).default("T2"),
     participation_mode: z.enum(["editorial", "hot_signal", "isolated"]).default("editorial"),
@@ -174,9 +175,9 @@ export async function createSource(input: unknown, actor: string) {
   const dup = await findDuplicateSource(s.kind, s.config);
   if (dup) return { created: false as const, duplicate: dup };
   const [row] = await sql`
-    INSERT INTO sources (id, name, kind, config, tier, participation_mode, interval_minutes, first_party, tags, site_fulltext, syndicate_fulltext, next_fetch_at)
+    INSERT INTO sources (id, name, kind, config, tier, participation_mode, interval_minutes, first_party, tags, site_fulltext, syndicate_fulltext, enabled, health, next_fetch_at)
     VALUES (${s.id}, ${s.name}, ${s.kind}, ${sql.json(s.config as never)}, ${s.tier}, ${s.participation_mode}, ${s.interval_minutes}, ${s.first_party}, ${s.tags},
-            ${s.site_fulltext}, ${s.syndicate_fulltext}, now())
+            ${s.site_fulltext}, ${s.syndicate_fulltext}, ${s.enabled}, ${s.enabled ? "unknown" : "paused"}, ${s.enabled ? new Date() : null})
     ON CONFLICT (id) DO NOTHING RETURNING *`;
   if (!row) throw new Conflict(`信源 ID ${s.id} 已存在`);
   await audit(actor, "source.create", `source:${s.id}`, null, null, s);

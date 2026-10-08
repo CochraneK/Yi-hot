@@ -13,7 +13,7 @@
 | 仓库 | 文件 | 静态记录数与含义 |
 |---|---|---|
 | `CochraneK/yihot` | `industry/sources.json` | **16** 条预置 seed；仅反映仓库示例，不能证明所有来源已经启用/抓取成功 |
-| `CochraneK/NewsMail` | `info_sources.md` | **100** 条 `名称 \| 类型 \| 地址/关键词` 行，包含新闻网站、聚合器、搜索关键词、重复记录；其中 **82** 行具有 http(s) URL，按**精确主机名**归为 **67** 个主机 |
+| `CochraneK/NewsMail` | `info_sources.md` | **99** 条 `名称 \| 类型 \| 地址/关键词` 行，包含新闻网站、聚合器、搜索关键词、重复记录；其中 **82** 行具有 http(s) URL，按**精确主机名**归为 **67** 个主机 |
 | `CochraneK/charity-intelligence` | `compliance/source-register.yaml` | **101** 条带有效域名的登记条目，记录 `collection_status`：`conditional` **68**、`pending_retest` **27**、`blocked` **6**（以该文件 2026-09-07 的审查状态为准） |
 
 解释：
@@ -71,7 +71,7 @@
 ## 本轮不做的事
 
 - 不同时引入 Qiaomu RSS、WeRSS 和新爬虫服务；优先用 YiHot 自带的来源连接器。
-- 不直接在生产启用 100 个 NewsMail 来源，不把 `conditional` 当 `allowed`。
+- 不直接在生产启用 99 个 NewsMail 来源，不把 `conditional` 当 `allowed`。
 - 不用 AIHOT 上游原仓库代码覆盖当前 YiHot 公益配置。
 - 不删除 NewsMail / charity-intelligence 仓库及已采集的原始数据。
 - 不为邮件重新建另一套数据库和四个容器。

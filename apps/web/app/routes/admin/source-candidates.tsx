@@ -88,16 +88,22 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[13.5px] font-medium text-ink">{candidate.name}</span>
                       <Badge>{candidate.kind_label}</Badge>
-                      <Badge tone="warn">待核查</Badge>
+                      {candidate.observation?.classification === "FEED_WITH_ENTRIES" ? <Badge tone="info">历史测试：RSS 有条目</Badge>
+                        : candidate.observation?.classification === "HTTP_ERROR" || candidate.observation?.classification === "HTML_NOT_FEED"
+                          ? <Badge tone="warn">旧 RSS 地址不可用</Badge>
+                          : <Badge tone="warn">待核查</Badge>}
                     </div>
                     <div className="break-all text-[12px] text-ink-4">{candidate.url ?? `关键词：${candidate.locator}`}</div>
                     <div className="text-[11px] text-ink-4">来自 NewsMail · 第 {candidate.source_line} 行；不视作自动采集许可</div>
+                    {candidate.observation && <div className="text-[11px] text-ink-4">2026-10-08 网络探测：HTTP {candidate.observation.status} · {candidate.observation.classification}；只是历史快照，需复验</div>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {candidate.url && (
                       <>
                         <Button tone="ghost" busy={pending === "discover" && url === candidate.url} onClick={() => void inspect(candidate.url!)}>寻找 RSS</Button>
-                        <ButtonLink to={draftLink(candidate.url, candidate.name, candidate.kind_label === "RSS" ? "rss" : "web_list")}>带入新建</ButtonLink>
+                        {candidate.kind_label === "RSS" && (candidate.observation?.classification === "HTTP_ERROR" || candidate.observation?.classification === "HTML_NOT_FEED")
+                          ? <Badge tone="warn">请先更换有效地址</Badge>
+                          : <ButtonLink to={draftLink(candidate.url, candidate.name, candidate.kind_label === "RSS" ? "rss" : "web_list")}>带入新建</ButtonLink>}
                       </>
                     )}
                     {!candidate.url && <Badge tone="muted">仅发现线索</Badge>}

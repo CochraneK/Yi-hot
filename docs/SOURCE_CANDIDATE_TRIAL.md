@@ -12,6 +12,10 @@
 4. **带入新建**：从候选页跳转 `/admin/sources/new`，预填 URL、名称、类型并复用原来的真实预览功能。新建信源默认 `enabled=false` 和 `health=paused`，参与模式 `isolated`，全文展示/再分发默认关闭；必须手动核对后启用。
 5. **不污染现有内容**：候选查询与 RSS 发现不写数据库、不自动触发 worker，也不改动当前四个 YiHot 容器。
 
+## 已有一次真实网络复核
+
+2026-10-08 的六源只读探测及失效 Feed 列表见 [M1 真实返回报告](SOURCE_M1_LIVE_PROBE_2026-10-08.md) 和 [历史观测 JSON](../data/source-registry/observations/live-probe-2026-10-08.json)。**这些数据是来自 GitHub Runner 的历史快照，不是实时的审查授权；已知失效 RSS 不允许直接预填并创建。**
+
 ## 不支持或尚未验证
 
 - 搜索微信公众号名称**只是查询旧候选清单**，不等于实时搜到官方公众号；需要额外验证公众号真实身份 ID。

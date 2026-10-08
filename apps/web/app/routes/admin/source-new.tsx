@@ -30,7 +30,7 @@ export default function NewSource() {
   const requestedKind = params.get("kind");
   const initialKind = requestedKind && requestedKind in TEMPLATES ? requestedKind : "rss";
   const requestedUrl = params.get("url") ?? "";
-  const initialUrl = /^https?:\\/\\//i.test(requestedUrl) && requestedUrl.length <= 2048 ? requestedUrl : "";
+  const initialUrl = (requestedUrl.startsWith("https://") || requestedUrl.startsWith("http://")) && requestedUrl.length <= 2048 ? requestedUrl : "";
   const initialName = (params.get("name") ?? "").slice(0, 200);
   const { run, pending } = useAdminAction();
   const [form, setForm] = useState({ id: "", name: initialName, kind: initialKind, tier: "T2", participation_mode: "isolated", interval_minutes: 120, first_party: false, site_fulltext: false, syndicate_fulltext: false, tags: "" });

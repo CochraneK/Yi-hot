@@ -13,6 +13,7 @@ import { listMonitorEvents, listMonitorPosts, relinkPost, resolveMonitorPost, re
 import { releaseReceipt, requeueFailedArticles, resolveDelivery, runsOverview } from "@aihot/backend/admin/runs";
 import { listBudgets, listTargets, replaceContactQr, setTargetEnabled, updateBudget } from "@aihot/backend/admin/settings";
 import { createSource, fetchNow, listSources, previewSource, sourceDetail, updateSource } from "@aihot/backend/admin/sources";
+import { discoverFeeds } from "@aihot/backend/sources/discovery";
 import { sql } from "@aihot/backend/db";
 import { loadContact } from "@aihot/backend/site/contact";
 import { sendProblem } from "../http/respond.ts";
@@ -40,6 +41,7 @@ export function registerAdmin(app: FastifyInstance) {
   }));
   app.post("/api/admin/sources", adminHandler(async (req, _reply, admin) => createSource(body(req), actorOf(admin))));
   app.post("/api/admin/sources/preview", adminHandler(async (req) => previewSource(body(req) as never)));
+  app.post("/api/admin/sources/discover", adminHandler(async (req) => discoverFeeds(String(body(req).url ?? ""))));
   app.get("/api/admin/sources/:id", adminHandler(async (req, reply) => orNotFound(req, reply, await sourceDetail(param(req, "id")))));
   app.patch("/api/admin/sources/:id", adminHandler(async (req, reply, admin) => {
     const b = body<{ patch: unknown; version: string; reason?: string }>(req);

@@ -48,7 +48,11 @@ async function check(path: string, expect: (res: Response, body: string) => stri
   }
 }
 
-for (const path of PAGES) await check(path, (_res, body) => (body.includes(SITE.name) ? null : `the page does not name ${SITE.name}`));
+// The bare root is the multi-project portal; the YiHot application pages live under /yihot/.
+for (const path of PAGES) {
+  const actual = path === "/" ? path : `/yihot${path}`;
+  await check(actual, (_res, body) => (body.includes(SITE.name) ? null : `the page does not name ${SITE.name}`));
+}
 for (const [path, type] of MACHINE) await check(path, (res) => (type.test(res.headers.get("content-type") ?? "") ? null : `content-type ${res.headers.get("content-type")}`));
 // MCP: the handshake answers with the site's server name.
 const mcp = await fetch(`${base}/api/mcp`, {

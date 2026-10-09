@@ -13,7 +13,7 @@
 
 ## 同步 / 多机
 - GitHub **`CochraneK/Yi-hot`**（private）；**10-09 由另一台机器改名**（原 `CochraneK/yihot`）→ 旧名 GET 会被服务端跟随，但 **POST/PATCH 返回 307 且 urllib 不跟随** → 所有脚本里的仓库名必须写规范名 `Yi-hot`（`D:\Software\DSH\*.py` 已统一改过）。改名后**务必复查 private**（改名可能重置可见性）。工具在 `D:\Software\DSH\`，走 api.github.com，token 在 `Novel2game/.git/config`。
-  - `_sync_yihot.py` 增改（CHANGED+MSG；**无删除能力**）｜`_delete_yihot.py` 删（DELETED；bottom-up 重建+剪空目录；闸门＝**删除前后全量 path→blob-sha 对照**：removed==预期、added==空、存活 sha 不变）｜`_pull_yihot.py` 拉。
+  - **10-09 起工具已搬进仓库 `tools/`（唯一真值）**：`sync.py` 增改（`-m "…" <路径…>` 或 `--changed-from <清单>`；**无删除能力**）｜`delete.py` 删（`-m "…" <路径…>`；bottom-up 重建+剪空目录；闸门＝**删除前后全量 path→blob-sha 对照**：removed==预期、added==空、存活 sha 不变）｜`pull.py` 拉｜`compare.py` 只读比对｜`verify_threeway.py`｜`server_diff.py`（服务器上跑）｜`ci_status.py`。共享配置 `tools/yihot_common.py`，env＝`YIHOT_ROOT` / `YIHOT_WORK`（中间产物目录，默认仓库外）/ `GITHUB_TOKEN`（优先于 config 回退）。**改同步逻辑改 `tools/`，别再改开发机 `D:\Software\DSH\` 那份**。
   - commit 日期用**本地墙钟+真实时区偏移**，禁 `time.gmtime()+08:00`（快 8h）。
 - **同步判定一律用 blob sha**（`sha1("blob <len>\0"+内容)`）；跨系统比对只能用 blob sha。别用 git log（本地 HEAD ≠ 远端 main）。
 - **三方核查**：`_verify_yihot_threeway.py`（GitHub+本地→`_gh_map.json`/`_local_map.json`）+ 服务器跑 `_server_diff_full.py`（比 `_local_map.json`，并写 `/tmp/_upload_manifest.txt`＝`本地绝对路径|远程绝对路径`）。
@@ -33,6 +33,9 @@
 ## 本机运维 / 上下文资产
 - 远程：`cd tools/deploy && SSH_PASS="$(grep -m1 '^SSH_PASS=' ../../secrets/credentials.env | cut -d= -f2-)" NODE_PATH='C:/Users/SCZ_2207/.workbuddy/binaries/node/workspace/node_modules' node sshexec.js '<cmd>'`（NODE_PATH 必须有）。命令**不能含单引号**（写 `.sh` 上传后 sh 跑）、**不能含 `||`**；复杂 SQL 写 `.sql` 上传后 `psql -f -`。
 - 上传 `node sftp-upload.js <本地> <远程>`｜批量 `sftp-upload-many.js <manifest>`。**⚠️ `deploy/cloud.env` 是过期 .env 副本，禁止覆盖服务器 .env**。docker 一律 `sudo -n`。测站点 UA=`YiHotBot`。
+- ⚠️ **`secrets/credentials.env` 的值可能带引号**（`SSH_PASS='…'`，18 B vs 实际 16 B）→ 裸 `cut -d= -f2-` 会把引号吃进去、SSH 直接认证失败。**正确取法**：`set -a && . ./secrets/credentials.env && set +a`，之后 `SSH_PASS` 就是干净值。
+- ⚠️ **`tools/deploy/*.js` 是 CommonJS，必须有 `tools/deploy/package.json`（`{"type":"commonjs"}`）**：仓库根 `package.json` 是 `"type":"module"`（Node 取**最近**的 package.json），缺了它 `require("ssh2")` 会报 *require is not defined in ES module scope*。**别删这个文件**。
+- ⚠️ **`tools/compare.py` 不能用 `git ls-files` 建本地集合**：开发机这份仓库的 git 索引陈旧/残缺（与远端不同源），会漏报一大批本地文件、凭空造出几十个「远端独有」假差异。已改成 `os.walk`（排除集与 `verify_threeway.py` 一致）。
 - 本地测试：`"D:/Software/node.js/node.exe" --test --test-concurrency=1 --test-timeout=120000 tests/*.test.ts`（**npm test 会落到 managed Node 22**）。typecheck：`tsc -p apps/web` / `-p packages/backend` / `-p apps/api`（`npm run typecheck -w @aihot/web` 的 typegen 会删 .react-router 被 IDE 守卫拦）。`tests/source-registry-audit.test.mjs`：**排序 locale 已固定为显式 `"en"`**（10-09），Windows 与 Linux 结果一致、可本机复跑（此前跟随宿主机默认 locale → 本机必失败，非回归）。其基线是**硬编码快照**，信源数变动后必须重生成（见上「CI / 离线审计门禁」）。`tests/source-discovery.test.ts` 与其余 invariant 测试**需要 DB**（`tests/setup.ts` 硬要求 `DATABASE_URL` 指向 `*_test`/`*_ci`）→ 本机无库必失败，属环境而非回归。
 - **上下文资产分布（换机/换 AI 的盲区）**：凭据自 **2026-10-09 起加密入库**——密文 `secrets/credentials.env.enc`（已进仓库）、加解密 `tools/secrets.sh`（一把口令），明文只在本地 `secrets/credentials.env` 与服务器 `/opt/yihot/.env`（**均未入库**）；`deploy/sshexec.js` 不含密码、只读 `SSH_PASS` 环境变量。技能在 `~/.workbuddy/skills/`（本机）；GitHub token 亦可从 `Novel2game/.git/config` 取。**仓库内** `docs/PROJECT_CONTEXT.md`＝脱敏交接总览（clone 即可接手），`docs/memory/`＝本目录 5 个常青分册的脱敏镜像，`tools/`＝同步/部署脚本。
 

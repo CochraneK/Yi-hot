@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "//": "tools/deploy/ 下的部署脚本是 CommonJS（用 require 引 ssh2）。仓库根的 package.json 声明了 \"type\": \"module\"，会把 .js 当 ESM 处理 → require is not defined。这个 package.json 存在的唯一目的，就是给本目录单独声明 CommonJS（Node 会取「最近的那个 package.json」）。它在 npm workspaces（apps/* packages/* industry）之外，npm 不会把它当工作区。**别删。**"
+}

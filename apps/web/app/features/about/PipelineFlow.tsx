@@ -12,17 +12,31 @@ import { IconArrowRight } from "../../components/icons";
  * itself can be reused elsewhere (docs, slides, agent-facing pages).
  */
 export function PipelineFlow({ className = "" }: { className?: string }) {
+  const alt =
+    "筛选流水线：采集、去重、相关性预筛（PASS 继续、UNKNOWN 放行、BLOCK 停止）、两次独立打分、按分数决定是否走深度理解";
   return (
     <figure id="pipeline" className={`mt-10 scroll-mt-24 xl:mt-14 ${className}`}>
+      {/* The site has a three-way appearance switch (data-theme), which Tailwind's
+          dark: variant keys off. Two files, swapped by CSS, so the diagram never
+          shows as a white slab on a dark page. */}
       <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <img
-          src="/yihot/pipeline-prefilter.png"
+          src="/yihot/pipeline-light.png"
           width={1600}
           height={1000}
           loading="lazy"
           decoding="async"
-          alt="筛选流水线：采集、去重、相关性预筛（PASS 继续、UNKNOWN 放行、BLOCK 停止）、两次独立打分、按分数决定是否走深度理解"
-          className="block w-full"
+          alt={alt}
+          className="block w-full dark:hidden"
+        />
+        <img
+          src="/yihot/pipeline-dark.png"
+          width={1600}
+          height={1000}
+          loading="lazy"
+          decoding="async"
+          alt={alt}
+          className="hidden w-full dark:block"
         />
       </div>
 

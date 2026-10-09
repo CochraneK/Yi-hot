@@ -49,7 +49,8 @@ interface Usage {
   totals: { calls: number; tokensIn: number; tokensOut: number; amount: number | null };
   averages: { callsPerDay: number; tokensPerCall: number };
   activeDays: number;
-  projection: { amount: number; currency: string } | null;
+  recent: { days: number; calls: number; tokensIn: number; tokensOut: number; amount: number | null; perDay: number | null };
+  projection: { amount: number; currency: string; basisDays: number } | null;
   lifetime: { calls: number; tokensIn: number; tokensOut: number; first: string | null; amount: number | null };
 }
 
@@ -65,7 +66,6 @@ const wan = (v: number) => `${num(v / 1e4, v >= 1e5 ? 0 : 2)} 万`;
 export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
   const cur = u.currency;
   const totalTokens = u.totals.tokensIn + u.totals.tokensOut;
-  const perDay = u.activeDays ? u.totals.amount! / u.activeDays : null;
 
   return (
     <AdminPage
@@ -90,12 +90,16 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
           label="估算费用"
           value={u.totals.amount === null ? "未定价" : money(u.totals.amount, cur)}
           tone={u.totals.amount === null ? "warn" : undefined}
-          hint={perDay === null ? "填好单价后才有金额" : `日均 ${money(perDay, cur)} · 每次调用 ${money(u.totals.amount! / u.totals.calls, cur)}`}
+          hint={u.totals.amount === null ? "填好单价后才有金额" : `每次调用约 ${money(u.totals.amount / u.totals.calls, cur)}`}
         />
         <Stat
-          label="月化预估"
-          value={u.projection ? money(u.projection.amount, cur) : "—"}
-          hint={u.projection ? `按有调用的 ${u.activeDays} 天推算` : "暂无数据"}
+          label={`近 ${u.recent.days} 天费用`}
+          value={u.recent.amount === null ? "—" : money(u.recent.amount, cur)}
+          hint={
+            u.recent.perDay === null
+              ? "暂无数据"
+              : `日均 ${money(u.recent.perDay, cur)} · 月化约 ${u.projection ? money(u.projection.amount, cur) : "—"}`
+          }
         />
       </div>
 
@@ -205,6 +209,10 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
                 ["累计调用", `${num(u.lifetime.calls)} 次`],
                 ["累计 token", `${num(u.lifetime.tokensIn + u.lifetime.tokensOut)}（输入 ${num(u.lifetime.tokensIn)} / 输出 ${num(u.lifetime.tokensOut)}）`],
                 ["累计估算费用", u.lifetime.amount === null ? "未定价" : `≈ ${money(u.lifetime.amount, cur)}`],
+                [
+                  "月化口径",
+                  u.recent.perDay === null ? "—" : `近 ${u.recent.days} 天日均 ${money(u.recent.perDay, cur)} × 30`,
+                ],
               ] as Array<[string, string]>
             ).map(([k, v]) => (
               <div key={k} className="flex items-baseline justify-between gap-4 border-b border-line-soft pb-2 last:border-0">
@@ -218,7 +226,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             <Link to="/admin/models" className="text-accent">
               模型与评测
             </Link>
-            」里以实付覆盖。
+            」里以实付覆盖。月化取<span className="text-ink-2">近 {u.recent.days} 天日均</span>，而不是"有调用天数的平均"——后者会被首次全量回填的尖峰和节假日空窗带偏。
           </p>
         </Card>
       </div>

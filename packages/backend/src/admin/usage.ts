@@ -141,6 +141,17 @@ export async function usageOverview(days = 30) {
   const currency = daily.find((x) => x.priced)?.currency ?? prices[0]?.currency ?? "USD";
   const lifetimeCost = costOf(Number(lifetime[0]?.tokens_in ?? 0), Number(lifetime[0]?.tokens_out ?? 0), prices.find((p) => p.model !== "") ?? null);
 
+  // Run rate: the trailing week is a far better basis than "average over active days", which the
+  // one-off first backfill (and holiday lulls) skew badly. Quoting the basis keeps it honest.
+  const recentDays = Math.min(7, d);
+  const recent = daily.slice(-recentDays);
+  const recentTotals = recent.reduce(
+    (a, x) => ({ calls: a.calls + x.calls, tokensIn: a.tokensIn + x.tokensIn, tokensOut: a.tokensOut + x.tokensOut, amount: a.amount + (x.amount ?? 0) }),
+    { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0 },
+  );
+  const recentAmount = recentTotals.amount || null;
+  const perDayRecent = recentAmount === null ? null : recentAmount / recentDays;
+
   return {
     days: d,
     currency,
@@ -154,7 +165,10 @@ export async function usageOverview(days = 30) {
       tokensPerCall: totals.calls ? Math.round((totals.tokensIn + totals.tokensOut) / totals.calls) : 0,
     },
     activeDays,
-    projection: activeDays ? { amount: (totals.amount / activeDays) * 30, currency } : null,
+    recent: { days: recentDays, ...recentTotals, amount: recentAmount, perDay: perDayRecent },
+    // Monthly projection = trailing-week daily average × 30. The first-ever backfill is excluded by
+    // construction only when it falls outside the trailing week; holiday weeks read low.
+    projection: perDayRecent === null ? null : { amount: perDayRecent * 30, currency, basisDays: recentDays },
     lifetime: {
       calls: lifetime[0]?.calls ?? 0,
       tokensIn: Number(lifetime[0]?.tokens_in ?? 0),

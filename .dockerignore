@@ -9,3 +9,9 @@ apps/web/.react-router
 .git
 .github
 *.log
+
+# 不进生产镜像：
+#   secrets/ = 凭据加密归档（换机备份用，运行时不需要；明文本来就被 .gitignore 挡住）
+#   tools/   = 开发机的同步/部署脚本（只在开发机跑）
+secrets
+tools

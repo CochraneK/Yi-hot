@@ -1,3 +1,5 @@
+> 🧭 **接手 / 换设备先读**：[`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md)（交接总览：拓扑、部署、内容口径、**新设备上手 §8**、**接手清单 §9**）→ [`docs/memory/`](docs/memory/)（项目经验的脱敏镜像，索引 `MEMORY.md`）→ [`tools/README.md`](tools/README.md)（同步/部署脚本）→ [`secrets/README.md`](secrets/README.md)（凭据加密归档）。三条硬纪律：推送走 `tools/sync.py`（本机 `git push` 会 502）、三方一致判定只用 git blob sha、密钥明文不入库。
+
 > **YiHot 公益情报平台整合方向（2026-10-08）**：本仓库以 AIHOT 上游为基础，目标逐步吸收 [NewsMail](https://github.com/CochraneK/NewsMail) 的信源经验与邮件分发，以及 [charity-intelligence](https://github.com/CochraneK/charity-intelligence) 的公益组织主数据、证据与纵向追踪。详见 [三库整合路线图](docs/INTEGRATION_ROADMAP.md)。 **信源治理设计**：[SOURCE_GOVERNANCE_DESIGN.md](docs/SOURCE_GOVERNANCE_DESIGN.md)；**离线审计结果**：[SOURCE_REGISTRY_AUDIT_2026-10-08.md](docs/SOURCE_REGISTRY_AUDIT_2026-10-08.md)（复算：`npm run sources:audit:check`）（借鉴 AIHOT、TrendRadar、RSSHub、Miniflux、Media Cloud；当前仅规划，尚未变更在线采集）。当前为分阶段迁移计划，**不代表两个旧库已完成合并，也不改变当前线上服务**。保留上游 AIHOT 的作者、MIT LICENSE/NOTICE 与来源归属。
 <p align="center">
   <picture>

@@ -1,9 +1,17 @@
 # PROJECT_CONTEXT — 冷启动交接（换机器 / 换 AI 必读）
 
 > **这份文件为什么存在**：项目的日常记忆（踩坑、口径、SOP）原本只存在于开发机的 `.workbuddy/memory/`，而该目录在 `.gitignore` 里——它**从不进仓库**。结果是：换一台电脑、或换一个 AI 来接手时，只有代码，没有经验，会重复踩坑。
-> 本文把它**脱敏后**写进仓库：任何机器 clone 之后都能立刻接手。**凭据一律不在本文**（见文末「凭据在哪」）。
+> 现在仓库里把接手需要的东西配齐了：
 >
-> 更新时间：2026-10-09。深度内容请配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+> | 读什么 | 是什么 |
+> | --- | --- |
+> | **本文** | 交接总览：站点拓扑 / 部署 / 内容口径 / **新设备上手（§8）** / **接手清单（§9）** |
+> | `docs/memory/` | 项目经验的**脱敏镜像**（`.workbuddy/memory/` 的 5 个常青分册；先看索引 `MEMORY.md`） |
+> | `tools/` | 同步 / 部署 / 核查脚本（`tools/README.md` 有清单与用法） |
+> | `secrets/` | 凭据**加密归档**（`credentials.env.enc` + `tools/secrets.sh`，一把口令；见 `secrets/README.md`） |
+>
+> 更新时间：2026-10-09（本次按「换机交接」重构）。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+
 
 ---
 
@@ -34,8 +42,8 @@ sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml build
 sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml up -d
 ```
 
-> ⚠️ **部署辅助脚本不在本仓库里。** 仓库内的 `deploy/` 只有 `Caddyfile`；开发机上另有一个同名目录（`D:\Software\DSH\deploy\`）放着 `sshexec.js`（远程执行）、`sftp-upload.js`（单文件上传）、`sftp-upload-many.js`（批量单连接上传）、`verify-*.sh`（登录后验证后台页）。**换机器接手时，这些要单独交接**；只用上面的 `scp` / `ssh` 也能完成部署，脚本只是省事。
-> 同目录还有一枚**过期**的 `cloud.env`——它是 `.env` 的旧副本，**禁止用来覆盖服务器上的 `.env`**。
+> ✅ **部署辅助脚本已在仓库里**：`tools/deploy/sshexec.js`（远程执行）、`tools/deploy/sftp-upload.js`（单文件上传）、`tools/deploy/sftp-upload-many.js`（按清单批量、单连接）。用法与依赖见 `tools/README.md`。只用上面的 `scp` / `ssh` 也能完成部署，脚本只是省事。
+> ⚠️ 开发机 `D:\Software\DSH\deploy\` 里还留着一枚**过期**的 `cloud.env`——它是 `.env` 的旧副本，**禁止用来覆盖服务器上的 `.env`**（运行时真值永远是服务器 `/opt/yihot/.env`）。
 
 - `package-lock.json` 未变时构建是**热缓存**（~50 秒）；只改 web 可 `up -d --no-build web`。
 - **禁止 `docker cp` + `restart`**：`env_file` 在容器创建时固化，`restart` 不生效；而 `up -d` 重建容器会丢掉 `cp` 进去的文件（代码静默回退）。
@@ -136,42 +144,95 @@ cd apps/web && node ../../node_modules/@react-router/dev/bin.cjs typegen
 - 测站点时 UA 用 `YiHotBot`。
 - 服务健康三板斧：① `settings` 表里 `heartbeat.worker` / `heartbeat.api:3001` 是否新鲜；② `pgboss.job_common` 按 name/state 计数（全 completed = 健康）；③ 到期未抓的源数（`enabled AND next_fetch_at <= now()`）应为 0。
 
-## 7. 凭据在哪（**都不在本仓库**）
+## 7. 凭据在哪（**密钥加密入库；明文永不入库**）
 
-| 需要什么 | 在哪 |
-| --- | --- |
-| 服务器 SSH 密码 | 开发机 `.workbuddy/memory/OPS.md`（明文记录，**该目录在 `.gitignore` 里**）或密码管理器。⚠️ `deploy/sshexec.js` **本身不存密码**，它只从 `SSH_PASS` 环境变量读 |
-| GitHub 推送 token | 开发机上其它仓库的 `.git/config`（remote URL 内嵌） |
-| 后台管理员密码 | 服务器 `/opt/yihot/.env` 的 `ADMIN_PASSWORD` |
-| 模型 API Key | 服务器 `/opt/yihot/.env`（`LLM_API_KEY` 等） |
+同一批凭据有三种形态，别混淆：
 
-换机器接手时，把这些**单独**交接，不要写进仓库。`deploy/cloud.env` 是一份**过期的 `.env` 副本，禁止用来覆盖服务器 `.env`**。
+| 形态 | 位置 | 说明 |
+| --- | --- | --- |
+| **运行时真值** | 服务器 `/opt/yihot/.env` | 唯一真正生效的那份；改了必须 `up -d` |
+| **加密归档（入库 ✅）** | `secrets/credentials.env.enc` | 换机备份。AES-256-CBC + PBKDF2；`tools/secrets.sh decrypt` 用口令解开 |
+| **本地明文（永不入库）** | `secrets/credentials.env`（已被 `.gitignore` 挡住） | 加解密的中间产物；`tools/secrets.sh encrypt` 的输入 |
+
+归档里装了什么（完整清单见 `secrets/README.md`）：服务器 `.env` 的全部变量——`ADMIN_PASSWORD`、session / 图片签名密钥、数据库密码、`LLM_API_KEY`、飞书凭据、`FUTUREME_UPSTREAM_URL`——外加**不在 `.env` 里**的 `SSH_HOST` / `SSH_USER` / `SSH_PASS` 与 `GITHUB_TOKEN`。
+
+- **那把 GitHub 推送 token** 也可以从开发机任一仓库的 `.git/config` 里取（remote URL 内嵌 `gho_…`）；但那是开发机便利路径，新设备上没有。
+- ⚠️ `tools/deploy/sshexec.js` / `sftp-upload*.js` **本身不存密码**，只从 `SSH_PASS` 环境变量读。
+- ⚠️ **为什么加密而不是明文入库**（哪怕仓库是 private）：
+  1. GitHub 的 Secret Scanning 对 `gho_…` / `ghp_…` 有强制检测，**push 上去即告警并自动吊销**——等于自己把证书废掉；
+  2. CI 的 `actions/checkout` 会把仓库拉到 runner 上，明文 `.env` 就等于把生产密钥交给每次 CI；
+  3. 「private」对协作者、GitHub App、你授权过的 OAuth 都可见；
+  4. **git 历史不可逆**，删掉文件也留得住值，真要清除得 rewrite history + 轮换全部密钥。
+  密文没有口令就是一堆随机字节，几百字节而已，可以安全入库。
+- ⚠️ **改凭据的正规顺序**（漏掉后两步，换机时就会还原出过期凭据）：改**服务器** `.env` → `up -d` 生效 → 同步进 `secrets/credentials.env` → `tools/secrets.sh encrypt` → 提交密文。
+- ⚠️ `deploy/cloud.env` 是一份**过期的 `.env` 副本，禁止用来覆盖服务器 `.env`**。
 
 ## 8. 新设备上手（clone 之后做什么）
 
-代码、配置与文档都在仓库里，`git clone` 之后就能接手本项目；但**下面 5 类东西刻意不入库**，必须提前单独带到新设备：
+代码、配置、文档、**工具（`tools/`）、脱敏记忆（`docs/memory/`）、加密凭据（`secrets/`）**都在仓库里 —— `git clone` 之后就能接手。真正需要**从外部带过来**的东西只剩一样：
 
-| 类别 | 内容 | 在哪 |
-| --- | --- | --- |
-| 环境变量 `.env` | `SITE_URL` / `ADMIN_PASSWORD` / `LLM_API_KEY` / 飞书凭据 / `FUTUREME_UPSTREAM_URL` | 服务器 `/opt/yihot/.env`（新机可先 `node scripts/init-env.ts` 生成骨架再逐项补） |
-| GitHub 写入凭据 | `gho_…` token | 开发机任一仓库的 `.git/config`（remote URL 内嵌） |
-| 服务器 SSH 密码 | — | 开发机 `.workbuddy/memory/OPS.md`（明文，未进仓库） |
-| 开发机脚本 | `sshexec.js` / `sftp-upload*.js` / `_sync_yihot.py` / `_pull_yihot.py` / `_delete_yihot.py` / `_verify_yihot_threeway.py` / `deploy/_ci_status.py` | `D:\Software\DSH\`（**刻意不入库**） |
-| 项目记忆 | 踩坑、口径、SOP（本文件是脱敏版） | 开发机 `.workbuddy/memory/`（`.gitignore`） |
+> **🔑 口令**（解开 `secrets/credentials.env.enc` 用）。它不在任何文件里、不在仓库里，只在人的脑子里或密码管理器里。**这是整条链上唯一的单点**，所以别用 `yihot123` 这种。
 
 上手顺序：
 
-1. `git clone https://github.com/CochraneK/Yi-hot`（private 仓，需要上面那枚 token），`npm ci`（Node 24）。
-2. 备好 `.env`（见上表）。
-3. 本机自检 —— **不需要数据库也能跑的部分**：
+1. `git clone https://github.com/CochraneK/Yi-hot`（private 仓，需要一枚有 **Contents 读写**权限的 PAT），`npm ci`（Node 24）。
+2. **解密凭据** →
+   ```sh
+   bash tools/secrets.sh decrypt      # 交互输入口令 → 还原 secrets/credentials.env
+   ```
+   没有 Git Bash 也能用仓库里现成的 `secrets/decrypt-secrets.bat`（双击即可），或直接：
+   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 300000 -in secrets/credentials.env.enc -out secrets/credentials.env`。
+   归档里的 `GITHUB_TOKEN` 导出成环境变量后，`tools/` 的脚本就直接能用（它们优先读 `GITHUB_TOKEN`）。
+3. **备好运行时 `.env`**：正式值就在归档里（＝服务器 `/opt/yihot/.env` 那份）；本机想跑起来也可以 `node scripts/init-env.ts` 生成骨架再逐项补。
+4. **本机自检 —— 不需要数据库的部分**：
    - `tsc -p apps/web --noEmit`、`-p packages/backend --noEmit`、`-p apps/api --noEmit`
+   - `python tools/compare.py`（**只读**看本地 vs GitHub 差在哪）
+   - `python tools/verify_threeway.py`（GitHub + 本地）
+   - `python tools/ci_status.py --steps`（看 CI 各步结果）
    - `node --test tests/source-registry-audit.test.mjs`（离线，应 **6/6** 通过）
    - ⚠️ 其余 `tests/*.test.ts` 需要 `DATABASE_URL` 指向 `*_test` / `*_ci` 库（`tests/setup.ts` 硬要求）——本机没有 Postgres 时跑不了，**这是环境限制，不是回归**。
-4. 改完要上线 → 按第 2 节的 `scp` + `ssh` + `docker compose build/up -d` 流程（或用开发机脚本，若已带过来）。
-5. 同步回 GitHub → **不要用 `git push`**（见下）。
+5. **改完要上线** → 按第 2 节的 `scp` + `ssh` + `docker compose build/up -d`，或用 `tools/deploy/` 里现成的脚本。
+6. **同步回 GitHub** → 用 `python tools/sync.py`（**不要 `git push`**，见下）。
+7. **若改了 `.workbuddy/memory/` 的 5 个常青分册** → 重跑 `python tools/sync_memory.py`，否则仓库里的 `docs/memory/` 镜像会过期。
 
 > ⚠️ **新设备上两个反直觉点**
-> 1. **`git push` / `git fetch` 在本机网络环境下会失败**（出口代理只放行 `api.github.com`，`github.com` 的 git smart-HTTP 被拦，报 502）。推送必须走 REST / Git Data API（`_sync_yihot.py` 那一套）。
-> 2. **本地 git 仓库与远端历史「不同源」**：开发机上这份仓库甚至**没有配 remote**。所以**判断"哪边更新"只能用 git blob sha 逐文件比对**（`sha1("blob <len>\0" + 内容)`），`git log` 对不上是正常的，别拿它当依据。
+> 1. **`git push` / `git fetch` 在本机网络环境下会失败**（出口代理只放行 `api.github.com`，`github.com` 的 git smart-HTTP 被拦，报 502）。推送必须走 REST / Git Data API —— 就是 `tools/sync.py` / `tools/delete.py` 那一套。
+> 2. **本地 git 仓库与远端历史「不同源」**：开发机上这份仓库甚至**没有配 remote**。所以**判断「哪边更新」只能用 git blob sha 逐文件比对**（`sha1("blob <len>\0" + 内容)`），`git log` 对不上是正常的，别拿它当依据。
 >
-> 另：`git clone` 出来的是**正常带 origin 的仓库**，比开发机现状更"标准"——但推送路径仍然只有 API 那条。
+> 另：`git clone` 出来的是**正常带 origin 的仓库**，比开发机现状更「标准」—— 但推送路径仍然只有 API 那条。
+
+---
+
+## 9. 接手清单（AI 或人，按序执行）
+
+给**接手的 AI**：读完这一节你就该能独立干活了。不要凭直觉改东西前先读完 §3（内容口径）和 §4（数据模型）；这两节里写着的坑都是真踩过的。
+
+**第一步：认清这是什么。**
+这是 **AIHOT 开源框架的公益领域定制版（站点名 Yi-Hot）**，不是上游默认的 AI 示例站。上游的 `README.md` / `AGENTS.md` 仍然有效（通用工程规范），但行业内容（信源、门槛、分类、文案）**已经全部换成公益口径**。
+
+**第二步：读完这四份，按顺序。**
+1. 本文（§1 拓扑 → §2 部署 → §3 内容口径 → §7 凭据 → §8 上手）。
+2. `docs/memory/MEMORY.md`（索引）→ 按需跳 `OPS.md` / `CONTENT.md` / `USAGE.md` / `FutureMe.md`。
+3. `tools/README.md`（同步与部署怎么跑）。
+4. `secrets/README.md`（凭据怎么解）。
+
+**第三步：动手前的三条硬纪律。**
+| 纪律 | 内容 |
+| --- | --- |
+| **三方一致** | 任何改动要落到 **本地 = GitHub `main` = 腾讯云 `/opt/yihot`** 三处。判定**只用 git blob sha**，别用 `git log`。 |
+| **推送走 API** | `git push` 在本机是坏的（502）。`tools/sync.py` 加文件、`tools/delete.py` 删文件。 |
+| **改了门槛/口径要连带** | 改 `industry/selection.ts` 要同步 `tests/analyze.test.ts` 与 `docs/selection.md`（CI 会红）；改信源要重生成离线审计快照（见 `OPS.md`）。 |
+
+**第四步：常见任务去哪找手册。**
+- 加/改信源 → `docs/sources.md` + `docs/memory/OPS.md` 的「CI / 离线审计门禁」
+- 改站点文案/分类/主题 → `docs/customize.md`（`industry/` 下一切）
+- 改精选门槛 → `docs/selection.md`（**必须用标注样本重校准，别凭感觉改数字**）
+- 看费用/用量 → `/yihot/admin/usage` + `docs/memory/USAGE.md`
+- 列表「停在昨天」→ `docs/memory/CONTENT.md` 的诊断顺序（先 `eligible` 再 `timeline_at`）
+- 部署/上线 → §2 与 `tools/README.md`
+
+**第五步：交接时别忘了。**
+- 任何**凭据变更**都要回写 `secrets/credentials.env` 并重新 `tools/secrets.sh encrypt`（否则换机还原的是过期值）。
+- 任何**记忆更新**（`.workbuddy/memory/` 的 5 个常青分册）都要重跑 `python tools/sync_memory.py`。
+
+

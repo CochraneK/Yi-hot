@@ -45,6 +45,11 @@
 `SSH_PASS=… NODE_PATH='<node workspace>/node_modules' node tools/deploy/sshexec.js '<cmd>'`。
 `sshexec.js` 的命令**不能含单引号**（要跑 SQL/脚本就传文件上去再执行），也不能含 `||`。
 
+> ⚠️ `tools/deploy/package.json`（内容只有 `{"type":"commonjs"}`）是**必需**的：仓库根的
+> `package.json` 声明了 `"type": "module"`，Node 又取「最近的那个 package.json」，
+> 所以少了它这几个用 `require` 的部署脚本会被当 ESM 跑、直接报
+> `require is not defined in ES module scope`。**不要删。**
+
 ## 常用工作流
 
 ```sh

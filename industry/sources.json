@@ -566,8 +566,7 @@
         "_aihot": {
           "initialBackfillLimit": 12
         },
-        "publishedAtSelector": "span.date",
-        "publishedAtAuthoritative": true
+        "publishedAtSelector": "span.date"
       },
       "tier": "T1",
       "first_party": true,

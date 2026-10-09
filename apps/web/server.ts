@@ -139,16 +139,21 @@ function pageCache(req: import("node:http").IncomingMessage, res: import("node:h
 /** The app lives under this prefix so the host can carry other projects. */
 const PREFIX = "/yihot";
 
-/** FutureMe is a separate application and HTTPS origin, never an iframe or YiHot API. */
-const FUTUREME_PUBLIC_URL = (() => {
-  const value = (process.env.FUTUREME_PUBLIC_URL ?? "").trim();
-  if (!value) return "";
+/** Optional second app on the same public IP, via an isolated Docker-only network.
+ * Never expose the FutureMe container directly or reuse the YiHot API namespace.
+ * Only a container DNS name on port 8766 is accepted (no arbitrary remote proxy).
+ */
+const FUTUREME_UPSTREAM = (() => {
+  const value = (process.env.FUTUREME_UPSTREAM_URL ?? "").trim();
+  if (!value) return null;
   try {
     const url = new URL(value);
-    if (url.protocol !== "https:" || url.username || url.password || url.hash) return "";
-    return url.toString();
+    if (url.protocol !== "http:" || url.port !== "8766" || url.username || url.password ||
+        url.pathname !== "/" || url.search || url.hash ||
+        !/^[a-z][a-z0-9-]{0,62}$/.test(url.hostname)) return null;
+    return url;
   } catch {
-    return "";
+    return null;
   }
 })();
 
@@ -175,24 +180,56 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
     return res.end();
   }
 
-  // Root project portal links here; no rewrite into YiHot / SSR.
-  // Do not enable a public HTTP proxy for sensitive FutureMe sessions:
-  // microphone/camera need a trusted HTTPS top-level context.
-  if (pathname === "/futureme" || pathname === "/futureme/") {
-    if (FUTUREME_PUBLIC_URL) {
-      res.writeHead(302, {
-        Location: FUTUREME_PUBLIC_URL,
+  // A public portal card links to /futureme/; the apps stay in separate containers.
+  // Prefix is stripped only for FutureYou, keeping its /api/* off YiHot's API router.
+  if (pathname === "/futureme") {
+    res.writeHead(308, { Location: "/futureme/" + search, "Cache-Control": "no-store" });
+    return res.end();
+  }
+  if (pathname.startsWith("/futureme/")) {
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // Even without a domain, microphone/camera are only safe on a trusted HTTPS
+    // origin (the IP can later get its own certificate). Never claim HTTP is secure.
+    if (!FUTUREME_UPSTREAM) {
+      res.writeHead(503, { "Content-Type": "text/html; charset=utf-8" });
+      return res.end(`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FutureMe · 接入中</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f6f2;color:#201f1b;font-family:system-ui,"PingFang SC",sans-serif}main{max-width:420px;padding:32px}h1{font-size:24px}p{color:#6d6a60;line-height:1.8}a{color:#2f6f4f;text-decoration:none}</style><main><h1>FutureMe 正在接入</h1><p>独立服务尚未准备好。可以先体验 YiHot；FutureMe 联通后会自动从这个入口打开。</p><a href="/">← 返回项目入口</a></main></html>`);
+    }
+    const clientIp = req.socket.remoteAddress ?? "unknown";
+    const proxyPath = pathname.slice("/futureme".length) + search;
+    // The visitor cannot override the upstream Host or trusted client address.
+    const { host: _host, connection: _connection, ...headers } = req.headers;
+    headers["host"] = FUTUREME_UPSTREAM.host;
+    headers["x-real-ip"] = clientIp;
+    headers["x-forwarded-for"] = clientIp;
+    headers["x-forwarded-proto"] = "http"; // TLS edge will set this after IP HTTPS is configured.
+    const upstream = httpRequest({
+      hostname: FUTUREME_UPSTREAM.hostname,
+      port: FUTUREME_UPSTREAM.port,
+      path: proxyPath,
+      method: req.method,
+      headers,
+      timeout: 120_000,
+    }, (up) => {
+      // Keep admin's WWW-Authenticate, cookies and response codes intact.
+      const { connection: _upConn, ...responseHeaders } = up.headers;
+      res.writeHead(up.statusCode ?? 502, {
+        ...responseHeaders,
         "Cache-Control": "no-store",
         "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
       });
-      return res.end();
-    }
-    res.writeHead(503, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store",
-      "X-Content-Type-Options": "nosniff",
+      up.pipe(res);
     });
-    return res.end(`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FutureMe · 接入中</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f6f2;color:#201f1b;font-family:system-ui,"PingFang SC",sans-serif}main{max-width:420px;padding:32px}h1{font-size:24px}p{color:#6d6a60;line-height:1.8}a{color:#2f6f4f;text-decoration:none}</style><main><h1>FutureMe 正在接入</h1><p>未来自我体验尚未正式开放。项目入口已预留，完成独立 HTTPS 部署后即可进入。</p><a href="/">← 返回项目入口</a></main></html>`);
+    upstream.on("timeout", () => upstream.destroy(new Error("FutureMe upstream timed out")));
+    upstream.on("error", () => {
+      if (res.headersSent) return res.destroy();
+      res.writeHead(502, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+      res.end("FutureMe temporarily unavailable");
+    });
+    req.pipe(upstream);
+    return;
   }
 
   const decision = resolveRedirect(internal, search);

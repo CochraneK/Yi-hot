@@ -45,8 +45,8 @@ const GATE_TINTS = [
 
 export function PipelineFlow({ className = "" }: { className?: string }) {
   return (
-    <figure className={`mt-10 xl:mt-14 ${className}`}>
-      <figcaption className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <figure id="pipeline" className={`mt-10 scroll-mt-24 xl:mt-14 ${className}`}>
+      <figcaption className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-line pt-8">
         <span className="text-[12px] font-semibold tracking-[0.2em] text-accent">内容流转</span>
         <span className="text-[14px] font-bold text-ink">一条动态要过七道闸门</span>
         <span className="text-[13px] text-ink-4">每一道都有取舍，越往后越少。</span>

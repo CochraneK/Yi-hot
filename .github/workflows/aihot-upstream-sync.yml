@@ -14,7 +14,7 @@ on:
     - cron: "23 20 * * *" # 04:23 Beijing time; GitHub schedules use UTC
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: aihot-upstream-sync
@@ -30,35 +30,49 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: true
+          token: ${{ secrets.AIHOT_SYNC_TOKEN || github.token }}
           fetch-depth: 1
 
-      - name: Fetch original public AIHOT history and fast-forward vendor ref
+      - name: Fetch upstream and sync when authorized
         shell: bash
+        env:
+          HAS_SYNC_TOKEN: ${{ secrets.AIHOT_SYNC_TOKEN != '' }}
         run: |
           set -euo pipefail
           git remote add aihot-public https://github.com/KKKKhazix/AIHOT.git
           git fetch --no-tags aihot-public +refs/heads/main:refs/remotes/aihot-public/main
-
           upstream_sha="$(git rev-parse refs/remotes/aihot-public/main)"
-          # No force push: fail if the public upstream unexpectedly rewrites history.
-          git push origin "${upstream_sha}:refs/heads/vendor/aihot-main"
+          vendor_ref="refs/heads/vendor/aihot-main"
+          vendor_sha="$(git ls-remote --heads origin "$vendor_ref" | cut -f1)"
 
-          # One-time clean rebuild starting point. Never reset or update this branch:
-          # later YiHot-specific commits on it must not be overwritten by the sync.
-          rebuild_ref="refs/heads/rebuild/aihot-aligned"
-          if [[ -z "$(git ls-remote --heads origin "$rebuild_ref")" ]]; then
-            git push origin "${upstream_sha}:${rebuild_ref}"
-            rebuild_state="created from official upstream"
+          if [[ "$upstream_sha" == "$vendor_sha" ]]; then
+            sync_state="up to date"
+          elif [[ "$HAS_SYNC_TOKEN" == "true" ]]; then
+            # Never force-push. An upstream history rewrite requires manual review.
+            git push origin "${upstream_sha}:${vendor_ref}"
+            sync_state="fast-forwarded"
           else
-            rebuild_state="preserved (no automatic changes)"
+            sync_state="update pending: AIHOT_SYNC_TOKEN not configured"
+            echo "::warning::New AIHOT commit ${upstream_sha} is not in vendor/aihot-main. A token with repository Contents and Workflows write permission is required for automatic import of upstream workflow history."
+          fi
+
+          rebuild_ref="refs/heads/rebuild/aihot-aligned"
+          rebuild_state="preserved"
+          if [[ -z "$(git ls-remote --heads origin "$rebuild_ref")" ]]; then
+            if [[ "$HAS_SYNC_TOKEN" == "true" ]]; then
+              git push origin "${upstream_sha}:${rebuild_ref}"
+              rebuild_state="created from original AIHOT history"
+            else
+              rebuild_state="not created (requires authorized import)"
+            fi
           fi
 
           {
-            echo "## AIHOT upstream import"
+            echo "## AIHOT upstream sync"
             echo ""
-            echo "- Upstream: \`KKKKhazix/AIHOT@${upstream_sha}\`"
-            echo "- \`vendor/aihot-main\`: fast-forwarded to the public upstream commit"
-            echo "- \`rebuild/aihot-aligned\`: ${rebuild_state}"
-            echo "- Existing YiHot \`main\`: unchanged by this job"
-            echo "- Production deployment: not performed"
+            echo "- Public AIHOT main: \`$upstream_sha\`"
+            echo "- Private vendor branch before this run: \`${vendor_sha:-not yet created}\`"
+            echo "- Vendor sync: $sync_state"
+            echo "- Rebuild branch: $rebuild_state"
+            echo "- Old YiHot main / production: unchanged by this job"
           } >> "$GITHUB_STEP_SUMMARY"

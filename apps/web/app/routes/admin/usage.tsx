@@ -49,8 +49,9 @@ interface Usage {
   totals: { calls: number; tokensIn: number; tokensOut: number; amount: number | null };
   averages: { callsPerDay: number; tokensPerCall: number };
   activeDays: number;
-  recent: { days: number; calls: number; tokensIn: number; tokensOut: number; amount: number | null; perDay: number | null };
+  recent: { days: number; calls: number; tokensIn: number; tokensOut: number; amount: number | null; perDay: number | null; activeDays: number; perDayActive: number | null };
   projection: { amount: number; currency: string; basisDays: number } | null;
+  projectedActive: { amount: number; currency: string; basisDays: number } | null;
   lifetime: { calls: number; tokensIn: number; tokensOut: number; first: string | null; amount: number | null };
 }
 
@@ -66,6 +67,10 @@ const wan = (v: number) => `${num(v / 1e4, v >= 1e5 ? 0 : 2)} 万`;
 export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
   const cur = u.currency;
   const totalTokens = u.totals.tokensIn + u.totals.tokensOut;
+  // Monthly is quoted as a range: the calendar average is pulled down by quiet days and the
+  // active-day average up by spikes, so a single figure would overstate its own precision.
+  const monthly = [u.projection?.amount, u.projectedActive?.amount].filter((v): v is number => v != null);
+  const monthlyRange = monthly.length === 2 ? `${money(Math.min(...monthly), cur)}–${money(Math.max(...monthly), cur)}` : u.projection ? money(u.projection.amount, cur) : "—";
 
   return (
     <AdminPage
@@ -98,7 +103,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
           hint={
             u.recent.perDay === null
               ? "暂无数据"
-              : `日均 ${money(u.recent.perDay, cur)} · 月化约 ${u.projection ? money(u.projection.amount, cur) : "—"}`
+              : `日均 ${money(u.recent.perDay, cur)} · 月化 ${monthlyRange}`
           }
         />
       </div>
@@ -209,9 +214,12 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
                 ["累计调用", `${num(u.lifetime.calls)} 次`],
                 ["累计 token", `${num(u.lifetime.tokensIn + u.lifetime.tokensOut)}（输入 ${num(u.lifetime.tokensIn)} / 输出 ${num(u.lifetime.tokensOut)}）`],
                 ["累计估算费用", u.lifetime.amount === null ? "未定价" : `≈ ${money(u.lifetime.amount, cur)}`],
+                ["近 7 天有调用", `${u.recent.activeDays} 天（日均 ${u.recent.perDay === null ? "—" : money(u.recent.perDay!, cur)}）`],
                 [
-                  "月化口径",
-                  u.recent.perDay === null ? "—" : `近 ${u.recent.days} 天日均 ${money(u.recent.perDay, cur)} × 30`,
+                  "月化区间",
+                  monthly.length === 2
+                    ? `${monthlyRange}（下界＝日历日均×30，上界＝活跃日均×30）`
+                    : "—",
                 ],
               ] as Array<[string, string]>
             ).map(([k, v]) => (
@@ -226,7 +234,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             <Link to="/admin/models" className="text-accent">
               模型与评测
             </Link>
-            」里以实付覆盖。月化取<span className="text-ink-2">近 {u.recent.days} 天日均</span>，而不是"有调用天数的平均"——后者会被首次全量回填的尖峰和节假日空窗带偏。
+            」里以实付覆盖。月化故意给<span className="text-ink-2">区间</span>而不是单值：下界＝近 {u.recent.days} 天日历日均 × 30（被节假日空窗压低），上界＝同期活跃日均 × 30（被首次全量回填的尖峰抬高）。站点历史只有十来天，把它当量级参考即可。
           </p>
         </Card>
       </div>

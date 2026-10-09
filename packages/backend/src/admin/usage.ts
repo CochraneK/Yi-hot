@@ -151,6 +151,11 @@ export async function usageOverview(days = 30) {
   );
   const recentAmount = recentTotals.amount || null;
   const perDayRecent = recentAmount === null ? null : recentAmount / recentDays;
+  // Two lenses on purpose: the calendar average is dragged down by quiet days (holidays, weekends)
+  // and the active-day average back up by whatever spike happened, so neither is authoritative on
+  // its own — the page shows both rather than picking one.
+  const recentActive = recent.filter((x) => x.calls > 0).length;
+  const perDayActive = recentActive ? recentTotals.amount / recentActive : null;
 
   return {
     days: d,
@@ -165,10 +170,11 @@ export async function usageOverview(days = 30) {
       tokensPerCall: totals.calls ? Math.round((totals.tokensIn + totals.tokensOut) / totals.calls) : 0,
     },
     activeDays,
-    recent: { days: recentDays, ...recentTotals, amount: recentAmount, perDay: perDayRecent },
-    // Monthly projection = trailing-week daily average × 30. The first-ever backfill is excluded by
-    // construction only when it falls outside the trailing week; holiday weeks read low.
+    recent: { days: recentDays, ...recentTotals, amount: recentAmount, perDay: perDayRecent, activeDays: recentActive, perDayActive },
+    // Monthly projection = trailing-week calendar daily average × 30. Treat it as an order of
+    // magnitude, not a forecast: the site's history is short and holiday weeks read low.
     projection: perDayRecent === null ? null : { amount: perDayRecent * 30, currency, basisDays: recentDays },
+    projectedActive: perDayActive === null ? null : { amount: perDayActive * 30, currency, basisDays: recentDays },
     lifetime: {
       calls: lifetime[0]?.calls ?? 0,
       tokensIn: Number(lifetime[0]?.tokens_in ?? 0),

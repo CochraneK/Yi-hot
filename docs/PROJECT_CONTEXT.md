@@ -24,15 +24,18 @@
 ## 2. 部署流程
 
 ```sh
-# 1) 传文件（只传自己改过的；新目录要先在服务器 mkdir -p，sftp 不会自建）
-node deploy/sftp-upload.js <本地路径> <远程路径>
-node deploy/sftp-upload-many.js <manifest>          # 批量，单连接
+# 1) 传文件（只传自己改过的；新目录要先在服务器 mkdir -p，scp/sftp 都不会自建）
+scp <本地路径> <用户>@49.233.72.222:/opt/yihot/<相对路径>
 
 # 2) 重建 + 重启
+ssh <用户>@49.233.72.222
 cd /opt/yihot
 sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml build
 sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml up -d
 ```
+
+> ⚠️ **部署辅助脚本不在本仓库里。** 仓库内的 `deploy/` 只有 `Caddyfile`；开发机上另有一个同名目录（`D:\Software\DSH\deploy\`）放着 `sshexec.js`（远程执行）、`sftp-upload.js`（单文件上传）、`sftp-upload-many.js`（批量单连接上传）、`verify-*.sh`（登录后验证后台页）。**换机器接手时，这些要单独交接**；只用上面的 `scp` / `ssh` 也能完成部署，脚本只是省事。
+> 同目录还有一枚**过期**的 `cloud.env`——它是 `.env` 的旧副本，**禁止用来覆盖服务器上的 `.env`**。
 
 - `package-lock.json` 未变时构建是**热缓存**（~50 秒）；只改 web 可 `up -d --no-build web`。
 - **禁止 `docker cp` + `restart`**：`env_file` 在容器创建时固化，`restart` 不生效；而 `up -d` 重建容器会丢掉 `cp` 进去的文件（代码静默回退）。
@@ -52,12 +55,47 @@ sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml up -d
 
 ## 3. 内容口径与质量闸门
 
-- 首页 `/` = **精选**；`/all` = **全部公益动态**。两者都强制 `listedCondition(now) AND p.eligible`，按 `publications.timeline_at DESC` 排序。
+### 3.1 ⚠️ 发布时间 ≠ 收录时间（**最容易搞混、务必先读这一节**）
+
+同一个条目身上有**两个互不相同的时间**，混用会得出完全错误的结论：
+
+| 概念 | 字段 | 含义 |
+| --- | --- | --- |
+| **原文发布时间** | `published_at`（API：`publishedAt`） | 这条内容**在来源网站上是什么时候发的** |
+| **本站收录时间** | `discovered_at`（API：`discoveredAt`） | **我们第一次抓到他**的时间 |
+
+**站内是三层物化链**，不是直接读原文时间：
+
+```
+articles.published_at      ← 从列表页/详情页解析出来的发布时间
+      ↓
+articles.timeline_at       ← 用于对外展示与排序的时间（回填/修正会重算）
+      ↓
+publications.timeline_at / publications.sort_at   ← 发布时物化的值
+```
+
+**各列表到底按什么排**（这里很容易记错，写错了结论就反了）：
+
+| 位置 | 排序字段 | 代码 |
+| --- | --- | --- |
+| 首页精选时间线 | **`sort_at`**（按"组"取 `max(sort_at)` 作锚点） | `publication/timeline.ts` |
+| `/all` 全部动态 | **`timeline_at DESC`** | `publication/pool.ts` |
+| 公开 API v1 | **可切换**：`?by=published` → `coalesce(published_at, discovered_at)`；`mode=selected` → `sort_at`；否则 `timeline_at` | `publication/v1.ts` |
+
+**⚠️ 两个已知陷阱：**
+
+1. **`published_at` 缺失时会回退成收录时间，并照样标成"发布时间"**——`publication/detail.ts` 与 `v1.ts` 都是 `coalesce(p.published_at, p.discovered_at)`。也就是说：**看到"发布时间"是某天，不代表原文那天真的发了**，可能原文压根没给日期，显示的是我们抓到的时刻。
+2. **`publications.sort_at` 不能直接改**：精选条目的 `sort_at` 是**读取组的锚点**（`min`/`max` of 组内成员的 `timeline_at`）。要让某个已精选条目换时间位置，得入队 `publication.republish-source` 让它重算，直接 UPDATE 会被下一次发布覆盖。
+
+**所以"今天怎么没有新内容 / 列表怎么停在昨天"的正确诊断顺序是**：先看 `eligible`（判定口径，见 3.2），再看 `timeline_at`（排序口径）——**不要用采集时间（`discovered_at`）去解释列表顺序**，它对列表完全不起作用。
+
+### 3.2 列表与判定
+
+- 首页 `/` = **精选**；`/all` = **全部公益动态**。两者都强制 `listedCondition(now) AND p.eligible`。
   - `listedCondition(now)` = `visibility='public' AND (NOT selected OR visible_after <= now)`
   - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，缺一即 false。
-  - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，与采集时间无关。这是理解"今天怎么没有新内容"的第一顺位原因。
+  - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
-- 时间链三层：`articles.published_at` → `articles.timeline_at` → `publications.timeline_at / sort_at`。列表排序用 `publications.sort_at`（发布时物化的值）。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。
 - 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），当前 **20 条（19 启用 + 1 停用）**。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 断言 `select count(*) from sources` = 20，加源必须同步。
 - 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。当前启用源统一 30 分钟。
@@ -92,7 +130,7 @@ sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml up -d
 cd apps/web && node ../../node_modules/@react-router/dev/bin.cjs typegen
 ```
 
-- 远程执行统一走 `deploy/sshexec.js`（命令里**不能含单引号**、不能含 `||`；复杂 SQL 写成 `.sql` 传上去再 `psql -f -`）。
+- 远程执行在开发机上用 `D:\Software\DSH\deploy\sshexec.js` 包一层（**不在本仓库**）；没有它就直接 `ssh <用户>@49.233.72.222 '<命令>'`。注意该包装脚本的约束：命令里**不能含单引号**（要写 SQL/脚本就传 `.sql` 上去再 `psql -f -`）、不能含 `||`。
 - 测站点时 UA 用 `YiHotBot`。
 - 服务健康三板斧：① `settings` 表里 `heartbeat.worker` / `heartbeat.api:3001` 是否新鲜；② `pgboss.job_common` 按 name/state 计数（全 completed = 健康）；③ 到期未抓的源数（`enabled AND next_fetch_at <= now()`）应为 0。
 

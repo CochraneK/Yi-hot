@@ -9,6 +9,7 @@ import { Kicker } from "../components/ui/Kicker";
 import { buttonClass } from "../components/ui/Controls";
 import { IconArrowRight } from "../components/icons";
 import { SignalRiver, type RiverSource } from "../features/about/SignalRiver";
+import { PipelineFlow } from "../features/about/PipelineFlow";
 
 /** Shared caches may keep this page for five minutes. */
 export function headers() {
@@ -268,6 +269,8 @@ export default function AboutPage() {
           ))}
         </ol>
       </section>
+
+      <PipelineFlow />
 
       {ABOUT.maker && <Maker maker={ABOUT.maker} contact={contact} />}
 

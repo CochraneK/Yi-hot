@@ -139,6 +139,19 @@ function pageCache(req: import("node:http").IncomingMessage, res: import("node:h
 /** The app lives under this prefix so the host can carry other projects. */
 const PREFIX = "/yihot";
 
+/** FutureMe is a separate application and HTTPS origin, never an iframe or YiHot API. */
+const FUTUREME_PUBLIC_URL = (() => {
+  const value = (process.env.FUTUREME_PUBLIC_URL ?? "").trim();
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password || url.hash) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+})();
+
 async function handle(req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) {
   const raw = req.url ?? "/";
   const qi = raw.indexOf("?");
@@ -160,6 +173,26 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   if (pathname === PREFIX) {
     res.writeHead(301, { Location: PREFIX + "/", "Cache-Control": "public, max-age=86400" });
     return res.end();
+  }
+
+  // Root project portal links here; no rewrite into YiHot / SSR.
+  // Do not enable a public HTTP proxy for sensitive FutureMe sessions:
+  // microphone/camera need a trusted HTTPS top-level context.
+  if (pathname === "/futureme" || pathname === "/futureme/") {
+    if (FUTUREME_PUBLIC_URL) {
+      res.writeHead(302, {
+        Location: FUTUREME_PUBLIC_URL,
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
+      });
+      return res.end();
+    }
+    res.writeHead(503, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+    });
+    return res.end(`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FutureMe · 接入中</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f6f2;color:#201f1b;font-family:system-ui,"PingFang SC",sans-serif}main{max-width:420px;padding:32px}h1{font-size:24px}p{color:#6d6a60;line-height:1.8}a{color:#2f6f4f;text-decoration:none}</style><main><h1>FutureMe 正在接入</h1><p>未来自我体验尚未正式开放。项目入口已预留，完成独立 HTTPS 部署后即可进入。</p><a href="/">← 返回项目入口</a></main></html>`);
   }
 
   const decision = resolveRedirect(internal, search);

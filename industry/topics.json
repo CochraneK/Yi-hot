@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-09-30",
+  "exportedAt": "2026-10-09",
   "groups": [
     {
       "key": "org",
@@ -147,6 +147,22 @@
       ]
     },
     {
+      "slug": "ministry-of-ecology-environment",
+      "name": "生态环境部",
+      "group": "company",
+      "entityId": "ministry-of-ecology-environment",
+      "tags": [
+        "生态环境部",
+        "entity:ministry-of-ecology-environment"
+      ],
+      "definition": "生态环境部在生态环保督察、污染防治、气候治理与生态保护等领域的政策发布、通知公告与业务动态的持续追踪。",
+      "related": [
+        "environment",
+        "policy",
+        "organization"
+      ]
+    },
+    {
       "slug": "save-the-children",
       "name": "救助儿童会",
       "group": "company",
@@ -160,6 +176,54 @@
         "child-care",
         "international",
         "emergency-relief"
+      ]
+    },
+    {
+      "slug": "south-metro-public-welfare",
+      "name": "南都公益基金会",
+      "group": "company",
+      "entityId": "south-metro-public-welfare",
+      "tags": [
+        "南都公益基金会",
+        "entity:south-metro-public-welfare"
+      ],
+      "definition": "南都公益基金会的全部动态：好公益平台、理事会治理、资助型基金会实践与行业倡导的持续追踪。",
+      "related": [
+        "grant-funding",
+        "transparency",
+        "trends"
+      ]
+    },
+    {
+      "slug": "byte-charity",
+      "name": "抖音公益",
+      "group": "company",
+      "entityId": "byte-charity",
+      "tags": [
+        "抖音公益",
+        "entity:byte-charity"
+      ],
+      "definition": "抖音（字节跳动）公益的全部动态：公益项目合作、内容生态与平台公益计划的持续追踪。",
+      "related": [
+        "tech4good",
+        "corporate-charity",
+        "project"
+      ]
+    },
+    {
+      "slug": "alibaba-charity",
+      "name": "阿里公益",
+      "group": "company",
+      "entityId": "alibaba-charity",
+      "tags": [
+        "阿里公益",
+        "entity:alibaba-charity"
+      ],
+      "definition": "阿里巴巴公益的全部动态：公益项目与平台计划、企业社会责任与员工公益的持续追踪。",
+      "related": [
+        "corporate-charity",
+        "tech4good",
+        "philanthropy"
       ]
     },
     {

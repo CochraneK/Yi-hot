@@ -12,7 +12,7 @@ test("host/URL normalization is conservative", () => {
 
 test("the 2026-10-08 three-repo inventory has a reproducible baseline", () => {
   const out = produce();
-  assert.equal(out.stats.seed_rows, 16);
+  assert.equal(out.stats.seed_rows, 20);
   assert.equal(out.stats.newsmail_rows, 99);
   assert.equal(out.stats.newsmail_url_rows, 82);
   assert.equal(out.stats.discovery_only_rows, 17);

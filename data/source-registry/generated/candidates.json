@@ -8,7 +8,7 @@
     "charity": "data/source-registry/imports/charity-2026-10-08.json"
   },
   "stats": {
-    "seed_rows": 16,
+    "seed_rows": 20,
     "newsmail_rows": 99,
     "newsmail_url_rows": 82,
     "newsmail_unique_hosts": 67,
@@ -136,6 +136,34 @@
       "kind": "web_list",
       "endpoint": "http://cfpa.org.cn/news/news.aspx",
       "host": "cfpa.org.cn"
+    },
+    {
+      "id": "rss-un-news",
+      "name": "联合国新闻（中文）",
+      "kind": "rss",
+      "endpoint": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml",
+      "host": "news.un.org"
+    },
+    {
+      "id": "web-mee-hjyw",
+      "name": "生态环境部·环保要闻",
+      "kind": "web_list",
+      "endpoint": "http://www.mee.gov.cn/ywdt/hjywnews/",
+      "host": "mee.gov.cn"
+    },
+    {
+      "id": "web-mee-xwfb",
+      "name": "生态环境部·新闻发布",
+      "kind": "web_list",
+      "endpoint": "http://www.mee.gov.cn/ywdt/xwfb/",
+      "host": "mee.gov.cn"
+    },
+    {
+      "id": "web-mee-zcwj",
+      "name": "生态环境部·政策文件",
+      "kind": "web_list",
+      "endpoint": "http://www.mee.gov.cn/zcwj/",
+      "host": "mee.gov.cn"
     }
   ],
   "candidates": [

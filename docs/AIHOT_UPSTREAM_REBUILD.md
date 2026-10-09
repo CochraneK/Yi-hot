@@ -65,7 +65,11 @@ git merge --no-ff upstream/main
 
 The Actions job `AIHOT upstream sync` also periodically fast-forwards `vendor/aihot-main`, but **never automatically merges it into the rebuild branch**. This makes upstream changes visible without risking production drift.
 
-If the private repository's Actions policy denies `GITHUB_TOKEN` writes, the import fails safely. An administrator must permit **Actions → General → Workflow permissions → Read and write permissions** for this repository, or perform an equivalent authenticated local `git fetch` / `git push`. Never commit a PAT, `.env`, or production database.
+**Automation permission:** GitHub's ordinary `GITHUB_TOKEN` cannot push public AIHOT commits that add or modify `.github/workflows/` files: GitHub requires a token with the separate **Workflows: write** permission. Merely enabling Actions "Read and write permissions" does not grant that capability. The bootstrap branches were created with the authorized GitHub connector.
+
+For unattended future fast-forward updates, add a repository-scoped token as the Actions secret **`AIHOT_SYNC_TOKEN`** under **Settings → Secrets and variables → Actions**. Use a short-lived fine-grained PAT restricted to `CochraneK/Yi-hot` with **Contents: Read and write** and **Workflows: Read and write** (or an appropriately scoped GitHub App token). Do **not** paste the token into chats, documentation, workflow files, or Git. Without the secret, the daily workflow still fetches/checks the public upstream and emits a visible warning when updates are pending; it no longer claims to have imported them. The vendor branch can also be updated by an authorized operator via the GitHub connector.
+
+Never commit `.env`, credentials, or production databases.
 
 ## Provenance
 

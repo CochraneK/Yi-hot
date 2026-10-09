@@ -35,7 +35,11 @@ export function urlKey(value) {
     return `${u.protocol}//${u.host}${pathname}${u.search}`;
   } catch { return null; }
 }
-const all = (value) => [...new Set(value)].sort((a, b) => a.localeCompare(b));
+// Pin the collation locale: the bare `localeCompare` follows the host default locale, so a Windows
+// zh-CN machine (pinyin order) and a Linux CI runner (ICU root order) produced different snapshots
+// and the committed output could not be reproduced on every machine. An explicit locale keeps
+// `--write` / `--check` byte-identical everywhere.
+const all = (value) => [...new Set(value)].sort((a, b) => a.localeCompare(b, "en"));
 const safe = (value) => String(value ?? "").replace(/[|\r\n]+/g, " ").trim();
 const csv = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
 

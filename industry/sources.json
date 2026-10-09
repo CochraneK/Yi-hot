@@ -557,7 +557,7 @@
       "kind": "web_list",
       "config": {
         "url": "http://www.mee.gov.cn/zcwj/",
-        "itemSelector": "ul li",
+        "itemSelector": "ul li:has(a[href$='.shtml']), ul li:has(a[href$='.html'])",
         "linkSelector": "a",
         "titleSelector": "a",
         "allowUrlPrefixes": [

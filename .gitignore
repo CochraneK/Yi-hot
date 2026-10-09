@@ -18,3 +18,10 @@ apps/web/.react-router/
 # Font package unpacked to regenerate the report nameplates (docs/customize.md)
 package/
 fontsource-noto-sans-sc-*.tgz
+
+# Credentials. Whitelist, not blacklist: everything under secrets/ is ignored by
+# default (so a stray plaintext file is never committed by accident), and only the
+# encrypted archive plus its README are allowed through.
+secrets/*
+!secrets/credentials.env.enc
+!secrets/README.md

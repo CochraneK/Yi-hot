@@ -1,0 +1,68 @@
+[
+  {
+    "id": "reliefweb",
+    "name": "ReliefWeb public updates",
+    "kind": "rss",
+    "url": "https://reliefweb.int/updates/rss.xml",
+    "tier": "T1_5",
+    "participationMode": "editorial",
+    "collectionStatus": "allowed",
+    "firstParty": false,
+    "category": "humanitarian"
+  },
+  {
+    "id": "un-news",
+    "name": "联合国新闻（中文）",
+    "kind": "rss",
+    "url": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml",
+    "tier": "T1",
+    "participationMode": "editorial",
+    "collectionStatus": "allowed",
+    "firstParty": true,
+    "category": "international_official"
+  },
+  {
+    "id": "un-official",
+    "name": "United Nations official updates",
+    "kind": "rss",
+    "url": "https://www.un.org/en/rss.xml",
+    "tier": "T1",
+    "participationMode": "editorial",
+    "collectionStatus": "allowed",
+    "firstParty": true,
+    "category": "international_official"
+  },
+  {
+    "id": "new-humanitarian",
+    "name": "The New Humanitarian",
+    "kind": "rss",
+    "url": "https://www.thenewhumanitarian.org/rss/all.xml",
+    "tier": "T2",
+    "participationMode": "editorial",
+    "collectionStatus": "conditional",
+    "firstParty": false,
+    "category": "humanitarian_media"
+  },
+  {
+    "id": "ssir",
+    "name": "Stanford Social Innovation Review",
+    "kind": "rss",
+    "url": "https://ssir.org/site/rss_2.0",
+    "tier": "T2",
+    "participationMode": "editorial",
+    "collectionStatus": "conditional",
+    "firstParty": false,
+    "category": "social_innovation"
+  },
+  {
+    "id": "oxfam-international",
+    "name": "Oxfam International",
+    "kind": "rss",
+    "url": "https://www.oxfam.org/en/rss.xml",
+    "tier": "T1",
+    "participationMode": "editorial",
+    "collectionStatus": "conditional",
+    "firstParty": true,
+    "category": "international_ngo"
+  }
+]

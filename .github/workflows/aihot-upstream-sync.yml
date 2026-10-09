@@ -1,0 +1,64 @@
+# Tracks public AIHOT main inside this private repository without touching YiHot main.
+# This workflow NEVER runs upstream code, merges into main, or deploys production.
+# The vendor branch fast-forwards only; the rebuild branch is created once and
+# remains pinned as a safe starting point for explicit YiHot-specific migration.
+name: AIHOT upstream sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/aihot-upstream-sync.yml
+  workflow_dispatch:
+  schedule:
+    - cron: "23 20 * * *" # 04:23 Beijing time; GitHub schedules use UTC
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aihot-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  import-history:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out YiHot (main stays untouched)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Fetch original public AIHOT history and fast-forward vendor ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          git remote add aihot-public https://github.com/KKKKhazix/AIHOT.git
+          git fetch --no-tags aihot-public +refs/heads/main:refs/remotes/aihot-public/main
+
+          upstream_sha="$(git rev-parse refs/remotes/aihot-public/main)"
+          # No force push: fail if the public upstream unexpectedly rewrites history.
+          git push origin "${upstream_sha}:refs/heads/vendor/aihot-main"
+
+          # One-time clean rebuild starting point. Never reset or update this branch:
+          # later YiHot-specific commits on it must not be overwritten by the sync.
+          rebuild_ref="refs/heads/rebuild/aihot-aligned"
+          if [[ -z "$(git ls-remote --heads origin "$rebuild_ref")" ]]; then
+            git push origin "${upstream_sha}:${rebuild_ref}"
+            rebuild_state="created from official upstream"
+          else
+            rebuild_state="preserved (no automatic changes)"
+          fi
+
+          {
+            echo "## AIHOT upstream import"
+            echo ""
+            echo "- Upstream: \`KKKKhazix/AIHOT@${upstream_sha}\`"
+            echo "- \`vendor/aihot-main\`: fast-forwarded to the public upstream commit"
+            echo "- \`rebuild/aihot-aligned\`: ${rebuild_state}"
+            echo "- Existing YiHot \`main\`: unchanged by this job"
+            echo "- Production deployment: not performed"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,14 @@
 # FutureMe 接入项目入口（不买域名 · 共用一个 IP）
 
-更新时间：2026-10-09。**已写入 GitHub，尚未修改腾讯云线上容器。**
+更新时间：2026-10-09 15:20。**已上线**：GitHub 已同步，腾讯云线上容器已按本流程部署并验收通过（`/` 200、`/yihot/` 200、`/futureme/` 200、`/futureme/api/status` 200、`/futureme/admin/` 401）。
+
+线上实际状态（2026-10-09 15:20 验收）：
+- `futureme_proxy` 网络已创建；`futureyou-app` 与 `aihot-web-1` 已接入；FutureMe 仍只绑 `127.0.0.1:8766`，未开公网端口。
+- `/opt/yihot/.env` 已设 `FUTUREME_UPSTREAM_URL=http://futureyou-app:8766`。
+- 已重建 `aihot-web-1`（新镜像含带代理逻辑的 `server.ts` + 双卡片 `portal.html`）与 `futureyou-app`（新镜像含更名后的 `index.html`）。db / api / worker 未受影响。
+- 备份：`/opt/yihot/.backup-20261009-150827/`、`/home/ubuntu/futureyou/.backup-20261009-150834/`。
+- 回滚：把备份文件复制回原位，再按下方部署流程第 1 与第 4 步重建对应容器即可。
+- ⚠️ 未来再改 FutureMe 的 `index.html` 必须 `build app`（它是 Dockerfile `COPY` 进镜像的，不是 volume 挂载），否则容器内仍是旧文件。
 
 ## 用户指定的最终入口
 

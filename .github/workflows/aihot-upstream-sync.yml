@@ -56,9 +56,9 @@ jobs:
           {
             echo "## AIHOT upstream import"
             echo ""
-            echo "- Upstream: \`KKKKhazix/AIHOT@\${upstream_sha}\`"
+            echo "- Upstream: \`KKKKhazix/AIHOT@${upstream_sha}\`"
             echo "- \`vendor/aihot-main\`: fast-forwarded to the public upstream commit"
-            echo "- \`rebuild/aihot-aligned\`: \${rebuild_state}"
+            echo "- \`rebuild/aihot-aligned\`: ${rebuild_state}"
             echo "- Existing YiHot \`main\`: unchanged by this job"
             echo "- Production deployment: not performed"
           } >> "$GITHUB_STEP_SUMMARY"

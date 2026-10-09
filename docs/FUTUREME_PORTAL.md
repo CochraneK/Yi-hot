@@ -23,8 +23,10 @@ YiHot 仍在 `/opt/yihot` 运行，80 端口对外，`curl http://127.0.0.1/` �
 
 - `apps/web/portal.html`：两个项目入口卡片。
 - `apps/web/server.ts`：`/futureme/*` 在 YiHot SSR 和 `/api/*` 匹配前，被代理到 `http://futureyou-app:8766/*`；自动剥离 `/futureme` 前缀；未配置上游则显示「接入中」。`/yihot/*` 维持原逻辑。
-- `docker-compose.yml`：YiHot 的 `web` 接入专用 `futureme_proxy` Docker bridge；增加 `FUTUREME_UPSTREAM_URL` 环境变量，初始可为空。
-- `CochraneK/FutureYou` 仓库的 `compose.futureyou.yml`：FutureMe `app` 接入相同的 `futureme_proxy` bridge，仍只监听宿主机 `127.0.0.1:8766`。
+- `docker-compose.yml`：保持 YiHot **单独运行无额外网络依赖**，仅保留默认空的 `FUTUREME_UPSTREAM_URL` 环境变量。
+- `compose.futureme-proxy.yml`：**仅在集成 FutureMe 时选用**，使 YiHot `web` 接入专用 `futureme_proxy` 网络。
+- `CochraneK/FutureYou` 仓库的 `compose.futureyou.yml`：FutureMe 单独运行无需任何 YiHot 网络，仍只绑定宿主机 `127.0.0.1:8766`。
+- `CochraneK/FutureYou/compose.futureme-proxy.yml`：只有同 IP 集成时才额外使 `app` 接入 `futureme_proxy`。
 - `FutureYou/index.html`：检测 `/futureme/` 前缀，所有未来自我的 `/api/*` 请求变为 `/futureme/api/*`，不会误访问 YiHot 的 `/api/*`。
 
 只有 YiHot Web 与 FutureMe App 参与这个路由网桥，FutureMe 不接入 YiHot DB 所在 `aihot_default` 网络。数据库、管理员认证、API Key 以及挂载数据保持分离。
@@ -33,8 +35,8 @@ YiHot 仍在 `/opt/yihot` 运行，80 端口对外，`curl http://127.0.0.1/` �
 
 1. 修复 FutureMe 的管理员密码，`sudo docker compose -f compose.futureyou.yml up -d --no-deps --force-recreate app`；先使本地检查变为 `200`（首页）/`401`（管理员）。
 2. **先验收最新源码。** 腾讯云服务器直连 GitHub TLS 超时，已上传的 FutureYou ZIP 和线上的 YiHot 源码**可能不含这些新提交**；不能只执行 `up` 就认为拿到更新。优先将本次更新的 `compose.futureyou.yml`、`index.html` 和 YiHot 的 `server.ts`、`portal.html` 从有 GitHub 访问能力的电脑下载后，通过 OrcaTerm 上传。只替换已经确认的对应文件，并留备份。
-3. `docker network inspect futureme_proxy >/dev/null 2>&1 || docker network create futureme_proxy`（需要适当的 sudo）；运行更新过的 Compose 或提供覆盖文件，分别让两个容器加入网桥。**不要让 FutureMe 加入默认的 YiHot 数据库网络**。
-4. 若本机 `/opt/yihot` 是当前镜像的源码，并可离线使用现有镜像，采用 **Compose 覆盖文件 + 只重建 web 容器**，无需重新下载或重新构建所有 YiHot 服务。确认容器启动命令运行 Node TS 能读取替换文件；不要仅覆盖宿主机文件却忘记镜像内文件仍旧。
+3. **仅在正式集成时**创建 `futureme_proxy` 网络；使用双方各自的可选 `compose.futureme-proxy.yml` 配合原本主 Compose 文件启用桥接，不要改掉两个项目原来的默认网络。**不要让 FutureMe 加入默认的 YiHot 数据库网络**。
+4. 若本机 `/opt/yihot` 是当前镜像的源码，并可离线使用现有镜像，采用**可选 Compose 覆盖文件**并仅重建 Web 容器。不要重建数据库或 Worker；确认更新了镜像内部的 `server.ts` 和 `portal.html`（宿主机同名文件未必已被挂载）。先留备份与回滚方案。
 5. 设置 `FUTUREME_UPSTREAM_URL=http://futureyou-app:8766`，由 YiHot `web` 容器解析同网桥服务名。**不能写成 `127.0.0.1:8766`**：那会指向 YiHot 容器自己。
 6. 验证：
    - `curl -si http://127.0.0.1/ | head` → 200 项目入口；
@@ -48,6 +50,13 @@ YiHot 仍在 `/opt/yihot` 运行，80 端口对外，`curl http://127.0.0.1/` �
 ## 离线部署注意
 
 从这台服务器上重建完整 YiHot 镜像可能需要 npm/apt 网络，且只有 2GB RAM，**不建议**现在执行 `docker compose up --build`。更稳妥的做法是只对现有 web 容器挂载新版 `server.ts`、`portal.html`，使用先行验证的 Compose override，然后 `--no-build --no-deps --force-recreate web`，保留回滚文件。此策略需要验证 `/opt/yihot/apps/web/` 里的对应源码路径存在。
+
+## 与另一台电脑并行开发的约定
+
+- YiHot 原有 `docker-compose.yml` **不依赖** FutureMe 的 Docker 网络，另一台电脑正常运行/部署 YiHot 无需创建任何网络。
+- 本次 FutureMe 接入相关文件限定为 `apps/web/portal.html`、`apps/web/server.ts`、`docker-compose.yml` 中一项可选环境变量、`compose.futureme-proxy.yml` 和本说明。
+- 另一台电脑开发时先 `git status`、`git fetch origin`、`git log --oneline --left-right HEAD...origin/main`，若工作目录或分支有未同步改动，先在本机分支保存，不运行 `git reset --hard` 或 `git push --force`。
+- 线上 YiHot 与 FutureMe 的部署工作不要同时推进。更新入口前先验收 FutureMe、备份当前 Web 配置，窗口期间只部署 Web，保留数据库与 Worker。
 
 ## 安全边界与诚实标注
 

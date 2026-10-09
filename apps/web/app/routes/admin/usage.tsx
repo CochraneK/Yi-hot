@@ -273,9 +273,10 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
               rowKey={(p) => `${p.service}|${p.model}`}
               columns={[
                 { key: "s", label: "服务", render: (p) => <span className="font-mono text-[12px]">{p.service}</span> },
-                { key: "m", label: "模型", render: (p) => <span className="font-mono text-[12px]">{p.model || "（兜底）"}</span> },
-                { key: "i", label: "输入 / 百万", align: "right", render: (p) => money(p.input_per_mtok ?? 0, p.currency) },
-                { key: "o", label: "输出 / 百万", align: "right", render: (p) => money(p.output_per_mtok ?? 0, p.currency) },
+                { key: "m", label: "模型", render: (p) => <span className="font-mono text-[12px]" title={p.note ?? undefined}>{p.model || "（兜底）"}</span> },
+                { key: "i", label: "输入 / 百万", align: "right", render: (p) => (p.input_per_mtok === null ? <span className="text-ink-4">—</span> : money(p.input_per_mtok, p.currency)) },
+                { key: "o", label: "输出 / 百万", align: "right", render: (p) => (p.output_per_mtok === null ? <span className="text-ink-4">—</span> : money(p.output_per_mtok, p.currency)) },
+                { key: "r", label: "按次", align: "right", render: (p) => (p.per_request === null ? <span className="text-ink-4">—</span> : money(p.per_request, p.currency)) },
                 { key: "v", label: "核对于", align: "right", render: (p) => <span className="whitespace-nowrap text-ink-4">{p.verified_on ?? "—"}</span> },
                 {
                   key: "a",
@@ -419,10 +420,10 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             <Field label={`输出单价（${form.currency} / 百万 token）`}>
               <Input value={form.outputPerMtok} onChange={(e) => setForm({ ...form, outputPerMtok: e.target.value })} inputMode="decimal" placeholder="1.20" />
             </Field>
-            <Field label={`缓存命中单价（${form.currency} / 百万 token，可空）`}>
+            <Field label={`缓存命中单价（${form.currency} / 百万 token，可空）`} hint="暂不参与估算——调用记录里没有区分缓存命中的 token，先留档备查">
               <Input value={form.cachedPerMtok} onChange={(e) => setForm({ ...form, cachedPerMtok: e.target.value })} inputMode="decimal" />
             </Field>
-            <Field label={`按次单价（${form.currency} / 次，可空）`}>
+            <Field label={`按次单价（${form.currency} / 次，可空）`} hint="按调用次数计费的服务填这里；与 token 单价可同时生效（相加）">
               <Input value={form.perRequest} onChange={(e) => setForm({ ...form, perRequest: e.target.value })} inputMode="decimal" />
             </Field>
             <div className="sm:col-span-2">

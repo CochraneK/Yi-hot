@@ -49,10 +49,19 @@ const priceFor = (model: string | null, prices: PriceRow[]): PriceRow | null => 
   return prices.find((p) => p.service === service && p.model === model) ?? prices.find((p) => p.service === service && p.model === "") ?? null;
 };
 
-const costOf = (tokensIn: number, tokensOut: number, p: PriceRow | null): { amount: number; currency: string } | null =>
-  !p || (!p.input_per_mtok && !p.output_per_mtok)
-    ? null
-    : { amount: (tokensIn / 1e6) * Number(p.input_per_mtok ?? 0) + (tokensOut / 1e6) * Number(p.output_per_mtok ?? 0), currency: p.currency };
+/**
+ * Estimated money for one (tokens, calls) group. A price row may carry per-token rates, a
+ * per-request rate, or both — a service that bills per call has no token rates at all, so the
+ * per-request side must be applied or such a row would silently contribute nothing.
+ */
+const costOf = (tokensIn: number, tokensOut: number, calls: number, p: PriceRow | null): { amount: number; currency: string } | null => {
+  if (!p) return null;
+  const perCall = p.per_request === null ? 0 : Number(p.per_request);
+  const hasTokenRates = p.input_per_mtok !== null || p.output_per_mtok !== null;
+  if (!hasTokenRates && perCall === 0) return null;
+  const amount = (tokensIn / 1e6) * Number(p.input_per_mtok ?? 0) + (tokensOut / 1e6) * Number(p.output_per_mtok ?? 0) + perCall * calls;
+  return { amount, currency: p.currency };
+};
 
 /** The last `days` Beijing calendar days as `YYYY-MM-DD` keys, oldest first. */
 function dayKeys(days: number): string[] {
@@ -107,7 +116,7 @@ export async function usageOverview(days = 30) {
     if (!b) continue;
     const tokensIn = Number(row.tokens_in ?? 0);
     const tokensOut = Number(row.tokens_out ?? 0);
-    const c = costOf(tokensIn, tokensOut, priceFor(row.model, prices));
+    const c = costOf(tokensIn, tokensOut, row.calls, priceFor(row.model, prices));
     b.calls += row.calls;
     b.tokensIn += tokensIn;
     b.tokensOut += tokensOut;
@@ -125,7 +134,7 @@ export async function usageOverview(days = 30) {
     const p = purposes.get(key) ?? { purpose: row.purpose, model: row.model, calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, currency: "USD", priced: false };
     const tokensIn = Number(row.tokens_in ?? 0);
     const tokensOut = Number(row.tokens_out ?? 0);
-    const c = costOf(tokensIn, tokensOut, priceFor(row.model, prices));
+    const c = costOf(tokensIn, tokensOut, row.calls, priceFor(row.model, prices));
     p.calls += row.calls;
     p.tokensIn += tokensIn;
     p.tokensOut += tokensOut;
@@ -158,7 +167,7 @@ export async function usageOverview(days = 30) {
   let lifeAmount = 0;
   let lifePriced = false;
   for (const r of lifetime) {
-    const c = costOf(Number(r.tokens_in ?? 0), Number(r.tokens_out ?? 0), priceFor(r.model, prices));
+    const c = costOf(Number(r.tokens_in ?? 0), Number(r.tokens_out ?? 0), r.calls, priceFor(r.model, prices));
     if (c) {
       lifeAmount += c.amount;
       lifePriced = true;

@@ -270,6 +270,16 @@ export default function AboutPage() {
         </ol>
       </section>
 
+      <nav aria-label="页面内导航" className="mt-10 flex flex-wrap gap-2 xl:mt-14">
+        <a
+          href="#pipeline"
+          className="inline-flex items-center gap-2 rounded-full border border-line-strong px-4 py-2 text-[13px] font-semibold text-ink-3 transition-colors hover:border-accent hover:text-accent"
+        >
+          <IconArrowRight size={14} className="rotate-90" />
+          看内容流转的七道闸门
+        </a>
+      </nav>
+
       <PipelineFlow />
 
       {ABOUT.maker && <Maker maker={ABOUT.maker} contact={contact} />}

@@ -1,0 +1,63 @@
+{
+  "observed_at": "2026-10-08T16:24:21.689Z",
+  "method": "bounded GitHub-hosted runner HTTP GET; max 192 KiB per source; no paid API",
+  "workflow": "https://github.com/CochraneK/yihot/actions/runs/37808495020",
+  "interpretation": "Network results from GitHub runner; no Tencent connectivity check, no rights verification; none approved",
+  "approved": false,
+  "targets": [
+    {
+      "name": "中国发展简报·旧 RSS 候选",
+      "requested": "https://www.chinadevelopmentbrief.org.cn/feed",
+      "status": 404,
+      "response_url": "https://www.chinadevelopmentbrief.org.cn/feed",
+      "content_type": "text/html;charset=UTF-8",
+      "classification": "HTTP_ERROR",
+      "sample_entries": 0
+    },
+    {
+      "name": "南都公益基金会·旧 RSS 候选",
+      "requested": "https://www.naradafoundation.org/feed",
+      "status": 200,
+      "response_url": "https://www.naradafoundation.org/index/index",
+      "content_type": "text/html; charset=utf-8",
+      "classification": "HTML_NOT_FEED",
+      "sample_entries": 0
+    },
+    {
+      "name": "公益时报·旧 RSS 候选",
+      "requested": "http://www.gongyishibao.com/rss.xml",
+      "status": 404,
+      "response_url": "http://www.gongyishibao.com/rss.xml",
+      "content_type": "text/html",
+      "classification": "HTTP_ERROR",
+      "sample_entries": 0
+    },
+    {
+      "name": "Oxfam·YiHot RSS seed",
+      "requested": "https://www.oxfam.org/en/rss.xml",
+      "status": 200,
+      "response_url": "https://www.oxfam.org/en/rss.xml",
+      "content_type": "application/rss+xml; charset=utf-8",
+      "classification": "FEED_WITH_ENTRIES",
+      "sample_entries": 10
+    },
+    {
+      "name": "UNICEF 中国·官方新闻栏目",
+      "requested": "https://www.unicef.cn/press-centre",
+      "status": 403,
+      "response_url": "https://www.unicef.cn/press-centre",
+      "content_type": "text/html; charset=UTF-8",
+      "classification": "HTTP_ERROR",
+      "sample_entries": 0
+    },
+    {
+      "name": "中国慈善联合会·官方动态",
+      "requested": "https://www.charityalliance.org.cn/dl/771e1p1pcD.html",
+      "status": 200,
+      "response_url": "https://www.charityalliance.org.cn/dl/771e1p1pcD.html",
+      "content_type": "text/html; charset=utf-8",
+      "classification": "HTML_NOT_FEED",
+      "sample_entries": 0
+    }
+  ]
+}

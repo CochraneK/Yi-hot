@@ -140,9 +140,38 @@ cd apps/web && node ../../node_modules/@react-router/dev/bin.cjs typegen
 
 | 需要什么 | 在哪 |
 | --- | --- |
-| 服务器 SSH 密码 | 开发机的部署脚本调用处 / 密码管理器 |
+| 服务器 SSH 密码 | 开发机 `.workbuddy/memory/OPS.md`（明文记录，**该目录在 `.gitignore` 里**）或密码管理器。⚠️ `deploy/sshexec.js` **本身不存密码**，它只从 `SSH_PASS` 环境变量读 |
 | GitHub 推送 token | 开发机上其它仓库的 `.git/config`（remote URL 内嵌） |
 | 后台管理员密码 | 服务器 `/opt/yihot/.env` 的 `ADMIN_PASSWORD` |
 | 模型 API Key | 服务器 `/opt/yihot/.env`（`LLM_API_KEY` 等） |
 
 换机器接手时，把这些**单独**交接，不要写进仓库。`deploy/cloud.env` 是一份**过期的 `.env` 副本，禁止用来覆盖服务器 `.env`**。
+
+## 8. 新设备上手（clone 之后做什么）
+
+代码、配置与文档都在仓库里，`git clone` 之后就能接手本项目；但**下面 5 类东西刻意不入库**，必须提前单独带到新设备：
+
+| 类别 | 内容 | 在哪 |
+| --- | --- | --- |
+| 环境变量 `.env` | `SITE_URL` / `ADMIN_PASSWORD` / `LLM_API_KEY` / 飞书凭据 / `FUTUREME_UPSTREAM_URL` | 服务器 `/opt/yihot/.env`（新机可先 `node scripts/init-env.ts` 生成骨架再逐项补） |
+| GitHub 写入凭据 | `gho_…` token | 开发机任一仓库的 `.git/config`（remote URL 内嵌） |
+| 服务器 SSH 密码 | — | 开发机 `.workbuddy/memory/OPS.md`（明文，未进仓库） |
+| 开发机脚本 | `sshexec.js` / `sftp-upload*.js` / `_sync_yihot.py` / `_pull_yihot.py` / `_delete_yihot.py` / `_verify_yihot_threeway.py` / `deploy/_ci_status.py` | `D:\Software\DSH\`（**刻意不入库**） |
+| 项目记忆 | 踩坑、口径、SOP（本文件是脱敏版） | 开发机 `.workbuddy/memory/`（`.gitignore`） |
+
+上手顺序：
+
+1. `git clone https://github.com/CochraneK/Yi-hot`（private 仓，需要上面那枚 token），`npm ci`（Node 24）。
+2. 备好 `.env`（见上表）。
+3. 本机自检 —— **不需要数据库也能跑的部分**：
+   - `tsc -p apps/web --noEmit`、`-p packages/backend --noEmit`、`-p apps/api --noEmit`
+   - `node --test tests/source-registry-audit.test.mjs`（离线，应 **6/6** 通过）
+   - ⚠️ 其余 `tests/*.test.ts` 需要 `DATABASE_URL` 指向 `*_test` / `*_ci` 库（`tests/setup.ts` 硬要求）——本机没有 Postgres 时跑不了，**这是环境限制，不是回归**。
+4. 改完要上线 → 按第 2 节的 `scp` + `ssh` + `docker compose build/up -d` 流程（或用开发机脚本，若已带过来）。
+5. 同步回 GitHub → **不要用 `git push`**（见下）。
+
+> ⚠️ **新设备上两个反直觉点**
+> 1. **`git push` / `git fetch` 在本机网络环境下会失败**（出口代理只放行 `api.github.com`，`github.com` 的 git smart-HTTP 被拦，报 502）。推送必须走 REST / Git Data API（`_sync_yihot.py` 那一套）。
+> 2. **本地 git 仓库与远端历史「不同源」**：开发机上这份仓库甚至**没有配 remote**。所以**判断"哪边更新"只能用 git blob sha 逐文件比对**（`sha1("blob <len>\0" + 内容)`），`git log` 对不上是正常的，别拿它当依据。
+>
+> 另：`git clone` 出来的是**正常带 origin 的仓库**，比开发机现状更"标准"——但推送路径仍然只有 API 那条。

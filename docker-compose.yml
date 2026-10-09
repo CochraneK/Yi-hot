@@ -69,6 +69,9 @@ services:
       <<: *app-env
       WEB_HOST: 0.0.0.0
       WEB_PORT: "3000"
+      # HTTPS FutureMe target for the /futureme/ project entry.
+      # Leave empty until independently deployed and verified.
+      FUTUREME_PUBLIC_URL: ${FUTUREME_PUBLIC_URL:-}
     ports:
       - "${PORT:-3000}:3000"
     depends_on:

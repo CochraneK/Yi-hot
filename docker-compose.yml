@@ -69,11 +69,14 @@ services:
       <<: *app-env
       WEB_HOST: 0.0.0.0
       WEB_PORT: "3000"
-      # HTTPS FutureMe target for the /futureme/ project entry.
-      # Leave empty until independently deployed and verified.
-      FUTUREME_PUBLIC_URL: ${FUTUREME_PUBLIC_URL:-}
+      # FutureMe stays on a dedicated Docker-only network; no extra public port.
+      # Leave empty until FutureMe is healthy and bridge network is created.
+      FUTUREME_UPSTREAM_URL: ${FUTUREME_UPSTREAM_URL:-}
     ports:
       - "${PORT:-3000}:3000"
+    networks:
+      - default
+      - futureme_proxy
     depends_on:
       api:
         condition: service_started
@@ -92,6 +95,13 @@ services:
       - caddy:/data
     depends_on:
       - web
+
+# Manually create once: docker network create futureme_proxy
+# Only YiHot web and FutureMe app join it; the databases stay isolated.
+networks:
+  futureme_proxy:
+    external: true
+    name: futureme_proxy
 
 volumes:
   db: {}

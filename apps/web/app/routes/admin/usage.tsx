@@ -70,7 +70,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
   return (
     <AdminPage
       title="用量与成本"
-      subtitle="每次模型调用都会记下 token 用量，金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。政府站白天抓取密、夜里几乎不跑，所以用量曲线的工作日/周末起伏是正常的。"
+      subtitle="每次模型调用都会记下 token 用量，金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。注意：这里的日期是模型调用的发生时间（北京时间），不是内容的发布时间；一篇 7 月发布的政策文件可能今天才被抓到并分析，token 就记在今天。政府站白天抓取密、夜里几乎不跑，所以曲线的工作日/周末起伏是正常的。"
       actions={
         <FilterChips
           param="days"
@@ -109,7 +109,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
       )}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <Card title="每日 token 用量" right={<span className="text-[12px] text-ink-4">单位：token</span>}>
+        <Card title="每日 token 用量" right={<span className="text-[12px] text-ink-4">按调用发生日（北京）</span>}>
           <StackedBars
             height={220}
             labels={u.daily.map((d) => d.label)}
@@ -120,7 +120,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             format={wan}
           />
         </Card>
-        <Card title="每日费用（估算）" right={<span className="text-[12px] text-ink-4">{cur}</span>}>
+        <Card title="每日费用（估算）" right={<span className="text-[12px] text-ink-4">按调用发生日（北京）· {cur}</span>}>
           <LineChart
             height={220}
             labels={u.daily.map((d) => d.label)}

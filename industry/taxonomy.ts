@@ -39,7 +39,7 @@ export const TOPIC_TAGS = [
 ] as const;
 
 /** 可选的实体标签（机构、平台、主管部门）。 */
-export const ENTITY_TAGS = ["腾讯公益", "支付宝公益", "阿里公益", "抖音公益", "壹基金", "中国慈善联合会", "中国乡村发展基金会", "中国青少年发展基金会", "南都公益基金会", "基金会中心网", "民政部", "救助儿童会"] as const;
+export const ENTITY_TAGS = ["腾讯公益", "支付宝公益", "阿里公益", "抖音公益", "壹基金", "中国慈善联合会", "中国乡村发展基金会", "中国青少年发展基金会", "南都公益基金会", "基金会中心网", "民政部", "生态环境部", "救助儿童会"] as const;
 
 /** 模型常写的近义词，统一成词表里的写法。 */
 export const TAG_SYNONYMS: Readonly<Record<string, string>> = {

@@ -106,7 +106,7 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 - `articles`：`identity_key = url:<url>`。
 - `analyses`：摘要列叫 **`summary_zh`**（还有 `title_zh` / `reason_zh`，**不叫 `summary`**）。一篇文章可以有多条 analyses → JOIN 会让 publication 行重复。
 - `receipt_attempts`：**每次线上模型调用记一条**，`usage` (jsonb) 里有 `prompt_tokens` / `completion_tokens`，另有 `model` / `cost` / `cost_basis` / `currency` / `latency_ms` / `started_at`。`origin='live'` 才是在线调用。
-- `service_prices`：**单价表，需人工填写**（`service` + `model` 为主键）。后台的费用列与「用量与成本」页全靠它——**表空着时金额一律显示"未定价"**。价格按 `service` 匹配，而 `service` 由 `packages/backend/src/providers/llm.ts` 的 `MODELS` 注册表反查得到：**模型名与注册表对不上就永远没有价格**。
+- `service_prices`：**单价表，人工维护**（`service` + `model` 为主键，`model=''` 是该服务的兜底价）。后台的费用列与「用量与成本」页全靠它——**表空着时金额一律显示"未定价"**。价格按 `service` 匹配，而 `service` 由 `packages/backend/src/providers/llm.ts` 的 `MODELS` 注册表反查得到：**模型名与注册表对不上就永远没有价格**（页面「实际在用」区会直接标出这种情况）。**改单价不用写 SQL**：在 `/admin/usage` 的「计价方式」卡里新增/编辑/删除（后端 `packages/backend/src/admin/models.ts` 的 `savePrice` / `deletePrice`，接口 `POST|DELETE /api/admin/usage/prices`，改动写审计）。
 - 手动入队 pgboss 写 `pgboss.job` 表（没有 `createjob` 之类的家表）。
 - ⚠️ **psql 会话显示的是 UTC**（服务器本地时区是北京）：读数 `+8 小时` 才是北京时间。曾经因此虚惊一场"worker 停抓 8 小时"。
 
@@ -114,7 +114,9 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 
 `/yihot/admin` 下：内容诊断、信源（含「发现候选」「新建信源」）、反馈、运行、**用量与成本**、模型与评测、SelectBench、设置、审计记录。
 
-- **用量与成本**（`/admin/usage`）：按日与按用途统计 token 与估算费用。后端 `packages/backend/src/admin/usage.ts`，接口 `GET /api/admin/usage?days=`。
+- **用量与成本**（`/admin/usage`）：按日与按用途统计 token 与估算费用，并可**在线编辑单价**（`service_prices`）——新增/编辑/删除都走 ReasonDialog 并写审计，保存后金额立刻重算。后端 `packages/backend/src/admin/usage.ts`（统计）与 `admin/models.ts`（单价读写），接口 `GET /api/admin/usage?days=`、`POST /api/admin/usage/prices`、`DELETE /api/admin/usage/prices`。
+  - ⚠️ 页面上的日期是**模型调用的发生日（北京）**，不是内容发布时间——一篇旧文今天才被分析，token 就记在今天。
+  - ⚠️ 月化故意给**区间**（下界＝近 7 天日历日均×30，被节假日空窗压低；上界＝同期活跃日均×30，被首次全量回填尖峰抬高），不要改成单一均值。
 - **模型与评测**（`/admin/models`）：每项能力当前用哪个模型、成功率、耗时、token 与费用，可切换模型（只影响之后的新任务）。
 - `/yihot/admin*` 未登录一律返回 **302**（重定向到登录页）——**302 不代表路由存在**，验证新页面必须登录后看是否 200。
 

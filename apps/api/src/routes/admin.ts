@@ -5,7 +5,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { actorOf } from "@aihot/backend/admin/auth";
 
 import { importSelectBenchRun, listSelectBenchRuns, selectBenchRun } from "@aihot/backend/admin/selectbench";
-import { modelsOverview, switchModel } from "@aihot/backend/admin/models";
+import { deletePrice, modelsOverview, savePrice, switchModel, type PriceInput } from "@aihot/backend/admin/models";
 import { usageOverview } from "@aihot/backend/admin/usage";
 
 import { contentChain, detachFromFact, mergeStories, overrideFields, rerun, searchContent, setSeoIndexed, setVisibility } from "@aihot/backend/admin/content";
@@ -122,6 +122,15 @@ export function registerAdmin(app: FastifyInstance) {
 
   // Token usage and estimated spend (F20)
   app.get("/api/admin/usage", adminHandler(async (req) => usageOverview(Math.min(365, Number(q(req).days) || 30))));
+  // Unit prices behind the estimate: edited here so keeping them current never needs SQL.
+  app.post("/api/admin/usage/prices", adminHandler(async (req, _reply, admin) => {
+    const b = body<{ price: PriceInput; reason?: string }>(req);
+    return savePrice(b.price, actorOf(admin), String(b.reason ?? ""));
+  }));
+  app.delete("/api/admin/usage/prices", adminHandler(async (req, reply, admin) => {
+    const f = q(req);
+    return orNotFound(req, reply, await deletePrice(f.service ?? "", f.model ?? "", actorOf(admin), f.reason ?? ""));
+  }));
 
   // Models and evaluation (F20)
   app.get("/api/admin/models", adminHandler(async (req) => modelsOverview(Math.min(90, Number(q(req).days) || 7))));

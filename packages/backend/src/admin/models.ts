@@ -106,3 +106,80 @@ export async function switchModel(capability: string, model: string | null, reas
   await audit(actor, "models.switch", `capability:${capability}`, reason, before ?? null, after ?? null);
   return { capability, before, after };
 }
+
+/**
+ * Unit prices for estimating spend. `service_prices` is operator-entered (imported from the
+ * provider's price page), so this is the only way to keep it current without touching SQL.
+ *
+ * Matching is by (service, model), and `service` is derived from the MODELS registry — a price row
+ * whose model is not in the registry is never used, which is why `usageOverview` also reports the
+ * model names actually seen in receipts.
+ */
+export interface PriceInput {
+  service: string;
+  model: string;
+  currency: string;
+  inputPerMtok: number | string | null;
+  cachedPerMtok: number | string | null;
+  outputPerMtok: number | string | null;
+  perRequest: number | string | null;
+  sourceUrl: string | null;
+  verifiedOn: string | null;
+  note: string | null;
+}
+
+const bad = (detail: string) => Object.assign(new Error(detail), { statusCode: 400 });
+
+/** Empty means "not set"; anything else must be a non-negative finite number. */
+function amount(value: number | string | null | undefined, field: string): number | null {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) throw bad(`${field}：请填非负数字，留空表示不适用`);
+  return n;
+}
+
+/**
+ * Creates or replaces one (service, model) row. At least one of the three rates must be filled.
+ * `reason` goes to the audit log; `input.note` stays on the row as a human annotation (e.g. "高峰价").
+ */
+export async function savePrice(input: PriceInput, actor: string, reason = "") {
+  const service = String(input.service ?? "").trim();
+  if (!service) throw bad("服务名必填（如 llm，见「实际在用」列表）");
+  const model = String(input.model ?? "").trim();
+  const currency = input.currency === "CNY" ? "CNY" : "USD";
+  const row = {
+    service,
+    model,
+    currency,
+    input_per_mtok: amount(input.inputPerMtok, "输入单价"),
+    cached_per_mtok: amount(input.cachedPerMtok, "缓存命中单价"),
+    output_per_mtok: amount(input.outputPerMtok, "输出单价"),
+    per_request: amount(input.perRequest, "按次单价"),
+    source_url: input.sourceUrl ? String(input.sourceUrl).trim() : null,
+    verified_on: input.verifiedOn ? String(input.verifiedOn).trim() : null,
+    note: input.note ? String(input.note).trim() : null,
+  };
+  if (row.input_per_mtok === null && row.output_per_mtok === null && row.per_request === null)
+    throw bad("至少填一个价格（输入 / 输出 / 按次）");
+  const [before] = await sql`SELECT * FROM service_prices WHERE service = ${service} AND model = ${model}`;
+  await sql`
+    INSERT INTO service_prices (service, model, currency, input_per_mtok, cached_per_mtok, output_per_mtok, per_request, source_url, verified_on, note)
+    VALUES (${row.service}, ${row.model}, ${row.currency}, ${row.input_per_mtok}, ${row.cached_per_mtok}, ${row.output_per_mtok}, ${row.per_request}, ${row.source_url}, ${row.verified_on}, ${row.note})
+    ON CONFLICT (service, model) DO UPDATE SET
+      currency = EXCLUDED.currency, input_per_mtok = EXCLUDED.input_per_mtok, cached_per_mtok = EXCLUDED.cached_per_mtok,
+      output_per_mtok = EXCLUDED.output_per_mtok, per_request = EXCLUDED.per_request, source_url = EXCLUDED.source_url,
+      verified_on = EXCLUDED.verified_on, note = EXCLUDED.note, updated_at = now()`;
+  await audit(actor, before ? "price.update" : "price.create", `price:${service}/${model || "(兜底)"}`, reason.trim() || row.note || (before ? "修改单价" : "新增单价"), before ?? null, row);
+  return { ...row, created: !before };
+}
+
+/** Removes one (service, model) row. Returns null when there was nothing to delete (→ 404). */
+export async function deletePrice(service: string, model: string, actor: string, reason = "") {
+  const s = String(service ?? "").trim();
+  const m = String(model ?? "").trim();
+  const [before] = await sql`SELECT * FROM service_prices WHERE service = ${s} AND model = ${m}`;
+  if (!before) return null;
+  await sql`DELETE FROM service_prices WHERE service = ${s} AND model = ${m}`;
+  await audit(actor, "price.delete", `price:${s}/${m || "(兜底)"}`, reason.trim() || "删除单价", before, null);
+  return { ok: true };
+}

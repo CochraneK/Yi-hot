@@ -20,8 +20,10 @@ interface PriceRow {
   input_per_mtok: string | null;
   cached_per_mtok: string | null;
   output_per_mtok: string | null;
+  per_request: string | null;
   source_url: string | null;
   verified_on: string | null;
+  note: string | null;
 }
 
 interface DayModelRow {
@@ -63,7 +65,7 @@ function dayKeys(days: number): string[] {
 export async function usageOverview(days = 30) {
   const d = Math.min(365, Math.max(1, Math.floor(days)));
   const since = new Date(Date.now() - d * 86400_000);
-  const [byDay, byPurpose, prices, lifetime] = await Promise.all([
+  const [byDay, byPurpose, prices, lifetime, seen] = await Promise.all([
     sql<DayModelRow[]>`
       SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.model,
              count(*)::int AS calls,
@@ -81,12 +83,20 @@ export async function usageOverview(days = 30) {
       WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NOT NULL
       GROUP BY 1, 2, 3`,
     sql<PriceRow[]>`
-      SELECT service, model, currency, input_per_mtok, cached_per_mtok, output_per_mtok, source_url, verified_on
+      SELECT service, model, currency, input_per_mtok, cached_per_mtok, output_per_mtok, per_request, source_url, verified_on, note
       FROM service_prices ORDER BY service, model`,
-    sql<{ calls: number; tokens_in: string | null; tokens_out: string | null; first: Date | null }[]>`
-      SELECT count(*)::int AS calls, sum((usage->>'prompt_tokens')::bigint) AS tokens_in,
-             sum((usage->>'completion_tokens')::bigint) AS tokens_out, min(started_at) AS first
-      FROM receipt_attempts WHERE origin = 'live' AND usage IS NOT NULL`,
+    sql<{ model: string | null; calls: number; tokens_in: string | null; tokens_out: string | null; first: Date | null }[]>`
+      SELECT a.model, count(*)::int AS calls, sum((a.usage->>'prompt_tokens')::bigint) AS tokens_in,
+             sum((a.usage->>'completion_tokens')::bigint) AS tokens_out, min(a.started_at) AS first
+      FROM receipt_attempts a WHERE a.origin = 'live' AND a.usage IS NOT NULL
+      GROUP BY 1`,
+    // The names that actually show up in receipts, so a price row can be created against a name
+    // that exists rather than one guessed from the model registry.
+    sql<{ model: string | null; calls: number }[]>`
+      SELECT a.model, count(*)::int AS calls
+      FROM receipt_attempts a
+      WHERE a.started_at >= ${since} AND a.origin = 'live'
+      GROUP BY 1 ORDER BY 2 DESC`,
   ]);
 
   const keys = dayKeys(d);
@@ -139,7 +149,21 @@ export async function usageOverview(days = 30) {
   const window = daily.filter((x) => x.calls > 0);
   const activeDays = window.length;
   const currency = daily.find((x) => x.priced)?.currency ?? prices[0]?.currency ?? "USD";
-  const lifetimeCost = costOf(Number(lifetime[0]?.tokens_in ?? 0), Number(lifetime[0]?.tokens_out ?? 0), prices.find((p) => p.model !== "") ?? null);
+  // Lifetime is priced per model, not with "the first price row that has a model" — that shortcut
+  // silently changes the total when an unrelated row sorts first.
+  const lifeCalls = lifetime.reduce((n, r) => n + r.calls, 0);
+  const lifeIn = lifetime.reduce((n, r) => n + Number(r.tokens_in ?? 0), 0);
+  const lifeOut = lifetime.reduce((n, r) => n + Number(r.tokens_out ?? 0), 0);
+  const lifeFirst = lifetime.reduce<Date | null>((min, r) => (r.first && (!min || r.first < min) ? r.first : min), null);
+  let lifeAmount = 0;
+  let lifePriced = false;
+  for (const r of lifetime) {
+    const c = costOf(Number(r.tokens_in ?? 0), Number(r.tokens_out ?? 0), priceFor(r.model, prices));
+    if (c) {
+      lifeAmount += c.amount;
+      lifePriced = true;
+    }
+  }
 
   // Run rate: the trailing week is a far better basis than "average over active days", which the
   // one-off first backfill (and holiday lulls) skew badly. Quoting the basis keeps it honest.
@@ -176,11 +200,16 @@ export async function usageOverview(days = 30) {
     projection: perDayRecent === null ? null : { amount: perDayRecent * 30, currency, basisDays: recentDays },
     projectedActive: perDayActive === null ? null : { amount: perDayActive * 30, currency, basisDays: recentDays },
     lifetime: {
-      calls: lifetime[0]?.calls ?? 0,
-      tokensIn: Number(lifetime[0]?.tokens_in ?? 0),
-      tokensOut: Number(lifetime[0]?.tokens_out ?? 0),
-      first: lifetime[0]?.first ?? null,
-      amount: lifetimeCost?.amount ?? null,
+      calls: lifeCalls,
+      tokensIn: lifeIn,
+      tokensOut: lifeOut,
+      first: lifeFirst,
+      amount: lifePriced ? lifeAmount : null,
     },
+    // Model names that actually appear in receipts during the window, plus the service the registry
+    // maps them to. A name with `service: null` is not in MODELS, so no price row can ever match it —
+    // surfacing this is how the operator finds out *why* a figure reads "未定价".
+    seenModels: seen.filter((r) => r.model).map((r) => ({ model: r.model as string, service: serviceOf(r.model), calls: r.calls })),
+    services: [...new Set(Object.values(MODELS).map((m) => m.service))].sort(),
   };
 }

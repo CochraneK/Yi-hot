@@ -103,6 +103,7 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
   "south-metro-public-welfare": { name: "南都公益基金会", displayTag: "南都公益基金会", aliases: ["南都公益基金会"] },
   "foundation-center": { name: "基金会中心网", displayTag: "基金会中心网", aliases: ["基金会中心网", "中基透明指数", "FTI"] },
   "ministry-of-civil-affairs": { name: "民政部", displayTag: "民政部", aliases: ["民政部"] },
+  "ministry-of-ecology-environment": { name: "生态环境部", displayTag: "生态环境部", aliases: ["生态环境部", "环保部", "环境保护部", "黄润秋"] },
   "save-the-children": { name: "救助儿童会", displayTag: "救助儿童会", aliases: ["救助儿童会", "Save the Children", "国际救助儿童会"] },
 };
 

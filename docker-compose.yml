@@ -74,9 +74,6 @@ services:
       FUTUREME_UPSTREAM_URL: ${FUTUREME_UPSTREAM_URL:-}
     ports:
       - "${PORT:-3000}:3000"
-    networks:
-      - default
-      - futureme_proxy
     depends_on:
       api:
         condition: service_started
@@ -95,13 +92,6 @@ services:
       - caddy:/data
     depends_on:
       - web
-
-# Manually create once: docker network create futureme_proxy
-# Only YiHot web and FutureMe app join it; the databases stay isolated.
-networks:
-  futureme_proxy:
-    external: true
-    name: futureme_proxy
 
 volumes:
   db: {}

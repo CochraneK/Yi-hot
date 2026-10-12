@@ -1,0 +1,107 @@
+{
+  "reviewed_at": "2026-10-12",
+  "references": {
+    "NewsMail": "c118b464e1d0806e35d5f940d3eb6ea3b8cd97db",
+    "charity-intelligence": "bc04e11d7be6a82d410d97ed85212e8a8c5861a9"
+  },
+  "candidates": [
+    {
+      "id": "amcham-china-social-impact",
+      "name": "中国美国商会（AmCham China）· 社会影响力",
+      "kind": "web_list",
+      "tier": "T2",
+      "first_party": true,
+      "status": "needs_access_check",
+      "url": "https://www.amchamchina.org/social-impact-initiative/",
+      "note": "用户指定补充来源：企业公益、CSR/ESG、社会影响力、社区及乡村发展，优先 Social Impact Initiative 栏目。2026-10-12 本机主页、栏目、新闻归档及 /feed/ 直连均返回 HTTP 468，未验证到正常列表或 RSS；需在腾讯云复验后配置解析并启用。主体为中国美国商会，不能与美中贸易全国委员会混为一谈。"
+    },
+    {
+      "id": "china-development-brief",
+      "name": "中国发展简报",
+      "kind": "web_list",
+      "tier": "T2",
+      "first_party": false,
+      "status": "preview_ready",
+      "note": "补充公益行业观察、社区与社会组织实践。官网首页有真实新闻；旧 /feed 地址不可用。",
+      "url": "https://www.chinadevelopmentbrief.org.cn/",
+      "config": {
+        "url": "https://www.chinadevelopmentbrief.org.cn/",
+        "baseUrl": "https://www.chinadevelopmentbrief.org.cn",
+        "itemSelector": ".today-focus-container a[href*=\"/news/detail/\"]",
+        "titleSelector": ".title",
+        "publishedAtSelector": ".time, .focus-item-time",
+        "allowUrlPrefixes": ["https://www.chinadevelopmentbrief.org.cn/news/detail/"]
+      }
+    },
+    {
+      "id": "gongyi-times",
+      "name": "公益时报 · 公益资讯",
+      "kind": "web_list",
+      "tier": "T2",
+      "first_party": false,
+      "status": "preview_ready",
+      "note": "补充国内公益行业报道、募捐与慈善组织动态。实测栏目有标题、原文链接和日期。",
+      "url": "http://www.gongyishibao.com/html/gongyizixun/list.html",
+      "config": {
+        "url": "http://www.gongyishibao.com/html/gongyizixun/list.html",
+        "baseUrl": "http://www.gongyishibao.com",
+        "itemSelector": ".list-inner-text-inner",
+        "linkSelector": "h2 a",
+        "titleSelector": "h2",
+        "publishedAtSelector": ".info span:nth-child(2)",
+        "allowUrlPrefixes": ["http://www.gongyishibao.com/html/gongyizixun/"]
+      }
+    },
+    {
+      "id": "ssir",
+      "name": "Stanford Social Innovation Review",
+      "kind": "rss",
+      "tier": "T2",
+      "first_party": false,
+      "status": "preview_ready",
+      "note": "补充社会创新、慈善与非营利管理研究。官网声明的 RSS 实测 40 条；需经过现有公益相关性筛选。",
+      "url": "https://ssir.org/site/rss_2.0",
+      "config": { "feedUrl": "https://ssir.org/site/rss_2.0" }
+    },
+    {
+      "id": "cfdp",
+      "name": "中国残疾人福利基金会",
+      "kind": "web_list",
+      "status": "needs_parser",
+      "url": "https://www.cfdp.org/",
+      "note": "补充残障与康复服务。官网可访问且有真实新闻，需补齐日期解析；NewsMail 中的 cdpf.org.cn 是残联，不是这家基金会。"
+    },
+    {
+      "id": "cwdf",
+      "name": "中国妇女发展基金会",
+      "kind": "web_list",
+      "status": "needs_date_check",
+      "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
+      "note": "补充妇女与家庭公益。栏目可访问，但观察到晚于核查日的日期及截断标题，需核实详情页再接入。"
+    },
+    {
+      "id": "unicef-cn",
+      "name": "联合国儿童基金会驻华办事处",
+      "kind": "web_list",
+      "status": "needs_access_check",
+      "url": "https://www.unicef.cn/press-centre",
+      "note": "补充儿童权利与发展政策。本机直连返回 403，需在部署环境复验，不能据历史记录标为已接入。"
+    },
+    {
+      "id": "reliefweb",
+      "name": "ReliefWeb",
+      "kind": "rss",
+      "status": "needs_access_check",
+      "url": "https://reliefweb.int/updates/rss.xml",
+      "note": "补充灾害与人道救援。此次响应 HTTP 202 空内容，未验证出可用条目。"
+    },
+    {
+      "id": "candid",
+      "name": "Candid",
+      "kind": "web_list",
+      "status": "needs_parser",
+      "url": "https://candid.org/blogs/",
+      "note": "补充筹资、基金会与非营利研究。旧 PND RSS 已重定向到博客 HTML，不能继续按 RSS 导入。"
+    }
+  ]
+}

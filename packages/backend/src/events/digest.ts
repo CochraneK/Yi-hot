@@ -63,7 +63,12 @@ export async function composeStoryDigest(storyId: number, opts: { afterCorrectio
     system: SYSTEM, user, schema: Schema, temperature: 0.3, maxTokens: 1200,
   });
   const version = story.version + 1;
-  await sql.begin(async (tx) => {
+  const committed = await sql.begin(async (tx) => {
+    const [current] = await tx<{ version: number }[]>`SELECT version FROM stories WHERE id = ${storyId} AND merged_into IS NULL FOR UPDATE`;
+    if (!current || current.version !== story.version) {
+      await completeReceipt(tx, res.receiptId);
+      return false;
+    }
     await tx`INSERT INTO story_digests (story_id, version, digest, latest, receipt_id, article_ids, inputs_hash)
              VALUES (${storyId}, ${version}, ${res.data.digest}, ${res.data.latest || null}, ${res.receiptId}, ${ids}, ${inputsHash})`;
     await tx`UPDATE stories SET digest = ${res.data.digest}, latest = ${res.data.latest || null}, digest_updated_at = now(),
@@ -71,8 +76,9 @@ export async function composeStoryDigest(storyId: number, opts: { afterCorrectio
                version = ${version}, updated_at = now()
              WHERE id = ${storyId}`;
     await completeReceipt(tx, res.receiptId);
+    return true;
   });
-  return { updated: true, version };
+  return committed ? { updated: true, version } : { updated: false };
 }
 
 /** Periodic: statuses follow activity (持续更新 / 观察中 / 历史事件). */

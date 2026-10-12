@@ -183,6 +183,24 @@ test("a withdrawn item leaves the hot board and the hot APIs at once, not at the
   for (const url of exits) assert.ok(!(await get(url)).body.includes(rep!), `${url} still shows the withdrawn item`);
 });
 
+test("withdrawing one of several reports removes derived copy while keeping the public story readable", async () => {
+  const removed = await article();
+  const kept = await article();
+  await publishArticle(removed, released());
+  await publishArticle(kept, released());
+  const publicId = await storyFor(removed);
+  const [fact] = await sql<{ id: number; story_id: number }[]>`SELECT f.id, f.story_id FROM facts f JOIN stories s ON s.id = f.story_id WHERE s.public_id = ${publicId} LIMIT 1`;
+  await sql`INSERT INTO fact_articles (fact_id, article_id, role) VALUES (${fact!.id}, ${kept}, 'report')`;
+  await sql`UPDATE stories SET digest = 'WITHDRAWN_CLAIM', summary = 'WITHDRAWN_CLAIM', latest = 'WITHDRAWN_CLAIM' WHERE id = ${fact!.story_id}`;
+  await setVisibility(removed, { visibility: "withdrawn", reason: "test derived copy", version: 0 }, "test");
+  for (const path of [`/api/site/stories/${publicId}`, `/api/v1/stories/${publicId}`]) {
+    const response = await get(path);
+    assert.equal(response.status, 200);
+    assert.ok(response.body.includes(kept));
+    assert.ok(!response.body.includes("WITHDRAWN_CLAIM"), path);
+  }
+});
+
 test("item pages follow the live rule: unsummarised editorial items keep one, hot_signal items have none", async () => {
   const SIGNAL = `${SOURCE}-signal`;
   await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, site_fulltext, syndicate_fulltext, next_fetch_at)
@@ -342,6 +360,23 @@ test("share images keep detail metadata and access rules while conditional reads
   assert.equal((await get(paths[0]![0]!, { "if-none-match": paths[0]![1]! })).status, 304, "summary-only pages keep the same allowed share summary");
   await sql`UPDATE publications SET visibility = 'withdrawn' WHERE article_id = ${id}`;
   for (const [path, etag] of paths) assert.equal((await get(path!, { "if-none-match": etag! })).status, 404, "cached ETags never bypass current visibility");
+});
+
+test("a date correction republishes the selected sync payload without reanalysing content", async () => {
+  const id = await article();
+  await publishArticle(id, released());
+  const snapshot = JSON.parse((await get('/api/v1/selected/snapshot?limit=1000')).body);
+  const [material] = await sql`SELECT url,title FROM articles WHERE id=${id}`;
+  const corrected = new Date(Date.now() - 2 * 86400_000);
+  const result = await upsertMaterial({ sourceId: SOURCE, url: material!.url, title: material!.title, bodyText: BODY,
+    bodyHtml: `<p>${BODY}</p>`, bodyStatus: 'ok', via: 'fetch', publishedAt: corrected });
+  assert.equal(result.metadataChanged, true);
+  assert.equal(result.revised, false);
+  assert.equal((await publishArticle(id, released()))!.changed, true);
+  const response = await get(`/api/v1/selected/changes?cursor=${encodeURIComponent(snapshot.cursor)}&limit=100`);
+  assert.equal(response.status, 200, response.body);
+  const changes = JSON.parse(response.body);
+  assert.equal(changes.changes.find((c: any) => c.item?.id === id)?.item.publishedAt, corrected.toISOString());
 });
 
 test("minimal sync projection preserves snapshot fields, pagination bindings and ordered changes", async () => {

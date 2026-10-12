@@ -5,6 +5,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { config, credential } from "../config.ts";
 import { sql } from "../db.ts";
 import { sha256 } from "../lib/ids.ts";
+import { safeAdminReturn } from "@aihot/contracts/admin-paths";
 
 export const SESSION_COOKIE = "aihot_admin";
 export const STATE_COOKIE = "aihot_oauth_state";
@@ -66,19 +67,9 @@ export function loginRedirect(returnTo: string): { url: string; stateCookie: str
   return { url, stateCookie: sign(state) };
 }
 
-/** Only admin paths on this site; anything else (other hosts, protocol-relative) falls back to /admin. */
+/** Admin paths retain /yihot; invalid paths fall back to the deployed admin root. */
 export function safeReturn(target: string): string {
-  let path = target;
-  // A proxy's login redirect may pass the whole original URL; keep only its path and query.
-  if (/^https?:\/\//i.test(path)) {
-    try {
-      const u = new URL(path);
-      path = `${u.pathname}${u.search}`;
-    } catch {
-      return "/admin";
-    }
-  }
-  return /^\/admin(\/|\?|$)/.test(path) && !path.startsWith("//") ? path : "/admin";
+  return safeAdminReturn(target);
 }
 
 interface FeishuUser {

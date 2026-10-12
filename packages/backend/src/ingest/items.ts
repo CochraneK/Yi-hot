@@ -5,6 +5,7 @@ import { sql } from "../db.ts";
 import { upsertMaterial } from "../content/materials.ts";
 import { queueProcessing } from "../jobs/content.ts";
 import { normalizeUrl } from "../lib/url.ts";
+import { publishArticle } from "../publication/publish.ts";
 
 export const MAX_ITEMS = 50;
 
@@ -64,6 +65,7 @@ export async function ingestItems(body: { sourceId?: unknown; sourceName?: unkno
       backfill: flags.backfill ? "reported-backfill" : flags.baseline ? "reported-baseline" : null,
     });
     if (res.created) created += 1;
+    if (res.metadataChanged) await publishArticle(res.articleId);
     if (res.created || res.revised) await queueProcessing(res.articleId);
   }
   await sql`UPDATE sources SET last_fetch_at = now(), last_ok_at = now() WHERE id = ${source!.id}`;

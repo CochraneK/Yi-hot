@@ -55,6 +55,8 @@ export interface MaterialResult {
   created: boolean;
   revised: boolean;
   backfill: boolean;
+  /** Date correction without a content revision: refresh publication without paying for analysis. */
+  metadataChanged?: boolean;
 }
 
 // Material first discovered more than this long after its source time is archived by source time,
@@ -155,8 +157,9 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
     return { articleId: newId, created: true, revised: false, backfill: t.backfill };
   }
 
-  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; title: string; body_text: string | null; excerpt: string | null }[]>`
-    SELECT id, source_id, revision, content_hash, backfill, title, body_text, excerpt FROM articles WHERE identity_key = ${identityKey} FOR UPDATE`;
+  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; title: string; body_text: string | null; excerpt: string | null; discovered_at: Date; published_at: Date | null; timeline_at: Date; backfill_reason: string | null }[]>`
+    SELECT id, source_id, revision, content_hash, backfill, title, body_text, excerpt, discovered_at, published_at, timeline_at, backfill_reason
+    FROM articles WHERE identity_key = ${identityKey} FOR UPDATE`;
   await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at)
            VALUES (${existing!.id}, ${m.sourceId}, ${m.via}, ${discoveredAt}) ON CONFLICT DO NOTHING`;
   const unchanged: MaterialResult = { articleId: existing!.id, created: false, revised: false, backfill: existing!.backfill };
@@ -164,6 +167,19 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
   // discovery only: its title and summary are its own rendering, and taking them made the article flip
   // between the two sources' versions on every fetch. Only the article's own source revises it.
   if (existing!.source_id !== m.sourceId) return unchanged;
+  if (m.publishedAt && Number.isFinite(m.publishedAt.getTime())) {
+    const corrected = decideTimeline(m.publishedAt, existing!.discovered_at,
+      m.backfill ?? (existing!.backfill_reason === "stale-on-discovery" ? null : existing!.backfill_reason));
+    // A newly claimed future date must not erase a previously verified date.
+    if (corrected.publishedAt && (corrected.publishedAt.getTime() !== existing!.published_at?.getTime() ||
+        corrected.timelineAt.getTime() !== existing!.timeline_at.getTime() || corrected.backfill !== existing!.backfill)) {
+      await db`UPDATE articles SET published_at = ${corrected.publishedAt}, published_at_claim = ${m.publishedAt},
+        timeline_at = ${corrected.timelineAt}, backfill = ${corrected.backfill}, backfill_reason = ${corrected.backfillReason}, updated_at = now()
+        WHERE id = ${existing!.id}`;
+      unchanged.backfill = corrected.backfill;
+      unchanged.metadataChanged = true;
+    }
+  }
   // What the row will hold after this report: a listing without body keeps the stored (extracted) body.
   const bodyText = m.bodyText ?? existing!.body_text;
   const excerpt = m.excerpt ?? existing!.excerpt;
@@ -201,5 +217,5 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
     RETURNING revision`;
   await db`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
            VALUES (${existing!.id}, ${row!.revision}, ${next}, ${title}, ${bodyText})`;
-  return { articleId: existing!.id, created: false, revised: true, backfill: existing!.backfill };
+  return { ...unchanged, revised: true };
 }

@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.enc binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.webp binary
+*.ttf binary
+*.woff2 binary

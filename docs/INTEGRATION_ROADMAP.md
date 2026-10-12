@@ -1,6 +1,7 @@
 # YiHot × NewsMail × charity-intelligence：统一公益情报平台
 
 > **Canonical integration decision · 2026-10-08**
+> **2026-10-12 补充决策**：项目所有者选择免费自托管 WeRSS；允许新增独立的公众号 RSS 采集服务，YiHot 仍是唯一选稿、归组和对外发布平台。下文“不引入长期 RSS 系统”的旧限制仅对此方案取消，实施见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。
 > 方向已由项目所有者确认：以 `CochraneK/yihot`（上游 AIHOT 衍生）作为**唯一持续对外提供公益资讯服务的主平台**，逐步吸收 `CochraneK/NewsMail` 与 `CochraneK/charity-intelligence` 的可复用能力与资产。
 > **注意：这是目标架构与迁移账本，不是已经完成的代码/数据合并。**
 > 避免将旧版 `docs/legacy/CHARITY-INTELLIGENCE-CONTRACT.md` 所描述的“两个永远独立的系统”误解为最终产品目标；该合同仅可作为早期非破坏性对接过渡方案。

@@ -6,6 +6,7 @@ import { SITE } from "@aihot/industry/site";
 import { apiGet } from "../lib/api.server";
 import { Wordmark } from "../components/Logo";
 import { buttonClass } from "../components/ui/Controls";
+import { safeAdminReturn } from "@aihot/contracts/admin-paths";
 
 const ERRORS: Record<string, string> = {
   wrong: "密码不对，再试一次。",
@@ -17,7 +18,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const returnTo = url.searchParams.get("return") ?? "/admin";
   const options = await apiGet<{ password: boolean; feishu: boolean }>("/api/auth/options", { signal: request.signal }).catch(() => ({ password: true, feishu: false }));
-  return { returnTo: returnTo.startsWith("/admin") ? returnTo : "/admin", error: url.searchParams.get("error"), ...options };
+  return { returnTo: safeAdminReturn(returnTo), error: url.searchParams.get("error"), ...options };
 }
 
 export const meta: Route.MetaFunction = () => [{ title: `登录 · ${SITE.name} 后台` }, { name: "robots", content: "noindex, nofollow" }];
@@ -63,7 +64,7 @@ export default function AdminLogin() {
           )}
         </form>
         <p className="mt-6 text-center text-[12px] text-ink-4">
-          <a href="/" className="hover:text-ink-2">
+          <a href="/yihot/" className="hover:text-ink-2">
             回到 {SITE.name}
           </a>
         </p>

@@ -209,7 +209,7 @@ function run() {
     console.log("Wrote " + files.map(x => x[0]).join(", "));
   } else if (process.argv.includes("--check")) {
     const errors = files.filter(([rel, value]) => {
-      try { return readFileSync(resolve(ROOT, rel), "utf8") !== value; }
+      try { return readFileSync(resolve(ROOT, rel), "utf8").replace(/\r\n/g, "\n") !== value; }
       catch { return true; }
     }).map(([rel]) => rel);
     if (errors.length) { console.error("Regenerate stale/missing files: " + errors.join(", ")); process.exitCode = 1; }

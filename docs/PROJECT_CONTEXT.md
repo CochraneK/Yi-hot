@@ -10,7 +10,7 @@
 > | `tools/` | 同步 / 部署 / 核查脚本（`tools/README.md` 有清单与用法） |
 > | `secrets/` | 凭据**加密归档**（`credentials.env.enc` + `tools/secrets.sh`，一把口令；见 `secrets/README.md`） |
 >
-> 更新时间：2026-10-09（本次按「换机交接」重构）。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+> 更新时间：2026-10-12。上次审查的六项问题已修复，已准备免费 WeRSS 的 RSS 接入及腾讯云部署文件；尚未实际部署、扫码或启用新增来源。信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
 
 
 ---

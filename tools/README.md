@@ -24,7 +24,7 @@
 | 脚本 | 来自 | 作用 |
 | --- | --- | --- |
 | `yihot_common.py` | 新增 | 共享：仓库根 / token / 中间产物目录 / blob sha |
-| `sync.py` | `_sync_yihot.py` | **增改文件并推送到 GitHub main**（`python tools/sync.py -m "…" <路径…>`；**无删除能力**） |
+| `sync.py` | `_sync_yihot.py` | **增改文件并推送到 GitHub 分支**（默认 main；`--branch codex/名称 --expect-head <SHA>` 可指定已存在分支并检查基线；**无删除能力**） |
 | `delete.py` | `_delete_yihot.py` | 从 GitHub main 删除指定路径（`python tools/delete.py -m "…" <路径…>`；自带「删除前后全量 path→blob-sha 对照」安全闸门） |
 | `pull.py` | `_pull_yihot.py` | 从 GitHub main 拉回本地（只覆盖有差异/缺失的路径，逐个校验 blob sha） |
 | `compare.py` | `_cmp_yihot.py` | **只读**比对：GitHub main vs 本地（远端独有 / 本地独有 / 内容不同） |

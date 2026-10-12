@@ -1,0 +1,20 @@
+# Merge with the base compose AND the existing FutureMe overlay in production.
+# docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml up -d
+services:
+  api:
+    environment:
+      WERSS_BASE_URL: http://werss:8001
+    networks:
+      - default
+      - werss
+  worker:
+    environment:
+      WERSS_BASE_URL: http://werss:8001
+    networks:
+      - default
+      - werss
+
+networks:
+  werss:
+    external: true
+    name: yihot_werss

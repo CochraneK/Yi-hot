@@ -47,6 +47,10 @@
 
 普通账号会被自动合并成一次搜索（每次最多二十几个账号），省请求数。
 
+### 免费公众号 RSS（WeRSS）
+
+自托管 WeRSS 扫码添加账号后，用 `rss` 类型和单账号 feed 地址接入，无需 Dajiala Key。后台“候选信源”有公众号 RSS 入口；部署及私网 feed 配置见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。未部署 WeRSS 时保持 `WERSS_BASE_URL` 为空。不要启用全局私网抓取。
+
 ### mp_account
 
 ```json

@@ -1,6 +1,6 @@
 // Public pool (/all) with numeric pages, and search in its two orderings.
 import type { PoolResponse, TimelineFilters } from "@aihot/contracts/site";
-import { beijingDate, beijingMidnight } from "@aihot/contracts/time";
+import { addDays, beijingDate, beijingMidnight } from "@aihot/contracts/time";
 import { one, sql, withCustomPlans, type Db } from "../db.ts";
 import {
   categoryCondition, channelCondition, ITEM_COLUMNS, ITEM_FROM, listedCondition, tagCondition, toFeedItemSummary, topicCondition,
@@ -127,13 +127,13 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
   const like = (col: ReturnType<typeof sql>, t: string) => sql`${col} LIKE ${"%" + t + "%"}`;
   const run = async (db: Db) => {
     if (!q) {
-      // Page ids from the timeline index first, then the joins for those rows only.
+      // Page ids by original publication date first, then the joins for those rows only.
       const rows = await db<ItemRow[]>`
         WITH page AS (
           SELECT p.article_id FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters}
-          ORDER BY p.timeline_at DESC, p.article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
+          ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
         SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE p.article_id IN (SELECT article_id FROM page)
-        ORDER BY p.timeline_at DESC, p.article_id DESC`;
+        ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC`;
       return { rows, total: await poolCount(filterKey, () => db<{ n: number }[]>`
         SELECT count(*) AS n FROM (SELECT 1 FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters} LIMIT ${cap}) t`) };
     }
@@ -160,27 +160,27 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
       type RankedRow = Omit<ItemRow, "id"> & { id: string | null; rel: number; total: number };
       const result = await db<RankedRow[]>`
         WITH matches AS ${splitFields ? sql`MATERIALIZED` : sql`NOT MATERIALIZED`} (${matches}), scored AS MATERIALIZED (
-          SELECT p.article_id, p.timeline_at, matches.part + (${titleScore}) AS rel
+          SELECT p.article_id, coalesce(p.published_at, p.timeline_at) AS display_at, matches.part + (${titleScore}) AS rel
           FROM matches JOIN publications p ON p.article_id = matches.article_id JOIN sources s ON s.id = p.source_id
           WHERE ${listedCondition(now)} AND p.eligible ${filters}
         ), page AS MATERIALIZED (
-          SELECT article_id, rel FROM scored ORDER BY rel DESC, timeline_at DESC, article_id DESC
+          SELECT article_id, rel FROM scored ORDER BY rel DESC, display_at DESC, article_id DESC
           LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset}
         ), total AS (SELECT count(*) AS n FROM (SELECT 1 FROM scored LIMIT ${cap}) capped)
         SELECT hydrated.*, total.n AS total FROM total LEFT JOIN LATERAL (
           SELECT ${ITEM_COLUMNS}, page.rel ${ITEM_FROM} JOIN page ON page.article_id = p.article_id
-        ) hydrated ON true ORDER BY hydrated.rel DESC, hydrated.timeline_at DESC, hydrated.id DESC`;
+        ) hydrated ON true ORDER BY hydrated.rel DESC, coalesce(hydrated.published_at, hydrated.timeline_at) DESC, hydrated.id DESC`;
       const rows = result.filter((r): r is ItemRow & { rel: number; total: number } => r.id !== null);
       return { rows, total: Number(result[0]!.total) };
     }
-    // Default search: newest first straight from the timeline index; the total from the pool's
+    // Default search: newest original publication date first; the total from the pool's
     // search rows, where one- and two-character terms scan a small table instead of every item.
     const rows = await db<ItemRow[]>`
       WITH page AS (
         SELECT p.article_id FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters} ${directMatchCondition(terms)}
-        ORDER BY p.timeline_at DESC, p.article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
+        ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
       SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE p.article_id IN (SELECT article_id FROM page)
-      ORDER BY p.timeline_at DESC, p.article_id DESC`;
+      ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC`;
     const direct = terms.reduce((acc, t) => sql`${acc} AND ${like(sql`ps.direct`, t)}`, sql``);
     const { n } = one(await db<{ n: number }[]>`
       SELECT count(*) AS n FROM (SELECT 1 FROM pool_search ps JOIN publications p ON p.article_id = ps.article_id
@@ -192,7 +192,8 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
   const today = beijingDate(now);
   const meta = one(await sql<{ today_count: number; updated_at: Date | null }[]>`
     SELECT (SELECT count(*) FROM publications p
-      WHERE ${listedCondition(now)} AND p.eligible AND p.timeline_at >= ${beijingMidnight(today)} ${filters}) AS today_count,
+      WHERE ${listedCondition(now)} AND p.eligible AND coalesce(p.published_at, p.timeline_at) >= ${beijingMidnight(today)}
+        AND coalesce(p.published_at, p.timeline_at) < ${beijingMidnight(addDays(today, 1))} ${filters}) AS today_count,
       (SELECT max(p.updated_at) FROM publications p WHERE p.eligible) AS updated_at`);
 
   return {

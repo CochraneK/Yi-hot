@@ -1,3 +1,4 @@
+import { FEATURES } from "@aihot/industry/features";
 // Operations alerts. The person reading them is the site owner, not an engineer: each
 // message says what readers see, whether it heals by itself and what, if anything, the owner must do.
 //   now    — readers are affected and it has not healed: sent at once, repeated hourly, recovery reported.
@@ -66,7 +67,7 @@ export async function collectFindings(now = Date.now()): Promise<Finding[]> {
       });
     }
     // The daily report is composed at 08:00 and caught up hourly.
-    if (Number(beijingTime(now).slice(0, 2)) >= 10) {
+    if (FEATURES.dailyReports && Number(beijingTime(now).slice(0, 2)) >= 10) {
       const [r] = await sql`SELECT 1 FROM reports WHERE kind = 'daily' AND key = ${beijingDate(now)}`;
       if (!r) {
         out.push({

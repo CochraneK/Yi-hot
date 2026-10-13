@@ -5,6 +5,7 @@ import type { FeedItemSummary, ItemSummary, MediaView, SourceKind, XPostView } f
 import { sql, type Db } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
 import { displayTags } from "./rules.ts";
+import { cardTags, cardTagValues } from "@aihot/industry/card-tags";
 
 export interface ItemRow {
   id: string;
@@ -99,7 +100,7 @@ export function categoryCondition(category: CategoryKey | null | undefined, _v1 
 
 export function tagCondition(tag: string | null | undefined) {
   if (!tag) return sql``;
-  return sql`AND p.tags @> ${[tag]}::text[]`;
+  return sql`AND p.tags && ${cardTagValues(tag)}::text[]`;
 }
 
 export function topicCondition(topicTags: string[] | null | undefined) {
@@ -185,7 +186,7 @@ export function toFeedItemSummary(row: ItemRow): FeedItemSummary {
   return {
     id: item.id, title: item.title, summary: item.summary, reason: item.reason,
     source: { name: item.source.name }, publishedAt: item.publishedAt, timelineAt: item.timelineAt,
-    category: item.category, tags: item.tags, score: item.score, selected: item.selected, channel: item.channel,
+    category: item.category, tags: cardTags(row.tags), score: item.score, selected: item.selected, channel: item.channel,
     x: item.x ? {
       authorName: item.x.authorName, handle: item.x.handle, avatarUrl: item.x.avatarUrl,
       ...(item.x.avatarSrcSet ? { avatarSrcSet: item.x.avatarSrcSet } : {}), media: item.x.media,

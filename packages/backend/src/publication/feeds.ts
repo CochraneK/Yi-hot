@@ -176,3 +176,16 @@ export async function dailyFeed(): Promise<string> {
 export function isFeedCategory(v: string): v is PublicApiCategoryKey {
   return (PUBLIC_API_CATEGORY_KEYS as readonly string[]).includes(v);
 }
+
+export async function periodFeed(kind: "weekly" | "monthly"): Promise<string> {
+  const index = await reportIndex(kind);
+  const label = kind === "weekly" ? "周报" : "月报";
+  const items = index.rows.slice(0, 30).map(r => {
+    const url = siteUrl(`/${kind}/${r.key}`);
+    const description = `本期公益${label}已发布，点击查看完整报告与原文来源。`;
+    return `<item><title>${cdata(`公益总报 · ${label} · ${r.key}`)}</title>
+      <link>${url}</link><description>${cdata(`<p>${description}</p>`)}</description>
+      <pubDate>${rfc822(r.generated_at)}</pubDate><guid isPermaLink="false">${kind}-${escapeXml(r.key)}</guid></item>`;
+  });
+  return channel({ title: `公益总报 · ${label}`, description: `公益行业${label}，保留最近 30 期。`, homePath: `/${kind}`, selfPath: `/feed/${kind}.xml`, ttl: 120 }, items);
+}

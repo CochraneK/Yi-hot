@@ -64,6 +64,25 @@ async function storyFor(id: string, role: "report" | "mention" = "report"): Prom
 }
 
 const released = () => ({ releasedAt: new Date(Date.now() - 60_000) });
+test('all dynamics use source dates for pagination, search and topic tag filters', async () => {
+  const old = await article();
+  const recent = await article();
+  const now = new Date();
+  const earlier = new Date(now.getTime() - 86400000);
+  const later = new Date(now.getTime() - 3600000);
+  await sql`UPDATE articles SET published_at=${earlier},timeline_at=${now} WHERE id=${old}`;
+  await sql`UPDATE articles SET published_at=${later},timeline_at=${earlier} WHERE id=${recent}`;
+  await sql`UPDATE analyses SET tags=${[T, 'entity:tencent-charity']} WHERE article_id IN (${old},${recent})`;
+  await publishArticle(old, released()); await publishArticle(recent, released());
+  for (const suffix of ['', `&q=${T}`, `&q=${T}&tab=relevance`]) {
+    const result = JSON.parse((await get(`/api/site/pool?tag=${T}${suffix}`)).body);
+    assert.deepEqual(result.items.map((i: {id: string})=>i.id), [recent,old]);
+    assert.ok(result.items[0].tags.includes('腾讯公益'));
+    assert.equal(result.items[0].publishedAt, later.toISOString());
+  }
+  const tagged = JSON.parse((await get('/api/site/pool?tag='+encodeURIComponent('腾讯公益'))).body);
+  assert.ok(tagged.items.some((i: {id: string})=>i.id===recent));
+});
 async function get(url: string, headers: Record<string, string> = {}) {
   const res = await app.inject({ method: "GET", url, headers });
   return { status: res.statusCode, body: res.body, etag: res.headers.etag as string | undefined };

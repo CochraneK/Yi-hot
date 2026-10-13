@@ -1,6 +1,7 @@
 # YiHot × NewsMail × charity-intelligence：统一公益情报平台
 
 > **Canonical integration decision · 2026-10-08**
+> **2026-10-13 产品决策**：取消自动日报及日报补刊，仅生成周报、月报，统一入口为「公益总报」。后续增加群发邮件功能已列入待办，当前未配置 SMTP、收件人或发送邮件。
 > **2026-10-12 补充决策**：项目所有者选择免费自托管 WeRSS；允许新增独立的公众号 RSS 采集服务，YiHot 仍是唯一选稿、归组和对外发布平台。下文“不引入长期 RSS 系统”的旧限制仅对此方案取消，实施见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。
 > 方向已由项目所有者确认：以 `CochraneK/yihot`（上游 AIHOT 衍生）作为**唯一持续对外提供公益资讯服务的主平台**，逐步吸收 `CochraneK/NewsMail` 与 `CochraneK/charity-intelligence` 的可复用能力与资产。
 > **注意：这是目标架构与迁移账本，不是已经完成的代码/数据合并。**
@@ -9,6 +10,12 @@
 > **统一信源唯一规范（M0）**：[SOURCE_GOVERNANCE_DESIGN.md](SOURCE_GOVERNANCE_DESIGN.md)。Source/Channel/Connector/Publisher/Collection 的正交定义优先于本路线图中的简写；本文负责仓库整合，规范文档负责信源设计与状态机。
 
 ## 1. 明确分工（MECE）
+
+### 后续待办：邮件分发与邮件信源（2026-10-13）
+
+- [ ] **群发邮件**：复用 NewsMail 的 SMTP 经验，将 YiHot 已公开的周报、月报发送给主动订阅的收件人。实现订阅确认、退订、发送回执和重复发送保护；发送与采集分离，不建立第二套报告生成器。待明确发送邮箱、SMTP/OAuth 配置、收件人管理方式与周期；当前只记录，不实际发送。
+- [ ] **邮件信源**：使用专用订阅邮箱或专用文件夹，只读取已确认的 newsletter 发件人。通过 IMAP/OAuth 定时解析邮件中的公开文章链接、标题和来源，经既有 `/api/ingest/items`（鉴权入口）或自托管 RSS 接入 YiHot。以 Message-ID + 原文 URL 去重；不把退订、广告和跟踪链接当文章，不把邮件发送时间冒充原文发表时间。原文日期可靠时才写 `publishedAt`，否则留空，由界面明确显示收录时间。
+- [ ] **AmCham 邮件入口**：官网及 [Glue Up 订阅页](https://amcham.glueup.cn/org/amcham-china/subscriptions/) 提供 newsletter。选定收件邮箱、完成订阅确认并拿到一封真实样本后再实现邮件连接器；无需新增模型调用来拆分链接和标签，选稿仍使用 YiHot 原有管线。网站解析受阻的现阶段已另用认证公众号接入，见 `PRODUCT_UPDATE_2026-10-13.md`。
 
 | 能力域 | 最优继承来源 | 未来唯一权威位置 | 不重复做什么 |
 |---|---|---|---|

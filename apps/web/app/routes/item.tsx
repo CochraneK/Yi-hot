@@ -197,7 +197,7 @@ export default function ItemPage() {
       <div className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
         {isX ? `@${item.x!.handle} · X` : item.author ?? hostOf(item.links.original)}
       </div>
-      <div className="mt-3 text-[12px] text-ink-4">发布时间</div>
+      <div className="mt-3 text-[12px] text-ink-4">{item.publishedAt ? "原文发布时间" : "原文日期未知 · 本站收录时间"}</div>
       <time dateTime={publishedIso} className="mono mt-0.5 block text-[12.5px] text-ink-2">
         {fullDateTime(publishedIso)}
       </time>
@@ -287,6 +287,7 @@ export default function ItemPage() {
             {isX && <span>· @{item.x!.handle} · X</span>}
             {item.author && !isX && <span>· {item.author}</span>}
             <span>·</span>
+            {!item.publishedAt && <span>收录于</span>}
             <time dateTime={publishedIso} className="mono">{fullDateTime(publishedIso)}</time>
             <span suppressHydrationWarning>· {relativeTime(publishedIso)}</span>
             {item.selected && (

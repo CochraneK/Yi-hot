@@ -10,7 +10,7 @@
 > | `tools/` | 同步 / 部署 / 核查脚本（`tools/README.md` 有清单与用法） |
 > | `secrets/` | 凭据**加密归档**（`credentials.env.enc` + `tools/secrets.sh`，一把口令；见 `secrets/README.md`） |
 >
-> 更新时间：2026-10-13。六项修复已部署腾讯云并通过线上 smoke；GitHub [PR #6](https://github.com/CochraneK/Yi-hot/pull/6) 已创建。三个网站来源已试抓 58 条历史样本；免费 WeRSS 已通过微信读书扫码实采公益时报 43 篇，YiHot 首抓入库 30 篇。四个新增来源均暂停、隔离；WeRSS 每两小时刷新。生产状态见 [DEPLOYMENT_2026-10-12.md](DEPLOYMENT_2026-10-12.md)，信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，后续部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+> 更新时间：2026-10-13。六项修复已部署腾讯云并通过线上 smoke；GitHub [PR #6](https://github.com/CochraneK/Yi-hot/pull/6) 已创建。三个网站来源已试抓 58 条历史样本；免费 WeRSS 已通过微信读书扫码实采公益时报 43 篇，YiHot 首抓入库 30 篇。用户已明确授权四个新来源全部启用，运行时均为 `enabled=true`、`participation_mode=editorial`，全文仍关闭；原有 88 条样本已进入正常处理，首轮已观察到 17 篇精选。WeRSS 每两小时刷新。生产状态见 [DEPLOYMENT_2026-10-12.md](DEPLOYMENT_2026-10-12.md)，信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，后续部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
 
 
 ---

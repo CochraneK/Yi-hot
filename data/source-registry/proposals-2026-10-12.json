@@ -16,14 +16,24 @@
       "note": "用户指定补充来源：企业公益、CSR/ESG、社会影响力、社区及乡村发展，优先 Social Impact Initiative 栏目。2026-10-12 本机主页、栏目、新闻归档及 /feed/ 直连均返回 HTTP 468，未验证到正常列表或 RSS；需在腾讯云复验后配置解析并启用。主体为中国美国商会，不能与美中贸易全国委员会混为一谈。"
     },
     {
+      "id": "email-amcham-events",
+      "name": "AmCham China Events 邮件",
+      "kind": "email_newsletter",
+      "tier": "T2",
+      "first_party": true,
+      "status": "mailbox_verified_connector_ready",
+      "url": "https://amcham.glueup.cn/",
+      "note": "QQ IMAP 已只读验证显示发件人 amchamevent@amchamchina.org、信封域 ebmail.amchamchina.org 和 29 封历史样本。连接器只保留社会影响力、公益、ESG、可持续发展、乡村、教育、儿童、残障、环境、气候、社区和志愿主题；普通商务活动、培训、退订和统计链接不入库。首次只立游标，不回灌历史邮件。"
+    },
+    {
       "id": "amity-chuanyi-newsletter",
       "name": "爱德传一基金 · 慈善纪事简报",
       "kind": "email_newsletter",
       "tier": "T2",
       "first_party": true,
-      "status": "subscription_link_supplied",
+      "status": "mailbox_verified_connector_ready",
       "url": "https://etrack01.com/track/click2/eNplUF1PwzAM_C8RfktT56tx3shGfgVCVZu1o2zrGO0kEOK_kzAhHpAs63Q-n3V-tM6h5YxxJh15K53TZB222pJvtfReoWtJN2JJlcTKV1lRKVTVNPfn67zDu-11_pgO3by_v1xEOp8YR86e1_UVdKjr4_skTkO94DK8gEKIGgiBthAJQoSgIHrwBGQhNqUTQbTgMzYHWwChADRFECbwuSt7FDEeWR_DR9-zo7dcRlKFmyEs6JxQirD_vhcSu9Gko3WfdcMY7KjJZeMSTtvZNdbc1MN61uXDihvgT6_ePkHN5qzf3GfvgG-OlH_.html",
-      "note": "用户于 2026-10-13 指定补充邮件来源并提供《慈善纪事简报》订阅链接。规范主体是爱德基金会传一慈善文化基金（简称爱德传一基金），不是独立基金会；公开资料确认其运营《慈善纪事简报》，公众号 ID 为 Chuanyi_2015。该跟踪链接在自动化环境返回 HTTP 400，可能要求正常浏览器会话或已失效；待专用收件邮箱完成订阅并取得一封真实样本后，核验发件人、Message-ID、正文结构、原文链接与发布日期，再启用邮件连接器。"
+      "note": "用户于 2026-10-13 指定补充邮件来源并提供《慈善纪事简报》订阅链接。规范主体是爱德基金会传一慈善文化基金（简称爱德传一基金），不是独立基金会；公众号 ID 为 Chuanyi_2015。QQ IMAP 已只读验证发件人 aidechuany@batch.lingxi360.com 和 83 封历史样本；连接器按整期简报接入，首次只立游标、不回灌历史邮件，邮件 Date 不作为原文发表日期。"
     },
     {
       "id": "china-development-brief",

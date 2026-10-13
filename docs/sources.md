@@ -89,7 +89,7 @@ Content-Type: application/json
   "sourceId": "my-crawler",
   "sourceName": "我的抓取脚本",
   "items": [
-    { "title": "必填", "url": "必填", "publishedAt": "2026-10-01T08:00:00+08:00", "author": "可选" }
+    { "title": "必填", "url": "必填", "publishedAt": "2026-10-01T08:00:00+08:00", "author": "可选", "excerpt": "可选，最多 12000 字" }
   ]
 }
 ```
@@ -97,5 +97,6 @@ Content-Type: application/json
 - `INGEST_TOKEN` 在 `.env` 里设置，至少 16 位；不设置时接口一律返回 401。
 - 每次最多 50 条；每个客户端每分钟最多 10 次。
 - 返回 `{"ok": true, "created": <新建条数>}`。缺标题或网址的条目会被跳过，同一请求里重复的网址只取第一条。
+- `excerpt` 供邮件等外部连接器传入已获准处理的摘要或正文片段；它只作为理解素材，是否公开全文仍由信源的 `site_fulltext` 决定。
 - `sourceId` 不存在时会自动建一个 `external` 信源，默认不进公开页面：到后台把它的参与方式改成 `editorial` 才会出现在站上。
 - 条目的 `raw._aihot.backfill` 为 `true` 时按历史回灌处理（不进入“今天”、不推送）。

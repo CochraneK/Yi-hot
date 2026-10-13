@@ -26,7 +26,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
   const open = () => onOpen?.(item.id);
   const showSources = !!group && (group.additionalSourceCount > 0 || (group.developmentCount <= 1 && group.reportCount > 1));
   const showDevelopments = !!group?.story && group.developmentCount > 1;
-  const tags = showTags ? item.tags.slice(0, 3) : [];
+  const tags = showTags ? item.tags : [];
 
   return (
     <article className="relative min-w-0 lg:card lg:card-hover lg:px-[18px] lg:pb-[14px] lg:pt-[15px]" data-item-id={item.id}>
@@ -71,14 +71,14 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       {isX && item.x!.quoted?.text && <QuotedLine quoted={item.x!.quoted} />}
 
       {(tags.length > 0 || (showTags && item.category)) && (
-        <div className="relative z-10 mt-2 hidden flex-wrap gap-x-2.5 gap-y-1 text-[12px] text-ink-4 lg:flex">
+        <div aria-label="动态标签" className="relative z-10 mt-2 flex flex-wrap gap-1.5 text-[12px] text-ink-3">
           {showTags && item.category && (
-            <Link to={`/all?category=${item.category}`} className="hover:text-accent">
+            <Link to={`/all?category=${item.category}`} className="rounded-full bg-bg-sunk px-2 py-0.5 hover:text-accent">
               {CATEGORY_LABELS[item.category]}
             </Link>
           )}
           {tags.map((t) => (
-            <Link key={t} to={`/all?tag=${encodeURIComponent(t)}`} className="hover:text-accent">
+            <Link key={t} to={`/all?tag=${encodeURIComponent(t)}`} className="rounded-full bg-bg-sunk px-2 py-0.5 hover:text-accent">
               #{t}
             </Link>
           ))}

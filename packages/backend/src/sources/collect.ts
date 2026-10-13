@@ -11,6 +11,7 @@ import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
 import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog, type XRead } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
+import { publishArticle } from "../publication/publish.ts";
 
 export interface CollectResult {
   sourceId: string;
@@ -75,6 +76,7 @@ async function store(sourceId: string, candidates: Candidate[], backfill: string
     const res = await upsertMaterial(material);
     if (res.created) created += 1;
     if (res.revised) revised += 1;
+    if (res.metadataChanged) await publishArticle(res.articleId);
     // Extraction first when the source wants full text and none came with the listing, else analysis.
     if (res.created || res.revised) await queueProcessing(res.articleId);
   }

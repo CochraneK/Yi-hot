@@ -8,6 +8,7 @@ import { behindSources, sourceClocks } from "../events/hot.ts";
 import { storyStatusFor } from "../events/digest.ts";
 import { itemUrl, storyApiUrl, storyUrl } from "./links.ts";
 import { SITE } from "@aihot/industry/site";
+import { restrictedStoryCopy } from "./story-copy.ts";
 
 export type StoryLookup = { kind: "found"; storyId: number; publicId: string } | { kind: "merged"; target: string } | { kind: "not_found" };
 
@@ -88,6 +89,10 @@ async function storyContent(storyId: number, now: Date) {
   const reports = await storyReports(storyId, now);
   if (reports.length === 0) return null;
   reports.sort((a, b) => b.at.getTime() - a.at.getTime());
+  if ((s.digest || s.summary || s.latest) && await restrictedStoryCopy(storyId)) {
+    s.digest = null; s.digest_updated_at = null; s.summary = null; s.latest = null;
+    s.title = reports[reports.length - 1]!.title;
+  }
 
   const byFact = new Map<number, ReportRow[]>();
   for (const r of reports) byFact.set(r.fact_id, [...(byFact.get(r.fact_id) ?? []), r]);

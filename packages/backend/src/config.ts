@@ -42,6 +42,8 @@ export const config = {
   siteUrl: str("SITE_URL", SITE.defaultUrl).replace(/\/+$/, ""),
   selectedVisibleAfterSeconds: int("SELECTED_VISIBLE_AFTER_SECONDS", 180),
   egressProxyUrl: env.EGRESS_PROXY_URL || null,
+  /** Optional private WeRSS origin; the exception is limited to read-only /feed/<id> XML endpoints. */
+  weRssBaseUrl: env.WERSS_BASE_URL || null,
   allowPrivateNetworkFetch: bool("ALLOW_PRIVATE_NETWORK_FETCH", false),
   feishuContentPushEnabled: bool("FEISHU_CONTENT_PUSH_ENABLED", false),
   indexNowSubmitEnabled: bool("INDEXNOW_SUBMIT_ENABLED", false),

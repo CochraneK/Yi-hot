@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/source-candidates";
 import { adminGet } from "../../lib/admin.server";
-import { findLegacyCandidates, legacySourceTotal } from "../../lib/source-registry.server";
+import { findLegacyCandidates, legacySourceTotal, sourceProposals, sourceReviewDate } from "../../lib/source-registry.server";
 import { useAdminAction } from "../../features/admin/action";
 import { AdminPage, Badge, Button, ButtonLink, Card, Empty, Input } from "../../features/admin/ui";
 
@@ -22,6 +22,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     existing: existing.rows.slice(0, query ? 15 : 5),
     candidates: findLegacyCandidates(query),
     candidateTotal: legacySourceTotal,
+    proposals: sourceProposals.filter(p => !query || `${p.name} ${p.url} ${p.note}`.toLowerCase().includes(lookup.toLowerCase())),
+    reviewedAt: sourceReviewDate,
   };
 }
 
@@ -32,7 +34,7 @@ function draftLink(url: string, name: string, kind: "rss" | "web_list" | "json_l
 }
 
 export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
-  const { query, candidates, candidateTotal, existing } = loaderData;
+  const { query, candidates, candidateTotal, existing, proposals, reviewedAt } = loaderData;
   const [url, setUrl] = useState(query.startsWith("http") ? query : "");
   const [discovery, setDiscovery] = useState<Discovery | null>(null);
   const { run, pending } = useAdminAction();
@@ -60,7 +62,22 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
             </div>
             <button type="submit" className="rounded-control bg-ink px-4 py-2 text-[13px] font-medium text-bg hover:opacity-90">查找</button>
           </Form>
-          <p className="mt-2 text-[12px] text-ink-4">已载入 NewsMail 历史候选 {candidateTotal} 条；还会比对当前 YiHot 数据库。历史清单不代表可用或有采集授权。</p>
+          <p className="mt-2 text-[12px] text-ink-4">已载入 NewsMail、charity-intelligence 历史候选 {candidateTotal} 条；还会比对当前 YiHot 数据库。历史清单不代表可用或有采集授权。</p>
+        </Card>
+
+        <Card title={`${reviewedAt} 补充建议`}>
+          <div className="divide-y divide-line/70">
+            {proposals.map(p => <div key={p.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
+              <div className="min-w-0 flex-1">
+                <a href={p.url} target="_blank" rel="noreferrer" className="text-[13.5px] font-medium text-ink hover:text-accent">{p.name}</a>
+                <p className="mt-1 text-[12px] text-ink-3">{p.note}</p>
+              </div>
+              {p.status === "preview_ready"
+                ? <ButtonLink to={`/admin/sources/new?proposal=${encodeURIComponent(p.id)}`}>带入配置并试抓</ButtonLink>
+                : <Badge tone="warn">待核查</Badge>}
+            </div>)}
+          </div>
+          <div className="mt-3 border-t border-line pt-3"><ButtonLink to="/admin/sources/new?wechat=1">添加公众号 RSS（WeRSS）</ButtonLink></div>
         </Card>
 
         {existing.length > 0 && (
@@ -94,7 +111,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
                           : <Badge tone="warn">待核查</Badge>}
                     </div>
                     <div className="break-all text-[12px] text-ink-4">{candidate.url ?? `关键词：${candidate.locator}`}</div>
-                    <div className="text-[11px] text-ink-4">来自 NewsMail · 第 {candidate.source_line} 行；不视作自动采集许可</div>
+                    <div className="text-[11px] text-ink-4">来自 {candidate.source_file} · 第 {candidate.source_line} 行；不视作自动采集许可</div>
                     {candidate.observation && <div className="text-[11px] text-ink-4">2026-10-08 网络探测：HTTP {candidate.observation.status} · {candidate.observation.classification}；只是历史快照，需复验</div>}
                   </div>
                   <div className="flex flex-wrap gap-2">

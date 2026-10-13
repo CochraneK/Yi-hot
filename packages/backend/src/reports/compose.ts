@@ -3,6 +3,7 @@
 // the industry pack (industry/prompts/report-*.md), the sections follow its categories.
 import { z } from "zod";
 import { SITE } from "@aihot/industry/site";
+import { FEATURES } from "@aihot/industry/features";
 import { CATEGORIES } from "@aihot/industry/taxonomy";
 import { promptText, promptVersion } from "../editorial/prompts.ts";
 import { modelFor } from "../editorial/models.ts";
@@ -224,7 +225,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   }
   const content = {
     kind,
-    title: kind === "weekly" ? `${SITE.name} 周报 · ${key}` : `${SITE.name} 月报 · ${key}`,
+    title: `公益总报 · ${kind === "weekly" ? "周报" : "月报"} · ${key}`,
     ...(kind === "weekly" ? { isoLabel: key } : { monthLabel: key }),
     periodStart: startDate,
     periodEnd: endDateInclusive,
@@ -232,7 +233,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     overview,
     themes,
     storyOrder: top.map((e) => e.itemId),
-    metrics: { totalStories: themes.reduce((n, t) => n + t.storyRefs.length, 0), selectedCount: all.length, reportsCovered: Number(dailyCount) },
+    metrics: { totalStories: themes.reduce((n, t) => n + t.storyRefs.length, 0), selectedCount: all.length, ...(FEATURES.dailyReports ? { reportsCovered: Number(dailyCount) } : {}) },
     generator: { version: REPORT_VERSION, model },
   };
   await saveReport(kind, key, start, end, content, reason, model);
@@ -264,7 +265,7 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
   const bjHour = Number(new Date(now.getTime() + 8 * 3600000).toISOString().slice(11, 13));
   const [first] = await sql<{ key: string | null }[]>`SELECT min(key) AS key FROM reports WHERE kind = 'daily'`;
   const latestDue = bjHour >= 8 ? today : addDays(today, -1);
-  for (let i = days - 1; i >= 0; i--) {
+  for (let i = FEATURES.dailyReports ? days - 1 : -1; i >= 0; i--) {
     if (shutdownSignal.signal.aborted) return { generated }; // the next hourly run continues
     const d = addDays(latestDue, -i);
     if (first?.key && d < first.key) continue;

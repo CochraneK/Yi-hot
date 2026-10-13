@@ -1,12 +1,13 @@
 // Names, dates and grouping for daily, weekly and monthly reports.
 import type { ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
-import { beijingWeekday } from "../../lib/format";
+import { beijingWeekday } from "../../lib/format.ts";
 
-export const KINDS: ReportKind[] = ["daily", "weekly", "monthly"];
+export const KINDS: ReportKind[] = ["weekly", "monthly"];
 export const KIND_PATH: Record<ReportKind, string> = { daily: "/daily", weekly: "/weekly", monthly: "/monthly" };
 export const KIND_LABEL: Record<ReportKind, string> = { daily: "日报", weekly: "周报", monthly: "月报" };
 
 export function kindFromPath(pathname: string): ReportKind {
+  pathname = pathname.replace(/^\/yihot(?=\/|$)/, "") || "/";
   if (pathname.startsWith("/weekly")) return "weekly";
   if (pathname.startsWith("/monthly")) return "monthly";
   return "daily";
@@ -35,9 +36,9 @@ export function monthRange(key: string): [string, string] {
 
 /** "这一天的 4 件 AI 大事" / "本周的 12 件 AI 大事" / "8 月的 20 件 AI 大事". */
 export function headline(kind: ReportKind, key: string, count: number): string {
-  if (kind === "daily") return `这一天的 ${count} 件 AI 大事`;
-  if (kind === "weekly") return `本周的 ${count} 件 AI 大事`;
-  return `${Number(key.slice(5, 7))} 月的 ${count} 件 AI 大事`;
+  if (kind === "daily") return `这一天的 ${count} 件公益大事`;
+  if (kind === "weekly") return `本周的 ${count} 件公益大事`;
+  return `${Number(key.slice(5, 7))} 月的 ${count} 件公益大事`;
 }
 
 /** "09.16" for a story inside a week or month. */
@@ -135,7 +136,6 @@ const METRICS: Array<[key: string, unit: string]> = [
   ["firstPartyEvents", "件一手发布"],
   ["modelsReleased", "个新模型"],
   ["selectedCount", "条精选"],
-  ["reportsCovered", "期日报"],
 ];
 export function metricItems(metrics: Record<string, number>): Array<{ value: number; unit: string }> {
   return METRICS.filter(([k]) => typeof metrics[k] === "number" && (k !== "modelsReleased" || metrics[k]! > 0)).map(([k, unit]) => ({ value: metrics[k]!, unit }));

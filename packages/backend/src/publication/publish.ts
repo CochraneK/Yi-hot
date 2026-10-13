@@ -68,6 +68,9 @@ interface PublicationRow {
   indexable: boolean;
   seo_indexed_at: Date | null;
   seo_excluded_at: Date | null;
+  published_at: Date | null;
+  timeline_at: Date;
+  backfill: boolean;
 }
 
 export interface V1ItemPayload {
@@ -236,6 +239,8 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
   };
   const changed =
     !previous ||
+    previous.published_at?.getTime() !== article.published_at?.getTime() ||
+    previous.timeline_at.getTime() !== article.timeline_at.getTime() || previous.backfill !== article.backfill ||
     stableJson({ ...next, tags: [...next.tags].sort() }) !==
       stableJson({
         visibility: previous.visibility, eligible: previous.eligible, selected: previous.selected, title: previous.title,
@@ -329,6 +334,21 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
       (previous!.visibility === "public" && visibility !== "public") ||
       (previous!.selected && !selected) ||
       (previous!.body_mode === "full" && bodyMode !== "full"));
+  if (previous?.visibility === "public" && (visibility !== "public" || (previous.eligible && !eligible))) {
+    // Revoke derived copy in the same transaction as its evidence. This also invalidates a digest
+    // already being written: the worker checks the story version before committing its answer.
+    const stories = await tx<{ id: number }[]>`
+      UPDATE stories st SET digest = NULL, summary = NULL, latest = NULL, digest_updated_at = NULL,
+        title = coalesce((SELECT p.title FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id
+          JOIN publications p ON p.article_id = fa.article_id JOIN sources s ON s.id = p.source_id
+          WHERE f.story_id = st.id AND p.visibility = 'public' AND p.eligible AND s.participation_mode = 'editorial'
+          ORDER BY coalesce(p.published_at, p.discovered_at), p.article_id LIMIT 1), st.title),
+        version = version + 1, updated_at = now()
+      WHERE st.id IN (SELECT DISTINCT f.story_id FROM fact_articles fa JOIN facts f ON f.id = fa.fact_id
+        WHERE fa.article_id = ${articleId} AND f.story_id IS NOT NULL) RETURNING st.id`;
+    for (const story of stories) await enqueue(QUEUES.digest, { storyId: story.id, afterCorrection: true },
+      { singletonKey: `story:${story.id}:correction`, startAfter: 5 }, tx);
+  }
   return { articleId, changed, selected, visibility, ledger, reduced };
 }
 

@@ -39,9 +39,9 @@ async function build(): Promise<string> {
   entries.push(
     { loc: "/", lastmod: now, changefreq: "hourly", priority: 1 },
     { loc: "/all", lastmod: now, changefreq: "hourly", priority: 0.9 },
-    { loc: "/daily", lastmod: latestDaily?.t, changefreq: "daily", priority: 0.9 },
+    ...(FEATURES.dailyReports ? [{ loc: "/daily", lastmod: latestDaily?.t, changefreq: "daily", priority: 0.9 }] : []),
     { loc: "/hot", lastmod: now, changefreq: "hourly", priority: 0.9 },
-    { loc: "/daily/archive", lastmod: latestDaily?.t, changefreq: "daily", priority: 0.7 },
+    ...(FEATURES.dailyReports ? [{ loc: "/daily/archive", lastmod: latestDaily?.t, changefreq: "daily", priority: 0.7 }] : []),
     { loc: "/weekly", changefreq: "weekly", priority: 0.7 },
     { loc: "/monthly", changefreq: "monthly", priority: 0.6 },
     { loc: "/topics", changefreq: "daily", priority: 0.7 },

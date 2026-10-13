@@ -6,8 +6,15 @@ import { useAdminAction } from "../../features/admin/action";
 import { bj } from "../../features/admin/format";
 import { KIND_LABEL, MODE_LABEL, TIER_LABEL } from "../../features/admin/labels";
 import { AdminPage, Button, Card, Empty, Field, Input, Select, Textarea } from "../../features/admin/ui";
+import { sourceProposals } from "../../lib/source-registry.server";
 
 export const meta: Route.MetaFunction = () => [{ title: `新建信源 · ${SITE.name} 后台` }];
+
+export function loader({ request }: Route.LoaderArgs) {
+  const id = new URL(request.url).searchParams.get("proposal");
+  const proposal = sourceProposals.find(p => p.id === id && p.status === "preview_ready");
+  return { proposal: proposal ?? null };
+}
 
 const TEMPLATES: Record<string, Record<string, unknown>> = {
   rss: { feedUrl: "https://example.com/feed.xml" },
@@ -24,17 +31,20 @@ interface Preview {
   items: Array<{ title: string; url: string; publishedAt: string | null; excerpt: string }>;
 }
 
-export default function NewSource() {
+export default function NewSource({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const requestedKind = params.get("kind");
+  const proposal = loaderData.proposal;
+  const wechat = params.get("wechat") === "1";
+  const requestedKind = proposal?.kind ?? params.get("kind");
   const initialKind = requestedKind && requestedKind in TEMPLATES ? requestedKind : "rss";
   const requestedUrl = params.get("url") ?? "";
   const initialUrl = (requestedUrl.startsWith("https://") || requestedUrl.startsWith("http://")) && requestedUrl.length <= 2048 ? requestedUrl : "";
-  const initialName = (params.get("name") ?? "").slice(0, 200);
+  const initialName = (proposal?.name ?? params.get("name") ?? "").slice(0, 200);
   const { run, pending } = useAdminAction();
-  const [form, setForm] = useState({ id: "", name: initialName, kind: initialKind, tier: "T2", participation_mode: "isolated", interval_minutes: 120, first_party: false, site_fulltext: false, syndicate_fulltext: false, tags: "" });
+  const [form, setForm] = useState({ id: proposal?.id ?? "", name: initialName, kind: initialKind, tier: proposal?.tier ?? "T2", participation_mode: "isolated", interval_minutes: 120, first_party: proposal?.first_party ?? false, site_fulltext: false, syndicate_fulltext: false, tags: "" });
   const [config, setConfig] = useState(() => {
+    if (proposal?.config) return JSON.stringify(proposal.config, null, 2);
     const template = { ...TEMPLATES[initialKind] };
     if (initialUrl && initialKind === "rss") template.feedUrl = initialUrl;
     if (initialUrl && initialKind === "web_list") template.url = initialUrl;
@@ -58,6 +68,20 @@ export default function NewSource() {
   return (
     <AdminPage title="新建信源" subtitle="先判重、先预览：优先 RSS/JSON 等稳定协议；首抓成功且有真实条目才算接入完成。一手身份要有运营主体或官方交叉链接证据。">
       <p className="mb-4 rounded-card bg-bg-sunk px-3 py-2 text-[12.5px] leading-relaxed text-ink-3">新信源创建后默认暂停，须核实采集许可、原标题与日期后在详情页手动启用；候选发现和预览本身不入库。</p>
+      {wechat && <Card title="公众号 RSS · WeRSS">
+        <p className="mb-3 text-[13px] text-ink-3">先在 WeRSS 扫码登录，搜索并添加公众号，再复制该账号的 RSS 链接。填入下面后点“预览抓取”，核对真实标题、发布日期和原文链接。</p>
+        <Field label="公众号 RSS 地址" hint="可直接粘贴 WeRSS 中复制的单个账号订阅链接，系统会转换为 YiHot 可读取的地址。">
+          <Input placeholder="粘贴公众号 RSS 链接" onChange={e => {
+            let feedUrl = e.target.value.trim();
+            try {
+              const u = new URL(feedUrl);
+              if (/^\/feed\/[A-Za-z0-9_-]+\.(?:rss|xml|atom)$/.test(u.pathname)) feedUrl = `http://werss:8001${u.pathname}${u.search}`;
+            } catch { /* Keep incomplete input for the preview's validation. */ }
+            setConfig(JSON.stringify({ feedUrl }, null, 2));
+            setForm(f => ({ ...f, kind: "rss" })); setPreview(null);
+          }} />
+        </Field>
+      </Card>}
       <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
         <Card title="信源定义">
           <div className="grid gap-4 sm:grid-cols-2">

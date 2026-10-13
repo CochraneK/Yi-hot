@@ -2,6 +2,7 @@
 import type { HotParticipant, HotStripEntry } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
+import { restrictedStoryCopy } from "../publication/story-copy.ts";
 
 export interface HotEntry {
   rank: number;
@@ -92,6 +93,9 @@ async function queryExtras(ranking: HotRanking): Promise<Extras> {
     faces: new Map(faces.map((f) => [f.name, f.icon_url ?? f.avatar])),
     texts: new Map(texts.map((t) => [Number(t.id), { summary: t.digest ?? t.summary, latest: t.latest }])),
   };
+  for (const t of texts) if ((t.digest || t.summary || t.latest) && await restrictedStoryCopy(Number(t.id))) {
+    extras.texts.set(Number(t.id), { summary: null, latest: null });
+  }
   extrasCache = { rankingId: ranking.id, extras };
   return extras;
 }

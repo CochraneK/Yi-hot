@@ -6,8 +6,10 @@ const values = (topic: (typeof topics)[number]) =>
   topic.entityId ? [`entity:${topic.entityId}`] : topic.tags;
 
 export function cardTags(tags: string[]): string[] {
-  const matched = topics.filter(topic => values(topic).some(tag => tags.includes(tag))).map(topic => topic.name);
-  return [...new Set([...matched, ...tags.filter(tag => !tag.startsWith("entity:"))])].slice(0, 8);
+  const matchedTopics = topics.filter(topic => values(topic).some(tag => tags.includes(tag)));
+  const covered = new Set(matchedTopics.flatMap(values));
+  const matched = matchedTopics.map(topic => topic.name);
+  return [...new Set([...matched, ...tags.filter(tag => !tag.startsWith("entity:") && !covered.has(tag))])].slice(0, 8);
 }
 
 /** A displayed topic label filters the same underlying tags that assigned it. */

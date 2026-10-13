@@ -1,4 +1,5 @@
 // Publication rules. Each rule is defined once here and used by every exit.
+import { TAG_SYNONYMS } from "@aihot/industry/taxonomy";
 
 export interface SourceFacts {
   id: string;
@@ -60,7 +61,9 @@ export function isIndexable(p: { visibility: string; hasSummary: boolean; select
   return p.visibility === "public" && p.hasSummary && p.seoExcludedAt === null && (p.selected || p.seoIndexedAt !== null);
 }
 
-/** Display tags exclude internal entity markers. */
+/** Display tags exclude internal entity markers and use the current concise vocabulary. */
 export function displayTags(tags: string[]): string[] {
-  return tags.filter((t) => !t.startsWith("entity:"));
+  return [...new Set(tags
+    .filter((t) => !t.startsWith("entity:"))
+    .map((t) => TAG_SYNONYMS[t] ?? t))];
 }

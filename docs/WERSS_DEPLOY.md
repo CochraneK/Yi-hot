@@ -47,7 +47,15 @@ ssh -N -L 18001:127.0.0.1:18001 ubuntu@49.233.72.222
 
 公众平台文章列表可能返回 `200013: freq control`，同时搜索仍正常；本实例 2026-10-13 已复现。上游 [issue #469](https://github.com/rachelos/we-mp-rss/issues/469) 记录了同类问题。不要持续点击刷新；官方镜像的刷新 API 会异步执行，立即返回 `total=0` 并不代表任务已结束。以 SQLite 入库数和 RSS 实际条目验收。
 
-可在 WeRSS 的微信读书管理页另行扫码，再测试公众号采集连接；Cookie 保存在本机服务数据中，不粘贴到聊天或提交仓库。当前代码的微信读书公众号通道会自动关注目标公众号以加入书架。它主要用于最新文章增量，不能承诺远期历史文章回补；扫码后仍要实测 feed 和 YiHot 入库，未通过时保持来源暂停。
+可在 WeRSS 的微信读书管理页另行扫码，再测试公众号采集连接；Cookie 保存在本机服务数据中，不粘贴到聊天或提交仓库。本实例已实测文章列表可用，公益时报 43 篇入 WeRSS、30 篇入 YiHot，日期与原文短链核对通过。微信原文网页可能仍返回环境验证页面，未开启全文采集或公开全文。
+
+### 本实例的微信读书兼容层
+
+固定镜像的采集器只读 cover，误把当前时间作为发布日期。复制 `deploy/werss/` 下的兼容补丁、覆盖配置、采集脚本及两个 systemd 文件到 `/opt/werss`，用 root 执行 `bash install-weread-compat.sh`。脚本核验固定版本原模块 SHA 后生成只读覆盖文件，保留原模块备份；版本不匹配直接失败，升级时必须重新审查，不能强行绕过 SHA 检查。
+
+本次补丁走已登录微信读书的文章列表，固定移动端表示以取得真实原文短链，拒绝桌面响应的 WR1 不透明 ID；保留真实日期并按文章 ID 去重，缺少必需元数据时不推进游标。正文补抓关闭。`yihot-weread.timer` 每两小时运行，只更新已订阅账号，不发送消息、不使用付费模型。验证：`python deploy/werss/test_weread_compat.py`。
+
+后续管理 WeRSS 始终使用 `docker compose -f compose.yml -f compose.weread.yml`；bootstrap 会在覆盖文件已安装时保留它。定时器状态用 `systemctl status yihot-weread.timer`，任务结果用 `journalctl -u yihot-weread.service`。回滚先停用定时器，再用仅 `compose.yml` 重建 WeRSS；保留 `.env` 和 data。微信读书 Cookie 失效时重新扫码，采集错误会让任务失败，不能把空 feed 报作成功。
 
 ## 故障定位
 

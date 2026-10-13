@@ -1,0 +1,9 @@
+services:
+  werss:
+    environment:
+      GATHER.MODEL: weread_mp
+      GATHER.CONTENT: "False"
+      GATHER.CONTENT_AUTO_CHECK: "False"
+    volumes:
+      - ./overrides/weread_mp.py:/app/core/wx/model/weread_mp.py:ro
+      - ./collect-weread.py:/app/yihot-collect-weread.py:ro

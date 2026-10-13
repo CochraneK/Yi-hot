@@ -21,13 +21,13 @@
 - 本机完整站点冒烟检查通过：页面、RSS、公开 API、MCP、manifest、分享图片等；新增候选页及两种新建入口均 HTTP 200。
 - WeRSS 本地桩测试验证：原微信 URL、日期、正文保留；只允许指定服务的单账号 feed，私网其他路径和跨地址重定向被拒绝。
 - 中国发展简报 8 条、公益时报 20 条、SSIR RSS 40 条为本机真实网络解析结果；没有将历史清单自动启用。
-- WeRSS 的 YAML 可解析、bootstrap Bash 语法通过；尚未在实际服务器执行 Docker Compose。
+- WeRSS 的 YAML 可解析、bootstrap Bash 语法通过；实际服务器 Compose 已启动，内部 feed 网络连通，公众平台扫码及账号搜索成功。
 
 ## 尚未验证或完成
 
-- 腾讯云部署：当前未发现解密后的 `secrets/credentials.env`，没有可用部署凭据，未更改生产服务。
+- 腾讯云部署：应用修复已部署并通过线上 smoke；WeRSS 已运行，但公众号文章列表返回微信 `200013: freq control`，RSS 仍为空。微信读书备用通道待扫码实测。实际镜像、备份和网络状态见 `DEPLOYMENT_2026-10-12.md`。
 - 公众号实采：需部署后由用户扫码登录并核实账号，再验证真实 feed 和 YiHot 入库。当前验证的是接入代码与本地 RSS 桩。
-- GitHub 发布：本地分支保存改动，等待归档内的 GitHub 凭据；未推送或合并 main。同步工具支持 `--branch` 与 `--expect-head`。
+- GitHub 发布：已通过同步工具发布工作分支并创建 [PR #6](https://github.com/CochraneK/Yi-hot/pull/6)，未合并 main。同步工具支持 `--branch` 与 `--expect-head`。
 - npm 审计仍有 satori/fflate 链路的 2 个 moderate 条目；未通过跨版本降级或强制覆盖依赖来声称消除所有公告。本次没有引入 ZIP 解包接口。
 
 本次无数据库结构迁移，不覆盖运行时 sources 配置、不更改生产模型和付费安全阀。

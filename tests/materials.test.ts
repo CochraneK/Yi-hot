@@ -52,6 +52,26 @@ test("an unchanged report does not add a revision", async () => {
   assert.equal(article!.revision, 1);
 });
 
+test("a later source date corrects history without a content revision, and another source cannot change it", async () => {
+  const material = { sourceId: SOURCE, url: `https://example.com/date-${tag()}`, title: "Known title", via: "fetch" as const,
+    discoveredAt: new Date("2026-10-12T00:00:00Z") };
+  const first = await upsertMaterial(material);
+  const corrected = await upsertMaterial({ ...material, publishedAt: new Date("2026-04-01T00:00:00Z") });
+  assert.equal(corrected.revised, false);
+  assert.equal(corrected.metadataChanged, true);
+  const [a] = await sql`SELECT revision, published_at, timeline_at, discovered_at, backfill FROM articles WHERE id = ${first.articleId}`;
+  assert.equal(a!.revision, 1);
+  assert.equal((a!.timeline_at as Date).toISOString(), "2026-04-01T00:00:00.000Z");
+  assert.equal(a!.backfill, true);
+  const mirror = await upsertMaterial({ ...material, sourceId: OTHER, publishedAt: new Date("2026-10-12T00:00:00Z") });
+  assert.equal(mirror.metadataChanged, undefined);
+  assert.equal((await upsertMaterial(material)).metadataChanged, undefined, "missing dates do not erase known dates");
+  const edit = await upsertMaterial({ ...material, title: "Edited title", publishedAt: new Date("2026-10-11T00:00:00Z") });
+  assert.equal(edit.revised, true);
+  assert.equal(edit.metadataChanged, true);
+  assert.equal(edit.backfill, false, "a corrected recent date removes stale-on-discovery");
+});
+
 test("an imported article's first report records a baseline, not a revision", async () => {
   const url = `https://example.com/imported-${tag()}`;
   const id = `imp${tag()}`;

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Incremental sync of changed files to github.com/CochraneK/Yi-hot (main).
+# Incremental sync of changed files to github.com/CochraneK/Yi-hot (main by default).
 # Reuses the Git Data API approach proved out in legacy/finish_push.py: upload the
 # changed blobs, rebuild only the affected tree chain (dirs) bottom-up, commit on
 # top of the current main, fast-forward the ref, verify (dynamic blob count).
@@ -8,11 +8,12 @@
 #
 #   python tools/sync.py -m "提交信息" <路径1> <路径2> ...
 #   python tools/sync.py -m "…" --changed-from <清单文件>     # 每行一个仓库相对路径
+#   python tools/sync.py --branch codex/source-expansion-wechat --expect-head <SHA> -m "…" <路径...>
 #
 # 路径一律是**仓库相对路径**（如 `docs/PROJECT_CONTEXT.md`），必须已存在且是文件。
 # 清单从哪来？跑 `python tools/compare.py`，它会打印「本地独有 + 内容不同」两组，
 # 把这两组拼起来写成清单文件即可（compare.py 也会把完整对照存进 `_yihot_cmp.json`）。
-import urllib.request, urllib.error, json, re, os, sys, base64, time, subprocess, hashlib
+import urllib.request, urllib.error, urllib.parse, json, re, os, sys, base64, time, subprocess, hashlib
 
 OWNER, REPO = 'CochraneK', 'Yi-hot'
 import os as _os, sys as _sys
@@ -22,7 +23,7 @@ from yihot_common import BASE, get_token, work_dir, work_file  # noqa: E402
 
 def parse_args(argv):
     """没给路径就直接退出，绝不「猜」要传什么——误传会让远端偏离本地。"""
-    msg, changed, from_file = None, [], None
+    msg, changed, from_file, branch, expected = None, [], None, 'main', None
     i = 0
     while i < len(argv):
         a = argv[i]
@@ -32,6 +33,12 @@ def parse_args(argv):
         elif a == '--changed-from':
             i += 1
             from_file = argv[i]
+        elif a == '--branch':
+            i += 1
+            branch = argv[i]
+        elif a == '--expect-head':
+            i += 1
+            expected = argv[i]
         elif a.startswith('-'):
             raise SystemExit('unknown option: ' + a)
         else:
@@ -40,10 +47,12 @@ def parse_args(argv):
     if from_file:
         with open(from_file, encoding='utf-8') as f:
             changed += [ln.strip().replace('\\', '/') for ln in f if ln.strip()]
-    return msg, changed
+    if subprocess.run(['git', 'check-ref-format', 'refs/heads/' + branch], cwd=BASE, capture_output=True).returncode:
+        raise SystemExit('invalid branch name')
+    return msg, changed, urllib.parse.quote(branch, safe='/'), expected
 
 
-MSG, CHANGED = parse_args(sys.argv[1:])
+MSG, CHANGED, BRANCH, EXPECTED = parse_args(sys.argv[1:])
 assert MSG and CHANGED, (
     'usage: python tools/sync.py -m "<commit message>" <repo-relative paths...>\n'
     '   or: python tools/sync.py -m "<commit message>" --changed-from <manifest>\n'
@@ -94,13 +103,14 @@ st, me = req('GET', '/user')
 assert me.get('login'), 'auth failed: %s' % me
 print('account:', me.get('login'), file=sys.stderr, flush=True)
 
-st, ref = req('GET', '/repos/%s/%s/git/ref/heads/main' % (OWNER, REPO))
-assert st == 200, 'main ref missing: %s' % ref
+st, ref = req('GET', '/repos/%s/%s/git/ref/heads/%s' % (OWNER, REPO, BRANCH))
+assert st == 200, 'branch ref missing: %s' % ref
 cur_sha = ref['object']['sha']
+assert not EXPECTED or cur_sha == EXPECTED, ('branch advanced; compare before syncing', cur_sha)
 st, cur_commit = req('GET', '/repos/%s/%s/git/commits/%s' % (OWNER, REPO, cur_sha))
 assert st == 200, ('commit fetch fail', st)
 cur_tree = cur_commit['tree']['sha']
-print('current main:', cur_sha[:10], 'tree:', cur_tree[:10], file=sys.stderr, flush=True)
+print('current branch:', BRANCH, cur_sha[:10], 'tree:', cur_tree[:10], file=sys.stderr, flush=True)
 
 def git_tree(path):
     """Fetch the tree at a repo path, walking from the root of the current commit.
@@ -194,7 +204,7 @@ st, commit = req('POST', '/repos/%s/%s/git/commits' % (OWNER, REPO), body)
 assert st == 201, ('commit fail', st, commit)
 print('new commit:', commit['sha'][:10], file=sys.stderr, flush=True)
 
-st, refres = req('PATCH', '/repos/%s/%s/git/refs/heads/main' % (OWNER, REPO),
+st, refres = req('PATCH', '/repos/%s/%s/git/refs/heads/%s' % (OWNER, REPO, BRANCH),
                  {'sha': commit['sha']})
 assert st == 200, ('ref fail (not fast-forward?)', st, refres)
 print('ref fast-forwarded to', refres['ref'][:10] if 'ref' in str(refres) else commit['sha'][:10], file=sys.stderr, flush=True)

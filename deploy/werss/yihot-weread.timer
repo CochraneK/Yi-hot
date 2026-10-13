@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh YiHot WeRead subscriptions every two hours
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,35 @@
+name: yihot-werss
+services:
+  werss:
+    image: ${WERSS_IMAGE:?Run bootstrap.sh first to pin the official image digest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB: sqlite:///data/we_mp_rss.db
+      PORT: "8001"
+      THREADS: "1"
+      MAX_PAGE: "1"
+      ENABLE_JOB: "True"
+      RSS_LOCAL: "False"
+      RSS_FULL_CONTEXT: "True"
+      RSS_BASE_URL: http://werss:8001
+    ports:
+      - "127.0.0.1:18001:8001"
+    volumes:
+      - ./data:/app/data
+    shm_size: 128m
+    mem_limit: 768m
+    cpus: 0.75
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      werss:
+        aliases: [werss]
+
+networks:
+  werss:
+    external: true
+    name: yihot_werss

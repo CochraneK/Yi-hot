@@ -112,7 +112,8 @@ function RssTab({ base }: { base: string }) {
     ["精选摘要（推荐）", "最新 50 条精选摘要，保留标题、站内阅读与原文入口。", "/feed.xml"],
     ["精选全文", "与精选摘要相同的最新 50 条；只对明确允许再分发的来源内联正文。", "/feed/full.xml"],
     ["最近 7 天全部动态", "最近 7 天公开动态，按真实发布时间倒序。", "/feed/all.xml"],
-    [withSubject("日报"), `每天 08:00 北京时间发布的${withSubject("日报")}，保留最近 30 期。`, "/feed/daily.xml"],
+    ["公益总报 · 周报", "每周一发布，保留最近 30 期。", "/feed/weekly.xml"],
+    ["公益总报 · 月报", "每月 1 日发布，保留最近 30 期。", "/feed/monthly.xml"],
   ];
   const categories = CATEGORY_KEYS.join("|");
   return (

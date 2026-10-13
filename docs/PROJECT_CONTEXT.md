@@ -10,7 +10,7 @@
 > | `tools/` | 同步 / 部署 / 核查脚本（`tools/README.md` 有清单与用法） |
 > | `secrets/` | 凭据**加密归档**（`credentials.env.enc` + `tools/secrets.sh`，一把口令；见 `secrets/README.md`） |
 >
-> 更新时间：2026-10-13。六项修复已部署腾讯云并通过线上 smoke；GitHub [PR #6](https://github.com/CochraneK/Yi-hot/pull/6) 已创建。三个网站来源已试抓 58 条历史样本；免费 WeRSS 已通过微信读书扫码实采公益时报 43 篇，YiHot 首抓入库 30 篇。用户已明确授权四个新来源全部启用，运行时均为 `enabled=true`、`participation_mode=editorial`，全文仍关闭；原有 88 条样本已进入正常处理，首轮已观察到 17 篇精选。WeRSS 每两小时刷新。生产状态见 [DEPLOYMENT_2026-10-12.md](DEPLOYMENT_2026-10-12.md)，信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，后续部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+> 更新时间：2026-10-13。六项修复已部署腾讯云并通过线上 smoke；GitHub [PR #6](https://github.com/CochraneK/Yi-hot/pull/6) 已创建。三个网站来源已试抓 58 条历史样本；免费 WeRSS 已通过微信读书扫码实采公益时报 43 篇，YiHot 首抓入库 30 篇。用户已明确授权四个新来源全部启用，运行时均为 `enabled=true`、`participation_mode=editorial`，全文仍关闭；原有 88 条样本已进入正常处理，首轮已观察到 17 篇精选。WeRSS 每两小时刷新。AmCham 已另用认证公众号启用接入；公益总报、原文日期排序与卡片标签改动见 [PRODUCT_UPDATE_2026-10-13.md](PRODUCT_UPDATE_2026-10-13.md)。生产状态见 [DEPLOYMENT_2026-10-12.md](DEPLOYMENT_2026-10-12.md)，信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，后续部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
 
 
 ---
@@ -87,26 +87,26 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 | 位置 | 排序字段 | 代码 |
 | --- | --- | --- |
 | 首页精选时间线 | **`sort_at`**（按"组"取 `max(sort_at)` 作锚点） | `publication/timeline.ts` |
-| `/all` 全部动态 | **`timeline_at DESC`** | `publication/pool.ts` |
+| `/all` 全部动态 | **`coalesce(published_at, timeline_at) DESC`**（原文日期优先） | `publication/pool.ts` |
 | 公开 API v1 | **可切换**：`?by=published` → `coalesce(published_at, discovered_at)`；`mode=selected` → `sort_at`；否则 `timeline_at` | `publication/v1.ts` |
 
-**⚠️ 两个已知陷阱：**
+**⚠️ 两个日期边界：**
 
-1. **`published_at` 缺失时会回退成收录时间，并照样标成"发布时间"**——`publication/detail.ts` 与 `v1.ts` 都是 `coalesce(p.published_at, p.discovered_at)`。也就是说：**看到"发布时间"是某天，不代表原文那天真的发了**，可能原文压根没给日期，显示的是我们抓到的时刻。
+1. **原文日期缺失不能伪装成发布时间**：全部动态卡片优先显示 `publishedAt`；缺失时明确标注「收录」。详情页也区分原文发布时间与本站收录时间。v1 保持既有字段和游标契约，消费者仍应核实原文日期可用性。
 2. **`publications.sort_at` 不能直接改**：精选条目的 `sort_at` 是**读取组的锚点**（`min`/`max` of 组内成员的 `timeline_at`）。要让某个已精选条目换时间位置，得入队 `publication.republish-source` 让它重算，直接 UPDATE 会被下一次发布覆盖。
 
-**所以"今天怎么没有新内容 / 列表怎么停在昨天"的正确诊断顺序是**：先看 `eligible`（判定口径，见 3.2），再看 `timeline_at`（排序口径）——**不要用采集时间（`discovered_at`）去解释列表顺序**，它对列表完全不起作用。
+**所以"今天怎么没有新内容 / 列表怎么停在昨天"的正确诊断顺序是**：先看 `eligible`（判定口径，见 3.2），再看原文 `published_at`（全部动态）或 `sort_at`（精选组时间线）——**不要用采集时间（`discovered_at`）去解释列表顺序**，它对列表完全不起作用。
 
 ### 3.2 列表与判定
 
-- 首页 `/` = **精选**；`/all` = **全部公益动态**。两者都强制 `listedCondition(now) AND p.eligible`。
+- 首页 `/` = **精选**；`/all` = **全部动态**。两者都强制 `listedCondition(now) AND p.eligible`。
   - `listedCondition(now)` = `visibility='public' AND (NOT selected OR visible_after <= now)`
   - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，缺一即 false。
   - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。
 - 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），当前 **20 条（19 启用 + 1 停用）**。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 断言 `select count(*) from sources` = 20，加源必须同步。
-- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。当前启用源统一 30 分钟。
+- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。实际轮询间隔以运行时数据库为准；新增网站、公众号初期配置 120 分钟，worker 可能自动调整。
 
 ## 4. 数据模型要点（写 SQL 前先看这段）
 

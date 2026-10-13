@@ -7,7 +7,7 @@ import { FEATURES } from "@aihot/industry/features";
 const at = process.argv.indexOf("--base");
 const base = (at > 0 ? process.argv[at + 1] : process.env.SITE_URL) ?? "http://localhost:3000";
 
-const PAGES = ["/", "/all", "/hot", "/daily", "/daily/archive", "/topics", "/starred", "/agent", "/about", "/changelog", "/feedback", "/terms", "/privacy", "/more", "/admin/login"];
+const PAGES = ["/", "/all", "/hot", "/weekly", "/monthly", "/daily", "/daily/archive", "/topics", "/starred", "/agent", "/about", "/changelog", "/feedback", "/terms", "/privacy", "/more", "/admin/login"];
 const MACHINE: Array<[path: string, type: RegExp]> = [
   ["/api/health", /json/],
   ["/api/v1/items", /json/],
@@ -15,6 +15,8 @@ const MACHINE: Array<[path: string, type: RegExp]> = [
   ["/api/v1/selected/snapshot", /json/],
   ["/feed.xml", /xml/],
   ["/feed/all.xml", /xml/],
+  ["/feed/weekly.xml", /xml/],
+  ["/feed/monthly.xml", /xml/],
   ["/llms.txt", /text\/plain/],
   ["/robots.txt", /text\/plain/],
   ["/sitemap.xml", /xml/],
@@ -33,7 +35,10 @@ if (FEATURES.codexResetMonitor) PAGES.push("/codex-reset");
 let failed = 0;
 async function check(path: string, expect: (res: Response, body: string) => string | null) {
   try {
-    const res = await fetch(base + path, { redirect: "manual", signal: AbortSignal.timeout(30_000) });
+    let res = await fetch(base + path, { redirect: "manual", signal: AbortSignal.timeout(30_000) });
+    if (path === "/yihot/daily" && res.status === 302 && res.headers.get("location") === "/yihot/weekly") {
+      res = await fetch(base + "/yihot/weekly", { redirect: "manual", signal: AbortSignal.timeout(30_000) });
+    }
     const body = res.headers.get("content-type")?.startsWith("image/") ? "" : await res.text();
     if (res.status === 503 && LEADERBOARD.includes(path)) {
       console.log(`– ${path}  no leaderboard round published yet`);

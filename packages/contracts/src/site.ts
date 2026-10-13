@@ -364,6 +364,8 @@ export interface SiteStats {
   items: number;
   selected: number;
   dailies: number;
+  /** Weekly and monthly editions of 公益总报. */
+  reports?: number;
   /** The last 24 hours: items found (heat-only sources included), and items that made 精选 (by their place on the timeline). */
   day: { collected: number; selected: number };
   /** Enabled sources in a daily shuffle, for the about page's river: one line per source. */

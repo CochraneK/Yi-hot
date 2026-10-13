@@ -27,7 +27,7 @@
 
 - 腾讯云部署与公众号实采已完成：公众平台文章列表限流后改用微信读书，WeRSS 公益时报 43 篇，YiHot 预览与首抓 30 篇；重复采集新增 0。固定版本的 WeRSS 兼容补丁修正列表、日期和原文链接，另有 3 个回归测试。实际镜像、备份、定时更新和网络状态见 `DEPLOYMENT_2026-10-12.md`。
 - 2026-10-13 用户明确授权后，四个新增来源均已启用并改为编辑候选，原有 88 条样本进入正常处理；首轮观察到 17 篇精选，四源自动采集均健康。AmCham 仍 HTTP 468，保留待接通候选。
-- GitHub 发布：已通过同步工具发布工作分支并创建 [PR #6](https://github.com/CochraneK/Yi-hot/pull/6)，未合并 main。同步工具支持 `--branch` 与 `--expect-head`。
+- GitHub 发布：已通过同步工具发布工作分支并创建 [PR #6](https://github.com/CochraneK/Yi-hot/pull/6)，已通过完整 CI 并于 10-13 合并 main。同步工具支持 `--branch` 与 `--expect-head`。
 - npm 审计仍有 satori/fflate 链路的 2 个 moderate 条目；未通过跨版本降级或强制覆盖依赖来声称消除所有公告。本次没有引入 ZIP 解包接口。
 
 本次无数据库结构迁移，不覆盖运行时 sources 配置、不更改生产模型和付费安全阀。

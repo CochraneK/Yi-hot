@@ -1,0 +1,18 @@
+[Unit]
+Description=Collect approved newsletter sources for YiHot
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/yihot-email/.env
+ExecStart=/usr/bin/python3 /opt/yihot-email/collect.py
+User=root
+Group=root
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/yihot-email
+TimeoutStartSec=120
+

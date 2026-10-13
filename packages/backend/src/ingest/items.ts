@@ -22,6 +22,7 @@ interface ItemIn {
   url?: unknown;
   publishedAt?: unknown;
   author?: unknown;
+  excerpt?: unknown;
   raw?: { _aihot?: { backfill?: boolean; baseline?: boolean } } & Record<string, unknown>;
 }
 
@@ -59,6 +60,7 @@ export async function ingestItems(body: { sourceId?: unknown; sourceName?: unkno
       url,
       title,
       author: typeof it.author === "string" ? it.author.slice(0, 200) : null,
+      excerpt: typeof it.excerpt === "string" ? it.excerpt.trim().slice(0, 12_000) : null,
       publishedAt: published && Number.isFinite(published.getTime()) ? published : null,
       raw: it.raw ?? null,
       via: "ingest",

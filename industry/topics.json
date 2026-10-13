@@ -100,7 +100,7 @@
     },
     {
       "slug": "china-youth-development-foundation",
-      "name": "希望工程 / 中国青少年发展基金会",
+      "name": "希望工程",
       "group": "company",
       "entityId": "china-youth-development-foundation",
       "tags": [
@@ -242,7 +242,7 @@
     },
     {
       "slug": "rural-education",
-      "name": "乡村教育 / 助学",
+      "name": "乡村教育",
       "group": "field",
       "tags": [
         "乡村教育"
@@ -497,6 +497,7 @@
       "name": "政策与监管",
       "group": "genre",
       "tags": [
+        "政策",
         "政策/监管"
       ],
       "definition": "民政部门与监管机构的政策发布、法规解读与通知公告：慈善、社会组织、养老与社工。",
@@ -553,6 +554,7 @@
       "name": "募集与数据",
       "group": "genre",
       "tags": [
+        "募集",
         "募集/数据"
       ],
       "definition": "募捐活动与资金数据：大型筹款活动进展、资金流向披露与行业募捐数据。",
@@ -567,6 +569,7 @@
       "name": "研究与标准",
       "group": "genre",
       "tags": [
+        "研究",
         "研究/报告"
       ],
       "definition": "行业研究与标准建设：研究报告、标准规范、评估指数与学术研究。",
@@ -581,6 +584,7 @@
       "name": "一线与人物",
       "group": "genre",
       "tags": [
+        "一线",
         "一线/人物"
       ],
       "definition": "公益一线的故事与人物：志愿者、项目负责人与受助者的真实经历。",
@@ -595,6 +599,7 @@
       "name": "观点与评论",
       "group": "genre",
       "tags": [
+        "观点",
         "观点/评论"
       ],
       "definition": "公益人物的观点、评论、访谈，以及行业现象与趋势的讨论。",

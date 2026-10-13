@@ -8,3 +8,9 @@ test('cards reuse registered entity labels and retain unregistered model tags',(
   assert.deepEqual(cardTagValues('新项目标签'),['新项目标签']);
   assert.deepEqual(cardTags(['entity:unknown']),[]);
 });
+
+test('cards use concise labels while old slash tags remain filter-compatible',()=>{
+  assert.deepEqual(cardTags(['政策/监管','乡村教育']),['乡村教育','政策与监管']);
+  assert.deepEqual(cardTagValues('政策与监管'),['政策与监管','政策','政策/监管']);
+  assert.deepEqual(cardTags(['募集/数据']),['募集与数据']);
+});

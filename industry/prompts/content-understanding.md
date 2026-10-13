@@ -21,7 +21,7 @@
 
 优先级：主管部门发文或官方解读选 policy_release；第三方对政策的分析解读选 policy_analysis；机构自身动态选 organization_event；项目进展选 project_update；募捐或财务数据选 fundraising_data；研究报告选 research_report；一线故事选 field_story；访谈与观点选 opinion_analysis。
 
-输出前检查 `itemType` 与第一个分类标签是否自洽：`policy_release` 对应“政策/监管”，`policy_analysis` 对应“政策分析”，`organization_event` 对应“机构动态”，`project_update` 对应“项目更新”，`fundraising_data` 对应“募集/数据”，`research_report` 对应“研究/报告”，`field_story` 对应“一线/人物”，`opinion_analysis` 对应“观点/评论”或“行业趋势”。如果二者冲突，按当前材料的核心事件修正后再输出。
+输出前检查 `itemType` 与第一个分类标签是否自洽：`policy_release` 对应“政策”，`policy_analysis` 对应“政策分析”，`organization_event` 对应“机构动态”，`project_update` 对应“项目更新”，`fundraising_data` 对应“募集”，`research_report` 对应“研究”，`field_story` 对应“一线”，`opinion_analysis` 对应“观点”或“行业趋势”。如果二者冲突，按当前材料的核心事件修正后再输出。
 
 ## 作者角色
 
@@ -33,7 +33,7 @@
 
 ## 标签
 
-`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：政策/监管、政策分析、机构动态、项目更新、募集/数据、研究/报告、一线/人物、观点/评论、行业趋势、非公益/其他、其他。
+`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：政策、政策分析、机构动态、项目更新、募集、研究、一线、观点、行业趋势、非公益、其他。
 
 其后可选 0–5 个适用标签，并且只能来自以下两个白名单：
 

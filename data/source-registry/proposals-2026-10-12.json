@@ -21,9 +21,9 @@
       "kind": "email_newsletter",
       "tier": "T2",
       "first_party": true,
-      "status": "needs_subscription_sample",
-      "url": "https://www.chinadevelopmentbrief.org.cn/news/detail/65812.html",
-      "note": "用户于 2026-10-13 指定补充邮件来源。规范主体是爱德基金会传一慈善文化基金（简称爱德传一基金），不是独立基金会；公开资料确认其运营《慈善纪事简报》，公众号 ID 为 Chuanyi_2015。待专用收件邮箱完成订阅并取得一封真实样本后，核验发件人、Message-ID、正文结构、原文链接与发布日期，再启用邮件连接器。"
+      "status": "subscription_link_supplied",
+      "url": "https://etrack01.com/track/click2/eNplUF1PwzAM_C8RfktT56tx3shGfgVCVZu1o2zrGO0kEOK_kzAhHpAs63Q-n3V-tM6h5YxxJh15K53TZB222pJvtfReoWtJN2JJlcTKV1lRKVTVNPfn67zDu-11_pgO3by_v1xEOp8YR86e1_UVdKjr4_skTkO94DK8gEKIGgiBthAJQoSgIHrwBGQhNqUTQbTgMzYHWwChADRFECbwuSt7FDEeWR_DR9-zo7dcRlKFmyEs6JxQirD_vhcSu9Gko3WfdcMY7KjJZeMSTtvZNdbc1MN61uXDihvgT6_ePkHN5qzf3GfvgG-OlH_.html",
+      "note": "用户于 2026-10-13 指定补充邮件来源并提供《慈善纪事简报》订阅链接。规范主体是爱德基金会传一慈善文化基金（简称爱德传一基金），不是独立基金会；公开资料确认其运营《慈善纪事简报》，公众号 ID 为 Chuanyi_2015。该跟踪链接在自动化环境返回 HTTP 400，可能要求正常浏览器会话或已失效；待专用收件邮箱完成订阅并取得一封真实样本后，核验发件人、Message-ID、正文结构、原文链接与发布日期，再启用邮件连接器。"
     },
     {
       "id": "china-development-brief",

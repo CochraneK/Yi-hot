@@ -5,7 +5,8 @@ import type { PoolResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
 import { loadOr404, queryString } from "../lib/api.server";
 import { listPath, pageMeta } from "../lib/seo";
-import { CategoryTabs, SearchField } from "../features/feed/Filters";
+import { TopicTabs, SearchField } from "../features/feed/Filters";
+import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { PillTabs } from "../components/ui/Tabs";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { EmptyState } from "../components/ui/Page";
@@ -15,15 +16,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const channelParam = url.searchParams.get("channel") ?? "all";
   const categoryParam = url.searchParams.get("category");
+  const topicParam = url.searchParams.get("topic");
   const channel = isChannelKey(channelParam) ? channelParam : "all";
   const category = categoryParam && isCategoryKey(categoryParam) ? categoryParam : null;
+  const topic = topicParam?.trim() || null;
   const tag = url.searchParams.get("tag")?.trim() || null;
   const q = url.searchParams.get("q")?.trim().slice(0, 200) || null;
   const tab = url.searchParams.get("tab") === "relevance" ? "relevance" : null;
   // Legacy deep-paging parameters (deep, anchorAt) still open a normal page.
   const page = Math.min(Math.max(Number.parseInt(url.searchParams.get("page") ?? "1", 10) || 1, 1), 50);
   const data = await loadOr404<PoolResponse>(
-    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, tag, q, tab, page: page > 1 ? page : null })}`,
+    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, page: page > 1 ? page : null })}`,
     { signal: request.signal, busyRedirect: "/all/search-busy" },
   );
   return { data };
@@ -33,10 +36,11 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const f = loaderData?.data.filters;
   const q = f?.q;
   const page = loaderData?.data.page ?? 1;
+  const topicName = f?.topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === f.topic)?.name ?? null : null;
   return pageMeta({
-    title: q ? `搜索：${q}` : "全部动态",
-    description: `${SITE.name} 收录的全部动态，优先按原文发布日期排列，可按类别与标签筛选，支持中英文搜索。`,
-    path: listPath("/all", { channel: f && f.channel !== "all" ? f.channel : null, category: f?.category, tag: f?.tag, q, tab: f?.tab === "relevance" ? "relevance" : null, page: page > 1 ? page : null }),
+    title: q ? `搜索：${q}` : topicName ?? "动态",
+    description: `${SITE.name} 收录的动态，优先按原文发布日期排列，可按主题与标签筛选，支持中英文搜索。`,
+    path: listPath("/all", { channel: f && f.channel !== "all" ? f.channel : null, topic: f?.topic, tag: f?.tag, q, tab: f?.tab === "relevance" ? "relevance" : null, page: page > 1 ? page : null }),
     noindex: !!q,
   });
 }
@@ -61,8 +65,9 @@ export default function AllPage() {
   const [params] = useSearchParams();
   const navigation = useNavigation();
   const f = data.filters;
+  const topic = f.topic ?? null;
   const busy = navigation.state === "loading" && navigation.location?.pathname === "/all";
-  const keep = { channel: f.channel === "all" ? null : f.channel, category: f.category };
+  const keep = { channel: f.channel === "all" ? null : f.channel, topic };
   const searchTabHref = (tab: "time" | "relevance") => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
@@ -70,16 +75,16 @@ export default function AllPage() {
     else sp.delete("tab");
     return `/all?${sp}`;
   };
-  const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : null;
+  const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === topic)?.name ?? null : null;
   const updated = new Date(data.freshness).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Shanghai" });
 
   return (
     <div className="pb-6">
       {/* Desktop, as on 精选: the title, then one filter row with the search field aligned on the right. */}
       <div className="hidden lg:block">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "全部动态"}</h1>
+        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1>
         <div className="mb-5 mt-4 flex items-center justify-between gap-4">
-          <CategoryTabs base="/all" category={f.category} channel={f.channel} layoutId="all-cat-desk" className="min-w-0" />
+          <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0" />
           <SearchField variant="track" defaultValue={f.q ?? ""} keep={keep} />
         </div>
       </div>
@@ -87,7 +92,7 @@ export default function AllPage() {
       {/* Phones: title with today's count, the search bar, then the same filter row as 精选. */}
       <div className="lg:hidden">
         <div className="flex items-baseline justify-between pb-3 pt-5">
-          <h1 className="text-[22px] font-bold text-ink">{title ?? "全部动态"}</h1>
+          <h1 className="text-[22px] font-bold text-ink">{title ?? "动态"}</h1>
           {!f.q && (
             <span className="text-[12.5px] text-ink-4">
               今日 <span className="num">{data.todayCount}</span> 条
@@ -96,7 +101,7 @@ export default function AllPage() {
         </div>
         <SearchField variant="bar" defaultValue={f.q ?? ""} keep={keep} autoFocus={params.get("search") === "1"} />
         <div className="-mx-4 mt-3 border-b border-line-soft px-4 pb-3">
-          <CategoryTabs base="/all" category={f.category} channel={f.channel} layoutId="all-cat-mobile" size="sm" className="min-w-0" />
+          <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-mobile" size="sm" className="min-w-0" />
         </div>
       </div>
 
@@ -148,7 +153,7 @@ export function SearchBusy() {
       <h1 className="text-[20px] font-bold text-ink">搜索有点忙</h1>
       <p className="mt-2 text-[14px] leading-relaxed text-ink-3">现在搜索的人比较多，请稍等几秒再试。列表浏览不受影响。</p>
       <div className="mt-6 flex justify-center gap-2.5">
-        <Link to="/all" className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-[13.5px] font-medium text-accent-contrast hover:bg-accent-ink">浏览全部动态</Link>
+        <Link to="/all" className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-[13.5px] font-medium text-accent-contrast hover:bg-accent-ink">浏览动态</Link>
       </div>
     </div>
   );

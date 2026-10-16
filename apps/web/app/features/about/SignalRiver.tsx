@@ -482,7 +482,7 @@ export function SignalRiver({
       const p = L.paper;
       if (x >= p.x - 8 && x <= p.x + p.w + 8 && y >= p.y - 8 && y <= p.y + p.h + 8) {
         hover = { s: null, bundle: null, paper: true };
-        place(x, y, "公益总报", "每周、每月出刊");
+        place(x, y, "总报", "每周、每月出刊");
         redraw();
         return;
       }

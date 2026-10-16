@@ -94,7 +94,7 @@ test("the retired selected page redirects to all dynamics and keeps filters", as
 test("HTML and navigation share freshness; cookies do not personalize public results", async () => {
   const html = await fetch(`${origin}/yihot/`);
   assert.equal(html.status, 200);
-  assert.match(await html.text(), /全部动态/);
+  assert.match(await html.text(), />动态</);
   const plain = await fetch(`${origin}/about.data`);
   const signedIn = await fetch(`${origin}/about.data?_routes=root`, { headers: { cookie: "admin_session=private; aihot_vid=reader" } });
   assert.match(plain.headers.get("Cache-Control")!, /^public,/);

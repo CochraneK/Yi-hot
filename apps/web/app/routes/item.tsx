@@ -38,7 +38,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
     noindex: !item.indexable,
     jsonLd: breadcrumbLd([
       { name: SITE.name, path: "/" },
-      { name: item.selected ? "精选" : "全部动态", path: item.selected ? "/" : "/all" },
+      { name: item.selected ? "精选" : "动态", path: item.selected ? "/" : "/all" },
       { name: item.title, path: `/items/${item.id}` },
     ]),
   });

@@ -10,8 +10,10 @@ import re
 import ssl
 import sys
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from email.header import decode_header
 from email.message import Message
+from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -109,6 +111,38 @@ def clean_redirect_url(url: str) -> str | None:
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", urlencode(kept), ""))
 
 
+def published_at_for(message: Message) -> str | None:
+    """RFC 822 Date header → ISO-8601 (keeping the offset), or None when it cannot be trusted.
+
+    Emails used to drop this entirely, so items fell back to the ingestion time and the shown
+    publish time was wrong. A header with no usable zone (-0000 / missing) yields None: we never
+    fabricate an offset, such an item keeps the ingestion fallback instead of a guessed time.
+    """
+    raw = message.get("Date")
+    if not raw:
+        return None
+    try:
+        moment = parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        return None
+    if moment is None or moment.tzinfo is None:
+        return None
+    return moment.isoformat()
+
+
+def published_on_or_after(published: str | None, cutoff: datetime) -> bool:
+    """Whether an ISO-8601 publish instant (from :func:`published_at_for`) is on/after ``cutoff``."""
+    if not published:
+        return False
+    try:
+        moment = datetime.fromisoformat(published)
+    except ValueError:
+        return False
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment >= cutoff
+
+
 def item_for(source: dict[str, str], message: Message, initial: bool) -> dict | None:
     subject = decode_header_text(message.get("Subject"))
     body, anchors = message_content(message)
@@ -130,13 +164,17 @@ def item_for(source: dict[str, str], message: Message, initial: bool) -> dict | 
         return None
     message_id = (message.get("Message-ID") or "").strip()
     digest = hashlib.sha256((message_id or subject + url).encode()).hexdigest()
-    return {
+    item: dict = {
         "title": subject[:500],
         "url": url,
         "author": source["name"],
         "excerpt": body,
         "raw": {"emailMessageIdHash": digest, "_aihot": {"backfill": initial}},
     }
+    published = published_at_for(message)
+    if published:
+        item["publishedAt"] = published
+    return item
 
 
 def post_items(source_id: str, source_name: str, items: list[dict]) -> dict:
@@ -154,6 +192,18 @@ def main() -> None:
     state_path = Path(os.environ.get("MAIL_SOURCE_STATE", "/var/lib/yihot-email/state.json"))
     state = json.loads(state_path.read_text("utf-8")) if state_path.exists() else {"initialized": False, "uids": {}}
     initial = not state.get("initialized", False)
+    # Optional one-off backfill: MAIL_BACKFILL_AFTER=YYYY-MM-DD reprocesses the whole mailbox, keeps
+    # only items published on/after that day (read in Beijing time), ingests them as explicit
+    # backfill, then advances the UID cursor so the normal 30-minute incremental runs resume
+    # unchanged. The systemd timer never sets this, so it only runs when invoked by hand.
+    backfill_after = os.environ.get("MAIL_BACKFILL_AFTER", "").strip()
+    backfill_cutoff: datetime | None = None
+    if backfill_after:
+        try:
+            day = datetime.strptime(backfill_after, "%Y-%m-%d")
+        except ValueError as exc:
+            raise RuntimeError("MAIL_BACKFILL_AFTER must be YYYY-MM-DD, got %r" % backfill_after) from exc
+        backfill_cutoff = day.replace(tzinfo=timezone(timedelta(hours=8)))
     client = imaplib.IMAP4_SSL(os.environ["MAIL_SOURCE_HOST"], int(os.environ.get("MAIL_SOURCE_PORT", "993")), ssl_context=ssl.create_default_context(), timeout=30)
     results = []
     try:
@@ -164,6 +214,26 @@ def main() -> None:
             status, data = client.uid("search", None, "FROM", f'"{source["query"]}"')
             uids = (data[0] or b"").split() if status == "OK" else []
             previous = int(state.get("uids", {}).get(source_id, 0))
+            if backfill_cutoff is not None:
+                items = []
+                max_uid = previous
+                for uid in uids:
+                    fetched_status, fetched = client.uid("fetch", uid, "(BODY.PEEK[])")
+                    if fetched_status != "OK" or not fetched or not isinstance(fetched[0], tuple):
+                        raise RuntimeError(f"cannot fetch UID {uid.decode()}")
+                    item = item_for(source, email.message_from_bytes(fetched[0][1]), True)
+                    if not item:
+                        continue
+                    if not published_on_or_after(item.get("publishedAt"), backfill_cutoff):
+                        continue
+                    items.append(item)
+                    max_uid = max(max_uid, int(uid))
+                created = 0
+                for offset in range(0, len(items), 50):
+                    created += int(post_items(source_id, source["name"], items[offset:offset + 50]).get("created", 0))
+                state.setdefault("uids", {})[source_id] = max_uid
+                results.append({"source": source_id, "backfill": True, "after": backfill_after, "scanned": len(uids), "accepted": len(items), "created": created})
+                continue
             pending = [uid for uid in uids if int(uid) > previous]
             if initial:
                 state.setdefault("uids", {})[source_id] = max([int(uid) for uid in uids], default=previous)

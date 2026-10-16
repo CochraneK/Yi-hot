@@ -27,7 +27,7 @@
         "腾讯公益",
         "entity:tencent-charity"
       ],
-      "definition": "腾讯公益平台的全部动态：99公益日、腾讯微公益、平台项目与资金流向的持续追踪。",
+      "definition": "腾讯公益平台的动态：99公益日、腾讯微公益、平台项目与资金流向的持续追踪。",
       "related": [
         "alipay-charity",
         "fundraising",
@@ -43,7 +43,7 @@
         "支付宝公益",
         "entity:alipay-charity"
       ],
-      "definition": "支付宝与蚂蚁集团公益的全部动态：天天正能量、爱心捐赠与平台机制的持续追踪。",
+      "definition": "支付宝与蚂蚁集团公益的动态：天天正能量、爱心捐赠与平台机制的持续追踪。",
       "related": [
         "tencent-charity",
         "corporate-charity",
@@ -59,7 +59,7 @@
         "壹基金",
         "entity:one-foundation"
       ],
-      "definition": "壹基金的全部动态：壹计划、儿童与灾害救助项目、机构治理与财务披露的持续追踪。",
+      "definition": "壹基金的动态：壹计划、儿童与灾害救助项目、机构治理与财务披露的持续追踪。",
       "related": [
         "child-care",
         "emergency-relief",
@@ -107,7 +107,7 @@
         "中国青少年发展基金会",
         "entity:china-youth-development-foundation"
       ],
-      "definition": "中国青少年发展基金会与希望工程的全部动态：助学项目、品牌活动与机构进展的持续追踪。",
+      "definition": "中国青少年发展基金会与希望工程的动态：助学项目、品牌活动与机构进展的持续追踪。",
       "related": [
         "rural-education",
         "child-care",
@@ -171,7 +171,7 @@
         "救助儿童会",
         "entity:save-the-children"
       ],
-      "definition": "救助儿童会（国际网络及其在华代表处）的全部动态：儿童保护与儿童福利项目、紧急救援、政策倡导，以及机构动态与财务披露的持续追踪。",
+      "definition": "救助儿童会（国际网络及其在华代表处）的动态：儿童保护与儿童福利项目、紧急救援、政策倡导，以及机构动态与财务披露的持续追踪。",
       "related": [
         "child-care",
         "international",
@@ -187,7 +187,7 @@
         "南都公益基金会",
         "entity:south-metro-public-welfare"
       ],
-      "definition": "南都公益基金会的全部动态：好公益平台、理事会治理、资助型基金会实践与行业倡导的持续追踪。",
+      "definition": "南都公益基金会的动态：好公益平台、理事会治理、资助型基金会实践与行业倡导的持续追踪。",
       "related": [
         "grant-funding",
         "transparency",
@@ -203,7 +203,7 @@
         "抖音公益",
         "entity:byte-charity"
       ],
-      "definition": "抖音（字节跳动）公益的全部动态：公益项目合作、内容生态与平台公益计划的持续追踪。",
+      "definition": "抖音（字节跳动）公益的动态：公益项目合作、内容生态与平台公益计划的持续追踪。",
       "related": [
         "tech4good",
         "corporate-charity",
@@ -219,7 +219,7 @@
         "阿里公益",
         "entity:alibaba-charity"
       ],
-      "definition": "阿里巴巴公益的全部动态：公益项目与平台计划、企业社会责任与员工公益的持续追踪。",
+      "definition": "阿里巴巴公益的动态：公益项目与平台计划、企业社会责任与员工公益的持续追踪。",
       "related": [
         "corporate-charity",
         "tech4good",
@@ -489,6 +489,132 @@
       "related": [
         "environment",
         "research",
+        "trends"
+      ]
+    },
+    {
+      "slug": "child-education",
+      "name": "儿童教育",
+      "group": "field",
+      "tags": [
+        "儿童教育"
+      ],
+      "definition": "儿童教育与发展的公益行动：学前教育与早期发展、素质教育、课后服务与随迁子女教育支持。",
+      "related": [
+        "child-care",
+        "child-mental-health",
+        "rural-education"
+      ]
+    },
+    {
+      "slug": "health-nutrition",
+      "name": "营养健康",
+      "group": "field",
+      "tags": [
+        "营养健康"
+      ],
+      "definition": "儿童营养与健康：营养餐与食育、营养改善计划、儿童卫生与健康促进项目。",
+      "related": [
+        "child-care",
+        "child-education",
+        "medical-relief"
+      ]
+    },
+    {
+      "slug": "gender-equality",
+      "name": "性别平等",
+      "group": "field",
+      "tags": [
+        "性别平等"
+      ],
+      "definition": "性别平等与女童发展：女童教育、妇女赋能、反歧视与性别友好环境建设。",
+      "related": [
+        "child-education",
+        "youth-development",
+        "child-care"
+      ]
+    },
+    {
+      "slug": "youth-development",
+      "name": "青年发展",
+      "group": "field",
+      "tags": [
+        "青年发展"
+      ],
+      "definition": "青年发展与参与：青年就业创业、领导力培养、青年志愿服务与青年议题倡导。",
+      "related": [
+        "child-education",
+        "volunteers",
+        "policy-advocacy"
+      ]
+    },
+    {
+      "slug": "parenting",
+      "name": "亲子养育",
+      "group": "field",
+      "tags": [
+        "亲子养育"
+      ],
+      "definition": "亲子养育与家庭教育：科学育儿指导、家长支持服务、早期发展与家庭友好环境。",
+      "related": [
+        "child-education",
+        "child-mental-health",
+        "child-care"
+      ]
+    },
+    {
+      "slug": "online-safety",
+      "name": "网络保护",
+      "group": "field",
+      "tags": [
+        "网络保护"
+      ],
+      "definition": "未成年人网络保护：网络安全教育、网络素养、防沉迷与健康上网环境建设。",
+      "related": [
+        "child-protection",
+        "child-mental-health",
+        "tech4good"
+      ]
+    },
+    {
+      "slug": "fundraising-campaign",
+      "name": "募集筹款",
+      "group": "field",
+      "tags": [
+        "募集筹款"
+      ],
+      "definition": "公益募集与筹款：互联网筹款、联合劝募、筹款活动设计与捐赠人服务。",
+      "related": [
+        "fundraising",
+        "philanthropy",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "policy-advocacy",
+      "name": "政策倡导",
+      "group": "field",
+      "tags": [
+        "政策倡导"
+      ],
+      "definition": "政策倡导与公众参与：儿童权益倡导、立法与政策建议、公众教育与行业倡议。",
+      "related": [
+        "policy",
+        "child-protection",
+        "research"
+      ]
+    },
+    {
+      "slug": "careers",
+      "name": "招募实习",
+      "group": "field",
+      "tags": [
+        "招募实习"
+      ],
+      "definition": "公益行业招聘与实习：机构用人需求、校园招募、实习项目与人才发展信息。",
+      "related": [
+        "volunteers",
+        "corporate-charity",
         "trends"
       ]
     },

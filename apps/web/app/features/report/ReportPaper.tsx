@@ -39,11 +39,11 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
         <div className="flex min-w-0 flex-col justify-center">
           <h1 id="report-start">
             <span className="sr-only">
-              公益总报 · {KIND_LABEL[report.kind]} · {dateLine(report.kind, report.key)}
+              总报 · {KIND_LABEL[report.kind]} · {dateLine(report.kind, report.key)}
             </span>
             <Nameplate which={report.kind} className="block h-[54px] w-auto @[520px]:h-[74px] @[880px]:h-[98px] @[1040px]:h-[112px]" />
           </h1>
-          <p className="mt-3 text-[11.5px] tracking-[0.36em] text-ink-4 @[880px]:mt-4 @[880px]:text-[12.5px]">公益总报 · {SITE.name.toUpperCase()}</p>
+          <p className="mt-3 text-[11.5px] tracking-[0.36em] text-ink-4 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
         </div>
         {/* 报眼: the box beside the nameplate, as a Chinese daily sets it: the issue and the date in the
             nameplate's dots, and on wider paper the issue calendar beside them. */}

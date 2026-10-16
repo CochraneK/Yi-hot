@@ -232,7 +232,7 @@ export default function AboutPage() {
             看今天的精选 <IconArrowRight size={15} />
           </Link>
           <Link to="/weekly" prefetch="intent" className={buttonClass("secondary", "lg")}>
-            读最新公益总报
+            读最新总报
           </Link>
         </div>
       </header>
@@ -244,7 +244,7 @@ export default function AboutPage() {
         <SignalRiver sources={sources} focus={focus} onArrive={onArrive} className="h-[230px] sm:h-[300px] lg:h-[360px] 2xl:h-[420px]">
           <Latest item={latest[at]} className="absolute left-[75%] top-[calc(42%+42px)] hidden w-[25%] px-6 lg:block" />
         </SignalRiver>
-        <p className="sr-only">示意图：每条线是一个信源；线汇成一束束，代表同一件事的多篇报道；经过精选的闸门，只有少数几束通过，汇入每周、每月的公益总报。</p>
+        <p className="sr-only">示意图：每条线是一个信源；线汇成一束束，代表同一件事的多篇报道；经过精选的闸门，只有少数几束通过，汇入每周、每月的总报。</p>
         <Latest item={latest[at]} className="mt-2 border-t border-line pt-4 lg:hidden" />
         <ol className="mt-4 grid grid-cols-1 border-t border-line-strong sm:grid-cols-2 lg:mt-0 lg:grid-cols-4">
           {stages.map((s, i) => (

@@ -30,6 +30,10 @@ const api = createServer((req, res) => {
     res.setHeader("Cache-Control", "public, max-age=30, s-maxage=30");
     return res.end(JSON.stringify({ filters, cards: [], nextCursor: null, refreshAt, dayCounts: [], hot: null, generatedAt: "2026-09-28T00:00:00Z" }));
   }
+  if (url.pathname === "/api/site/pool") {
+    const filters = { channel: "all", category: url.searchParams.get("category"), tag: url.searchParams.get("tag"), q: url.searchParams.get("q"), tab: "time" };
+    return res.end(JSON.stringify({ filters, items: [], page: 1, pageCount: 1, total: 0, todayCount: 0, freshness: "2026-09-28T00:00:00Z", generatedAt: "2026-09-28T00:00:00Z" }));
+  }
   if (url.pathname === "/api/site/hot") return res.end(JSON.stringify({ entries: [] }));
   if (url.pathname === "/api/site/echo-client") return res.end(JSON.stringify({ forwarded: req.headers["x-forwarded-for"], real: req.headers["x-real-ip"] }));
   if (url.pathname === "/api/site/items/long-lived") return res.end(JSON.stringify({ id: "long-lived", title: "t" }));
@@ -76,30 +80,21 @@ after(async () => {
   await new Promise<void>((resolve) => api.close(() => resolve()));
 });
 
-test("public route subsets produce the same complete navigation data; filters still differ", async () => {
-  const answers = await Promise.all(["", "?_routes=root", "?_routes=routes%2Fhome", "?_routes=unknown"].map(async (query) => {
-    const res = await fetch(`${origin}/_.data${query}`);
-    assert.equal(res.status, 200);
-    assert.match(res.headers.get("Cache-Control")!, /^public,/);
-    assert.equal(res.headers.get("X-Accel-Expires"), `@${deadline}`);
-    assert.doesNotMatch(res.headers.get("Cache-Control")!, /stale/);
-    const body = await res.text();
-    assert.ok(body.includes("root") && body.includes("routes/home"));
-    return body;
-  }));
-  assert.ok(answers.every((body) => body === answers[0]));
+test("the retired selected page redirects to all dynamics and keeps filters", async () => {
   const category = CATEGORY_KEYS.at(-1)!;
-  const filtered = await fetch(`${origin}/_.data?category=${category}&_routes=root`);
-  const body = await filtered.text();
-  assert.ok(body.includes(category));
-  assert.notEqual(body, answers[0]);
+  const home = await fetch(`${origin}/_.data?category=${category}&_routes=routes%2Fhome`);
+  assert.equal(home.status, 202);
+  assert.equal(home.headers.get("Cache-Control"), "private, no-store");
+  assert.match(await home.text(), new RegExp(`/all\\?category=${category}`));
+  const all = await fetch(`${origin}/all.data?category=${category}`);
+  assert.equal(all.status, 200);
+  assert.match(await all.text(), new RegExp(category));
 });
 
 test("HTML and navigation share freshness; cookies do not personalize public results", async () => {
   const html = await fetch(`${origin}/yihot/`);
   assert.equal(html.status, 200);
-  assert.equal(html.headers.get("X-Accel-Expires"), `@${deadline}`);
-  assert.match(await html.text(), /精选/);
+  assert.match(await html.text(), /全部动态/);
   const plain = await fetch(`${origin}/about.data`);
   const signedIn = await fetch(`${origin}/about.data?_routes=root`, { headers: { cookie: "admin_session=private; aihot_vid=reader" } });
   assert.match(plain.headers.get("Cache-Control")!, /^public,/);
@@ -140,61 +135,16 @@ test("admin data and actions never become public cache entries", async () => {
   await action.text();
 });
 
-test("an elapsed release deadline cannot be extended by a fresh page/data response", async () => {
-  const saved = refreshAt;
-  refreshAt = new Date(Date.now() - 1000).toISOString();
-  try {
-    for (const pathname of ["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"]) {
-      const res = await fetch(origin + pathname);
-      assert.equal(res.status, 200);
-      assert.equal(res.headers.get("Cache-Control"), "no-cache");
-      assert.equal(res.headers.get("X-Accel-Expires"), "0");
-      await res.text();
-    }
-  } finally {
-    refreshAt = saved;
-  }
+test("all dynamics keeps a bounded shared cache", async () => {
+  const res = await fetch(origin + "/yihot/all");
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Cache-Control"), "public, max-age=60, s-maxage=60, must-revalidate");
+  await res.text();
   const now = Date.parse("2026-09-28T00:00:00Z");
   const upstream = new Headers({ "X-Accel-Expires": `@${now / 1000 + 7}` });
   const headers = releaseBoundCache(new Date(now + 20_000).toISOString(), 30, now + 2_000, upstream);
   assert.equal(headers["Cache-Control"], "public, max-age=0, s-maxage=5");
   assert.equal(headers["X-Accel-Expires"], upstream.get("X-Accel-Expires"));
-});
-
-test("browser freshness shares the selected deadline, including slow sibling loaders", async () => {
-  const savedDeadline = deadline;
-  const savedRefresh = refreshAt;
-  try {
-    deadline = Math.floor(Date.now() / 1000) + 20;
-    refreshAt = new Date((deadline + 5) * 1000).toISOString();
-    for (const pathname of ["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"]) {
-      const res = await fetch(origin + pathname);
-      const cc = res.headers.get("Cache-Control")!;
-      const browser = Number(cc.match(/(?:^|,)\s*max-age=(\d+)/)![1]);
-      const shared = Number(cc.match(/(?:^|,)\s*s-maxage=(\d+)/)![1]);
-      assert.ok(browser > 0 && browser === shared);
-      assert.ok(Date.parse(res.headers.get("Date")!) / 1000 + browser <= deadline);
-      assert.equal(res.headers.get("X-Accel-Expires"), `@${deadline}`);
-      assert.match(cc, /must-revalidate/);
-      assert.doesNotMatch(cc, /stale/);
-      await res.text();
-    }
-    // The selected loader initially grants a positive TTL, but root metadata finishes after it.
-    deadline = Math.floor(Date.now() / 1000) + 2;
-    refreshAt = new Date((deadline + 5) * 1000).toISOString();
-    metaDelayMs = 2300;
-    await Promise.all(["/yihot/", "/yihot/_.data?_routes=routes%2Fhome"].map(async (pathname) => {
-      const res = await fetch(origin + pathname);
-      assert.equal(res.status, 200);
-      assert.equal(res.headers.get("Cache-Control"), "no-cache");
-      assert.equal(res.headers.get("X-Accel-Expires"), "0");
-      await res.text();
-    }));
-  } finally {
-    deadline = savedDeadline;
-    refreshAt = savedRefresh;
-    metaDelayMs = 0;
-  }
 });
 
 test("the edge may keep a page longer than browsers, which a withdrawal purge cannot reach", async () => {

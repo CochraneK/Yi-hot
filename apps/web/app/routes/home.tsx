@@ -10,9 +10,11 @@ import { Timeline } from "../features/feed/Timeline";
 import { HotTopics } from "../features/feed/HotTopics";
 import { CategoryTabs, SearchField, SearchIconLink } from "../features/feed/Filters";
 import { beijingDate, beijingWeekday } from "../lib/format";
+import { FEATURES } from "@aihot/industry/features";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
+  if (!FEATURES.selectedFeed) throw redirect(`/all${url.search}`);
   const q = url.searchParams.get("q");
   // Search lives on /all; keep the parameters so old links still land on results.
   if (q && q.trim()) throw redirect(`/all${url.search}`);

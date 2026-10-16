@@ -1,179 +1,159 @@
-> 🧭 **接手 / 换设备先读**：[`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md)（交接总览：拓扑、部署、内容口径、**新设备上手 §8**、**接手清单 §9**）→ [`docs/memory/`](docs/memory/)（项目经验的脱敏镜像，索引 `MEMORY.md`）→ [`tools/README.md`](tools/README.md)（同步/部署脚本）→ [`secrets/README.md`](secrets/README.md)（凭据加密归档）。三条硬纪律：推送走 `tools/sync.py`（本机 `git push` 会 502）、三方一致判定只用 git blob sha、密钥明文不入库。
+# Yi‑Hot 公益动态
 
-> **YiHot 公益情报平台整合方向（2026-10-08）**：本仓库以 AIHOT 上游为基础，目标逐步吸收 [NewsMail](https://github.com/CochraneK/NewsMail) 的信源经验与邮件分发，以及 [charity-intelligence](https://github.com/CochraneK/charity-intelligence) 的公益组织主数据、证据与纵向追踪。详见 [三库整合路线图](docs/INTEGRATION_ROADMAP.md)。 **信源治理设计**：[SOURCE_GOVERNANCE_DESIGN.md](docs/SOURCE_GOVERNANCE_DESIGN.md)；**离线审计结果**：[SOURCE_REGISTRY_AUDIT_2026-10-08.md](docs/SOURCE_REGISTRY_AUDIT_2026-10-08.md)（复算：`npm run sources:audit:check`）（借鉴 AIHOT、TrendRadar、RSSHub、Miniflux、Media Cloud；当前仅规划，尚未变更在线采集）。当前为分阶段迁移计划，**不代表两个旧库已完成合并，也不改变当前线上服务**。保留上游 AIHOT 的作者、MIT LICENSE/NOTICE 与来源归属。
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
-    <img src="docs/assets/banner-light.png" alt="AIHOT：每个行业，都可以有自己的 AIHOT。很多条信源流进中间的精选，再分给法律、人力资源、金融等各个行业" width="100%">
-  </picture>
-</p>
+Yi‑Hot 是一个公益行业动态聚合站。它定时读取政府部门、公益机构、媒体、微信公众号和邮件简报，生成中文标题与摘要，保留原文链接，并按周、按月生成「公益总报」。
 
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-176b75?style=flat-square" alt="MIT License"></a>
-  <img src="https://img.shields.io/badge/Node.js-24-176b75?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 24">
-  <img src="https://img.shields.io/badge/PostgreSQL-17-176b75?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL 17">
-  <img src="https://img.shields.io/badge/Docker-Compose-176b75?style=flat-square&logo=docker&logoColor=white" alt="Docker Compose">
-  <a href="https://aihot.news"><img src="https://img.shields.io/badge/demo-aihot.news-202a30?style=flat-square" alt="aihot.news"></a>
-</p>
+线上站点：<https://49.233.72.222/yihot/>
 
-<p align="center">
-  <b>一个自己找热点、自己写日报的网站框架。</b><br>
-  把信源换成你的，把精选标准换成你的 KnowHow，它就是你的行业热点站。
-</p>
+管理后台：<https://49.233.72.222/yihot/admin>
 
-<p align="center">
-  <a href="#跑起来">跑起来</a> ·
-  <a href="docs/customize.md">改成你的行业</a> ·
-  <a href="#它是怎么工作的">它是怎么工作的</a> ·
-  <a href="#文档">文档</a>
-</p>
+> **交接给新维护者时，先读本页即可。** 日常工作通常只需要打开后台查看运行状态和信源，不需要理解模型、提示词或代码。需要技术处理时，再按文末的文档入口操作。
 
-<br>
-
-## 这是什么
-
-[AIHOT](https://aihot.news) 是我做的一个 AI 热点网站。它每天从一批信源里收资料，用大模型先筛一遍、再独立打两次分，挑出真正值得看的，写成中文标题和摘要；把不同来源说的同一件事聚成一个事件，按有多少人在说排出热点；每天早上出一份日报。
-
-这个仓库是它的完整框架：网站、后台、精选流程、聚簇和热度算法，**所有提示词的原文和入选门槛**，都在这里。
-
-## 为什么开源
-
-这半年，很多做法律、做 HR、做金融、做贵金属的朋友问我，能不能也给他们的行业做一个。
-
-我做不了。我不懂你们的行业，不知道哪些信源有用，也不知道什么样的消息，对你们来说才叫热点。
-
-但你们懂。
-
-既然我没办法满足所有人，那就把火种交到大家自己手上。
-
-## 说在前面
-
-- **我不是专业的开发者。** 我是设计师出身，半年前还看不太懂代码。这套代码是我和 AI 一起重写的，比以前干净了很多，但一定还有写得不好的地方。发现问题欢迎提 Issue，我不一定能很快回复，先说声抱歉。
-- **这是一份快照。** 它来自 AIHOT 正在线上跑的代码，不是精心打磨的通用框架。以后 AIHOT 的更新，我会尽量同步过来，但没法保证每一次都同步。
-- **里面没有 AIHOT 的信源名单和运营数据。** 仓库带了 18 个公开的海外 AI 资讯源做示范，够你跑起来看效果；真正的信源，要换成你自己行业的。
-- **请不要用 AIHOT 的名字和 Logo。** 换上你自己的名字，它就是你的站。
-
-## 它是怎么工作的
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-dark.png">
-  <img src="docs/assets/how-light.png" alt="六步：采集、预筛、两次评分、写作、聚簇、热点与成刊" width="100%">
-</picture>
-
-一条资料从信源进来，先判重，再预筛；可能重要的独立打两次分，过了门槛才进精选；然后写中文标题和摘要，和别的报道聚成事件，算进热度，最后进日报。每一步的提示词都在 [`industry/prompts/`](industry/prompts/)，改标准不用改代码。详见 [精选与校准](docs/selection.md)。
-
-### 聚簇与热点
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cluster-dark.png">
-  <img src="docs/assets/cluster-light.png" alt="五个来源的报道聚成一个事件，事件进入当前热点榜" width="100%">
-</picture>
-
-同一件事，官网发一篇、媒体转十篇、X 上吵一天，读者只需要看到一次。AIHOT 把它们聚成一个**事件**：先用标题摘要的向量在最近两周里找候选，再让模型判断是同一件事、后续进展，还是两件事；拿不准的合并，换一家模型再确认一遍。
-
-**热度**按事件算，不按文章算：48 小时内，每个独立来源只算一次，24 小时减半。重复抓取不会多算，一家媒体发十篇也只算一次，所以排在前面的，是真正有很多人在说的事。
-
-### 速度
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/perf-dark.png">
-  <img src="docs/assets/perf-light.png" alt="AIHOT 线上实测：页面中位数 10 毫秒，95% 在 50 毫秒内；接口中位数 6 毫秒，95% 在 12 毫秒内；文章页 95% 在 14 毫秒内" width="100%">
-</picture>
-
-## 你会得到什么
-
-| | |
-|---|---|
-| **六种信源** | RSS、网页列表、JSON 接口、X 账号、微信公众号，以及你自己脚本推送进来的内容。信源分级（官方一手 / 媒体个人），抓取频率按产出自动调整 |
-| **精选** | 预筛，同一份评分标准独立打两次分，再按信源分级的门槛决定入选。提示词和门槛全部公开，全部可以改；用你自己标注的样本在 SelectBench 里校准 |
-| **写作** | 中文标题、答案先行的摘要、推荐理由、标签，外文全文翻译；防止模型把原文没提到的公司写进标题 |
-| **聚簇** | 不同来源报道的同一件事聚成一个事件，后续进展挂在同一个事件下，事件页有综述；人工改过的归属不会被覆盖 |
-| **热点** | 按事件算热度：独立来源越多越靠前，X 上的讨论也算进来；和 6 小时前比，涨得快的标上升，新出现的标“新” |
-| **日报、周报、月报** | 每天 08:00 出日报，每周一出周报，每月 1 日出月报，按分类分节，带导语 |
-| **主题与搜索** | 公司、方向、内容形态三类主题页；标题摘要搜索和全文相关搜索 |
-| **给 Agent 用** | RSS（精选、全部、全文、日报）、公开 API、MCP、`llms.txt`，同一份内容给人看也给 Agent 用 |
-| **后台** | 信源管理与试抓、内容诊断、精选评测、每一步单独换模型、付费服务的预算熔断、运行记录与告警 |
-| **AI 专属模块** | 模型榜（汇总多家公开评测，方法公开）和 Codex 重置监控。别的行业一个开关关掉 |
-
-## 看一眼
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/shots-dark.png">
-  <img src="docs/assets/shots-light.png" alt="首页的当前热点与精选，关于页的信源河" width="100%">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/board-dark.png">
-  <img src="docs/assets/board-light.png" alt="模型榜" width="100%">
-</picture>
-
-<p align="center"><sub>截图来自用示范信源跑起来的本地站，站名是默认的 MyHOT。</sub></p>
-
-## 跑起来
-
-需要 [Docker](https://docs.docker.com/get-docker/)，和一个 OpenAI 兼容的模型 API Key（DeepSeek、千问、智谱都可以）。
-
-```bash
-git clone https://github.com/KKKKhazix/AIHOT.git myhot
-cd myhot
-node scripts/init-env.ts --llm-key <你的模型 API Key>
-docker compose up -d --build
-```
-
-打开 <http://localhost:3000>。后台在 `/admin`，管理员密码在 `.env` 的 `ADMIN_PASSWORD` 里。一两分钟后开始有内容，第一次导入的资料大约半小时处理完。
-
-机器上没有 Node、服务器在中国大陆、要配域名和 HTTPS，见 [部署](docs/deploy.md)。
-
-## 把它改成你的行业
-
-最省事的办法：打开你的 Agent（Claude Code、Codex 都可以），把这个仓库交给它，然后说：
+## 这个站现在怎么工作
 
 ```text
-请读 AGENTS.md 和 docs/customize.md，把这个站改成「法律」行业的热点站。
-我关心的是：……（你想盯哪些信源，你觉得什么消息重要、什么不重要，越具体越好）。
+公开信源 / 公众号 / 邮件
+          ↓
+    自动采集和去重
+          ↓
+  相关性判断、摘要和标签
+          ↓
+全部动态 ── 热点榜 ── 主题
+          ↓
+     每周、每月公益总报
 ```
 
-要改的东西几乎都在 [`industry/`](industry/) 这一个文件夹里，代码基本不用动：
+- 「全部动态」是主要阅读入口，优先按**原文发布日期**排列；原文没有日期时才显示收录时间，并明确标注「收录」。
+- 「精选」栏目目前隐藏，但精选状态和卡片标签仍保留，用于公益总报、后台判断和以后恢复。
+- 周报每周生成，月报每月生成；日报已经停用。
+- 网站部署在腾讯云。采集、分析和发布都在服务器上运行，维护者不需要一直开着自己的电脑。
+- 微信公众号由服务器上的 WeRSS 辅助采集；QQ 邮箱中的指定简报由邮件采集服务每 30 分钟检查一次。
 
-| 文件 | 改什么 |
-|---|---|
-| `site.ts` | 站名、行业词、首页文案、关于页 |
-| `taxonomy.ts`、`topics.json` | 分类、标签、主题 |
-| `sources.json` | 首次启动时导入的信源 |
-| `prompts/` | 精选标准和写作要求。**你的行业 KnowHow，就写在这里** |
-| `selection.ts` | 入选门槛 |
-| `features.ts` | 模型榜、Codex 重置监控的开关 |
-| `brand/`、`pages/` | 图标、使用规则和隐私说明 |
+## 新维护者第一次接手
 
-最值得花时间的是评分标准（`prompts/selection-score.md`）和门槛：拿一两百条你自己标注过的资料，用 `scripts/eval-selection.ts` 跑一遍，看它选得准不准，再回去改。怎么做写在 [精选与校准](docs/selection.md) 里。
+原维护者应通过安全方式分别交付以下内容，**不要把密码写进 README、聊天记录或 Git 仓库**：
 
-## 文档
+1. 腾讯云账号或服务器 SSH 访问方式。
+2. GitHub 仓库访问权限。
+3. Yi‑Hot 后台管理员密码。
+4. 凭据归档的解密口令。
+5. QQ 邮箱、微信公众平台等外部账号的必要权限。
 
-| 文档 | 内容 |
-|---|---|
-| [把它改成你的行业](docs/customize.md) | 站名、分类、信源、提示词、门槛、品牌，一步一步来 |
-| [信源](docs/sources.md) | 六种信源怎么配，分级和全文，外部推送接口 |
-| [精选与校准](docs/selection.md) | 一条资料怎么变成精选，怎么用自己的样本校准 |
-| [部署](docs/deploy.md) | Docker、域名和 HTTPS、中国大陆、更新、备份、花多少钱 |
-| [架构](docs/architecture.md) | 三个进程、几条不变的规则、目录、对外出口 |
-| [模型榜与 Codex 重置监控](docs/leaderboard.md) | 两个 AI 专属模块 |
+接手后按下面顺序确认：
 
-技术栈：Node.js 24 · TypeScript · React Router（服务端渲染）· Fastify · PostgreSQL · pg-boss · Tailwind CSS · Docker Compose。
+1. 打开[线上站点](https://49.233.72.222/yihot/)，确认「全部动态」能正常显示。
+2. 登录[管理后台](https://49.233.72.222/yihot/admin)，查看「运行」和「信源」页面是否有连续失败。
+3. 打开「公益总报」，确认最近一期周报或月报可以阅读。
+4. 在 GitHub 确认自己能看到本仓库，但不要随意删除分支、Actions、`LICENSE` 或 `NOTICE`。
+5. 把解密口令存进个人密码管理器；不要和加密文件放在同一个位置。
 
-## 最后
+完成以上五项，就具备日常维护条件。
 
-AIHOT 曾经只是我无数个深夜里，一个很小、很小的念头。
+## 日常维护只做这些
 
-我不知道它会被改成什么样子，会走到多远的地方。但这可能就是开源最浪漫的地方。
+| 频率 | 要看什么 | 正常表现 | 发现异常怎么办 |
+| --- | --- | --- | --- |
+| 每周一次 | 网站首页和全部动态 | 最近几天有新内容，原文链接可打开 | 去后台「运行」和「信源」查看失败原因 |
+| 每周一次 | 公益总报 | 周报正常生成 | 记录缺失日期和页面地址，交给技术维护者检查任务队列 |
+| 每月一次 | 信源健康 | 大部分启用信源为正常；个别网站偶发失败可以观察 | 同一信源连续失败多次再处理，不要立即删除 |
+| 每月一次 | 用量与成本 | 费用和调用量没有突然异常增长 | 暂停异常来源或模型调用，并请技术维护者核查 |
+| 增加新来源时 | 原文质量、发布日期、版权边界 | 能稳定取得标题、摘要、发布日期和原文链接 | 先作为候选试抓，不要直接开启全文展示 |
 
-剩下的路，就交给你们了。
+后台入口：
 
-<p align="right">—— 数字生命卡兹克</p>
+- **内容诊断**：查看某条动态为什么出现、为什么没有入选。
+- **信源**：查看采集是否正常，也可以先试抓再决定是否启用。
+- **运行**：查看自动任务成功或失败。
+- **用量与成本**：查看模型调用量和费用。
+- **反馈**：处理读者提交的更正、下架或其他意见。
 
-## 许可
+## 三种常见情况
 
-代码使用 [MIT 许可证](LICENSE)。AIHOT 的名字和 Logo 不在许可范围内。字体、模型厂商和评测来源的标志各有自己的许可和商标归属，见 [NOTICE](NOTICE)。
+### 网站能打开，但最近没有新内容
 
----
+先去后台检查：
 
-<sub>**In English:** AIHOT ([aihot.news](https://aihot.news)) is an AI news site that collects from many sources, lets a language model filter and score every item twice, writes Chinese headlines and summaries, clusters reports of the same story into one event, ranks events by how many independent sources discuss them, and publishes a daily briefing. This repository is its complete framework, including every prompt and threshold. Hand it to your coding agent with `AGENTS.md` and `docs/customize.md` to turn it into a news site for your own field. The documentation is in Chinese.</sub>
+1. 「信源」里最近采集是否成功；
+2. 「运行」里 worker 是否持续运行；
+3. 新抓到的内容是否被判断为与公益无关；
+4. 原文发布日期是否确实较早。
+
+不要把本站收录时间当成原文发布日期，也不要为了让页面看起来更新而手工改日期。
+
+### 某个来源连续失败
+
+先保留来源并记录错误。网站改版、验证码、登录失效和 RSS 临时中断都可能造成失败。公众号失败通常先检查 WeRSS 登录状态；邮件来源失败通常先检查 QQ 邮箱授权是否仍有效。只有确认来源永久停用或不再适合收录时才关闭。
+
+### 需要修改页面、部署或修复程序
+
+这属于技术维护。把问题现象、发生时间、页面地址和后台错误一起交给技术人员。若使用编码 Agent，可以直接给它下面这段话：
+
+```text
+请先阅读仓库根目录 AGENTS.md、docs/PROJECT_CONTEXT.md、
+docs/memory/MEMORY.md、tools/README.md 和 secrets/README.md。
+先核实线上现象和运行状态，再修改、测试、同步 GitHub 并部署腾讯云。
+不要输出或提交任何密钥。
+```
+
+## 不要直接做的事
+
+- 不要把 `.env`、邮箱授权码、后台密码、SSH 密码或 API Key 提交到 GitHub。
+- 不要直接改数据库里的日期、精选结果或费用记录。
+- 不要因为一两次失败就删除信源或历史内容。
+- 不要绕过后台和现有脚本在生产服务器上临时改代码。
+- 不要随意修改模型、评分门槛或提示词；这些改动会影响全部内容，需要样本校准和测试。
+- 不要删除或改写 `LICENSE`、`NOTICE` 中的上游版权信息。
+- 不要使用 AIHOT 的名称或 Logo 作为 Yi‑Hot 的品牌。
+
+## 备份、凭据与换电脑
+
+- 生产运行时凭据以服务器 `/opt/yihot/.env` 为准。
+- 仓库中的 `secrets/credentials.env.enc` 是加密备份；解密口令不在仓库中。
+- 明文凭据只保存在本机忽略文件和服务器，不进入 Git。
+- 凭据发生变化后，要更新服务器、更新本机明文归档、重新加密并提交新的密文。
+- 换电脑或交接的完整步骤见 [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) 第 8、9 节和 [`secrets/README.md`](secrets/README.md)。
+
+## 给技术维护者的入口
+
+请依次阅读：
+
+1. [`AGENTS.md`](AGENTS.md)：项目规则与安全边界。
+2. [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md)：服务器、部署、数据口径和接手清单。
+3. [`docs/memory/MEMORY.md`](docs/memory/MEMORY.md)：运维经验索引。
+4. [`tools/README.md`](tools/README.md)：GitHub 同步、部署和核查脚本。
+5. [`secrets/README.md`](secrets/README.md)：凭据加密归档。
+6. [`docs/sources.md`](docs/sources.md)：信源类型与配置。
+7. [`docs/selection.md`](docs/selection.md)：精选判断与校准。
+
+最低验证命令：
+
+```bash
+npm run typecheck
+npm run build -w @aihot/web
+node --test apps/web/tests/*.test.ts
+```
+
+涉及数据库行为时还要在名称以 `_test` 或 `_ci` 结尾的测试库中运行迁移和 `npm test`。本项目在当前网络环境下推送 GitHub 必须使用 `tools/sync.py`；完整说明见 [`tools/README.md`](tools/README.md)。
+
+## 来源、版权与 AIHOT 归属
+
+**Yi‑Hot 是在 [AIHOT](https://github.com/KKKKhazix/AIHOT) 开源项目基础上修改的公益行业定制版本。** AIHOT 由“数字生命卡兹克 / KKKKhazix”开发，代码依据 MIT License 开放。本仓库保留了上游的 [`LICENSE`](LICENSE) 和 [`NOTICE`](NOTICE)。
+
+使用、复制、修改或再发布本项目时必须注意：
+
+1. 按 MIT License 要求，在软件副本或主要部分中保留原版权声明和许可文本。
+2. 保留 `NOTICE` 中的上游及第三方材料说明。
+3. AIHOT 的名称和 Logo 不属于 MIT 授权范围；本项目使用自己的 Yi‑Hot 名称和品牌，也不得让人误以为这是 AIHOT 官方站点。
+4. 原始新闻、图片和文章版权归各来源所有。Yi‑Hot 默认只展示摘要和原文链接，只有来源明确允许时才展示全文。
+5. 新增第三方代码、图片、字体或数据前，应核对其许可证并补充相应归属说明。
+
+本节用于帮助维护者保留清晰来源，并不替代 `LICENSE`、`NOTICE` 或专业法律意见。
+
+## 技术概览
+
+- Node.js 24、TypeScript、React Router、Fastify
+- PostgreSQL 17、pg-boss
+- Docker Compose
+- 一个镜像运行 Web、API、worker 和数据库初始化任务
+- 公开出口包括网站、RSS、API 和 MCP
+
+项目内部仍保留 `aihot`、`@aihot/*` 和 `aihot-*` 等技术标识，这是为了兼容上游结构和现有部署；对外品牌始终是 **Yi‑Hot**。

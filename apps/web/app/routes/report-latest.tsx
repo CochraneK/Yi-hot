@@ -20,8 +20,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta({ loaderData, location }: Route.MetaArgs) {
   const kind = loaderData?.kind ?? "weekly";
   return pageMeta({
-    title: `公益总报 · ${KIND_LABEL[kind]}`,
-    description: kind === "weekly" ? "公益总报，每周综合回顾。" : "公益总报，每月盘点。",
+    title: `总报 · ${KIND_LABEL[kind]}`,
+    description: kind === "weekly" ? "总报，每周综合回顾。" : "总报，每月盘点。",
     path: location.pathname,
     image: `/og/pages/${kind}.png`,
   });
@@ -35,7 +35,7 @@ export default function ReportLatestPage() {
   const { kind, report, index, today } = useLoaderData<typeof loader>();
   return (
     <ReportLayout kind={kind} index={index} current={report?.key ?? null} today={today}>
-      {report ? <ReportPaper report={report} index={index} /> : <EmptyState title={`还没有发布公益总报 · ${KIND_LABEL[kind]}`}>第一期发布后会出现在这里。</EmptyState>}
+      {report ? <ReportPaper report={report} index={index} /> : <EmptyState title={`还没有发布总报 · ${KIND_LABEL[kind]}`}>第一期发布后会出现在这里。</EmptyState>}
     </ReportLayout>
   );
 }

@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import { CATEGORY_KEYS, CATEGORY_LABELS, CHANNEL_LABELS, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
+import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { IconClose, IconSearch } from "../../components/icons";
-import { PillTabs } from "../../components/ui/Tabs";
+import { PillTabs, type TabItem } from "../../components/ui/Tabs";
 
 /** Same page with some query parameters changed (paging state dropped). */
 export function hrefWith(base: string, params: URLSearchParams, patch: Record<string, string | null>) {
@@ -19,7 +20,7 @@ export function hrefWith(base: string, params: URLSearchParams, patch: Record<st
 }
 
 /**
- * The feed's one filter row (精选 and 全部动态 alike): 全部, 一手, then the categories. One choice at a
+ * The feed's one filter row (精选 and 动态 alike): 全部, 一手, then the categories. One choice at a
  * time: picking 一手 clears the category and picking a category clears 一手. Older 资讯 / X links
  * still filter; the row then shows 全部.
  */
@@ -32,6 +33,31 @@ export function CategoryTabs({ base, category, channel = "all", layoutId, size =
   ];
   const active = channel === "firstParty" ? "firstParty" : (category ?? "all");
   return <PillTabs items={items} active={active} layoutId={layoutId} label="筛选" size={size} className={className} />;
+}
+
+/**
+ * The feed's topic row (精选 and 动态 alike): 全部, 一手, then Save the Children's mission topics,
+ * each with a dot in its dashboard color. One choice at a time: picking a topic clears the category
+ * and the channel, and 一手 clears the topic — the same mutual exclusion the category row had.
+ */
+export function TopicTabs({ base, topic, channel = "all", layoutId, size = "md", className = "" }: { base: string; topic: string | null; channel?: ChannelKey; layoutId: string; size?: "md" | "sm"; className?: string }) {
+  const [params] = useSearchParams();
+  const items: TabItem[] = [
+    { key: "all", label: "全部", to: hrefWith(base, params, { topic: null, channel: null }) },
+    { key: "firstParty", label: CHANNEL_LABELS.firstParty, to: hrefWith(base, params, { topic: null, channel: "firstParty" }) },
+    ...SAVE_THE_CHILDREN_TOPICS.map((t) => ({
+      key: t.slug,
+      label: (
+        <>
+          <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
+          {t.name}
+        </>
+      ),
+      to: hrefWith(base, params, { topic: t.slug, category: null, channel: null }),
+    })),
+  ];
+  const active = channel === "firstParty" ? "firstParty" : (topic ?? "all");
+  return <PillTabs items={items} active={active} layoutId={layoutId} label="主题筛选" size={size} className={className} />;
 }
 
 function useSlashFocus(ref: React.RefObject<HTMLInputElement | null>) {
@@ -131,7 +157,7 @@ export function SearchField({ action = "/all", defaultValue = "", keep = {}, var
   );
 }
 
-/** Mobile home: the search icon at the end of the category row opens search on 全部动态. */
+/** Mobile home: the search icon at the end of the category row opens search on 动态. */
 export function SearchIconLink() {
   return (
     <Link to="/all?search=1" aria-label="搜索" className="flex size-9 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-bg-sunk hover:text-ink">

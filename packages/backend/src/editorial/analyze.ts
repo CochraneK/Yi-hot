@@ -26,16 +26,18 @@ import {
   type IdentityGuard,
 } from "./writing.ts";
 import { CATEGORY_BY_ITEM_TYPE, CATEGORY_GUIDE, CATEGORY_TAGS, ENTITIES, ENTITY_TAGS, ITEM_TYPES, normalizeTags, TOPIC_TAGS } from "./vocabulary.ts";
-import { promptText, promptVersion } from "./prompts.ts";
+import { promptText, promptVersion, promptVersionWithVocab } from "./prompts.ts";
 
 export { buildMaterial, loadAnalyzeInput, type AnalyzeInputArticle };
 
 export const PROMPT_VERSIONS = {
   prefilter: promptVersion("prefilter"),
   score: promptVersion("selection-score"),
-  understand: promptVersion("understand"),
+  // understand and structure write the tags the topic filters read; a vocabulary edit must
+  // invalidate their settled receipts, so their versions fold industry/taxonomy.ts in.
+  understand: promptVersionWithVocab("understand"),
   summarize: promptVersion("summarize-article", "summarize-article-empty", "summarize-short-post", "summarize-short-post-quoted", "summarize-long-post", "summarize-long-post-quoted", "identity-context"),
-  structure: promptVersion("structure"),
+  structure: promptVersionWithVocab("structure"),
 } as const;
 /** Every step's prompt, as stored on each judgement. */
 export const ANALYZE_PROMPT_VERSION = Object.values(PROMPT_VERSIONS).join("+");

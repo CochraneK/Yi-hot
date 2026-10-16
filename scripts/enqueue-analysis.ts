@@ -1,5 +1,8 @@
 // Enqueues analysis for articles (development helper). By default only editorial articles that have
-// no live model analysis yet; --all re-runs everything (receipts make repeats free).
+// no live model analysis yet; --all re-runs everything. Repeats are free for the steps whose prompt
+// did not change (the receipt's system hash matches and the settled answer is reused); after a
+// vocabulary edit the tag-writing steps (understand, structure) re-run, which is the point of a
+// backfill — see docs/topic-axis-migration.md.
 import { parseArgs } from "node:util";
 import { closeDb, sql } from "@aihot/backend/db";
 import { enqueue, QUEUES, stopBoss } from "@aihot/backend/jobs/queue";

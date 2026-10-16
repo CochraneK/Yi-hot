@@ -54,3 +54,17 @@ export function promptVersion(...names: string[]): string {
   for (const n of used) hash.update(`${n}\n${raw(n)}\n`);
   return `${names.join("+")}@${hash.digest("hex").slice(0, 10)}`;
 }
+
+/**
+ * Like promptVersion, but the industry's tag vocabulary (industry/taxonomy.ts) is folded into the
+ * hash as well. Receipt reuse is decided by the system prompt's own hash (providers/llm.ts), so a
+ * vocabulary edit already forces a fresh call for the steps whose prompt embeds it; folding the
+ * vocabulary in here keeps analyses.prompt_version saying which wording produced a result when the
+ * vocabulary, rather than the prompt file, is what changed.
+ */
+export function promptVersionWithVocab(...names: string[]): string {
+  const base = promptVersion(...names);
+  const vocab = readFileSync(path.join(REPO_ROOT, "industry/taxonomy.ts"), "utf8");
+  const hash = createHash("sha256").update(base).update(`\nvocabulary\n${vocab}\n`);
+  return `${names.join("+")}@${hash.digest("hex").slice(0, 10)}`;
+}

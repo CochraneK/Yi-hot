@@ -11,6 +11,7 @@ import { Sidebar } from "./components/shell/Sidebar";
 import { MobileTabBar } from "./components/shell/MobileTabBar";
 import { BackToTop, NavigationProgress } from "./components/shell/Chrome";
 import { RingMark } from "./components/Logo";
+import stcLogo from "@aihot/industry/brand/save-the-children.svg?url&no-inline";
 import { buttonClass } from "./components/ui/Controls";
 import { THEME_BOOT_SCRIPT } from "./lib/local-state";
 import { apiGet } from "./lib/api.server";
@@ -79,7 +80,14 @@ function SiteShell({ changelogVersion, children }: { changelogVersion: string | 
       {/* Mobile shell (≤ 960px): one centred column, the tab bar below. Desktop: the page fills the main area
           up to the list width (--page-max-wide), centred beyond it. */}
       <main id="main" className="min-w-0 flex-1 pb-[calc(72px+env(safe-area-inset-bottom))] lg:px-7 lg:pb-[72px] lg:pt-6">
-        <div className="mx-auto w-full max-w-[640px] px-4 lg:max-w-[var(--page-max-wide)] lg:px-0">{children}</div>
+        <div className="mx-auto w-full max-w-[640px] px-4 lg:max-w-[var(--page-max-wide)] lg:px-0">
+          {/* The sidebar wordmark shows on desktop only, so phones get the same brand row up top. */}
+          <div className="flex h-9 items-center gap-2 lg:hidden">
+            <img src={stcLogo} alt="救助儿童会 Save the Children" className="h-[22px] w-auto rounded bg-white px-1.5 py-0.5 ring-1 ring-line-soft" />
+            <span className="text-[12.5px] font-semibold text-ink-2">{SITE.name}</span>
+          </div>
+          {children}
+        </div>
       </main>
       <MobileTabBar changelogVersion={changelogVersion} />
       <BackToTop />
@@ -117,7 +125,7 @@ export function ErrorBoundary() {
         </p>
         <div className="mt-6 flex justify-center gap-2.5">
           <Link to="/all" className={buttonClass("primary")}>
-            浏览全部动态
+            浏览动态
           </Link>
         </div>
       </div>

@@ -273,7 +273,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
     <div className="relative">
       {days.length === 0 && (
         <div className="lg:card">
-          <EmptyState title="这个筛选下还没有精选内容">换个类别看看，或者去全部动态里找找。</EmptyState>
+          <EmptyState title="这个筛选下还没有精选内容">换个类别看看，或者去动态里找找。</EmptyState>
         </div>
       )}
 

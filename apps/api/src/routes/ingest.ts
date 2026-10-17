@@ -9,7 +9,7 @@ import { IngestError, ingestItems } from "@aihot/backend/ingest/items";
 const PLACEHOLDER = /^(|changeme|change-me|placeholder|xxx+|todo|test|dev|your[-_]?token.*)$/i;
 
 /** Constant-time check; an empty or placeholder server token rejects everything. */
-function authorized(req: FastifyRequest): boolean {
+export function ingestAuthorized(req: FastifyRequest): boolean {
   const expected = credential("auth", "INGEST_TOKEN") ?? "";
   if (PLACEHOLDER.test(expected) || expected.length < 16) return false;
   const given = /^Bearer\s+(.+)$/i.exec(req.headers.authorization ?? "")?.[1]?.trim() ?? "";
@@ -35,7 +35,7 @@ function unauthorized(reply: FastifyReply) {
 export function registerIngest(app: FastifyInstance) {
   app.post("/api/ingest/items", async (req, reply) => {
     reply.header("Cache-Control", "no-store");
-    if (!authorized(req)) return unauthorized(reply);
+    if (!ingestAuthorized(req)) return unauthorized(reply);
     if (limited(`items:${req.ip}`, 10)) return reply.code(429).header("Retry-After", "60").send({ ok: false, error: "rate limited" });
     try {
       return await ingestItems((req.body ?? {}) as never);

@@ -605,6 +605,20 @@
       ]
     },
     {
+      "slug": "other-fields",
+      "name": "其他领域",
+      "group": "field",
+      "tags": [
+        "其他领域"
+      ],
+      "definition": "未命中其余 12 个具体公益领域的公益动态，包括养老、社区服务、行业治理及其他跨领域议题。该主题只作兜底，不与具体公益领域同时使用。",
+      "related": [
+        "community",
+        "elderly-care",
+        "trends"
+      ]
+    },
+    {
       "slug": "policy",
       "name": "政策与监管",
       "group": "genre",

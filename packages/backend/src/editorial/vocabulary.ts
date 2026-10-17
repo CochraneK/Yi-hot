@@ -1,6 +1,7 @@
 // Tag normalization over the industry pack's vocabulary (industry/taxonomy.ts), which the topics
 // (industry/topics.json) are built on.
 import { CATEGORIES, CATEGORY_TAGS, ENTITY_TAGS, TAG_SYNONYMS, TOPIC_TAGS } from "@aihot/industry/taxonomy";
+import { OTHER_MISSION_TOPIC, SPECIFIC_MISSION_TOPIC_NAMES } from "@aihot/industry/save-the-children";
 
 export { CATEGORY_BY_ITEM_TYPE, CATEGORY_TAGS, ENTITIES, ENTITY_TAGS, ITEM_TYPES, TOPIC_TAGS } from "@aihot/industry/taxonomy";
 
@@ -22,7 +23,10 @@ export function normalizeTags(v: unknown, opts: { max?: number; fallbackCategory
   const isCategory = (t: string) => (CATEGORY_TAGS as readonly string[]).includes(t);
   const categoryIndex = tags.findIndex(isCategory);
   const category = categoryIndex >= 0 ? tags[categoryIndex]! : (opts.fallbackCategory ?? CATEGORY_TAGS[CATEGORY_TAGS.length - 1]!);
-  return [category, ...tags.filter((t) => t !== category)].slice(0, max);
+  const rest = tags.filter((t) => t !== category && t !== OTHER_MISSION_TOPIC);
+  const hasSpecificMissionTopic = rest.some((tag) => SPECIFIC_MISSION_TOPIC_NAMES.includes(tag));
+  if (category === "非公益" || hasSpecificMissionTopic) return [category, ...rest].slice(0, max);
+  return [category, ...rest.slice(0, Math.max(0, max - 2)), OTHER_MISSION_TOPIC].slice(0, max);
 }
 
 /** The category guide the structure step reads: one line per category. */

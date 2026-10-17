@@ -51,7 +51,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
   return (
     <AdminPage
       title="候选信源"
-      subtitle="先查重，再发现订阅源，最后到现有页面试抓。这里只读，不会自动新增或启用来源。"
+      subtitle="这里是历史线索库与试抓工具，不是待一键启用的队列；已验证来源会明确标成已纳入。"
       actions={<ButtonLink to="/admin/sources">返回信源管理</ButtonLink>}
     >
       <div className="space-y-4">
@@ -62,7 +62,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
             </div>
             <button type="submit" className="rounded-control bg-ink px-4 py-2 text-[13px] font-medium text-bg hover:opacity-90">查找</button>
           </Form>
-          <p className="mt-2 text-[12px] text-ink-4">已载入 NewsMail、charity-intelligence 历史候选 {candidateTotal} 条；还会比对当前 YiHot 数据库。历史清单不代表可用或有采集授权。</p>
+          <p className="mt-2 text-[12px] text-ink-4">已载入 NewsMail、charity-intelligence 历史线索 {candidateTotal} 条；其中含失效地址、仅关键词和受限站点，不等于有 {candidateTotal} 个来源漏接。</p>
         </Card>
 
         <Card title={`${reviewedAt} 补充建议`}>
@@ -72,7 +72,9 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
                 <a href={p.url} target="_blank" rel="noreferrer" className="text-[13.5px] font-medium text-ink hover:text-accent">{p.name}</a>
                 <p className="mt-1 text-[12px] text-ink-3">{p.note}</p>
               </div>
-              {p.status === "preview_ready"
+              {p.status === "enabled" || p.status === "covered_by_existing"
+                ? <Badge tone="ok">{p.status === "enabled" ? "已纳入" : "已有入口覆盖"}</Badge>
+                : p.status === "preview_ready"
                 ? <ButtonLink to={`/admin/sources/new?proposal=${encodeURIComponent(p.id)}`}>带入配置并试抓</ButtonLink>
                 : <Badge tone="warn">待核查</Badge>}
             </div>)}
@@ -96,7 +98,7 @@ export default function SourceCandidates({ loaderData }: Route.ComponentProps) {
           </Card>
         )}
 
-        <Card title={query ? `历史候选 · ${candidates.length} 条匹配` : "历史候选 · 先看部分来源"}>
+        <Card title={query ? `历史线索 · ${candidates.length} 条匹配` : "历史线索 · 先看部分来源"}>
           {candidates.length ? (
             <div className="divide-y divide-line/70">
               {candidates.map((candidate) => (

@@ -580,6 +580,35 @@
       ],
       "site_fulltext": true,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cwdf-news",
+      "name": "中国妇女发展基金会·本会新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
+        "itemSelector": ".benhuixinwen > ul > li",
+        "linkSelector": ".benhuixinwenli21 a[title]",
+        "titleFromAttribute": true,
+        "publishedAtSelector": ".benhuixinwenli23 span",
+        "allowUrlPrefixes": [
+          "https://www.cwdf.org.cn/index.php?m=content&c=index&a=show&catid=26"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T1_5",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "机构动态",
+        "性别平等"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
     }
   ]
 }

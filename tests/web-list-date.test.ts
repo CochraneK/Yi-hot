@@ -2,7 +2,7 @@
 // the server runs in (Docker runs in UTC; run this file with TZ=UTC and TZ=Asia/Shanghai to see both).
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseLooseDate } from "@aihot/backend/sources/web-list";
+import { fromHtml, parseLooseDate } from "@aihot/backend/sources/web-list";
 
 const iso = (v: string, offset?: string) => parseLooseDate(v, offset)?.toISOString() ?? null;
 
@@ -41,4 +41,23 @@ test("a month-first dotted date (One Foundation's <time>) is in the source's off
 test("no date at all is null", () => {
   assert.equal(iso(""), null);
   assert.equal(iso("yesterday"), null);
+});
+
+test("a list can prefer the link title attribute when visible text is truncated", () => {
+  const source = { id: "demo", config: {
+    url: "https://example.org/news", itemSelector: "li", linkSelector: "a",
+    titleFromAttribute: true, publishedAtSelector: "time",
+  } } as any;
+  const items = fromHtml('<li><a href="/post/1" title="完整的公益项目新闻标题">截断的公益项目...</a><time>2026-10-17</time></li>', "https://example.org/news", source);
+  assert.equal(items[0]?.title, "完整的公益项目新闻标题");
+  assert.equal(items[0]?.publishedAt?.toISOString(), "2026-10-17T00:00:00.000Z");
+});
+
+test("query-identified articles are not mistaken for their index.php listing", () => {
+  const source = { id: "query-cms", config: {
+    url: "https://example.org/index.php?a=lists&catid=26", itemSelector: "li", linkSelector: "a",
+    allowUrlPrefixes: ["https://example.org/index.php?a=show&catid=26"],
+  } } as any;
+  const items = fromHtml('<li><a href="/index.php?a=show&catid=26&id=1">一条通过查询参数标识的完整新闻</a></li>', source.config.url, source);
+  assert.equal(items.length, 1);
 });

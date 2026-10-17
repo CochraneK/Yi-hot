@@ -1,5 +1,5 @@
 // 救助儿童会使命主题：/all 的筛选轴按这套字段呈现（2026-10 品牌化重构，替代原“内容类型”轴）。
-// 每个 slug 对应 industry/topics.json 里的主题页（4 个原有 + 9 个新增）；颜色与救助儿童会
+// 每个 slug 对应 industry/topics.json 里的主题页；颜色与救助儿童会
 // dashboard 同一套色板，保证筛选 pill、主题卡片、dashboard 三处同色。
 export interface MissionTopic {
   slug: string;
@@ -20,7 +20,13 @@ export const SAVE_THE_CHILDREN_TOPICS: readonly MissionTopic[] = [
   { slug: "environment", name: "环境保护", color: "#2A9D8F" },
   { slug: "fundraising-campaign", name: "募集筹款", color: "#D62828" },
   { slug: "policy-advocacy", name: "政策倡导", color: "#6A4C93" },
+  { slug: "other-fields", name: "其他领域", color: "#64748B" },
 ] as const;
+
+export const OTHER_MISSION_TOPIC = "其他领域";
+export const SPECIFIC_MISSION_TOPIC_NAMES = SAVE_THE_CHILDREN_TOPICS
+  .map((topic) => topic.name)
+  .filter((name) => name !== OTHER_MISSION_TOPIC);
 
 /** slug → 颜色，供筛选 pill 与主题卡片共用。 */
 export const MISSION_TOPIC_COLORS: Record<string, string> = Object.fromEntries(

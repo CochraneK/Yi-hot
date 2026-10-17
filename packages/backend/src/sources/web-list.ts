@@ -87,7 +87,9 @@ export function allowed(url: string, source: SourceRow): boolean {
 
 /** A link back to the listing page itself (skip links, in-page anchors such as #paper, #blog). */
 function listingItself(url: string, listing: string): boolean {
-  const bare = (x: URL) => `${x.host}${x.pathname.replace(/\/$/, "")}`;
+  // Some CMSes identify both their list and every article through query parameters on /index.php.
+  // Ignoring the query made every article look like a self-link and silently emptied the source.
+  const bare = (x: URL) => `${x.host}${x.pathname.replace(/\/$/, "")}${x.search}`;
   return bare(new URL(url)) === bare(new URL(listing));
 }
 
@@ -171,7 +173,7 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     if (!url || seen.has(url) || !allowed(url, source)) continue;
     if (!sectionsArePosts && listingItself(url, listing)) continue;
     const titleEl = c.titleSelector ? (el.is(c.titleSelector) ? el : el.find(c.titleSelector).first()) : linkEl;
-    const title = collapseWhitespace(titleEl.text() || linkEl.attr("title") || "");
+    const title = collapseWhitespace((c.titleFromAttribute === true ? linkEl.attr("title") : titleEl.text()) || linkEl.attr("title") || "");
     if (!title) continue;
     let publishedAt: Date | null = null;
     if (c.publishedAtSelector) {

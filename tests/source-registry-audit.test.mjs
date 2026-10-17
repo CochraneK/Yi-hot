@@ -12,13 +12,13 @@ test("host/URL normalization is conservative", () => {
 
 test("the 2026-10-08 three-repo inventory has a reproducible baseline", () => {
   const out = produce();
-  assert.equal(out.stats.seed_rows, 20);
+  assert.equal(out.stats.seed_rows, 21);
   assert.equal(out.stats.newsmail_rows, 99);
   assert.equal(out.stats.newsmail_url_rows, 82);
   assert.equal(out.stats.discovery_only_rows, 17);
   assert.equal(out.stats.newsmail_unique_hosts, 67);
   assert.equal(out.stats.charity_registry_rows, 101);
-  assert.equal(out.stats.seed_host_overlap_rows, 10);
+  assert.equal(out.stats.seed_host_overlap_rows, 12);
   assert.deepEqual(out.stats.charity_statuses, { blocked: 6, conditional: 68, pending_retest: 27 });
   assert.equal(out.stats.newsmail_url_collision_groups, 4);
   assert.equal(out.stats.newsmail_distinct_name_conflicts, 2);

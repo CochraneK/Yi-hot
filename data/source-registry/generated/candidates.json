@@ -8,7 +8,7 @@
     "charity": "data/source-registry/imports/charity-2026-10-08.json"
   },
   "stats": {
-    "seed_rows": 20,
+    "seed_rows": 21,
     "newsmail_rows": 99,
     "newsmail_url_rows": 82,
     "newsmail_unique_hosts": 67,
@@ -18,7 +18,7 @@
       "conditional": 68,
       "pending_retest": 27
     },
-    "seed_host_overlap_rows": 10,
+    "seed_host_overlap_rows": 12,
     "newsmail_url_collision_groups": 4,
     "newsmail_distinct_name_conflicts": 2,
     "discovery_only_rows": 17,
@@ -164,6 +164,13 @@
       "kind": "web_list",
       "endpoint": "http://www.mee.gov.cn/zcwj/",
       "host": "mee.gov.cn"
+    },
+    {
+      "id": "web-cwdf-news",
+      "name": "中国妇女发展基金会·本会新闻",
+      "kind": "web_list",
+      "endpoint": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
+      "host": "cwdf.org.cn"
     }
   ],
   "candidates": [
@@ -702,7 +709,9 @@
       "source_line": 35,
       "host": "cwdf.org.cn",
       "normalized_url": "https://cwdf.org.cn/",
-      "matching_seed_ids": [],
+      "matching_seed_ids": [
+        "web-cwdf-news"
+      ],
       "compliance_refs": [
         {
           "legacy_id": "charity:national_cwdf",
@@ -715,6 +724,7 @@
       ],
       "review_reasons": [
         "DUPLICATE_LIST_ENTRY",
+        "EXISTING_SEED_HOST_REVIEW",
         "FIND_SPECIFIC_NEWS_ENDPOINT",
         "PERMISSION_RECHECK"
       ],
@@ -2518,7 +2528,9 @@
       "source_line": 139,
       "host": "cwdf.org.cn",
       "normalized_url": "https://cwdf.org.cn/",
-      "matching_seed_ids": [],
+      "matching_seed_ids": [
+        "web-cwdf-news"
+      ],
       "compliance_refs": [
         {
           "legacy_id": "charity:national_cwdf",
@@ -2531,6 +2543,7 @@
       ],
       "review_reasons": [
         "DUPLICATE_LIST_ENTRY",
+        "EXISTING_SEED_HOST_REVIEW",
         "FIND_SPECIFIC_NEWS_ENDPOINT",
         "PERMISSION_RECHECK"
       ],

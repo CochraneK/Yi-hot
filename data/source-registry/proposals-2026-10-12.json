@@ -11,9 +11,9 @@
       "kind": "web_list",
       "tier": "T2",
       "first_party": true,
-      "status": "needs_access_check",
+      "status": "covered_by_existing",
       "url": "https://www.amchamchina.org/social-impact-initiative/",
-      "note": "用户指定补充来源：企业公益、CSR/ESG、社会影响力、社区及乡村发展，优先 Social Impact Initiative 栏目。2026-10-12 本机主页、栏目、新闻归档及 /feed/ 直连均返回 HTTP 468，未验证到正常列表或 RSS；需在腾讯云复验后配置解析并启用。主体为中国美国商会，不能与美中贸易全国委员会混为一谈。"
+      "note": "网站栏目在本机与腾讯云均持续拒绝自动访问；目前由 AmCham Events 邮件和认证公众号两个已启用入口覆盖，避免建立不可运行的重复网站源。"
     },
     {
       "id": "email-amcham-events",
@@ -21,7 +21,7 @@
       "kind": "email_newsletter",
       "tier": "T2",
       "first_party": true,
-      "status": "mailbox_verified_connector_ready",
+      "status": "enabled",
       "url": "https://amcham.glueup.cn/",
       "note": "QQ IMAP 已只读验证显示发件人 amchamevent@amchamchina.org、信封域 ebmail.amchamchina.org 和 29 封历史样本。连接器只保留社会影响力、公益、ESG、可持续发展、乡村、教育、儿童、残障、环境、气候、社区和志愿主题；普通商务活动、培训、退订和统计链接不入库。首次只立游标，不回灌历史邮件。"
     },
@@ -31,7 +31,7 @@
       "kind": "email_newsletter",
       "tier": "T2",
       "first_party": true,
-      "status": "mailbox_verified_connector_ready",
+      "status": "enabled",
       "url": "https://etrack01.com/track/click2/eNplUF1PwzAM_C8RfktT56tx3shGfgVCVZu1o2zrGO0kEOK_kzAhHpAs63Q-n3V-tM6h5YxxJh15K53TZB222pJvtfReoWtJN2JJlcTKV1lRKVTVNPfn67zDu-11_pgO3by_v1xEOp8YR86e1_UVdKjr4_skTkO94DK8gEKIGgiBthAJQoSgIHrwBGQhNqUTQbTgMzYHWwChADRFECbwuSt7FDEeWR_DR9-zo7dcRlKFmyEs6JxQirD_vhcSu9Gko3WfdcMY7KjJZeMSTtvZNdbc1MN61uXDihvgT6_ePkHN5qzf3GfvgG-OlH_.html",
       "note": "用户于 2026-10-13 指定补充邮件来源并提供《慈善纪事简报》订阅链接。规范主体是爱德基金会传一慈善文化基金（简称爱德传一基金），不是独立基金会；公众号 ID 为 Chuanyi_2015。QQ IMAP 已只读验证发件人 aidechuany@batch.lingxi360.com 和 83 封历史样本；连接器按整期简报接入，首次只立游标、不回灌历史邮件，邮件 Date 不作为原文发表日期。"
     },
@@ -41,7 +41,7 @@
       "kind": "web_list",
       "tier": "T2",
       "first_party": false,
-      "status": "preview_ready",
+      "status": "enabled",
       "note": "补充公益行业观察、社区与社会组织实践。官网首页有真实新闻；旧 /feed 地址不可用。",
       "url": "https://www.chinadevelopmentbrief.org.cn/",
       "config": {
@@ -59,7 +59,7 @@
       "kind": "web_list",
       "tier": "T2",
       "first_party": false,
-      "status": "preview_ready",
+      "status": "enabled",
       "note": "补充国内公益行业报道、募捐与慈善组织动态。实测栏目有标题、原文链接和日期。",
       "url": "http://www.gongyishibao.com/html/gongyizixun/list.html",
       "config": {
@@ -78,7 +78,7 @@
       "kind": "rss",
       "tier": "T2",
       "first_party": false,
-      "status": "preview_ready",
+      "status": "enabled",
       "note": "补充社会创新、慈善与非营利管理研究。官网声明的 RSS 实测 40 条；需经过现有公益相关性筛选。",
       "url": "https://ssir.org/site/rss_2.0",
       "config": { "feedUrl": "https://ssir.org/site/rss_2.0" }
@@ -89,15 +89,15 @@
       "kind": "web_list",
       "status": "needs_parser",
       "url": "https://www.cfdp.org/",
-      "note": "补充残障与康复服务。官网可访问且有真实新闻，需补齐日期解析；NewsMail 中的 cdpf.org.cn 是残联，不是这家基金会。"
+      "note": "业务动态页面可在浏览器访问，但实际采集客户端仍收到验证页，无法稳定取得条目，暂不建立会持续失败的正式来源。NewsMail 中的 cdpf.org.cn 是残联，不是这家基金会。"
     },
     {
       "id": "cwdf",
       "name": "中国妇女发展基金会",
       "kind": "web_list",
-      "status": "needs_date_check",
+      "status": "enabled",
       "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
-      "note": "补充妇女与家庭公益。栏目可访问，但观察到晚于核查日的日期及截断标题，需核实详情页再接入。"
+      "note": "已复验本会新闻栏目与详情页日期，并使用链接 title 属性保留完整标题；作为官方一手来源启用。"
     },
     {
       "id": "unicef-cn",

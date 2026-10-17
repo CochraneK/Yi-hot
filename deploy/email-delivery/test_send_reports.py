@@ -1,6 +1,7 @@
 import importlib.util
 import tempfile
 import unittest
+from email.message import EmailMessage
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("send_reports", Path(__file__).with_name("send_reports.py"))
@@ -32,6 +33,16 @@ class ReportDeliveryTests(unittest.TestCase):
         self.assertEqual(first["status"], "sent")
         self.assertEqual(second["status"], "duplicate")
         self.assertEqual(len(sent), 1)
+
+    def test_confirmation_contains_the_confirm_link(self):
+        body, text = module.render_confirmation({"confirmUrl": "https://example.test/subscribe/confirm?token=abc"})
+        self.assertIn("确认订阅", body)
+        self.assertIn("token=abc", text)
+
+    def test_delivery_status_extracts_failed_recipient(self):
+        raw = b"From: MAILER-DAEMON@example.test\r\nSubject: Delivery Status Notification\r\nContent-Type: multipart/report; boundary=x\r\n\r\n--x\r\nContent-Type: text/plain\r\n\r\nfailed\r\n--x\r\nContent-Type: message/delivery-status\r\n\r\nFinal-Recipient: rfc822; Bad@Example.com\r\nAction: failed\r\n\r\n--x--\r\n"
+        message = module.email.message_from_bytes(raw)
+        self.assertEqual(module.bounce_addresses(message), ["bad@example.com"])
 
 
 if __name__ == "__main__":

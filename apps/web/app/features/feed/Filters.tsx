@@ -4,7 +4,7 @@ import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import { CATEGORY_KEYS, CATEGORY_LABELS, CHANNEL_LABELS, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
 import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { IconClose, IconSearch } from "../../components/icons";
-import { PillTabs, type TabItem } from "../../components/ui/Tabs";
+import { PillTabs } from "../../components/ui/Tabs";
 
 /** Same page with some query parameters changed (paging state dropped). */
 export function hrefWith(base: string, params: URLSearchParams, patch: Record<string, string | null>) {
@@ -40,24 +40,45 @@ export function CategoryTabs({ base, category, channel = "all", layoutId, size =
  * each with a dot in its dashboard color. One choice at a time: picking a topic clears the category
  * and the channel, and 一手 clears the topic — the same mutual exclusion the category row had.
  */
-export function TopicTabs({ base, topic, channel = "all", layoutId, size = "md", className = "" }: { base: string; topic: string | null; channel?: ChannelKey; layoutId: string; size?: "md" | "sm"; className?: string }) {
+export function TopicTabs({ base, topic, layoutId, className = "" }: { base: string; topic: string | null; channel?: ChannelKey; layoutId: string; size?: "md" | "sm"; className?: string }) {
   const [params] = useSearchParams();
-  const items: TabItem[] = [
-    { key: "all", label: "全部", to: hrefWith(base, params, { topic: null, channel: null }) },
-    { key: "firstParty", label: CHANNEL_LABELS.firstParty, to: hrefWith(base, params, { topic: null, channel: "firstParty" }) },
-    ...SAVE_THE_CHILDREN_TOPICS.map((t) => ({
-      key: t.slug,
-      label: (
-        <>
-          <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-          {t.name}
-        </>
-      ),
-      to: hrefWith(base, params, { topic: t.slug, category: null, channel: null }),
-    })),
+  const current = SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === topic);
+  const links = [
+    { slug: null, name: "全部", color: null },
+    ...SAVE_THE_CHILDREN_TOPICS.map((t) => ({ slug: t.slug, name: t.name, color: t.color })),
   ];
-  const active = channel === "firstParty" ? "firstParty" : (topic ?? "all");
-  return <PillTabs items={items} active={active} layoutId={layoutId} label="主题筛选" size={size} className={className} />;
+  const href = (slug: string | null) => hrefWith(base, params, { topic: slug, category: null, channel: null });
+  const chip = (entry: (typeof links)[number], mobile = false) => {
+    const on = entry.slug === topic || (!entry.slug && !topic);
+    return (
+      <Link
+        key={entry.slug ?? "all"}
+        to={href(entry.slug)}
+        preventScrollReset
+        aria-current={on ? "page" : undefined}
+        className={`${mobile ? "h-9 w-full px-1 text-[12px]" : "h-8 px-3 text-[13px]"} inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-full border transition-colors ${on ? "border-ink bg-ink font-semibold text-bg" : "border-line bg-surface text-ink-3 hover:border-ink-4 hover:text-ink"}`}
+      >
+        {entry.color && <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />}
+        {entry.name}
+      </Link>
+    );
+  };
+  return (
+    <div className={className} data-topic-filter={layoutId}>
+      <details className="group/topic rounded-xl border border-line bg-bg-sunk/60 p-1.5 lg:hidden">
+        <summary className="flex h-9 cursor-pointer list-none items-center justify-between rounded-lg bg-surface px-3 text-[13px] font-medium text-ink ring-1 ring-line-soft">
+          <span className="inline-flex items-center gap-1.5">
+            {current && <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: current.color }} />}
+            {current?.name ?? "全部主题"}
+          </span>
+          <span className="text-[12px] font-normal text-ink-4 group-open/topic:hidden">选择主题</span>
+          <span className="hidden text-[12px] font-normal text-ink-4 group-open/topic:inline">收起</span>
+        </summary>
+        <nav aria-label="主题筛选" className="mt-1.5 grid grid-cols-4 gap-1.5">{links.map((entry) => chip(entry, true))}</nav>
+      </details>
+      <nav aria-label="主题筛选" className="hidden flex-wrap gap-1.5 lg:flex">{links.map((entry) => chip(entry))}</nav>
+    </div>
+  );
 }
 
 function useSlashFocus(ref: React.RefObject<HTMLInputElement | null>) {

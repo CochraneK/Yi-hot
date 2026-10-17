@@ -5,6 +5,7 @@ import stcLogo from "@aihot/industry/brand/save-the-children.svg?url&no-inline";
 import { useChangelogSeen } from "../../lib/local-state";
 import { SIDEBAR, tabIsActive, type NavItem } from "./nav";
 import { ThemeSwitch } from "./ThemeSwitch";
+import { Wordmark } from "../../components/Logo";
 
 /** True while the changelog has an entry newer than the one this reader last opened. */
 export function useChangelogDot(latestVersion: string | null): boolean {
@@ -42,8 +43,9 @@ export function Sidebar({ changelogVersion }: { changelogVersion: string | null 
   const dot = useChangelogDot(changelogVersion);
   return (
     <aside className="sticky top-0 hidden h-dvh w-[180px] shrink-0 flex-col border-r border-line bg-sidebar px-3 pb-3.5 pt-6 lg:flex">
-      <Link to="/all" className="mb-4 flex h-[50px] items-center px-1" aria-label={`${SITE.name} 首页`}>
-        <img src={stcLogo} alt="救助儿童会 Save the Children" className="h-8 w-auto rounded-md bg-white px-2 py-1.5 ring-1 ring-line-soft" />
+      <Link to="/all" className="mb-1 flex h-[74px] flex-col items-start justify-center gap-2 px-1" aria-label={`${SITE.name} 首页`}>
+        <img src={stcLogo} alt="救助儿童会 Save the Children" className="h-7 w-auto max-w-[120px] rounded-md bg-white px-1.5 py-1 ring-1 ring-line-soft" />
+        <Wordmark size={21} />
       </Link>
       <nav className="-mx-1 flex-1 overflow-y-auto px-1" aria-label="主导航">
         {SIDEBAR.map((section) => (

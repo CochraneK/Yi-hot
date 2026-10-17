@@ -129,13 +129,53 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
     if (!q) {
       // Page ids by original publication date first, then the joins for those rows only.
       const rows = await db<ItemRow[]>`
-        WITH page AS (
-          SELECT p.article_id FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters}
-          ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
+        WITH base AS (
+          SELECT p.*, coalesce(p.published_at, p.timeline_at) AS display_at,
+            lower(regexp_replace(p.title, '[[:space:][:punct:]]+', '', 'g')) AS title_key
+          FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters}
+        ), gaps AS (
+          SELECT base.*, CASE WHEN lag(display_at) OVER (
+            PARTITION BY title_key ORDER BY display_at, article_id
+          ) >= display_at - interval '8 days' THEN 0 ELSE 1 END AS group_start
+          FROM base
+        ), clustered AS (
+          SELECT gaps.*, sum(group_start) OVER (
+            PARTITION BY title_key ORDER BY display_at, article_id
+          ) AS title_cluster
+          FROM gaps
+        ), candidates AS (
+          SELECT clustered.*, row_number() OVER (
+            PARTITION BY coalesce('f:' || fact_id::text, 't:' || title_key || ':' || title_cluster::text)
+            ORDER BY first_party DESC, (body_mode = 'full') DESC, score DESC NULLS LAST, updated_at DESC, article_id DESC
+          ) AS duplicate_rank
+          FROM clustered
+        ), page AS (
+          SELECT article_id FROM candidates WHERE duplicate_rank = 1
+          ORDER BY display_at DESC, article_id DESC LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset})
         SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE p.article_id IN (SELECT article_id FROM page)
         ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC`;
       return { rows, total: await poolCount(filterKey, () => db<{ n: number }[]>`
-        SELECT count(*) AS n FROM (SELECT 1 FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters} LIMIT ${cap}) t`) };
+        WITH base AS (
+          SELECT p.*, coalesce(p.published_at, p.timeline_at) AS display_at,
+            lower(regexp_replace(p.title, '[[:space:][:punct:]]+', '', 'g')) AS title_key
+          FROM publications p WHERE ${listedCondition(now)} AND p.eligible ${filters}
+        ), gaps AS (
+          SELECT base.*, CASE WHEN lag(display_at) OVER (
+            PARTITION BY title_key ORDER BY display_at, article_id
+          ) >= display_at - interval '8 days' THEN 0 ELSE 1 END AS group_start
+          FROM base
+        ), clustered AS (
+          SELECT gaps.*, sum(group_start) OVER (
+            PARTITION BY title_key ORDER BY display_at, article_id
+          ) AS title_cluster
+          FROM gaps
+        ), ranked AS (
+          SELECT row_number() OVER (
+            PARTITION BY coalesce('f:' || fact_id::text, 't:' || title_key || ':' || title_cluster::text)
+            ORDER BY first_party DESC, (body_mode = 'full') DESC, score DESC NULLS LAST, updated_at DESC, article_id DESC
+          ) AS duplicate_rank FROM clustered
+        )
+        SELECT count(*) AS n FROM (SELECT 1 FROM ranked WHERE duplicate_rank = 1 LIMIT ${cap}) t`) };
     }
     if (tab === "relevance") {
       // Rank narrow rows first: no article bodies or translations enter the sort/count. The public

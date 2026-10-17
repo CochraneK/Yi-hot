@@ -4,7 +4,6 @@ import { memo } from "react";
 import { Link } from "react-router";
 import { IntentLink } from "../../components/ui/IntentLink";
 import type { GroupInfo, FeedItemSummary, TimelineFilters } from "@aihot/contracts/site";
-import { CATEGORY_LABELS } from "@aihot/contracts/taxonomy";
 import { SelectedBadge } from "../../components/ui/Badge";
 import { ScoreLabel } from "../../components/ui/Score";
 import { MediaThumbs, SourceLine, StarButton } from "./parts";
@@ -70,13 +69,8 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       {isX && item.x!.media.length > 0 && <MediaThumbs media={item.x!.media} className="mt-2.5" />}
       {isX && item.x!.quoted?.text && <QuotedLine quoted={item.x!.quoted} />}
 
-      {(tags.length > 0 || (showTags && item.category)) && (
+      {tags.length > 0 && (
         <div aria-label="动态标签" className="relative z-10 mt-2 flex flex-wrap gap-1.5 text-[12px] text-ink-3">
-          {showTags && item.category && (
-            <Link to={`/all?category=${item.category}`} className="rounded-full bg-bg-sunk px-2 py-0.5 hover:text-accent">
-              {CATEGORY_LABELS[item.category]}
-            </Link>
-          )}
           {tags.map((t) => (
             <Link key={t} to={`/all?tag=${encodeURIComponent(t)}`} className="rounded-full bg-bg-sunk px-2 py-0.5 hover:text-accent">
               #{t}

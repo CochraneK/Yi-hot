@@ -47,7 +47,14 @@ function roleOf(kind: string, firstParty: boolean): string {
   return "媒体";
 }
 
-export async function candidates(start: Date, end: Date): Promise<Candidate[]> {
+export interface CandidateOptions {
+  selectedOnly?: boolean;
+  includeBackfill?: boolean;
+}
+
+export async function candidates(start: Date, end: Date, options: CandidateOptions = {}): Promise<Candidate[]> {
+  const selectedOnly = options.selectedOnly ?? true;
+  const includeBackfill = options.includeBackfill ?? false;
   const rows = await sql.begin("isolation level read committed", async (tx) => {
     // Wait for in-flight releases and keep later ones outside this snapshot. The following SELECT
     // gets a fresh READ COMMITTED snapshot; model calls and report writes happen after the lock ends.
@@ -57,15 +64,17 @@ export async function candidates(start: Date, end: Date): Promise<Candidate[]> {
       source_id: string; source_name: string; source_kind: string; fact_public_id: string | null; story_public_id: string | null; at: Date; backfill: boolean;
     }[]>`
       SELECT p.article_id AS id, p.title, p.summary, p.url, p.category, p.score, p.first_party, s.id AS source_id, s.name AS source_name,
-             s.kind AS source_kind, f.public_id AS fact_public_id, st.public_id::text AS story_public_id, p.timeline_at AS at, p.backfill
+             s.kind AS source_kind, f.public_id AS fact_public_id, st.public_id::text AS story_public_id,
+             ${includeBackfill ? sql`coalesce(p.published_at, p.timeline_at)` : sql`p.timeline_at`} AS at, p.backfill
       FROM publications p JOIN sources s ON s.id = p.source_id
       LEFT JOIN facts f ON f.id = p.fact_id LEFT JOIN stories st ON st.id = f.story_id
-      -- Attribute each item by the later of arrival and release; either range can use its index.
-      WHERE p.visibility = 'public' AND p.selected AND NOT p.backfill
-        AND (
-          (p.visible_after <= p.timeline_at AND p.timeline_at >= ${start} AND p.timeline_at < ${end})
-          OR (p.visible_after > p.timeline_at AND p.visible_after >= ${start} AND p.visible_after < ${end})
-        )`;
+      WHERE p.visibility = 'public' AND ${selectedOnly ? sql`p.selected` : sql`p.eligible`}
+        ${includeBackfill
+          ? sql`AND coalesce(p.published_at, p.timeline_at) >= ${start} AND coalesce(p.published_at, p.timeline_at) < ${end}`
+          : sql`AND NOT p.backfill AND (
+              (p.visible_after <= p.timeline_at AND p.timeline_at >= ${start} AND p.timeline_at < ${end})
+              OR (p.visible_after > p.timeline_at AND p.visible_after >= ${start} AND p.visible_after < ${end})
+            )`}`;
   });
   // One entry per fact: first-party first, then score.
   const byFact = new Map<string, Candidate>();
@@ -79,7 +88,22 @@ export async function candidates(start: Date, end: Date): Promise<Candidate[]> {
     const prev = byFact.get(key);
     if (!prev || Number(c.firstParty) - Number(prev.firstParty) > 0 || (c.firstParty === prev.firstParty && (c.score ?? 0) > (prev.score ?? 0))) byFact.set(key, c);
   }
-  return [...byFact.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  // Grouping occasionally misses the same article collected from a website and its WeChat/RSS
+  // mirror. Collapse exact normalized titles when their publication dates are within eight days;
+  // the window keeps genuinely recurring notices with generic titles separate.
+  const titleGroups = new Map<string, Candidate[][]>();
+  for (const c of byFact.values()) {
+    const titleKey = c.title.normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+    const at = new Date(c.publishedAt).getTime();
+    const groups = titleGroups.get(titleKey) ?? [];
+    const group = groups.find((g) => g.some((e) => Math.abs(new Date(e.publishedAt).getTime() - at) <= 8 * 86400000));
+    if (group) group.push(c);
+    else groups.push([c]);
+    titleGroups.set(titleKey, groups);
+  }
+  return [...titleGroups.values()].flat().map((group) => group.sort((a, b) =>
+    Number(b.firstParty) - Number(a.firstParty) || (b.score ?? 0) - (a.score ?? 0) || a.publishedAt.localeCompare(b.publishedAt),
+  )[0]!).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
 /** Facts and items already covered by recent editions are not repeated. */
@@ -183,10 +207,9 @@ export const PeriodSchema = z.object({
   headline: z.string().max(60).catch(""),
   overview: z.string().max(1500),
   themes: z
-    // A theme cites at most eight entries; a model that lists more keeps its first eight rather than failing the issue.
-    .array(z.object({ heading: z.string().max(60), summary: z.string().max(800), refs: z.array(z.union([z.number(), z.string()])).transform((refs) => refs.slice(0, 8)) }))
+    .array(z.object({ heading: z.string().max(60), summary: z.string().max(800), refs: z.array(z.union([z.number(), z.string()])).transform((refs) => refs.slice(0, 20)) }))
     .min(1)
-    .transform((themes) => themes.slice(0, 6)),
+    .transform((themes) => themes.slice(0, 10)),
 });
 
 /** The editor's brief for a week or month: its top entries as a numbered list, each with its section. */
@@ -201,8 +224,10 @@ export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endD
 async function composePeriod(kind: "weekly" | "monthly", key: string, startDate: string, endDateInclusive: string, reason: string) {
   const start = beijingMidnight(startDate);
   const end = beijingMidnight(addDays(endDateInclusive, 1));
-  const all = await candidates(start, end);
-  const top = all.slice(0, kind === "weekly" ? 40 : 60);
+  // Period issues use original publication dates and include late imports. They summarize the
+  // eligible pool rather than duplicating the narrower selected feed.
+  const all = await candidates(start, end, { selectedOnly: false, includeBackfill: true });
+  const top = all.slice(0, kind === "weekly" ? 120 : 300);
   const dailyCount = (await sql<{ n: number }[]>`SELECT count(*) AS n FROM reports WHERE kind = 'daily' AND key >= ${startDate} AND key <= ${endDateInclusive}`)[0]?.n ?? 0;
   let themes: Array<{ heading: string; summary: string; storyRefs: ReportEntry[] }> = [];
   let headline = "";
@@ -212,16 +237,35 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   if (top.length) {
     const res = await chatJson({
       model, purpose: `report_${kind}`, subject: `report:${kind}:${key}`, promptVersion: REPORT_VERSION,
-      ...periodPrompt(kind, startDate, endDateInclusive, top), schema: PeriodSchema, temperature: 0.3, maxTokens: 2500,
+      ...periodPrompt(kind, startDate, endDateInclusive, top), schema: PeriodSchema, temperature: 0.3, maxTokens: 4000,
     });
     receiptId = res.receiptId;
     headline = res.data.headline.trim();
     overview = res.data.overview;
-    themes = res.data.themes.map((t) => ({
-      heading: t.heading,
-      summary: t.summary,
-      storyRefs: t.refs.map((r) => top[Number(r) - 1]).filter((e): e is Candidate => !!e).map(({ category: _c, factKey: _f, ...e }) => e),
-    }));
+    const assigned = new Set<string>();
+    themes = res.data.themes.flatMap((t) => {
+      const storyRefs: ReportEntry[] = [];
+      for (const ref of t.refs) {
+        const candidate = top[Number(ref) - 1];
+        if (!candidate || assigned.has(candidate.itemId)) continue;
+        assigned.add(candidate.itemId);
+        const { category: _c, factKey: _f, ...entry } = candidate;
+        storyRefs.push(entry);
+      }
+      return storyRefs.length ? [{ heading: t.heading, summary: t.summary, storyRefs }] : [];
+    });
+    // The model writes the synthesis, but completeness is deterministic: every candidate remains
+    // inspectable in the issue even when the editor does not cite it in a narrative theme.
+    const cited = new Set(themes.flatMap((t) => t.storyRefs.map((e) => e.itemId)));
+    const remaining = top.filter((e) => !cited.has(e.itemId));
+    for (let i = 0; i < remaining.length; i += 20) {
+      const chunk = remaining.slice(i, i + 20);
+      themes.push({
+        heading: remaining.length > 20 ? `更多动态 ${Math.floor(i / 20) + 1}` : "更多动态",
+        summary: "以下动态也属于本期合格信息，为保留完整覆盖一并列出，可继续查看摘要与原文。",
+        storyRefs: chunk.map(({ category: _c, factKey: _f, ...e }) => e),
+      });
+    }
   }
   const content = {
     kind,
@@ -233,7 +277,12 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     overview,
     themes,
     storyOrder: top.map((e) => e.itemId),
-    metrics: { totalStories: themes.reduce((n, t) => n + t.storyRefs.length, 0), selectedCount: all.length, ...(FEATURES.dailyReports ? { reportsCovered: Number(dailyCount) } : {}) },
+    metrics: {
+      totalStories: new Set(themes.flatMap((t) => t.storyRefs.map((e) => e.itemId))).size,
+      candidateCount: all.length,
+      sourcesCount: new Set(all.map((e) => e.sourceId)).size,
+      ...(FEATURES.dailyReports ? { reportsCovered: Number(dailyCount) } : {}),
+    },
     generator: { version: REPORT_VERSION, model },
   };
   await saveReport(kind, key, start, end, content, reason, model);

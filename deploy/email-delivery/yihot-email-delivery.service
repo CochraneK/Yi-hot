@@ -1,0 +1,17 @@
+[Unit]
+Description=Deliver published Yi-Hot reports by email
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/yihot-email/.env
+EnvironmentFile=-/opt/yihot-email-delivery/.env
+ExecStart=/usr/bin/python3 /opt/yihot-email-delivery/send_reports.py
+User=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/yihot-email-delivery
+

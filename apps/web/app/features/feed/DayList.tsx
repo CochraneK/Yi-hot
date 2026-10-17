@@ -8,6 +8,7 @@ import { beijingDate } from "../../lib/format";
 import { markRead, useReadSet } from "../../lib/local-state";
 import { DayHeader, TimelineSlot } from "./Timeline";
 import { FeedItem } from "./FeedItem";
+import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 
 export function DayList({ items, todayCount = null, showTags = true, animate = false }: { items: FeedItemSummary[]; todayCount?: number | null; showTags?: boolean; animate?: boolean }) {
   const readSet = useReadSet();
@@ -30,7 +31,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
           <DayHeader day={day} today={today} count={day === today ? todayCount : null} />
           <ol className="lg:pt-1">
             {list.map((it) => (
-              <TimelineSlot key={it.id} at={it.publishedAt ?? it.timelineAt} timeLabel={it.publishedAt ? "原文发表" : "收录"} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0}>
+              <TimelineSlot key={it.id} at={it.publishedAt ?? it.timelineAt} timeLabel={it.publishedAt ? "原文发表" : "收录"} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                 <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
               </TimelineSlot>
             ))}
@@ -39,6 +40,10 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
       ))}
     </div>
   );
+}
+
+function topicColor(tags: string[]) {
+  return SAVE_THE_CHILDREN_TOPICS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
 }
 
 /** Numbered pages (the list stays crawlable), with previous / next at the ends. */

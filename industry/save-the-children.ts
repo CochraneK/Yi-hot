@@ -20,7 +20,6 @@ export const SAVE_THE_CHILDREN_TOPICS: readonly MissionTopic[] = [
   { slug: "environment", name: "环境保护", color: "#2A9D8F" },
   { slug: "fundraising-campaign", name: "募集筹款", color: "#D62828" },
   { slug: "policy-advocacy", name: "政策倡导", color: "#6A4C93" },
-  { slug: "careers", name: "招募实习", color: "#8D99AE" },
 ] as const;
 
 /** slug → 颜色，供筛选 pill 与主题卡片共用。 */

@@ -605,20 +605,6 @@
       ]
     },
     {
-      "slug": "careers",
-      "name": "招募实习",
-      "group": "field",
-      "tags": [
-        "招募实习"
-      ],
-      "definition": "公益行业招聘与实习：机构用人需求、校园招募、实习项目与人才发展信息。",
-      "related": [
-        "volunteers",
-        "corporate-charity",
-        "trends"
-      ]
-    },
-    {
       "slug": "policy",
       "name": "政策与监管",
       "group": "genre",

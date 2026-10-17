@@ -11,6 +11,7 @@ import { RingMark } from "../../components/Logo";
 import { EmptyState } from "../../components/ui/Page";
 import { beijingDate, beijingTime, beijingWeekday } from "../../lib/format";
 import { markRead, useReadSet } from "../../lib/local-state";
+import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { isHydrated, isReload, markHydrated, readSnapshot, restoreAnchor, saveSnapshot } from "./restore";
 
 const AUTO_BATCHES = 3;
@@ -89,7 +90,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
  * One dated slot: the time, the rail (desktop) and the item. As on the original timeline, the rail is a
  * 1px line from this node's centre to the next one's, so the day reads as one continuous thread.
  */
-export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string }) {
+export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dotColor?: string }) {
   return (
     <li
       data-card-key={dataKey}
@@ -102,7 +103,7 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, 
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />
-        <span className="absolute left-[7.5px] top-[25.5px] size-[7px] rounded-full bg-accent shadow-[0_0_0_4px_var(--bg)] transition-transform duration-300 group-hover/slot:scale-[1.15]" />
+        <span className="absolute left-[7.5px] top-[25.5px] size-[7px] rounded-full shadow-[0_0_0_4px_var(--bg)] transition-transform duration-300 group-hover/slot:scale-[1.15]" style={{ backgroundColor: dotColor ?? "var(--accent)" }} />
       </span>
       {children}
     </li>
@@ -289,7 +290,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                     const fresh = freshKeys.has(c.key);
                     const delay = fresh ? Math.min(order++, 10) * 40 : 0;
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={c.anchorAt} fresh={fresh} delay={delay}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={c.anchorAt} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );
@@ -304,6 +305,10 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
       <FeedEnd loading={loadingMore} error={loadError} hasMore={!!state.nextCursor} manual={state.batches >= AUTO_BATCHES} empty={state.cards.length === 0} onMore={loadMore} />
     </div>
   );
+}
+
+function topicColor(tags: string[]) {
+  return SAVE_THE_CHILDREN_TOPICS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
 }
 
 /** The foot of a paged list: loading, retry, "加载更多" after a few automatic pages, or the end. */

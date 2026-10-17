@@ -18,9 +18,9 @@ import { apiGet } from "./lib/api.server";
 import { useHydratedFlag } from "./lib/hydration";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "icon", href: "/favicon.ico", sizes: "any" },
-  { rel: "icon", type: "image/png", href: "/icon.png" },
-  { rel: "apple-touch-icon", href: "/apple-icon.png" },
+  { rel: "icon", href: "/favicon.ico?v=star-20261017", sizes: "any" },
+  { rel: "icon", type: "image/png", href: "/icon.png?v=star-20261017" },
+  { rel: "apple-touch-icon", href: "/apple-icon.png?v=star-20261017" },
   { rel: "manifest", href: "/manifest.webmanifest" },
   { rel: "alternate", type: "application/rss+xml", title: `${SITE.name} — 精选`, href: "/feed.xml" },
 ];
@@ -82,9 +82,9 @@ function SiteShell({ changelogVersion, children }: { changelogVersion: string | 
       <main id="main" className="min-w-0 flex-1 pb-[calc(72px+env(safe-area-inset-bottom))] lg:px-7 lg:pb-[72px] lg:pt-6">
         <div className="mx-auto w-full max-w-[640px] px-4 lg:max-w-[var(--page-max-wide)] lg:px-0">
           {/* The sidebar wordmark shows on desktop only, so phones get the same brand row up top. */}
-          <div className="flex h-9 items-center gap-2 lg:hidden">
+          <div className="flex h-11 items-center gap-3 lg:hidden">
             <img src={stcLogo} alt="救助儿童会 Save the Children" className="h-[22px] w-auto rounded bg-white px-1.5 py-0.5 ring-1 ring-line-soft" />
-            <span className="text-[12.5px] font-semibold text-ink-2">{SITE.name}</span>
+            <span className="text-[16px] font-black tracking-[-0.03em] text-ink">{SITE.name}</span>
           </div>
           {children}
         </div>

@@ -48,6 +48,10 @@ export function parseLooseDate(value: string | null | undefined, utcOffset = "+0
   return atOffset(local.getFullYear(), local.getMonth() + 1, local.getDate(), local.getHours(), local.getMinutes(), local.getSeconds(), utcOffset);
 }
 
+function datePrecision(value: string | null | undefined): "date" | "datetime" {
+  return value && /\d{1,2}:\d{2}/.test(value) ? "datetime" : "date";
+}
+
 /** The datePublished of the page's structured data (JSON-LD, also inside @graph or embedded app state). */
 export function jsonLdPublished($: cheerio.CheerioAPI, html: string): string | null {
   const find = (v: unknown, depth = 0): string | null => {
@@ -176,16 +180,20 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     const title = collapseWhitespace((c.titleFromAttribute === true ? linkEl.attr("title") : titleEl.text()) || linkEl.attr("title") || "");
     if (!title) continue;
     let publishedAt: Date | null = null;
+    let publishedAtPrecision: "date" | "datetime" | undefined;
     if (c.publishedAtSelector) {
       const dateEl = el.find(c.publishedAtSelector).first();
-      publishedAt = parseLooseDate(dateEl.attr("datetime") ?? dateEl.attr("title") ?? dateEl.text(), c.publishedAtUtcOffset);
+      const raw = dateEl.attr("datetime") ?? dateEl.attr("title") ?? dateEl.text();
+      publishedAt = parseLooseDate(raw, c.publishedAtUtcOffset);
+      if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
     if (!publishedAt && c.publishedAtRegex) {
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
       publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset);
+      if (publishedAt) publishedAtPrecision = datePrecision(m?.[1]);
     }
     seen.add(url);
-    out.push({ url, title, publishedAt });
+    out.push({ url, title, publishedAt, publishedAtPrecision });
   }
   return out;
 }

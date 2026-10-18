@@ -1,5 +1,5 @@
 [Unit]
-Description=Check for new Yi-Hot weekly/monthly reports
+Description=Check for new Yi-Hot daily/weekly/monthly reports
 
 [Timer]
 OnCalendar=*:0/30

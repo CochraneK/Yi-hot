@@ -52,6 +52,7 @@ export interface ItemSummary {
   source: SourceRef;
   links: { aihot: string; original: string };
   publishedAt: string | null;
+  publishedAtPrecision: "date" | "datetime";
   discoveredAt: string;
   timelineAt: string;
   category: CategoryKey | null;
@@ -64,7 +65,7 @@ export interface ItemSummary {
 }
 
 /** The fields rendered by a site feed card; full original text lives in the item detail. */
-export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "publishedAt" | "discoveredAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel"> {
+export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "publishedAt" | "publishedAtPrecision" | "discoveredAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel"> {
   source: Pick<SourceRef, "name">;
   x: (Pick<XPostView, "authorName" | "handle" | "avatarUrl" | "avatarSrcSet" | "media"> & {
     quoted: Omit<NonNullable<XPostView["quoted"]>, "url"> | null;

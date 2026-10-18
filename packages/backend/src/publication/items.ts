@@ -22,6 +22,7 @@ export interface ItemRow {
   channel: "news" | "x";
   url: string;
   published_at: Date | null;
+  published_at_precision: "date" | "datetime";
   discovered_at: Date;
   timeline_at: Date;
   /** Reading-group anchor for a selected item (timeline_at otherwise). */
@@ -54,7 +55,7 @@ export interface ItemRow {
 /** Columns every item listing selects. Internal judgement details never leave this layer. */
 export const ITEM_COLUMNS = sql`
   p.article_id AS id, p.revision, p.title, p.original_title, p.summary, p.reason, p.category, p.tags, p.score,
-  p.selected, p.eligible, p.channel, p.url, p.published_at, p.discovered_at, p.timeline_at, p.sort_at, p.first_party, p.visibility,
+  p.selected, p.eligible, p.channel, p.url, p.published_at, a.published_at_precision, p.discovered_at, p.timeline_at, p.sort_at, p.first_party, p.visibility,
   p.body_mode, p.syndicate, p.indexable, p.visible_after, p.backfill, p.fact_id, p.story_id,
   s.id AS source_id, s.name AS source_name, s.kind AS source_kind, s.participation_mode AS source_mode, s.icon_url AS source_icon,
   a.x_post, a.author, a.language,
@@ -168,6 +169,7 @@ export function toItemSummary(row: ItemRow): ItemSummary {
     },
     links: { aihot: `/items/${row.id}`, original: row.url },
     publishedAt: row.published_at?.toISOString() ?? null,
+    publishedAtPrecision: row.published_at_precision,
     discoveredAt: row.discovered_at.toISOString(),
     timelineAt: row.timeline_at.toISOString(),
     category: (row.category as CategoryKey | null) ?? null,
@@ -185,7 +187,7 @@ export function toFeedItemSummary(row: ItemRow): FeedItemSummary {
   const item = toItemSummary(row);
   return {
     id: item.id, title: item.title, summary: item.summary, reason: item.reason,
-    source: { name: item.source.name }, publishedAt: item.publishedAt, discoveredAt: item.discoveredAt, timelineAt: item.timelineAt,
+    source: { name: item.source.name }, publishedAt: item.publishedAt, publishedAtPrecision: item.publishedAtPrecision, discoveredAt: item.discoveredAt, timelineAt: item.timelineAt,
     category: item.category, tags: cardTags(row.tags), score: item.score, selected: item.selected, channel: item.channel,
     x: item.x ? {
       authorName: item.x.authorName, handle: item.x.handle, avatarUrl: item.x.avatarUrl,

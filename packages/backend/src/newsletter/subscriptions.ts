@@ -2,6 +2,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { credential, config } from "../config.ts";
 import { sql } from "../db.ts";
 import { listReports, loadReport, type ReportKind } from "../publication/reports.ts";
+import { FEATURES } from "@aihot/industry/features";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -23,38 +24,47 @@ function verifySigned(token: string, purpose: string): number | null {
   return a.length === b.length && timingSafeEqual(a, b) ? id : null;
 }
 
-export async function requestSubscription(input: { email?: unknown; weekly?: unknown; monthly?: unknown }) {
+export async function requestSubscription(input: { email?: unknown; weekly?: unknown; monthly?: unknown; daily?: unknown }) {
   const email = String(input.email ?? "").trim().toLowerCase().slice(0, 254);
   if (!EMAIL.test(email)) throw Object.assign(new Error("请输入有效邮箱地址"), { statusCode: 400 });
   const weekly = input.weekly !== false;
   const monthly = input.monthly !== false;
-  if (!weekly && !monthly) throw Object.assign(new Error("请至少选择周报或月报"), { statusCode: 400 });
+  const daily = input.daily === true;
+  if (!weekly && !monthly && !daily) throw Object.assign(new Error("请至少选择日报、周报或月报"), { statusCode: 400 });
   const token = randomBytes(32).toString("base64url");
   const tokenHash = hash(token);
   const expires = new Date(Date.now() + 48 * 3600_000);
   const [row] = await sql<{ id: number; status: string }[]>`
-    INSERT INTO newsletter_subscriptions (email, weekly, monthly, status, confirm_token_hash, confirm_expires_at, updated_at)
-    VALUES (${email}, ${weekly}, ${monthly}, 'pending', ${tokenHash}, ${expires}, now())
-    ON CONFLICT ((lower(email))) DO UPDATE SET weekly = EXCLUDED.weekly, monthly = EXCLUDED.monthly,
+    INSERT INTO newsletter_subscriptions (email, weekly, monthly, daily, status, confirm_token_hash, confirm_expires_at, updated_at)
+    VALUES (${email}, ${weekly}, ${monthly}, ${daily}, 'pending', ${tokenHash}, ${expires}, now())
+    ON CONFLICT ((lower(email))) DO UPDATE SET
+      weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.weekly ELSE EXCLUDED.weekly END,
+      monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.monthly ELSE EXCLUDED.monthly END,
+      daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.daily ELSE EXCLUDED.daily END,
+      pending_weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.weekly ELSE NULL END,
+      pending_monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.monthly ELSE NULL END,
+      pending_daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.daily ELSE NULL END,
       status = CASE WHEN newsletter_subscriptions.status = 'active' THEN 'active' ELSE 'pending' END,
-      confirm_token_hash = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.confirm_token_hash ELSE EXCLUDED.confirm_token_hash END,
-      confirm_expires_at = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.confirm_expires_at ELSE EXCLUDED.confirm_expires_at END,
+      confirm_token_hash = EXCLUDED.confirm_token_hash, confirm_expires_at = EXCLUDED.confirm_expires_at,
       updated_at = now()
     RETURNING id, status`;
-  if (row!.status !== "active") {
+  if (row) {
     const confirmUrl = `${config.siteUrl}/subscribe/confirm?token=${encodeURIComponent(token)}`;
     await sql`INSERT INTO newsletter_outbox (subscription_id, kind, dedupe_key, payload)
-      VALUES (${row!.id}, 'confirmation', ${`confirm:${row!.id}:${tokenHash}`}, ${sql.json({ email, weekly, monthly, confirmUrl } as never)})
+      VALUES (${row.id}, 'confirmation', ${`confirm:${row.id}:${tokenHash}`}, ${sql.json({ email, weekly, monthly, daily, confirmUrl } as never)})
       ON CONFLICT (dedupe_key) DO NOTHING`;
   }
-  return { ok: true, state: row!.status === "active" ? "active" : "confirmation_sent" };
+  return { ok: true, state: "confirmation_sent" };
 }
 
 export async function confirmSubscription(token: string) {
   const tokenHash = hash(token);
-  const [row] = await sql<{ id: number }[]>`UPDATE newsletter_subscriptions SET status = 'active', confirmed_at = coalesce(confirmed_at, now()),
+  const [row] = await sql<{ id: number }[]>`UPDATE newsletter_subscriptions SET
+    weekly = coalesce(pending_weekly, weekly), monthly = coalesce(pending_monthly, monthly), daily = coalesce(pending_daily, daily),
+    pending_weekly = NULL, pending_monthly = NULL, pending_daily = NULL,
+    status = 'active', confirmed_at = coalesce(confirmed_at, now()),
     confirm_token_hash = NULL, confirm_expires_at = NULL, unsubscribed_at = NULL, updated_at = now()
-    WHERE confirm_token_hash = ${tokenHash} AND confirm_expires_at > now() AND status = 'pending' RETURNING id`;
+    WHERE confirm_token_hash = ${tokenHash} AND confirm_expires_at > now() AND status IN ('pending','active') RETURNING id`;
   return { ok: !!row, state: row ? "confirmed" : "invalid" };
 }
 
@@ -69,13 +79,14 @@ export async function unsubscribe(token: string) {
 
 export async function syncLatestReports() {
   let queued = 0;
-  for (const kind of ["weekly", "monthly"] as const) {
+  for (const kind of ["daily", "weekly", "monthly"] as const) {
+    if (kind === "daily" && !FEATURES.dailyNewsletter) continue;
     const latest = (await listReports(kind, 1))[0];
     if (!latest) continue;
     const report = await loadReport(kind, latest.key);
     if (!report) continue;
     const subs = await sql<{ id: number; email: string; confirmed_at: Date }[]>`SELECT id, email, confirmed_at FROM newsletter_subscriptions WHERE status = 'active'
-      AND ((${kind} = 'weekly' AND weekly) OR (${kind} = 'monthly' AND monthly))`;
+      AND ((${kind} = 'daily' AND daily) OR (${kind} = 'weekly' AND weekly) OR (${kind} = 'monthly' AND monthly))`;
     for (const sub of subs) {
       // Confirmation starts delivery from the next issue; subscribing must never dump archives.
       if (!sub.confirmed_at || new Date(report.generatedAt) <= sub.confirmed_at) continue;

@@ -6,6 +6,7 @@ export const FEATURES = {
   selectedFeed: false,
   /** 公益总报只生成周报、月报；旧日报保留为历史记录。 */
   dailyReports: false,
+  dailyNewsletter: true,
   /** 模型榜：汇总公开评测，按公开方法 v15 计算共识排名（/leaderboard）。每天抓 4 次评测来源。公益行业无此需求。 */
   leaderboard: false,
   /** Codex 重置监控：盯 OpenAI Codex 负责人在 X 上的额度重置公告（/codex-reset）。需要 SocialData。公益行业无此需求。 */

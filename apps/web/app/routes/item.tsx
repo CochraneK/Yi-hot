@@ -122,7 +122,7 @@ export default function ItemPage() {
   const bodyHtml = lang === "zh" ? (item.body?.zh ?? item.body?.original) : (item.body?.original ?? item.body?.zh);
   const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? "正文 · AI 翻译" : lang === "original" && hasTranslation ? "正文 · 原文" : "正文";
   const isX = item.channel === "x" && !!item.x;
-  const display = feedDisplayAt(item.publishedAt, item.discoveredAt, item.timelineAt);
+  const display = feedDisplayAt(item.publishedAt, item.discoveredAt, item.timelineAt, item.publishedAtPrecision);
   const publishedIso = display.at;
   const summaryOnly = item.readingMode === "summary-only";
   const showOutline = item.outline.length >= 3;

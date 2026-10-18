@@ -15,8 +15,9 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
   const today = beijingDate(Date.now());
   const days = useMemo(() => {
     const out: Array<{ day: string; items: FeedItemSummary[] }> = [];
-    for (const it of items) {
-      const d = beijingDate(feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt).at);
+    const ordered = [...items].sort((a, b) => Date.parse(feedDisplayAt(b.publishedAt, b.discoveredAt, b.timelineAt, b.publishedAtPrecision).at) - Date.parse(feedDisplayAt(a.publishedAt, a.discoveredAt, a.timelineAt, a.publishedAtPrecision).at));
+    for (const it of ordered) {
+      const d = beijingDate(feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision).at);
       const last = out[out.length - 1];
       if (last && last.day === d) last.items.push(it);
       else out.push({ day: d, items: [it] });
@@ -31,7 +32,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
           <DayHeader day={day} today={today} count={day === today ? todayCount : null} />
           <ol className="lg:pt-1">
             {list.map((it) => {
-              const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt);
+              const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
               return (
                 <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                   <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />

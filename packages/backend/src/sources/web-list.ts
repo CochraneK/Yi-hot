@@ -177,7 +177,12 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     if (!url || seen.has(url) || !allowed(url, source)) continue;
     if (!sectionsArePosts && listingItself(url, listing)) continue;
     const titleEl = c.titleSelector ? (el.is(c.titleSelector) ? el : el.find(c.titleSelector).first()) : linkEl;
-    const title = collapseWhitespace((c.titleFromAttribute === true ? linkEl.attr("title") : titleEl.text()) || linkEl.attr("title") || "");
+    // A few official lists put their date inside the link itself. Keep that useful date for
+    // publishedAt, but do not append it to the reader-facing headline.
+    const visibleTitle = c.publishedAtSelector
+      ? titleEl.clone().find(c.publishedAtSelector).remove().end().text()
+      : titleEl.text();
+    const title = collapseWhitespace((c.titleFromAttribute === true ? linkEl.attr("title") : visibleTitle) || linkEl.attr("title") || "");
     if (!title) continue;
     let publishedAt: Date | null = null;
     let publishedAtPrecision: "date" | "datetime" | undefined;

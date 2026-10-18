@@ -53,6 +53,16 @@ test("a list can prefer the link title attribute when visible text is truncated"
   assert.equal(items[0]?.publishedAt?.toISOString(), "2026-10-17T00:00:00.000Z");
 });
 
+test("a date nested inside the headline link is not appended to the title", () => {
+  const source = { id: "official-news", config: {
+    url: "https://example.org/news", itemSelector: "li", linkSelector: "a",
+    titleSelector: "a", publishedAtSelector: "span",
+  } } as any;
+  const items = fromHtml('<li><a href="/post/1">应急救援能力建设工作<span>2026-10-18 17:18</span></a></li>', "https://example.org/news", source);
+  assert.equal(items[0]?.title, "应急救援能力建设工作");
+  assert.equal(items[0]?.publishedAt?.toISOString(), "2026-10-18T09:18:00.000Z");
+});
+
 test("query-identified articles are not mistaken for their index.php listing", () => {
   const source = { id: "query-cms", config: {
     url: "https://example.org/index.php?a=lists&catid=26", itemSelector: "li", linkSelector: "a",

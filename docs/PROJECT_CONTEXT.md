@@ -108,7 +108,7 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
   - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。
-- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），seed 快照为 **20 条（19 启用 + 1 停用）**，运行时另有五个已启用的新来源。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 断言 `select count(*) from sources` = 20，加源必须同步。
+- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），2026-10-19 的 seed 快照为 **24 条**；生产运行时另含公众号、邮件及后台接入的来源。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 的种子数量从该 JSON 动态读取，加源后仍须重生成信源审计产物。
 - 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。实际轮询间隔以运行时数据库为准；新增网站、公众号初期配置 120 分钟，worker 可能自动调整。
 
 ## 4. 数据模型要点（写 SQL 前先看这段）

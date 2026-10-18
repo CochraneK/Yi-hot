@@ -609,6 +609,95 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cdpf-news",
+      "name": "中国残联·残联要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cdpf.org.cn/xwzx/clyw2/index.htm",
+        "itemSelector": "ul.subRightList > li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "https://www.cdpf.org.cn/xwzx/clyw2/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "china-disabled-persons-federation",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "残障融合"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-mem-emergency-news",
+      "name": "应急管理部·应急要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mem.gov.cn/xw/yjyw/",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "https://www.mem.gov.cn/xw/yjyw/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "ministry-of-emergency-management",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "官方",
+        "应急救援"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-cac-policy",
+      "name": "中国网信网·政策法规",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cac.gov.cn/wxzw/zcfg/A093703index_1.htm",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "publishedAtRegex": "(\\d{4}-\\d{2}-\\d{2})",
+        "allowUrlPrefixes": [
+          "https://www.cac.gov.cn/20"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": "cyberspace-administration-of-china",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "官方",
+        "网络保护",
+        "政策"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false
     }
   ]
 }

@@ -3,6 +3,12 @@
 </p>
 
 <h1 align="center">Yi-Hot · 公益动态</h1>
+
+<p align="center">
+  <img src="industry/brand/save-the-children.svg" alt="救助儿童会（儿童公益主题适配涉及的机构标识）" width="210" />
+</p>
+<p align="center"><sub>救助儿童会方向的儿童公益主题适配 · 机构标识归原权利人所有；本站独立维护，展示不代表官方合作或背书。</sub></p>
+
 <p align="center">
   <strong>让值得关注的公益信息，更容易被发现、理解与追踪。</strong><br/>
   面向公益从业者、研究者与关注公共议题的读者的公益资讯聚合与 AI 辅助整理平台。

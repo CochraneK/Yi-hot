@@ -38,6 +38,9 @@ services:
   setup:
     <<: *app
     env_file: .env
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
     restart: "no"
     command: ["sh", "-c", "node scripts/migrate.ts && node scripts/seed.ts"]
 
@@ -47,6 +50,7 @@ services:
     command: ["node", "apps/api/src/main.ts"]
     environment:
       <<: *app-env
+      DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
       API_HOST: 0.0.0.0
       API_PORT: "3001"
     depends_on:
@@ -56,6 +60,9 @@ services:
   worker:
     <<: *app
     env_file: .env
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
     command: ["node", "apps/worker/src/main.ts"]
     # On stop the worker lets a paid call in flight finish (STOP_TIMEOUT_MS, 195 s); Docker's default
     # 10 s would kill it mid-call and leave "outcome unknown" receipts that are paid for again.

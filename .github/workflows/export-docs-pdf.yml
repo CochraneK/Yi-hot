@@ -1,0 +1,52 @@
+name: Export YiHot PDF manuals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - MAINTENANCE.md
+      - scripts/export_docs_pdf.py
+      - .github/workflows/export-docs-pdf.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    name: Render and publish PDFs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Chinese fonts and PDF renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk
+          python -m pip install "weasyprint>=63,<70" "mistune>=3,<4" "beautifulsoup4>=4,<5" "pypdf>=5,<7"
+      - name: Export README, full handbook and combined PDF
+        run: python scripts/export_docs_pdf.py
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YiHot-PDF-Docs
+          path: docs/pdf/*.pdf
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish updated PDFs to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/pdf/YiHot_README.pdf docs/pdf/YiHot_MAINTENANCE.pdf docs/pdf/YiHot_Complete.pdf
+          if git diff --cached --quiet; then
+            echo "PDFs unchanged"
+            exit 0
+          fi
+          git commit -m "docs(pdf): refresh rendered YiHot manuals [skip ci]"
+          git push origin HEAD:main

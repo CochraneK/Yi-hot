@@ -192,14 +192,13 @@ node --test apps/web/tests/*.test.ts
 
 | 服务 | 作用 | 运行方式 |
 | --- | --- | --- |
-| `aihot-web-1` | 网页、SSR、FutureMe 反向代理 | Docker |
+| `aihot-web-1` | 网页和 SSR | Docker |
 | `aihot-api-1` | 公开 API、后台 API、订阅 API | Docker |
 | `aihot-worker-1` | 采集、分析、归组、发布、总报 | Docker |
 | `aihot-db-1` | PostgreSQL 数据库 | Docker volume |
 | `yihot-werss-werss-1` | 微信公众号 RSS | Docker |
 | `yihot-email-source.timer` | 每 30 分钟读取获准邮件来源 | systemd |
 | `yihot-email-delivery.timer` | 每 30 分钟发送确认信和总报 | systemd |
-| `futureme-app` | 同服务器的 FutureMe 项目 | 独立 Docker 项目 |
 
 ## 二、后台怎么用
 
@@ -277,7 +276,7 @@ sudoedit .env
 把 `ADMIN_PASSWORD` 改成至少 12 位的随机密码，然后让容器重新读取 `env_file`：
 
 ```bash
-sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml up -d
+sudo docker compose <服务器现行的完整生产覆盖参数> up -d
 ```
 
 只执行 `docker restart` 不会重新读取 `.env`。验证新密码后，把新值同步进本机 `secrets/credentials.env` 并重新加密：
@@ -520,41 +519,36 @@ console.log(data.items);
 | 服务 | 实测 | 当前保守规划 |
 | --- | --- | --- |
 | Yi-Hot 动态页 | 20 并发全部成功，P95 约 0.58 秒 | 20–30 名同时活跃读者 |
-| FutureMe 普通页面 | 20 并发全部成功，P95 约 0.09 秒 | 普通页面 20 并发无明显压力 |
-| FutureMe AI | 程序限制同时 3 个模型请求 | 超出会等待 |
 | Yi-Hot 邮件 | 20 封/30 分钟 | 100–200 个订阅者 |
 
-访问分散时，Yi-Hot 约可承载 1,000–3,000 次日访问。这不是保证值；页面类型、缓存、机器人、FutureMe AI、WeRSS 刷新和批处理都会改变容量。
+访问分散时，Yi-Hot 约可承载 1,000–3,000 次日访问。这不是保证值；页面类型、缓存、机器人、WeRSS 刷新和批处理都会改变容量。
 
-FutureMe 当前全站公共每日保护额度：新会话 80、文本模型 120、图片 12、实时语音 24、语音识别 60、语音合成 80、媒体处理 80。这些是程序内的每日次数保险丝，不是模型平台的金额上限。
-
-出现以下情况应优化或扩容：可用内存持续低于 300MB、Swap 持续增长到 1GB 以上、负载均值长期超过约 1.5、页面 P95 长期超过 1 秒、出现 5xx、磁盘超过 80%、邮件接近 200 订阅者，或 FutureMe 经常达到并发和每日额度。下一档优先考虑 2 核4GB。
+出现以下情况应优化或扩容：可用内存持续低于 300MB、Swap 持续增长到 1GB 以上、负载均值长期超过约 1.5、页面 P95 长期超过 1 秒、出现 5xx、磁盘超过 80%或邮件接近 200 订阅者。下一档优先考虑 2核4GB。
 
 ### 当前成本概览
 
-成本分成固定基础设施、Yi-Hot 模型调用、FutureMe 模型调用和可选服务四部分。下面是 **2026-10-18 的规划快照**，用于交接和做预算，不代替腾讯云及模型服务商账单。
+成本分成固定基础设施、Yi-Hot 模型调用和可选服务三部分。下面是 **2026-10-18 的规划快照**，用于交接和做预算，不代替腾讯云及模型服务商账单。
 
 | 项目 | 当前估算 | 计费特点 |
 | --- | ---: | --- |
-| 腾讯云 2核2GB 主机 | 约 ¥50/月，或 ¥510/年 | 按当前同级轻量应用服务器刊例估算；实际以该实例续费单为准 |
+| 腾讯云 2核2GB 主机 | **实际购买价 ¥99/年，折合 ¥8.25/月** | 当前项目真实成本；续费前查看控制台新价格 |
 | Yi-Hot 模型 API | 约 ¥35–63/月 | 依据生产真实 token 和当前后台高峰单价推算 |
 | WeRSS 软件 | ¥0 软件订阅费 | 自托管开源软件，但占用服务器 CPU、内存和磁盘 |
 | QQ 邮件收取和发送 | 当前无单独 API 费 | 使用已有 QQ 邮箱；受个人邮箱发送限制和风控约束 |
 | GitHub 私有仓库 | 当前可为 ¥0 | 取决于 GitHub 账号方案和 Actions 用量 |
 | HTTPS | 当前没有单独证书费 | 若使用域名可申请 ACME 免费证书；域名另计 |
 | 异地备份 | 尚未形成已核实固定账单 | 建议另留 ¥1–20/月，取决于保留周期、容量和下载流量 |
-| FutureMe 模型 API | 暂不能可靠月化 | 多服务商且缺少统一费用回执，必须从各控制台对账 |
 
-不含 FutureMe、域名和可选备份时，现阶段可以先按：
+不含域名和可选备份时，现阶段可以先按：
 
 ```text
-每月：约 ¥85–115
-每年：约 ¥1,020–1,380
+每月：约 ¥43–72
+每年：约 ¥519–855
 ```
 
 准备项目预算时建议再留 20%–30% 余量，用于历史回灌、模型调价、失败重试、临时扩容和备份下载。
 
-腾讯云官网当前展示的中国内地同级轻量入门套餐为 2核2GB、50GB SSD、4Mbps、300GB 月流量，约 ¥50/月、¥510/年；促销、新购和存量续费价可能不同。维护者应打开[腾讯云轻量应用服务器官方页面](https://cloud.tencent.com/product/lighthouse)和实例续费页核对，不要把 README 数字直接当发票金额。
+当前服务器是优惠购买的 **¥99/年**，这是本项目预算应使用的真实金额。腾讯云官网当前展示的中国内地同级轻量入门套餐为 2核2GB、50GB SSD、4Mbps、300GB 月流量，约 ¥50/月、¥510/年；这个刊例只用于判断未来续费或重购风险，不是当前账单。维护者应在到期前打开[腾讯云轻量应用服务器官方页面](https://cloud.tencent.com/product/lighthouse)和实例续费页核对。
 
 ### Yi-Hot 模型费用怎样算出来
 
@@ -635,37 +629,15 @@ FutureMe 当前全站公共每日保护额度：新会话 80、文本模型 120�
 
 当前每封邮件没有单独 API 单价，但每个收件人会建立一次 SMTP 连接。订阅量扩大后的主要问题是 QQ 邮箱限流、风控、投递率和发送时间，而不是模型 token。转专业邮件服务后通常会按联系人数量或发送封数收费，应在迁移时单独询价。
 
-### FutureMe 成本为什么还不能给固定月费
-
-FutureMe 使用阿里云百炼、MiMo、DeepSeek、OpenRouter 等不同能力，包含文本、图片、实时语音、ASR 和 TTS。当前 SQLite 只保存公共额度次数和部分分析 token，没有像 Yi-Hot `receipt_attempts` 那样统一保存每次请求的服务、单价和费用。
-
-当前可确认的使用快照：
-
-- 已保存 9 个体验会话；
-- 3 次持久化 `qwen-flash` 分析合计约 5,337 输入 token、1,975 输出 token；
-- 2026-10-16 至 10-17 的公共额度记录包括 12 次 LLM、6 次图片、9 次实时语音、21 次媒体处理和 7 个新会话。
-
-这些数字不足以换算可靠月费，因为图片、实时语音、ASR、TTS 可能按张、秒、字符或 token 分别计费，而且部分调用没有本地实际费用回执。
-
-维护者每月应分别检查：
-
-1. 阿里云百炼/DashScope 账单与用量；
-2. MiMo API 账单；
-3. DeepSeek API 账单；
-4. OpenRouter Credits 和 Activity；
-5. 实际是否启用了某个备用模型；
-6. FutureMe 每日配额的命中次数。
-
-在统一成本回执完成前，FutureMe 预算应按“服务商控制台实际消费 + 20% 余量”管理，不把它混入 Yi-Hot 的 ¥35–63 模型估算。后续最值得做的运维改进是给 FutureMe 增加与 Yi-Hot 类似的统一 receipts、服务价格表和月度费用页。
-
 ### 扩容后的基础设施预算
 
 按腾讯云当前官网同类套餐做规划参考：
 
 | 规格 | 官网示例价格 | 适用情况 |
 | --- | ---: | --- |
-| 2核2GB、50GB | 约 ¥50/月，¥510/年 | 当前规模，但内存余量有限 |
-| 2核4GB、100GB | 约 ¥100/月，¥1,020/年 | Yi-Hot、WeRSS、FutureMe 继续同机运行时更稳妥 |
+| 当前 2核2GB、50GB | **实际 ¥99/年** | 当前规模，但内存余量有限；先用到续费或达到资源触发线 |
+| 新购同级 2核2GB、50GB | 官网约 ¥50/月，¥510/年 | 当前优惠到期后的保守重购参考 |
+| 2核4GB、100GB | 约 ¥100/月，¥1,020/年 | Yi-Hot 和 WeRSS 继续同机运行时更稳妥 |
 | 4核8GB、180GB | 约 ¥245/月，¥2,499/年 | 明显增加访问、并发 AI 或更多自托管服务 |
 
 这是产品页刊例，不含促销，也不代表当前实例必须立即升级。实际触发线仍以本章的内存、Swap、负载、P95、磁盘和错误率为准。
@@ -675,7 +647,6 @@ FutureMe 使用阿里云百炼、MiMo、DeepSeek、OpenRouter 等不同能力，
 - [ ] 腾讯云实例续费价、流量包和超额流量；
 - [ ] Yi-Hot 后台近 30 天 token、调用、未定价模型和失败重试；
 - [ ] DeepSeek/其他模型服务商实际扣费；
-- [ ] FutureMe 各服务商账单；
 - [ ] QQ 邮箱是否触发限制，是否需要专业邮件服务；
 - [ ] COS/对象存储备份容量和下载流量；
 - [ ] 域名续费和证书状态；
@@ -699,8 +670,8 @@ FutureMe 使用阿里云百炼、MiMo、DeepSeek、OpenRouter 等不同能力，
 
 ```bash
 cd /opt/yihot
-sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml ps
-sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml logs --tail=100 web api
+sudo docker compose <服务器现行的完整生产覆盖参数> ps
+sudo docker compose <服务器现行的完整生产覆盖参数> logs --tail=100 web api
 curl -fsS http://127.0.0.1/yihot/api/health
 ```
 
@@ -792,28 +763,14 @@ python tools/compare.py
 
 ```bash
 cd /opt/yihot
-sudo docker compose \
-  -f docker-compose.yml \
-  -f compose.futureme-proxy.yml \
-  -f compose.werss.yml \
-  config --quiet
-
-sudo docker compose \
-  -f docker-compose.yml \
-  -f compose.futureme-proxy.yml \
-  -f compose.werss.yml \
-  build
-
-sudo docker compose \
-  -f docker-compose.yml \
-  -f compose.futureme-proxy.yml \
-  -f compose.werss.yml \
-  up -d
+sudo docker compose <服务器现行的完整生产覆盖参数> config --quiet
+sudo docker compose <服务器现行的完整生产覆盖参数> build
+sudo docker compose <服务器现行的完整生产覆盖参数> up -d
 ```
 
 `industry/`、`data/` 和源码会被烘焙进镜像，变化后必须 rebuild。禁止把 `docker cp` 加 `restart` 当成正式部署；容器重建后临时文件会消失，`.env` 也不会在普通 restart 时重新读取。
 
-生产至少验收：门户、`/yihot/`、`/yihot/all`、`/yihot/topics`、`/yihot/subscribe`、`/yihot/api/health` 和 `/futureme/` 返回正常；FutureMe 后台匿名访问应为 401，Yi-Hot 后台匿名访问应跳转登录页。
+生产至少验收：门户、`/yihot/`、`/yihot/all`、`/yihot/topics`、`/yihot/subscribe` 和 `/yihot/api/health` 返回正常；Yi-Hot 后台匿名访问应跳转登录页。
 
 最后用 Git blob SHA 核对本地、GitHub `main` 和服务器 `/opt/yihot`，不要用 commit SHA 判断三方一致。
 
@@ -1361,7 +1318,7 @@ http://127.0.0.1:18001/feed/MP_WXS_1234567890.rss
 
 ### 当前状态
 
-现有生产 `main` 与上游 `KKKKhazix/AIHOT` 已经明显分叉，不能直接把上游 `main` 合进当前生产分支，也不能用上游文件覆盖 Yi-Hot。这样做会破坏公益配置、数据库迁移、邮件、WeRSS、FutureMe 路由和现有历史。
+现有生产 `main` 与上游 `KKKKhazix/AIHOT` 已经明显分叉，不能直接把上游 `main` 合进当前生产分支，也不能用上游文件覆盖 Yi-Hot。这样做会破坏公益配置、数据库迁移、邮件、WeRSS、部署覆盖和现有历史。
 
 仓库已经设计了隔离的上游对齐路线：
 
@@ -1382,7 +1339,7 @@ http://127.0.0.1:18001/feed/MP_WXS_1234567890.rss
 4. 保留 `industry/`、品牌、来源、提示词、分类、邮件、公众号、用量管理和门户覆盖层。
 5. 在全新测试数据库运行上游和 Yi-Hot 的全部迁移、测试与 smoke。
 6. 用生产数据库备份副本彩排迁移，逐项对账文章、来源、总报、设置、人工覆盖和订阅。
-7. 在 staging 验证 `/yihot/`、后台、API、RSS、邮件、WeRSS 和 `/futureme/`。
+7. 在 staging 验证 `/yihot/`、后台、API、RSS、邮件和 WeRSS。
 8. 再用一个更新后的上游提交演练第二次合并，证明以后仍能持续更新。
 9. 完整备份并验证回滚后，单独安排生产切换；不在同步工作流里自动部署。
 
@@ -1413,12 +1370,12 @@ GitHub Actions 若需要同步上游包含 `.github/workflows/` 的提交，普�
 
 ### 能不能部署到 NAS
 
-Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。当前整套生产还包含 WeRSS、邮件 systemd 定时器和 FutureMe，因此“核心站点能启动”不等于“全部功能已经迁移”。NAS 迁移需要逐项替代服务器能力。
+Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。当前整套生产还包含 WeRSS 和邮件 systemd 定时器，因此“核心站点能启动”不等于“全部功能已经迁移”。NAS 迁移需要逐项替代服务器能力。
 
 ### NAS 最低条件
 
 - 支持 Docker/Container Manager 和 Compose；
-- 建议至少 4GB 内存，若同时运行 WeRSS 和 FutureMe 建议 8GB；
+- 建议至少 4GB 内存；若还要运行较多其他容器，建议 8GB；
 - 至少 2 个 CPU 核心；
 - 持久化存储建议预留 50GB，并启用磁盘健康和容量告警；
 - 支持自动重启容器；
@@ -1427,7 +1384,7 @@ Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。�
 - CPU 架构与所有镜像兼容。WeRSS 及其他第三方镜像尤其要核查 `amd64`/`arm64` 支持；
 - 若放在家庭网络，必须考虑公网 IP、运营商入站限制、路由器端口转发和断电断网。
 
-不建议把后台、PostgreSQL、WeRSS 管理端或 FutureMe 管理端直接暴露到公网。
+不建议把后台、PostgreSQL 或 WeRSS 管理端直接暴露到公网。
 
 ### 推荐迁移顺序
 
@@ -1438,9 +1395,8 @@ Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。�
 5. 先只部署 PostgreSQL、setup、API、worker、web，使用测试域名验证核心 Yi-Hot。
 6. 再迁移 WeRSS，确认镜像架构、登录 Cookie、feed 和内部网络。
 7. 把两个 systemd timer 改为 NAS 计划任务或定时任务容器；保持单实例运行，防止重复采集或发信。
-8. 最后迁移 FutureMe 和门户路由。
-9. 配置 HTTPS、备份、日志轮转、时间同步和重启策略。
-10. 完成全量 smoke 后再切换 DNS/端口；腾讯云至少保留一个可回滚周期。
+8. 配置 HTTPS、备份、日志轮转、时间同步和重启策略。
+9. 完成全量 smoke 后再切换 DNS/端口；腾讯云至少保留一个可回滚周期。
 
 ### NAS 上的目录建议
 
@@ -1459,7 +1415,7 @@ Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。�
 
 ### Compose 和定时任务适配
 
-核心可以从 `docker-compose.yml` 开始。生产还需要按实际功能加入 `compose.werss.yml` 和 FutureMe 网络覆盖。NAS GUI 导入 Compose 时要确认它没有改写 volume 名、网络名、健康检查或 `stop_grace_period`。
+核心可以从 `docker-compose.yml` 开始，公众号采集再加入 `compose.werss.yml`。NAS GUI 导入 Compose 时要确认它没有改写 volume 名、网络名、健康检查或 `stop_grace_period`。
 
 Synology/QNAP 等 NAS 未必使用 systemd。邮件采集、邮件投递和微信读书兼容任务可以用 NAS 计划任务调用一次性容器，或新增常驻调度容器。无论采用哪种方式，都要满足：
 
@@ -1474,7 +1430,7 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集、邮件投递和微�
 
 推荐使用 NAS 自带反向代理或独立 Caddy/Nginx，将公网 HTTPS 转发到 web 容器。`SITE_URL` 必须改成最终公开地址，例如 `https://example.org/yihot`；若代理负责访客 IP，正确配置受信任代理后再开启 `TRUST_PROXY`。不要为了省事把数据库端口映射到公网。
 
-路径仍必须保留 `/yihot/` 尾斜杠规则，FutureMe 若继续挂在 `/futureme/`，还需保留对应 Docker 网络和 `FUTUREME_UPSTREAM_URL`。
+路径仍必须保留 `/yihot/` 尾斜杠规则。
 
 ### NAS 迁移验收
 
@@ -1486,7 +1442,6 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集、邮件投递和微�
 - [ ] WeRSS feed 和公众号原文链接正常；
 - [ ] 两个邮件任务各运行一次且没有重复；
 - [ ] 周报/月报时区和周期正确；
-- [ ] FutureMe 页面与管理端权限正确；
 - [ ] 容器重启和 NAS 重启后数据、Cookie、游标、上传二维码仍存在；
 - [ ] 数据库备份已在另一位置成功恢复；
 - [ ] 旧服务器回滚步骤经过验证。

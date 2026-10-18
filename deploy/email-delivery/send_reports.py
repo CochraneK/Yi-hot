@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deliver Yi-Hot's published weekly/monthly reports through SMTP.
+"""Deliver Yi-Hot's published daily/weekly/monthly reports through SMTP.
 
 The website remains the only report generator. This adapter reads the public report DTO, renders
 an email-friendly view, and records one receipt per report and recipient in a local state file.
@@ -54,7 +54,7 @@ def report_url(base, report):
 
 def render(report, base, unsubscribe_url=""):
     esc = lambda value: html.escape(str(value or ""))
-    kind_name = "周报" if report["kind"] == "weekly" else "月报"
+    kind_name = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
     lead = report.get("lead") or {}
     sections = []
     for section in report.get("sections") or []:
@@ -134,7 +134,7 @@ def deliver_outbox(item, base):
         body, text = render_confirmation(payload)
     else:
         report = payload["report"]
-        label = "周报" if report["kind"] == "weekly" else "月报"
+        label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
         subject = f"Yi-Hot 公益总报 · {label} · {report['key']}"
         body, text = render(report, base, payload.get("unsubscribeUrl", ""))
     send(subject, body, text, recipient, payload.get("unsubscribeUrl", "") if item["kind"] == "report" else "")
@@ -235,7 +235,7 @@ def save_state(path, state):
 
 def deliver(report, base, target, state, test=False):
     body, text = render(report, base)
-    label = "周报" if report["kind"] == "weekly" else "月报"
+    label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
     subject = f"{'[测试] ' if test else ''}Yi-Hot 公益总报 · {label} · {report['key']}"
     key = f"{report['kind']}:{report['key']}:{target}"
     if not test and key in state["sent"]:

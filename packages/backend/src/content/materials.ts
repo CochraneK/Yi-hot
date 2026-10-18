@@ -34,6 +34,7 @@ export interface MaterialInput {
   author?: string | null;
   language?: string | null;
   publishedAt?: Date | null;
+  publishedAtPrecision?: "date" | "datetime";
   sourceUpdatedAt?: Date | null;
   excerpt?: string | null;
   bodyHtml?: string | null;
@@ -141,11 +142,11 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
   const hash = contentHash({ title, bodyText: m.bodyText, excerpt: m.excerpt });
   const [inserted] = await db<{ id: string }[]>`
     INSERT INTO articles (id, source_id, identity_key, url, title, author, language, published_at, published_at_claim,
-      discovered_at, source_updated_at, timeline_at, backfill, backfill_reason, revision, content_hash, excerpt,
+      discovered_at, source_updated_at, timeline_at, backfill, backfill_reason, revision, content_hash, excerpt, published_at_precision,
       body_text, body_html, body_status, media, x_post, raw)
     VALUES (${newId}, ${m.sourceId}, ${identityKey}, ${m.url}, ${title}, ${m.author ?? null}, ${m.language ?? null},
       ${t.publishedAt}, ${m.publishedAt ?? null}, ${discoveredAt}, ${m.sourceUpdatedAt ?? null}, ${t.timelineAt},
-      ${t.backfill}, ${t.backfillReason}, 1, ${hash}, ${m.excerpt ?? null}, ${m.bodyText ?? null}, ${m.bodyHtml ?? null},
+      ${t.backfill}, ${t.backfillReason}, 1, ${hash}, ${m.excerpt ?? null}, ${m.publishedAtPrecision ?? "datetime"}, ${m.bodyText ?? null}, ${m.bodyHtml ?? null},
       ${m.bodyStatus ?? (m.bodyText ? "ok" : "pending")}, ${db.json((m.media ?? []) as never)},
       ${m.xPost ? db.json(m.xPost as never) : null}, ${m.raw === undefined ? null : db.json(m.raw as never)})
     ON CONFLICT (identity_key) DO NOTHING RETURNING id`;
@@ -157,8 +158,8 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
     return { articleId: newId, created: true, revised: false, backfill: t.backfill };
   }
 
-  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; title: string; body_text: string | null; excerpt: string | null; discovered_at: Date; published_at: Date | null; timeline_at: Date; backfill_reason: string | null }[]>`
-    SELECT id, source_id, revision, content_hash, backfill, title, body_text, excerpt, discovered_at, published_at, timeline_at, backfill_reason
+  const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; title: string; body_text: string | null; excerpt: string | null; discovered_at: Date; published_at: Date | null; published_at_precision: "date" | "datetime"; timeline_at: Date; backfill_reason: string | null }[]>`
+    SELECT id, source_id, revision, content_hash, backfill, title, body_text, excerpt, discovered_at, published_at, published_at_precision, timeline_at, backfill_reason
     FROM articles WHERE identity_key = ${identityKey} FOR UPDATE`;
   await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at)
            VALUES (${existing!.id}, ${m.sourceId}, ${m.via}, ${discoveredAt}) ON CONFLICT DO NOTHING`;
@@ -173,7 +174,7 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
     // A newly claimed future date must not erase a previously verified date.
     if (corrected.publishedAt && (corrected.publishedAt.getTime() !== existing!.published_at?.getTime() ||
         corrected.timelineAt.getTime() !== existing!.timeline_at.getTime() || corrected.backfill !== existing!.backfill)) {
-      await db`UPDATE articles SET published_at = ${corrected.publishedAt}, published_at_claim = ${m.publishedAt},
+      await db`UPDATE articles SET published_at = ${corrected.publishedAt}, published_at_claim = ${m.publishedAt}, published_at_precision = ${m.publishedAtPrecision ?? existing!.published_at_precision},
         timeline_at = ${corrected.timelineAt}, backfill = ${corrected.backfill}, backfill_reason = ${corrected.backfillReason}, updated_at = now()
         WHERE id = ${existing!.id}`;
       unchanged.backfill = corrected.backfill;

@@ -5,14 +5,13 @@ name: aihot
 x-app: &app
   build: .
   image: aihot-app
-  env_file: .env
   restart: unless-stopped
   environment: &app-env
     NODE_ENV: production
-    DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
     AIHOT_DATA_DIR: /data
     API_BASE_URL: http://api:3001
     LOCAL_ROUTER_URL: http://web:3000
+    AIHOT_RELEASE: ${AIHOT_RELEASE:-unknown}
   volumes:
     - data:/data
   depends_on:
@@ -38,11 +37,13 @@ services:
   # Applies the database migrations and seeds the topics and demo sources, then exits.
   setup:
     <<: *app
+    env_file: .env
     restart: "no"
     command: ["sh", "-c", "node scripts/migrate.ts && node scripts/seed.ts"]
 
   api:
     <<: *app
+    env_file: .env
     command: ["node", "apps/api/src/main.ts"]
     environment:
       <<: *app-env
@@ -54,6 +55,7 @@ services:
 
   worker:
     <<: *app
+    env_file: .env
     command: ["node", "apps/worker/src/main.ts"]
     # On stop the worker lets a paid call in flight finish (STOP_TIMEOUT_MS, 195 s); Docker's default
     # 10 s would kill it mid-call and leave "outcome unknown" receipts that are paid for again.
@@ -69,6 +71,9 @@ services:
       <<: *app-env
       WEB_HOST: 0.0.0.0
       WEB_PORT: "3000"
+      SITE_URL: ${SITE_URL:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-}
       # FutureMe stays on a dedicated Docker-only network; no extra public port.
       # Leave empty until FutureMe is healthy and bridge network is created.
       FUTUREME_UPSTREAM_URL: ${FUTUREME_UPSTREAM_URL:-}

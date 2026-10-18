@@ -30,8 +30,9 @@ export function fullDateTime(iso: string): string {
 }
 
 /** Date-only source timestamps parse as Beijing midnight; use collection time for the clock display. */
-export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string): { at: string; label: "原文发表" | "收录" } {
+export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): { at: string; label: "原文发表" | "收录" } {
   if (!publishedAt) return { at: timelineAt || discoveredAt, label: "收录" };
+  if (precision === "date") return { at: `${beijingDate(publishedAt)}T${beijingTime(discoveredAt)}:00+08:00`, label: "收录" };
   if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录" };
   return { at: publishedAt, label: "原文发表" };
 }

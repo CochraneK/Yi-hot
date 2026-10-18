@@ -1053,9 +1053,9 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 
 ### 当前生产信源台账
 
-以下是 2026-10-18 直接从生产 PostgreSQL 读取的运行时清单，不是 `industry/sources.json` 的初始样例。当前共 **28 个来源：27 个启用，1 个暂停**，全部使用 `editorial` 参与方式。
+以下是 2026-10-19 核查并扩充后的生产运行时清单，不是 `industry/sources.json` 的初始样例。当前共 **31 个来源：30 个启用，1 个暂停**，全部使用 `editorial` 参与方式。
 
-#### 网站列表 `web_list`：18 个，全部启用
+#### 网站列表 `web_list`：21 个，全部启用
 
 | ID | 显示名称 | 等级 | 地址 |
 | --- | --- | --- | --- |
@@ -1075,6 +1075,9 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 | `web-onefoundation-news` | 壹基金·最新活动 | T1 | `https://onefoundation.cn/news/` |
 | `web-cfpa-news` | 中国乡村发展基金会·机构新闻 | T1 | `http://cfpa.org.cn/news/news.aspx` |
 | `web-cwdf-news` | 中国妇女发展基金会·本会新闻 | T1.5 | `https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26` |
+| `web-cdpf-news` | 中国残联·残联要闻 | T1 | `https://www.cdpf.org.cn/xwzx/clyw2/index.htm` |
+| `web-mem-emergency-news` | 应急管理部·应急要闻 | T1 | `https://www.mem.gov.cn/xw/yjyw/` |
+| `web-cac-policy` | 中国网信网·政策法规 | T1 | `https://www.cac.gov.cn/wxzw/zcfg/A093703index_1.htm` |
 | `china-development-brief` | 中国发展简报 | T2 | `https://www.chinadevelopmentbrief.org.cn/` |
 | `gongyi-times` | 公益时报·公益资讯 | T2 | `http://www.gongyishibao.com/html/gongyizixun/list.html` |
 
@@ -1118,6 +1121,8 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 | `MP_WXS_3567681740` | 爱德传一基金 | 0 | 否 | 当前使用邮件《慈善纪事简报》 |
 
 “出现在 WeRSS”与“已纳入 Yi-Hot”是两件事：WeRSS 里有账号，只表示已登记公众号；必须有文章、feed 可读，并在 Yi-Hot 建立启用的 RSS 来源后才算完成接入。
+
+2026-10-19 曾因重建时只加载基础 Compose 和网页代理覆盖、漏掉 `compose.werss.yml`，导致 worker 解析不到 `werss`。恢复时必须同时加载 `docker-compose.yml`、`compose.futureme-proxy.yml` 和 `compose.werss.yml`；两处公众号随后手动采集成功，健康状态恢复为 `ok`。
 
 ### 新增微信公众号 RSS：逐步点击教程
 

@@ -1,5 +1,9 @@
 # Yi‑Hot 公益动态
 
+<p align="left">
+  <img src="industry/brand/save-the-children.svg" alt="救助儿童会" width="180">
+</p>
+
 Yi‑Hot 是一个公益行业动态聚合站。它定时读取政府部门、公益机构、媒体、微信公众号和邮件简报，生成中文标题与摘要，保留原文链接，并按周、按月生成「总报」。
 
 线上站点：<https://49.233.72.222/yihot/>

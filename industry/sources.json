@@ -636,7 +636,7 @@
         "官方",
         "残障融合"
       ],
-      "site_fulltext": true,
+      "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
@@ -665,7 +665,7 @@
         "官方",
         "应急救援"
       ],
-      "site_fulltext": true,
+      "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
@@ -696,7 +696,7 @@
         "网络保护",
         "政策"
       ],
-      "site_fulltext": true,
+      "site_fulltext": false,
       "syndicate_fulltext": false
     }
   ]

@@ -570,7 +570,6 @@
       },
       "tier": "T1",
       "first_party": true,
-      "owner_entity_id": "ministry-of-ecology-environment",
       "participation_mode": "editorial",
       "interval_minutes": 360,
       "tags": [

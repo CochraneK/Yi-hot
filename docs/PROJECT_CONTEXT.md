@@ -116,6 +116,7 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 - `publications` **没有 `created_at`**。可见性五字段：`eligible` / `visibility` / `visible_after` / `selected` / `backfill`。
 - `articles`：`identity_key = url:<url>`。
 - `analyses`：摘要列叫 **`summary_zh`**（还有 `title_zh` / `reason_zh`，**不叫 `summary`**）。一篇文章可以有多条 analyses → JOIN 会让 publication 行重复。
+- 机构主题来自 `analyses.subjects`，发布时转成内部 `entity:<id>` 标签。模型候选还必须通过 `editorial/analyze.ts` 的主体证据校验：来源 `owner_entity_id` 匹配，或原始标题明确点名机构；正文顺带提及和多事件简报不会进入机构主题。历史修复用 `node scripts/repair-entity-subjects.ts`（默认 dry-run，`--apply` 才写入并重发布）。
 - `receipt_attempts`：**每次线上模型调用记一条**，`usage` (jsonb) 里有 `prompt_tokens` / `completion_tokens`，另有 `model` / `cost` / `cost_basis` / `currency` / `latency_ms` / `started_at`。`origin='live'` 才是在线调用。
 - `service_prices`：**单价表，人工维护**（`service` + `model` 为主键，`model=''` 是该服务的兜底价）。后台的费用列与「用量与成本」页全靠它——**表空着时金额一律显示"未定价"**。价格按 `service` 匹配，而 `service` 由 `packages/backend/src/providers/llm.ts` 的 `MODELS` 注册表反查得到：**模型名与注册表对不上就永远没有价格**（页面「实际在用」区会直接标出这种情况）。**改单价不用写 SQL**：在 `/admin/usage` 的「计价方式」卡里新增/编辑/删除（后端 `packages/backend/src/admin/models.ts` 的 `savePrice` / `deletePrice`，接口 `POST|DELETE /api/admin/usage/prices`，改动写审计）。
 - 手动入队 pgboss 写 `pgboss.job` 表（没有 `createjob` 之类的家表）。

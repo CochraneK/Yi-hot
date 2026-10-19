@@ -10,7 +10,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
 import { upsertMaterial } from "@aihot/backend/content/materials";
-import { analyzeArticle, SCORE_SYSTEM, tierThreshold } from "@aihot/backend/editorial/analyze";
+import { analyzeArticle, SCORE_SYSTEM, tagsForVerifiedSubjects, tierThreshold, verifiedEntitySubjects } from "@aihot/backend/editorial/analyze";
 import { queueProcessing } from "@aihot/backend/jobs/content";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
 import { compactAnswerFirstSummary, enforceIdentity, parseTranslateOutput, PREFILTER_SYSTEM } from "@aihot/backend/editorial/writing";
@@ -58,9 +58,9 @@ for (const env of ["DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "DEEPSEEK_API_KEY"]) pr
 Object.assign(process.env, { PREFILTER_MODEL: "qwen3.7-flash", SCORE_MODEL: "glm-5.3-flash-selection", UNDERSTAND_MODEL: "glm-5.3-flash", SUMMARIZE_MODEL: "deepseek-flash", STRUCTURE_MODEL: "qwen3.8-flash" });
 
 before(async () => {
-  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at) VALUES
-    (${SOURCE}, 'Test analyze source', 'rss', 'T1', 'editorial', '2100-01-01'),
-    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01')`;
+  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at, owner_entity_id) VALUES
+    (${SOURCE}, 'Test analyze source', 'rss', 'T1', 'editorial', '2100-01-01', 'ministry-of-civil-affairs'),
+    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01', NULL)`;
 });
 after(async () => {
   await provider.close();
@@ -188,6 +188,33 @@ test("guards: an entity the input does not name is not written in; long summarie
   assert.ok(compactAnswerFirstSummary(long).length <= 190);
   assert.deepEqual(parseTranslateOutput("title_zh: 标题\nsummary_zh: 第一句。\n第二句。"), { titleZh: "标题", summaryZh: "第一句。\n第二句。", bodyZh: "" });
   assert.equal(parseTranslateOutput("title_zh: 标题\nbody_zh: 我们懂你。\n\n来源：X：壹基金 (@OneFoundation)").bodyZh, "我们懂你。", "a repeated prompt line is dropped");
+});
+
+test("organization subjects require source ownership or a headline mention", () => {
+  const roundup = {
+    title: "9月纪事：多场公益活动举行，行业报告发布",
+    source: { ownerEntityId: null },
+  };
+  assert.deepEqual(
+    verifiedEntitySubjects(roundup, ["save-the-children", "one-foundation", "unknown"]),
+    [],
+    "body-only mentions in a roundup do not populate organization topics",
+  );
+  assert.deepEqual(
+    verifiedEntitySubjects({ ...roundup, source: { ownerEntityId: "save-the-children" } }, ["save-the-children"]),
+    ["save-the-children"],
+    "a first-party source keeps its own organization even when the headline omits the name",
+  );
+  assert.deepEqual(
+    verifiedEntitySubjects({ title: "壹基金发布儿童平安计划年度进展", source: { ownerEntityId: null } }, []),
+    ["one-foundation"],
+    "a headline mention is deterministic even when the model omits the subject",
+  );
+  assert.deepEqual(
+    tagsForVerifiedSubjects(["机构动态", "救助儿童会", "壹基金"], ["one-foundation"]),
+    ["机构动态", "壹基金"],
+    "entity display tags follow the same verified subject set",
+  );
 });
 
 test("analysing the same revision again reuses every paid answer", async () => {

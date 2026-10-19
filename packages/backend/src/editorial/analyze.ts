@@ -193,6 +193,38 @@ function checkAnalysisRunning() {
 const subjectOf = (a: AnalyzeInputArticle) => `article:${a.id}@${a.revision}`;
 const tagged = (attemptTag: string | undefined, step: string) => [attemptTag, step].filter(Boolean).join(":") || undefined;
 
+type SubjectEvidence = Pick<AnalyzeInputArticle, "title"> & {
+  source: Pick<AnalyzeInputArticle["source"], "ownerEntityId">;
+};
+
+/**
+ * Organization topics are intentionally precise: an entity must own the source or be named in the
+ * original headline. Body-only mentions are often one entry in a roundup, a partner list or an award
+ * roster and must not turn the whole article into that organization's update.
+ */
+export function verifiedEntitySubjects(a: SubjectEvidence, candidates: readonly string[]): string[] {
+  const owner = a.source.ownerEntityId?.trim().toLowerCase() ?? null;
+  const title = collapseWhitespace(a.title).toLocaleLowerCase();
+  const headlineSubjects = Object.entries(ENTITIES)
+    .filter(([, entity]) => entity.aliases.some((alias) => title.includes(alias.toLocaleLowerCase())))
+    .map(([id]) => id);
+  const named = [...candidates.map((s) => s.trim().toLowerCase()), ...headlineSubjects].filter((s) => {
+    const entity = ENTITIES[s];
+    return !!entity && (s === owner || entity.aliases.some((alias) => title.includes(alias.toLocaleLowerCase())));
+  });
+  if (owner && ENTITIES[owner]) named.unshift(owner);
+  return [...new Set(named)];
+}
+
+/** Entity display tags mirror verified subjects; they are not an independent, looser classifier. */
+export function tagsForVerifiedSubjects(tags: readonly string[], subjects: readonly string[]): string[] {
+  const allowed = new Set(subjects.map((s) => ENTITIES[s]?.displayTag).filter((tag): tag is string => !!tag));
+  const entityTags = new Set<string>(ENTITY_TAGS);
+  const out = tags.filter((tag) => !entityTags.has(tag) || allowed.has(tag));
+  for (const tag of allowed) if (!out.includes(tag)) out.push(tag);
+  return out;
+}
+
 async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<AnalysisRun["prefilter"]> {
   const model = await modelFor("prefilter");
   checkAnalysisRunning();
@@ -257,7 +289,7 @@ async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<Non
     maxTokens: 800,
     attemptTag: tagged(opts.attemptTag, "structure"),
   });
-  const subjects = [...new Set(res.data.subjects.map((s) => s.trim().toLowerCase()).filter((s) => s in ENTITIES))];
+  const subjects = verifiedEntitySubjects(a, res.data.subjects);
   return { model: res.model, category: res.data.category, tags: normalizeTags(res.data.tags), subjects, fact: res.data.fact, receiptId: res.receiptId, reused: res.reused };
 }
 
@@ -381,11 +413,7 @@ export function normalizeAnalysis(run: AnalysisRun) {
   const threshold = run.scores?.threshold ?? null;
   const selected = relevance === "pass" && sum !== null && threshold !== null && sum >= threshold * SCORE_CALLS;
   const subjects = run.structure?.subjects ?? [];
-  const tags = [...(run.writing?.tags ?? run.structure?.tags ?? [])];
-  for (const s of subjects) {
-    const display = ENTITIES[s]?.displayTag;
-    if (display && !tags.includes(display)) tags.push(display);
-  }
+  const tags = tagsForVerifiedSubjects(run.writing?.tags ?? run.structure?.tags ?? [], subjects);
   return {
     relevance,
     selected,

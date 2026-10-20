@@ -291,7 +291,7 @@ sudoedit .env
 把 `ADMIN_PASSWORD` 改成至少 12 位的随机密码，然后让容器重新读取 `env_file`：
 
 ```bash
-sudo docker compose <服务器现行的完整生产覆盖参数> up -d
+sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml up -d
 ```
 
 只执行 `docker restart` 不会重新读取 `.env`。验证新密码后，把新值同步进本机 `secrets/credentials.env` 并重新加密：
@@ -692,8 +692,8 @@ console.log(data.items);
 
 ```bash
 cd /opt/yihot
-sudo docker compose <服务器现行的完整生产覆盖参数> ps
-sudo docker compose <服务器现行的完整生产覆盖参数> logs --tail=100 web api
+sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml ps
+sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml logs --tail=100 web api
 curl -fsS http://127.0.0.1/yihot/api/health
 ```
 
@@ -810,12 +810,23 @@ python tools/compare.py
 
 ```bash
 cd /opt/yihot
-sudo docker compose <服务器现行的完整生产覆盖参数> config --quiet
-sudo docker compose <服务器现行的完整生产覆盖参数> build
-sudo docker compose <服务器现行的完整生产覆盖参数> up -d
+DC="sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml"
+$DC config --quiet
+$DC build
+$DC up -d
 ```
 
+**三条命令都必须带全三个 `-f`，一条都不能省。** 少写 `compose.werss.yml`，api/worker 会被摘出 `yihot_werss` 网络，公众号源立刻报 `getaddrinfo EAI_AGAIN werss`——2026-10-19 和 10-20 各踩了一次；少写 `compose.futureme-proxy.yml` 会丢 FutureMe 的出网代理。
+
 `industry/`、`data/` 和源码会被烘焙进镜像，变化后必须 rebuild。禁止把 `docker cp` 加 `restart` 当成正式部署；容器重建后临时文件会消失，`.env` 也不会在普通 restart 时重新读取。
+
+部署后先验网络归属，再验页面：
+
+```bash
+sudo docker inspect aihot-worker-1 --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+# 必须同时出现 aihot_default 和 yihot_werss
+sudo docker exec aihot-worker-1 node -e "fetch('http://werss:8001/feed/MP_WXS_2395372392.rss?is_update=false').then(r=>console.log(r.status))"
+```
 
 生产至少验收：门户、`/yihot/`、`/yihot/all`、`/yihot/topics`、`/yihot/subscribe` 和 `/yihot/api/health` 返回正常；Yi-Hot 后台匿名访问应跳转登录页。
 

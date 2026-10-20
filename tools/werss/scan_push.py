@@ -10,9 +10,10 @@
     python3 scan_push.py --force      # 立刻生成并推送（不看剩余时长）
     python3 scan_push.py             # 只在会话快到期时推送（定时器用这个）
     python3 scan_push.py --status    # 只打印剩余时长与各号同步情况，不发消息
+    python3 scan_push.py --refresh   # 不发二维码，只把各号刷一遍，按「文章数增量」报告
     python3 scan_push.py --no-refresh  # 推送后不自动拉文章，只等人扫
 
-退出码：0 成功或无需动作；1 生成/推送失败；2 等扫码超时。
+退出码：0 成功或无需动作；1 生成/推送失败；2 等扫码超时；3 刷新但没有新文章；4 会话已过期。
 """
 import argparse
 import datetime
@@ -136,6 +137,22 @@ def account_state():
             rows.append({"name": parts[0], "synced": parts[1], "articles": parts[2], "latest": parts[3]})
     return rows
 
+def feed_counts():
+    """feed id -> (名称, 文章数)，只读 sqlite。"""
+    script = (
+        "import sqlite3\n"
+        "con=sqlite3.connect('file:/app/data/we_mp_rss.db?mode=ro',uri=True)\n"
+        "for i,n in con.execute('select id,mp_name from feeds order by mp_name'):\n"
+        "    c=con.execute('select count(*) from articles where mp_id=?',(i,)).fetchone()[0]\n"
+        "    print('%s|%s|%d' % (i,n,c))\n")
+    res = docker_exec(["python3", "-c", script], timeout=60)
+    out = []
+    for line in (res.stdout or "").strip().splitlines():
+        parts = line.split("|")
+        if len(parts) == 3:
+            out.append((parts[0], parts[1], int(parts[2])))
+    return out
+
 
 # ---- WeRSS ----------------------------------------------------------------------------------
 
@@ -186,18 +203,26 @@ def wait_for_png(started_at, path="/tmp/werss-qr.png"):
     return None
 
 
-def update_all(token):
-    """扫完码之后把每个号都拉一遍；接口是异步的，这里只负责发起。"""
+def update_all(token, gap=90):
+    """扫完码之后把每个号都拉一遍；接口是异步的，这里只负责发起。
+
+    必须**串行且留间隔**。公众号后台的 appmsgpublish 有频控（ret=200013），
+    三个号同时点下去会一起吃闭门羹：2026-10-20 实测并发触发后连试三轮、
+    三分半钟仍然 `成功0条`。
+    """
     try:
         listing = http_json(WERSS_API + "/api/v1/wx/mps?limit=100&offset=0", token=token)
     except Exception as exc:
         return ["取公众号列表失败: %s" % exc]
     items = (listing.get("data") or {}).get("list") or []
     notes = []
-    for mp in items:
+    for idx, mp in enumerate(items):
         mp_id = mp.get("id")
         if not mp_id:
             continue
+        if idx:
+            log("等 %d 秒再拉下一个号，避开频控" % gap)
+            time.sleep(gap)
         try:
             out = http_json(WERSS_API + "/api/v1/wx/mps/update/%s?start_page=0&end_page=1" % mp_id, token=token)
             if out.get("code") == 0:
@@ -207,6 +232,34 @@ def update_all(token):
         except Exception as exc:
             notes.append("%s 拉取失败：%s" % (mp.get("mp_name") or mp_id, exc))
     return notes
+
+
+def refresh_all(gap=90, wait=240):
+    """逐个号刷新，并用「文章数变化」判断到底有没有抓到东西。
+
+    WeRSS 的刷新接口是异步的，返回 `total:0` 永远不代表结果；而且公众号后台
+    的列表接口会返 `ret=200013`（频率限制），此时日志里是 `成功0条`。
+    所以这里看的是 DB 里的文章数增量，不看接口返回值。
+    """
+    token = werss_token()
+    feeds = feed_counts()
+    before = {mp_id: (name, count) for mp_id, name, count in feeds}
+    results = []
+    for idx, (mp_id, name, count) in enumerate(feeds):
+        if idx:
+            log("等 %d 秒再拉下一个号，避开频控" % gap)
+            time.sleep(gap)
+        try:
+            http_json(WERSS_API + "/api/v1/wx/mps/update/%s?start_page=0&end_page=1" % mp_id,
+                      token=token, timeout=60)
+        except Exception as exc:
+            log("%s 刷新请求失败：%s" % (name, exc))
+            continue
+        log("%s 已发起，等 %d 秒看入库" % (name, wait))
+        time.sleep(wait)
+        now = dict((mid, c) for mid, _, c in feed_counts())
+        results.append((name, count, now.get(mp_id, count)))
+    return results
 
 
 # ---- 飞书 ------------------------------------------------------------------------------------
@@ -275,6 +328,7 @@ def main():
     ap.add_argument("--status", action="store_true", help="只打印状态，不推送")
     ap.add_argument("--no-refresh", action="store_true", help="推送后不自动拉文章")
     ap.add_argument("--dry-run", action="store_true", help="生成二维码但不发飞书")
+    ap.add_argument("--refresh", action="store_true", help="不发二维码，只把各号刷一遍并报告新增")
     args = ap.parse_args()
 
     left = hours_left()
@@ -284,6 +338,31 @@ def main():
         for row in account_state():
             log("%s  最后同步 %s  文章 %s  最新 %s" % (row["name"], row["synced"], row["articles"], row["latest"]))
         return 0
+
+    if args.refresh:
+        if left is not None and left < 0:
+            log("公众平台会话已过期（%.1f 小时前），刷新没有意义，先扫码" % -left)
+            return 4
+        rows = refresh_all()
+        added = 0
+        lines = ["本轮刷新（会话剩余 %s）：" % ("未知" if left is None else "%.0f 小时" % left)]
+        for name, before, after in rows:
+            delta = after - before
+            added += delta
+            lines.append("· %s：%d → %d（新增 %d）" % (name, before, after, delta))
+        lines.append("")
+        lines.append("合计新增 %d 篇。若全为 0 且日志有 `频率限制`，是微信频控，不是没更新。" % added)
+        text = "\n".join(lines)
+        log(text.replace("\n", " | "))
+        if added > 0:
+            env = read_env(YIHOT_ENV)
+            chat_id = env.get("FEISHU_ALERT_CHAT_ID") or env.get("FEISHU_INTERNAL_CHAT_ID")
+            try:
+                feishu_text(env, feishu_token(env), chat_id, text)
+                log("有新文章，已通知飞书")
+            except Exception as exc:
+                log("飞书通知失败：%s" % exc)
+        return 0 if added > 0 else 3
 
     if not args.force:
         if left is not None and left > PUSH_BELOW_HOURS:
@@ -356,7 +435,8 @@ def main():
     time.sleep(8)
     feishu_text(env, ftoken, chat_id, "扫码成功，会话已续期。开始拉取各公众号…")
     notes = update_all(token)
-    time.sleep(45)
+    # 串行刷新 + 每个号约 3 分钟的异步抓取，留足观察窗口再汇总。
+    time.sleep(180)
     rows = account_state()
     summary = ["拉取结果："] + ["· %s：最后同步 %s，共 %s 篇，最新 %s" % (
         r["name"], r["synced"], r["articles"], r["latest"]) for r in rows]

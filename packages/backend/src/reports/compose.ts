@@ -19,6 +19,12 @@ const SECTION_OF: Record<string, string> = Object.fromEntries(CATEGORIES.map((c)
 const SECTION_ORDER = [...new Set(CATEGORIES.map((c) => c.section))];
 /** Where an item without a category goes. */
 const DEFAULT_SECTION = SECTION_OF.industry ?? SECTION_ORDER.at(-1)!;
+/**
+ * One daily issue keeps at most this many entries from the same source; the rest still appear in
+ * the flash list. A high-volume outlet that publishes ten items a night would otherwise fill the
+ * issue on its own and the morning read would become that outlet's digest.
+ */
+export const DAILY_MAX_PER_SOURCE = 3;
 
 export interface ReportEntry {
   itemId: string;
@@ -174,12 +180,16 @@ export async function composeDaily(date: string, reason = "scheduled", opts: { a
   const all = await candidates(start, end, { includeBackfill: opts.attribution === "published" });
   const fresh = all.filter((c) => !covered.has(c.factKey) && !covered.has(`a:${c.itemId}`));
   const perSection = new Map<string, Candidate[]>();
+  const perSource = new Map<string, number>();
   const flashes: Array<{ itemId: string; title: string; sourceName: string; sourceUrl: string; publishedAt: string }> = [];
   for (const c of fresh) {
     const label = SECTION_OF[c.category ?? ""] ?? DEFAULT_SECTION;
     const list = perSection.get(label) ?? [];
-    if (list.length < 8) list.push(c);
-    else if (flashes.length < 12) flashes.push({ itemId: c.itemId, title: c.title, sourceName: c.sourceName, sourceUrl: c.sourceUrl, publishedAt: c.publishedAt });
+    const used = perSource.get(c.sourceId) ?? 0;
+    if (used < DAILY_MAX_PER_SOURCE && list.length < 8) {
+      list.push(c);
+      perSource.set(c.sourceId, used + 1);
+    } else if (flashes.length < 12) flashes.push({ itemId: c.itemId, title: c.title, sourceName: c.sourceName, sourceUrl: c.sourceUrl, publishedAt: c.publishedAt });
     perSection.set(label, list);
   }
   const sections = SECTION_ORDER.filter((l) => perSection.get(l)?.length).map((label) => ({

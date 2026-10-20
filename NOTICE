@@ -13,6 +13,9 @@ and logo for your site.
 
 This repository also contains third-party material under its own terms:
 
+- PsyHOT (https://github.com/zhangheqing11/PsyHOT), MIT License: the agent-facing answer layer, the
+  Agent Skill package and installer, and the paid-provider adapter pattern are adapted from it.
+  See THIRD_PARTY_NOTICES.md for the file-level list.
 - assets/og-fonts/: Noto Sans SC, SIL Open Font License 1.1 (assets/og-fonts/LICENSE).
 - assets/model-providers/: model and provider marks, mostly from Lobe Icons (MIT). The marks remain
   trademarks of their respective owners and are used only to identify them (assets/model-providers/NOTICE.md).

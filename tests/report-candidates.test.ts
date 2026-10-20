@@ -20,6 +20,10 @@ process.env.DEEPSEEK_BASE_URL = `${provider.url}/v1`;
 process.env.DEEPSEEK_API_KEY = "test-key";
 
 before(async () => {
+  // Fixtures from an earlier run of this file in the same database would compete for the same
+  // windows and make the boundary assertions ambiguous; they belong to throwaway sources, so clear them.
+  await sql`DELETE FROM articles WHERE source_id LIKE 'test-report-%'
+            AND discovered_at >= '2020-01-01' AND discovered_at < '2020-01-07'`;
   await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at)
             VALUES (${SOURCE}, 'Report boundary test', 'rss', 'T1', 'editorial', '2100-01-01')`;
 });

@@ -1,4 +1,5 @@
 import { SITE, withSubject } from "@aihot/industry/site";
+import { useState } from "react";
 import { Link, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/all";
 import type { PoolResponse } from "@aihot/contracts/site";
@@ -9,6 +10,8 @@ import { TopicTabs, SearchField } from "../features/feed/Filters";
 import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { PillTabs } from "../components/ui/Tabs";
 import { DayList, Pagination } from "../features/feed/DayList";
+import { ToggleChip } from "../components/ui/Controls";
+import { useReadSet } from "../lib/local-state";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
 
@@ -77,6 +80,13 @@ export default function AllPage() {
   };
   const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === topic)?.name ?? null : null;
   const updated = new Date(data.freshness).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Shanghai" });
+  // 只看未读 is a reader-side filter over this page: the read record lives in this browser only, so
+  // the server never has to know who read what. Turning it on can empty a page, and the note below
+  // the list says so instead of leaving a blank screen.
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const readSet = useReadSet();
+  const items = unreadOnly ? data.items.filter((it) => !readSet.has(it.id)) : data.items;
+  const hiddenCount = data.items.length - items.length;
 
   return (
     <div className="pb-6">
@@ -120,24 +130,44 @@ export default function AllPage() {
         </div>
       )}
 
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[12px] text-ink-4">{unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}</span>
+        <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
+          只看未读
+        </ToggleChip>
+      </div>
+
       <div className={`transition-opacity duration-200 ${busy ? "opacity-50" : ""}`}>
-        {data.items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="mt-2 lg:card">
-            <EmptyState
-              title="没有找到相关内容"
-              action={
-                f.q && f.tab === "time" ? (
-                  <Link to={searchTabHref("relevance")} className="text-[13px] font-medium text-accent hover:underline">
-                    试试“全文相关”，连正文一起搜
-                  </Link>
-                ) : undefined
-              }
-            >
-              {f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
-            </EmptyState>
+            {unreadOnly && data.items.length > 0 ? (
+              <EmptyState
+                title="这一页都读过了"
+                action={
+                  <button type="button" onClick={() => setUnreadOnly(false)} className="text-[13px] font-medium text-accent hover:underline">
+                    看全部内容
+                  </button>
+                }
+              >
+                翻到下一页，或者关掉「只看未读」。
+              </EmptyState>
+            ) : (
+              <EmptyState
+                title="没有找到相关内容"
+                action={
+                  f.q && f.tab === "time" ? (
+                    <Link to={searchTabHref("relevance")} className="text-[13px] font-medium text-accent hover:underline">
+                      试试“全文相关”，连正文一起搜
+                    </Link>
+                  ) : undefined
+                }
+              >
+                {f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
+              </EmptyState>
+            )}
           </div>
         ) : (
-          <DayList items={data.items} todayCount={f.q ? null : data.todayCount} showTags />
+          <DayList items={items} todayCount={f.q ? null : data.todayCount} showTags />
         )}
       </div>
       <Pagination page={data.page} pageCount={data.pageCount} href={(p) => pageHref(params, p)} />

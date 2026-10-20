@@ -92,7 +92,10 @@ export interface GroupInfo {
 
 export interface TimelineCard {
   key: string;
+  /** Sort position: the clock the slot prints, newest first. */
   anchorAt: string;
+  /** The calendar day (YYYY-MM-DD, Beijing) the card is filed under. A date-only article keeps its own day. */
+  dayAt: string;
   item: FeedItemSummary;
   group: GroupInfo | null;
 }

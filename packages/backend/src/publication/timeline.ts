@@ -20,7 +20,10 @@ export interface TimelineQuery extends TimelineFilters {
 
 interface GroupRow {
   gk: string;
+  /** Where the card sits in the list: the clock the slot prints (see feedDisplayAt on the site). */
   anchor_at: Date;
+  /** The day the card is filed under — a date-only article stays on its own day; see queryGroupedAnchors. */
+  day_at: Date;
 }
 
 function filterSql(q: TimelineQuery) {
@@ -61,10 +64,15 @@ async function groupPool(q: TimelineQuery, now: Date, storyIds: number[], factId
  * The selected set grouped into cards (fact or standalone item) with their anchor times, newest
  * first. Every timeline page, day count and "new items" probe reads this list; it is kept for five
  * seconds per filter scope (a release becomes visible at most that much later).
+ *
+ * Two keys per card, because a source that states only a day has no clock to sort by: the day it is
+ * filed under (its own date) and the position inside that day (when we collected it, which is what
+ * the slot prints). Ordering by one key alone put those articles at a day's midnight while their
+ * slot showed a later clock, so the list no longer read as newest-first.
  */
-const groupedCache = new Map<string, { at: number; rows: Array<{ gk: string; anchor: number }> }>();
-const groupedPending = new Map<string, Promise<Array<{ gk: string; anchor: number }>>>();
-async function groupedAnchors(q: TimelineQuery, now: Date): Promise<Array<{ gk: string; anchor: number }>> {
+const groupedCache = new Map<string, { at: number; rows: Array<{ gk: string; anchor: number; day: number }> }>();
+const groupedPending = new Map<string, Promise<Array<{ gk: string; anchor: number; day: number }>>>();
+async function groupedAnchors(q: TimelineQuery, now: Date): Promise<Array<{ gk: string; anchor: number; day: number }>> {
   const key = binding(q);
   const cached = q.now ? undefined : groupedCache.get(key);
   if (cached && Date.now() - cached.at < 5000) return cached.rows;
@@ -82,35 +90,43 @@ async function groupedAnchors(q: TimelineQuery, now: Date): Promise<Array<{ gk: 
 }
 
 async function queryGroupedAnchors(q: TimelineQuery, now: Date) {
+  // day_at is a calendar day (Beijing), not an instant: comparing two timestamps put a date-only
+  // article at its day's start below a clocked one on the same day no matter when we collected it.
   const rows = (
-    await sql<{ gk: string; anchor_at: Date }[]>`
+    await sql<{ gk: string; anchor_at: Date; day: string }[]>`
       WITH base AS (
-        SELECT p.sort_at, coalesce('s' || p.story_id::text, 'f' || p.fact_id::text, 'a' || p.article_id) AS gk
-        FROM publications p
+        SELECT coalesce('s' || p.story_id::text, 'f' || p.fact_id::text, 'a' || p.article_id) AS gk,
+          to_char((CASE WHEN a.published_at_precision = 'date' AND p.published_at IS NOT NULL THEN p.published_at ELSE p.sort_at END) + interval '8 hours', 'YYYY-MM-DD') AS day,
+          CASE WHEN a.published_at_precision = 'date' AND p.published_at IS NOT NULL THEN p.discovered_at ELSE p.sort_at END AS pos_at
+        FROM publications p JOIN articles a ON a.id = p.article_id
         WHERE ${selectedCondition(now)} ${filterSql(q)}
       )
-      SELECT gk, max(sort_at) AS anchor_at FROM base GROUP BY gk ORDER BY anchor_at DESC, gk COLLATE "C" DESC`
-  ).map((r) => ({ gk: r.gk, anchor: r.anchor_at.getTime() }));
-  return rows;
+      SELECT gk, max(day) AS day, max(pos_at) AS anchor_at FROM base GROUP BY gk
+      ORDER BY max(day) DESC, max(pos_at) DESC, gk COLLATE "C" DESC`
+  ).map((r) => ({ gk: r.gk, anchor: r.anchor_at.getTime(), day: Date.parse(`${r.day}T00:00:00+08:00`) }));
+  return rows.sort((a, b) => b.day - a.day || b.anchor - a.anchor || (a.gk < b.gk ? 1 : -1));
 }
 
 export async function loadTimeline(q: TimelineQuery): Promise<Omit<TimelineResponse, "hot" | "generatedAt">> {
   const now = q.now ?? new Date();
   const limit = Math.min(Math.max(q.limit ?? 20, 1), 40);
   const bind = binding(q);
-  let after: { a: number; g: string } | null = null;
+  let after: { d: number; a: number; g: string } | null = null;
   if (q.cursor) {
-    const c = decodeCursor<{ a: number; g: string; b: string }>("tl1", q.cursor);
-    if (c.b !== bind || typeof c.a !== "number" || typeof c.g !== "string") throw new InvalidCursorError("cursor does not match this query");
-    after = { a: c.a, g: c.g };
+    const c = decodeCursor<{ d: number; a: number; g: string; b: string }>("tl2", q.cursor);
+    if (c.b !== bind || typeof c.d !== "number" || typeof c.a !== "number" || typeof c.g !== "string") throw new InvalidCursorError("cursor does not match this query");
+    after = { d: c.d, a: c.a, g: c.g };
   }
 
   // Independent of the page: read alongside it.
   const refreshAtRead = nextRelease(q, now);
   refreshAtRead.catch(() => {});
   const grouped = await groupedAnchors(q, now);
-  const start = after ? grouped.findIndex((g) => g.anchor < after!.a || (g.anchor === after!.a && g.gk < after!.g)) : 0;
-  const groups: GroupRow[] = (start < 0 ? [] : grouped.slice(start, start + limit + 1)).map((g) => ({ gk: g.gk, anchor_at: new Date(g.anchor) }));
+  const start = after
+    ? grouped.findIndex((g) =>
+        g.day < after!.d || (g.day === after!.d && (g.anchor < after!.a || (g.anchor === after!.a && g.gk < after!.g))))
+    : 0;
+  const groups: GroupRow[] = (start < 0 ? [] : grouped.slice(start, start + limit + 1)).map((g) => ({ gk: g.gk, anchor_at: new Date(g.anchor), day_at: new Date(g.day) }));
 
   const page = groups.slice(0, limit);
   const hasMore = groups.length > limit;
@@ -135,10 +151,10 @@ export async function loadTimeline(q: TimelineQuery): Promise<Omit<TimelineRespo
   );
   const firstSeen = (list: Member[]) => Math.min(...list.map((r) => (r.sort_at ?? r.timeline_at).getTime()));
 
-  const planned: Array<{ key: string; anchorAt: string; id: string; group: GroupInfo | null }> = [];
+  const planned: Array<{ key: string; anchorAt: string; dayAt: string; id: string; group: GroupInfo | null }> = [];
   for (const g of page) {
     if (g.gk.startsWith("a")) {
-      planned.push({ key: g.gk, anchorAt: g.anchor_at.toISOString(), id: g.gk.slice(1), group: null });
+      planned.push({ key: g.gk, anchorAt: g.anchor_at.toISOString(), dayAt: beijingDate(g.day_at), id: g.gk.slice(1), group: null });
       continue;
     }
     const id = Number(g.gk.slice(1));
@@ -173,33 +189,33 @@ export async function loadTimeline(q: TimelineQuery): Promise<Omit<TimelineRespo
       memberIds: [...new Set([...byFact.values()].flat().map((m) => m.id))].slice(0, 30),
     };
     const showGroup = group.reportCount > 1 || group.developmentCount > 1;
-    planned.push({ key: g.gk, anchorAt: g.anchor_at.toISOString(), id: rep.id, group: showGroup ? group : null });
+    planned.push({ key: g.gk, anchorAt: g.anchor_at.toISOString(), dayAt: beijingDate(g.day_at), id: rep.id, group: showGroup ? group : null });
   }
 
   // Recheck scope when hydrating: a withdrawal may commit after the narrow representative read.
   const rows = new Map(planned.length ? (await sql<ItemRow[]>`
     SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE p.article_id IN ${sql(planned.map((p) => p.id))}
       AND ${selectedCondition(now)} ${filterSql(q)}`).map((row) => [row.id, row]) : []);
-  const cards: TimelineCard[] = planned.flatMap(({ id, key, anchorAt, group }) => {
+  const cards: TimelineCard[] = planned.flatMap(({ id, key, anchorAt, dayAt, group }) => {
     const row = rows.get(id);
     if (!row) return [];
     if (group) group.story = row.story_public_id ? { publicId: row.story_public_id, title: row.story_title ?? "" } : null;
-    return [{ key, anchorAt, item: toFeedItemSummary(row), group }];
+    return [{ key, anchorAt, dayAt, item: toFeedItemSummary(row), group }];
   });
 
   // Day header counts for the days on this page, over the full grouped set.
-  const days = new Set(page.map((g) => beijingDate(g.anchor_at)));
+  const days = new Set(page.map((g) => beijingDate(g.day_at)));
   const dayCounts: Record<string, number> = {};
   if (days.size) {
     for (const g of grouped) {
-      const day = beijingDate(g.anchor);
+      const day = beijingDate(g.day);
       if (days.has(day)) dayCounts[day] = (dayCounts[day] ?? 0) + 1;
     }
   }
 
   const refreshAt = await refreshAtRead;
   const last = page[page.length - 1];
-  const nextCursor = hasMore && last ? encodeCursor("tl1", { a: last.anchor_at.getTime(), g: last.gk, b: bind }) : null;
+  const nextCursor = hasMore && last ? encodeCursor("tl2", { d: last.day_at.getTime(), a: last.anchor_at.getTime(), g: last.gk, b: bind }) : null;
   return { filters: { channel: q.channel, category: q.category, tag: q.tag, topic: q.topic ?? null }, cards, nextCursor, refreshAt, dayCounts };
 }
 

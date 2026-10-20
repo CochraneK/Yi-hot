@@ -1544,6 +1544,10 @@
     ],
     "_aihot": {
      "initialBackfillLimit": 8
+    },
+    "detail": {
+     "maxFetches": 10,
+     "publishedAtForExternal": true
     }
    },
    "tier": "T2",
@@ -1785,6 +1789,10 @@
     "allowUrlPrefixes": [],
     "_aihot": {
      "initialBackfillLimit": 8
+    },
+    "detail": {
+     "maxFetches": 10,
+     "publishedAtForExternal": true
     }
    },
    "tier": "T2",

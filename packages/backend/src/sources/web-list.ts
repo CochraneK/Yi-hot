@@ -109,22 +109,25 @@ export function externalLink(url: string, listing: string): boolean {
  * The publication date a detail page states, for reposted articles where the listing only knows when it
  * copied the piece. Reads metadata first, then the byline an article page prints ("时间：2026-10-13",
  * "2026-10-13 14:02:19 来源：新华网"), scanning only the opening of the visible text so a footer or a
- * related-article list cannot supply it.
+ * related-article list cannot supply it. A date that comes with a clock beats a bare day.
  */
-export function pagePublishedAt(html: string): Date | null {
+export function pagePublishedAt(html: string): { at: Date; precision: "date" | "datetime" } | null {
   const $ = cheerio.load(html);
-  const meta = $('meta[property="article:published_time"], meta[name="pubdate"], meta[name="publishdate"], meta[name="PubDate"], meta[itemprop="datePublished"], meta[name="date"]').attr("content");
-  const fromMeta = parseLooseDate(meta);
-  if (fromMeta) return fromMeta;
-  const fromJsonLd = parseLooseDate(jsonLdPublished($, html));
-  if (fromJsonLd) return fromJsonLd;
-  const fromTime = parseLooseDate($("time[datetime]").first().attr("datetime"));
-  if (fromTime) return fromTime;
+  const seen: Array<{ at: Date; precision: "date" | "datetime" }> = [];
+  const take = (raw: string | null | undefined) => {
+    const at = parseLooseDate(raw);
+    if (at) seen.push({ at, precision: datePrecision(raw) });
+  };
+  take($('meta[property="article:published_time"], meta[name="pubdate"], meta[name="publishdate"], meta[name="PubDate"], meta[name="date"]').attr("content"));
+  take($('meta[itemprop="datePublished"]').attr("content"));
+  take(jsonLdPublished($, html));
+  for (const el of $("time[datetime]").toArray().slice(0, 3)) take($(el).attr("datetime"));
   const text = collapseWhitespace($("body").text()).slice(0, 3000);
   const labeled = /(?:发布时间|发布日期|发稿时间|时间|日期)\s*[：:]\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s*\d{1,2}:\d{2}(?::\d{2})?)?)/.exec(text);
-  if (labeled) return parseLooseDate(labeled[1]);
+  if (labeled) take(labeled[1]);
   const bare = /(\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/.exec(text);
-  return parseLooseDate(bare?.[1]);
+  if (bare) take(bare[1]);
+  return seen.find((s) => s.precision === "datetime") ?? seen[0] ?? null;
 }
 
 export function allowed(url: string, source: SourceRow): boolean {
@@ -393,7 +396,7 @@ export interface DetailNeed {
  * text ("Published Time: …", "# Heading"), so that paid rendering is bought only when such a rule is
  * needed; selectors and page metadata read the page's own HTML.
  */
-export async function fetchDetail(url: string, source: SourceRow, need: DetailNeed): Promise<{ publishedAt: Date | null; title: string | null; summary: string | null; body: ExtractedBody | null }> {
+export async function fetchDetail(url: string, source: SourceRow, need: DetailNeed): Promise<{ publishedAt: Date | null; publishedAtPrecision: "date" | "datetime" | null; title: string | null; summary: string | null; body: ExtractedBody | null }> {
   const d = source.config.detail ?? {};
   const jinaListing = String(source.config.url ?? "").startsWith(JINA_PREFIX);
   const dateInJina = need.date && jinaListing && !!d.publishedAtRegex;
@@ -414,6 +417,7 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
   const $ = html === null ? null : cheerio.load(html);
 
   let publishedAt: Date | null = null;
+  let publishedAtPrecision: "date" | "datetime" | null = null;
   const dateText = dateInJina ? jina : html;
   if (need.date && dateText !== null) {
     if ($ && !dateInJina && d.publishedAtSelector) {
@@ -429,7 +433,13 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
       publishedAt = parseLooseDate(meta) ?? parseLooseDate(jsonLdPublished($, html!)) ?? parseLooseDate($("time[datetime]").first().attr("datetime"));
     }
     // Reposted articles: the target page, not the listing, knows when the piece was published.
-    if (!publishedAt && html && d.publishedAtForExternal === true) publishedAt = pagePublishedAt(html);
+    if (!publishedAt && html && d.publishedAtForExternal === true) {
+      const page = pagePublishedAt(html);
+      if (page) {
+        publishedAt = page.at;
+        publishedAtPrecision = page.precision;
+      }
+    }
   }
 
   let title: string | null = null;
@@ -444,5 +454,5 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
     const el = $(d.summarySelector).first();
     summary = collapseWhitespace(el.attr("content") ?? el.text()) || null;
   }
-  return { publishedAt, title, summary, body };
+  return { publishedAt, publishedAtPrecision, title, summary, body };
 }

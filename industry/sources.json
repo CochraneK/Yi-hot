@@ -1385,7 +1385,11 @@
     },
     "_aihot": {
      "initialBackfillLimit": 10
-    }
+    },
+    "titlePaths": [
+     "text"
+    ],
+    "titleMaxChars": 60
    },
    "tier": "T2",
    "first_party": false,
@@ -1483,7 +1487,11 @@
     },
     "_aihot": {
      "initialBackfillLimit": 10
-    }
+    },
+    "titlePaths": [
+     "text"
+    ],
+    "titleMaxChars": 60
    },
    "tier": "T2",
    "first_party": false,
@@ -1581,7 +1589,11 @@
     },
     "_aihot": {
      "initialBackfillLimit": 10
-    }
+    },
+    "titlePaths": [
+     "text"
+    ],
+    "titleMaxChars": 60
    },
    "tier": "T2",
    "first_party": false,

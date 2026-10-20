@@ -22,23 +22,27 @@ export function parseJinaText(text: string): JinaPage {
  * Reads a page through Jina. The receipt key is the target URL plus the day, so a same-day retry of an
  * article's body or detail reuses it. A listing is read afresh on every fetch (`perRead`): with the day
  * key each listing was read once a day and every later fetch saw the morning's page.
+ *
+ * Without a key Reader still answers, unauthenticated, at 20 requests a minute and for no tokens; the
+ * jina budget row (5/min) stays the tighter limit, so the call is made without the authorization header
+ * rather than failing the article. The request still passes through paidRequest: it is the audit trail
+ * and the circuit breaker, not only the bill.
  */
 export async function jinaRead(
   targetUrl: string,
   opts: { purpose: string; subject: string; format?: "markdown" | "html"; cacheToleranceSeconds?: number; perRead?: boolean },
 ): Promise<JinaPage & { receiptId: number; raw: string }> {
   const key = credential("collectors", "JINA_API_KEY");
-  if (!key) throw new Error("JINA_API_KEY is not configured");
   const base = (credential("collectors", "JINA_BASE_URL") ?? "https://r.jina.ai").replace(/\/$/, "");
   // A listing whose freshness matters (xAI news) caps how old Jina's cached rendering may be.
   const tolerance: Record<string, string> = Number.isInteger(opts.cacheToleranceSeconds) && opts.cacheToleranceSeconds! >= 0 ? { "x-cache-tolerance": String(opts.cacheToleranceSeconds) } : {};
   const now = new Date().toISOString();
   const day = opts.perRead ? now : now.slice(0, 10);
   const receipt = await paidRequest(
-    { service: "jina", model: null, purpose: opts.purpose, subject: opts.subject, identity: { url: targetUrl, day, format: opts.format ?? "markdown" }, requestSummary: { url: targetUrl } },
+    { service: "jina", model: null, purpose: opts.purpose, subject: opts.subject, identity: { url: targetUrl, day, format: opts.format ?? "markdown" }, requestSummary: { url: targetUrl, anonymous: !key } },
     async () => {
       const res = await guardedFetch(`${base}/${targetUrl}`, {
-        headers: { authorization: `Bearer ${key}`, "x-return-format": opts.format ?? "markdown", accept: "text/plain", ...tolerance },
+        headers: { ...(key ? { authorization: `Bearer ${key}` } : {}), "x-return-format": opts.format ?? "markdown", accept: "text/plain", ...tolerance },
         timeoutMs: 60_000,
         maxBytes: 6 * 1024 * 1024,
       });
@@ -48,9 +52,10 @@ export async function jinaRead(
       if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`jina HTTP ${res.status}`, res.status, true);
       const text = res.text();
       // Billed in tokens; estimated at about ¥0.36 per million (a recharge-pack price). Without the usage
-      // header nothing is guessed.
+      // header nothing is guessed. An unauthenticated read spends no tokens, so it is recorded at zero
+      // even if the header appears.
       const tokens = Number(res.headers.get("x-usage-tokens")) || null;
-      const cost = tokens ? { amount: (tokens / 1e6) * 0.36, currency: "CNY", basis: "estimated" as const } : null;
+      const cost = key && tokens ? { amount: (tokens / 1e6) * 0.36, currency: "CNY", basis: "estimated" as const } : null;
       return { response: { text: text.slice(0, 2_000_000), status: res.status }, requestId: res.headers.get("x-request-id"), usage: { bytes: res.body.length, tokens }, cost };
     },
   );

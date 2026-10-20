@@ -37,7 +37,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
             {list.map((it) => {
               const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
               return (
-                <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
+                <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                   <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
                 </TimelineSlot>
               );

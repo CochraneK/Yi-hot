@@ -1312,6 +1312,300 @@
      "fundraising"
     ]
    }
+  },
+  {
+   "id": "weibo-search-vulnerable-children",
+   "name": "微博 · 困境儿童资助",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "weibo",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "困境儿童 资助"
+    },
+    "summaryIsBody": true,
+    "requireBoolean": {
+     "path": "author_verified",
+     "equals": true
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "困境",
+      "留守",
+      "孤儿",
+      "儿童",
+      "未成年人",
+      "民政",
+      "保障",
+      "政策",
+      "补贴",
+      "扶助",
+      "资助",
+      "女童",
+      "残障",
+      "残疾"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "抽奖",
+      "同款",
+      "代购",
+      "返图",
+      "开箱",
+      "团购",
+      "拼团",
+      "超话",
+      "应援",
+      "粉丝",
+      "明星",
+      "周边",
+      "生日",
+      "打卡",
+      "戳我",
+      "t.cn",
+      "唠唠",
+      "抱抱",
+      "动态汇总",
+      "一起为",
+      "求转发",
+      "求扩散"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "微博",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "policy": 18,
+     "project": 20
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "weibo-search-unattended-children",
+   "name": "微博 · 事实无人抚养儿童",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "weibo",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "事实无人抚养儿童"
+    },
+    "summaryIsBody": true,
+    "requireBoolean": {
+     "path": "author_verified",
+     "equals": true
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "困境",
+      "留守",
+      "孤儿",
+      "儿童",
+      "未成年人",
+      "民政",
+      "保障",
+      "政策",
+      "补贴",
+      "扶助",
+      "资助",
+      "女童",
+      "残障",
+      "残疾"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "抽奖",
+      "同款",
+      "代购",
+      "返图",
+      "开箱",
+      "团购",
+      "拼团",
+      "超话",
+      "应援",
+      "粉丝",
+      "明星",
+      "周边",
+      "生日",
+      "打卡",
+      "戳我",
+      "t.cn",
+      "唠唠",
+      "抱抱",
+      "动态汇总",
+      "一起为",
+      "求转发",
+      "求扩散"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "微博",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "policy": 18,
+     "project": 20
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "weibo-search-student-aid",
+   "name": "微博 · 一对一助学",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "weibo",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "助学 一对一"
+    },
+    "summaryIsBody": true,
+    "requireBoolean": {
+     "path": "author_verified",
+     "equals": true
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "困境",
+      "留守",
+      "孤儿",
+      "儿童",
+      "未成年人",
+      "民政",
+      "保障",
+      "政策",
+      "补贴",
+      "扶助",
+      "资助",
+      "女童",
+      "残障",
+      "残疾"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "抽奖",
+      "同款",
+      "代购",
+      "返图",
+      "开箱",
+      "团购",
+      "拼团",
+      "超话",
+      "应援",
+      "粉丝",
+      "明星",
+      "周边",
+      "生日",
+      "打卡",
+      "戳我",
+      "t.cn",
+      "唠唠",
+      "抱抱",
+      "动态汇总",
+      "一起为",
+      "求转发",
+      "求扩散"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "微博",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "policy": 18,
+     "project": 20
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
   }
  ]
 }

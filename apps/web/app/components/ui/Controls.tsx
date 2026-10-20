@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type SelectHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
 import { IconChevronDown } from "../icons";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -30,6 +30,25 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
     />
   );
 });
+
+/**
+ * A filter that stays on or off: a pill in the same shape as the tag filters. `aria-pressed`
+ * carries the state, so the label never has to change and screen readers announce it.
+ */
+export function ToggleChip({ on, onToggle, children }: { on: boolean; onToggle: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onToggle}
+      className={`inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-[13px] transition-colors ${
+        on ? "border-ink bg-ink font-semibold text-bg" : "border-line bg-surface text-ink-3 hover:border-ink-4 hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 /** Native select as a pill, like the site's other controls. */
 export function Select({ className = "", children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {

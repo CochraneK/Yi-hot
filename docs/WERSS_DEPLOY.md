@@ -1,5 +1,7 @@
 # 免费公众号采集：WeRSS + YiHot
 
+> **2026-10-20 现状**：`GATHER.MODEL=web`，微信读书兼容层停用。维护节奏是 **每 3 天**在管理端点「刷新授权」扫码，然后逐个公众号点「刷新」。一键入口见下文「一键扫码（Windows）」。
+
 采用 [WeRSS / we-mp-rss](https://github.com/rachelos/we-mp-rss) 的 MIT 开源自托管方案。软件无需 API 订阅费，使用已有腾讯云的计算和存储资源。核查参考代码为 `9b40351f`；实际部署记录必须保存镜像 digest。Wechat2RSS 的[私有部署](https://github.com/ttttmr/Wechat2RSS/blob/master/deploy/index.md)收费，不是本次选项。
 
 GitHub Pages 只能托管静态页面，不能运行扫码会话、浏览器采集任务和 SQLite，所以服务运行在腾讯云。WeRSS 是独立服务；YiHot 继续用现有 RSS 管线。
@@ -51,6 +53,8 @@ ssh -N -L 18001:127.0.0.1:18001 ubuntu@49.233.72.222
 
 ### 本实例的微信读书兼容层
 
+> **2026-10-20 起已停用。** `GATHER.MODEL` 已切回 `web`，`yihot-weread.timer` 已 `disable --now`；本层实测 86 次运行失败 84 次、`added` 恒为 0，从未产出过文章。下面内容保留作历史记录与回滚参考，日常维护**不需要**执行。
+
 固定镜像的采集器只读 cover，误把当前时间作为发布日期。复制 `deploy/werss/` 下的兼容补丁、覆盖配置、采集脚本及两个 systemd 文件到 `/opt/werss`，用 root 执行 `bash install-weread-compat.sh`。脚本核验固定版本原模块 SHA 后生成只读覆盖文件，保留原模块备份；版本不匹配直接失败，升级时必须重新审查，不能强行绕过 SHA 检查。
 
 本次补丁走已登录微信读书的文章列表，固定移动端表示以取得真实原文短链，拒绝桌面响应的 WR1 不透明 ID；保留真实日期并按文章 ID 去重，缺少必需元数据时不推进游标。正文补抓关闭。`yihot-weread.timer` 每两小时运行，只更新已订阅账号，不发送消息、不使用付费模型。验证：`python deploy/werss/test_weread_compat.py`。
@@ -72,19 +76,46 @@ ssh -N -L 18001:127.0.0.1:18001 ubuntu@49.233.72.222
 ### 三个容易误判的机制
 
 1. **WeRSS 不会自己定时刷新。** `jobs/mps.py:start_job()` 依赖 `message_tasks.cron_exp` 注册 APScheduler 任务；本实例 `message_tasks`、`message_tasks_logs`、`config_management` 三表均为 **0 行**，启动日志第 164 行打印「没有任务」后直接返回。所以 10-13 那 43 / 80 篇是**首次扫描的存量**，之后 `feeds.sync_time` 一直冻结在 `2026-10-13 08:52:56` / `09:24:53`。
-2. **`MP_WXS_` 前缀会强制走微信读书通道。** `jobs/mps.py:72` 判断 `mp.id.startswith("MP_WXS_")` 且存在 weread cookie 时自动切换采集器。**只扫公众平台二维码不会恢复这三个号**——必须刷新微信读书 Cookie，或改 feed id / 清空 weread cookie 让它回落到 web 模式。
-3. **没有自动续期。** `core/weread_cookie_refresh.py` 的 `request_host_refresh()` 依赖宿主机 `host_weread_refresh_agent.py`（`http://host.docker.internal:9876/refresh`），这套代理是给 macOS 本机 Chrome 写的；腾讯云上不存在 → `triggered=False` 静默跳过，日志里没有报错。
+2. **`MP_WXS_` 前缀在定时任务里会强制走微信读书通道。** `jobs/mps.py:70-82` 判断 `mp.id.startswith("MP_WXS_")` 时，只要存在 weread cookie 就切换采集器；**没有 cookie 则直接 `raise RuntimeError("微信读书 Cookie 未配置")` 跳过该号，不会回落到 web**。所以只扫公众平台二维码，对「定时任务」这条路无效。
+   但**手动「刷新」走的是另一条路**：`GET /api/v1/wx/mps/update/{id}` 用 `WxGather().Model()`，即由 `GATHER.MODEL` 决定，不受 feed 前缀影响。2026-10-20 已把 `GATHER.MODEL` 切回 `web`（`deploy/werss/compose.weread.yml`），实测 `collector = MpsWeb`，因此「扫码 + 手动刷新」这条路是通的。
+3. **没有自动续期。** `core/weread_cookie_refresh.py` 的 `request_host_refresh()` 依赖宿主机 `host_weread_refresh_agent.py`（`http://host.docker.internal:9876/refresh`），这套代理是给 macOS 本机 Chrome 写的；腾讯云上不存在 → `triggered=False` 静默跳过，日志里没有报错。该定时器已于 2026-10-20 停用。
 
 ### 建议节奏：每 3 天扫一次
 
-4 天是硬过期，**每 3 天扫一次留 1 天余量**，避免刚好在周末/出差时断掉。若确定只用 web 模式（已清空 weread cookie），4 天一次也够，但仍建议按 3 天执行并配合下面的新鲜度检查。
+4 天是硬过期，**每 3 天扫一次留 1 天余量**，避免刚好在周末/出差时断掉。扫码后还要对每个号点一次「刷新」才会真正拉取新文章——订阅号列表不会自己动。
+
+### 一键扫码（Windows，推荐日常用这个）
+
+仓库里有三个小工具，双击即用，不用记 SSH 命令：
+
+| 文件 | 作用 |
+| --- | --- |
+| `tools/werss/werss-scan.cmd` | 建隧道 + 打开管理端 + 打印步骤 |
+| `tools/werss/werss-status.cmd` | 只读检查：凭据到期、每个号最后同步时间、最新文章日期 |
+| `tools/werss/werss_status.py` | 状态脚本本体（在容器内跑，由上面调用） |
+
+前置条件只需配一次：
+
+1. 本机装 Windows 自带 OpenSSH 客户端（`ssh -V` 有输出）。
+2. 本机公钥写入服务器 `~/.ssh/authorized_keys`。
+3. `~/.ssh/config` 里有 `Host yihot`（HostName / User / IdentityFile）。
+4. 服务器上放一份状态脚本：`sudo cp werss_status.py /opt/werss/`。
+
+配好后 `ssh yihot "echo ok"` 应直接返回 `ok`，不再问密码。
+
+**扫码四步**（前 3 步在 `werss-scan.cmd` 打开的页面里完成，第 4 步收尾）：
+
+1. 若要求登录：账号密码在服务器 `/opt/werss/.env` 的 `ADMIN_` 开头项里。
+2. 点顶部**「刷新授权」**（扫描图标），用公众号管理员微信扫码。刷的是公众平台会话，有效期 4 天。**不要点「微信读书授权」**，那条路 2 小时就失效。
+3. 左侧选中一个公众号 → 点顶部**「刷新」**→ 弹窗保持默认（第 0 页到第 1 页）→ 确定，看到「刷新成功，新增 N 篇」。每个号都做一次。
+4. 关掉最小化的隧道窗口，双击 `werss-status.cmd` 复核。
 
 每次扫码后必须验收四件事，缺一不可：
 
 1. WeRSS 的 `feeds.sync_time` 前移到当前时间；
 2. feed 中最新条目的发布日期在 **3 天内**；
 3. YiHot 后台该来源 `health=ok` 且本轮 `added > 0`；
-4. 若走微信读书通道：`journalctl -u yihot-weread.service` 中无 `-2012`。
+4. `werss-status.cmd` 输出里三个号都显示「4 天内」，没有「已过期」。
 
 ### 停更判定（不要看 HTTP 200）
 
@@ -117,6 +148,7 @@ curl -fsS -X GET "http://127.0.0.1:18001/api/v1/wx/mps/update/MP_WXS_实际账�
 
 - 2026-10-19：重建时漏掉 `compose.werss.yml`，api/worker 被摘出 `yihot_werss` 网络，两个公众号来源连续失败约 21 小时（`getaddrinfo EAI_AGAIN werss`）。
 - 2026-10-13 至 10-20：`feeds.sync_time` 冻结 7 天，微信读书兼容层 84/86 次失败，期间无任何告警。**这是「接口健康 ≠ 内容新鲜」的典型案例**，对应待办：给信源加 `max(published_at)` 新鲜度告警。
+- 2026-10-20：确认部署实际是 `GATHER.MODEL=weread_mp`，公众平台扫码对采集无效；已切回 `web`（`collector = MpsWeb` 实测）并停用 `yihot-weread.timer`。回滚方式：把 `deploy/werss/compose.weread.yml` 里 `GATHER.MODEL` 改回 `weread_mp`，`docker compose ... up -d`，并 `systemctl enable --now yihot-weread.timer`。
 
 ## 故障定位
 

@@ -1,7 +1,11 @@
 services:
   werss:
     environment:
-      GATHER.MODEL: weread_mp
+      # 2026-10-20 起切回 web 模式：微信读书 Cookie 实测约 2 小时失效、86 次运行 84 次失败、
+      # added 恒为 0，这条通道从未产出过文章。web 模式依赖公众平台会话（登录后固定 4 天），
+      # 配合「每 3 天扫码一次」可用；扫码入口在管理端顶栏「微信公众号授权」。
+      # 回滚：把下面一行改回 weread_mp 并 `docker compose ... up -d`。
+      GATHER.MODEL: web
       GATHER.CONTENT: "False"
       GATHER.CONTENT_AUTO_CHECK: "False"
     volumes:

@@ -22,9 +22,12 @@ const ABNORMAL = "600406";
 const DISHONESTY = "600407";
 
 export function noticeTypeOf(type: unknown, noticeType: unknown): RegulatoryRecordType | null {
+  const t = text(type);
   const n = text(noticeType);
-  if (n === "600825") return text(type) === DISHONESTY ? "dishonesty_enrol" : "abnormal_enrol";
-  if (n === "600826") return text(type) === DISHONESTY ? "dishonesty_remove" : "abnormal_remove";
+  // 名录类型缺失或不在码表里时不猜：默认按活动异常名录处理会把严重失信记成异常。
+  if (t !== ABNORMAL && t !== DISHONESTY) return null;
+  if (n === "600825") return t === DISHONESTY ? "dishonesty_enrol" : "abnormal_enrol";
+  if (n === "600826") return t === DISHONESTY ? "dishonesty_remove" : "abnormal_remove";
   if (n === "600824") return "delivery";
   return null;
 }

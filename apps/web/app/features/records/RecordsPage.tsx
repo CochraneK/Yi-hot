@@ -110,7 +110,7 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
           ))}
         </nav>
         <div className="w-full lg:ml-auto lg:w-60">
-          <SearchField action="/records" defaultValue={q ?? ""} keep={{ type: activeType, kind: activeKind }} />
+          <SearchField action="/records" defaultValue={q ?? ""} keep={{ type: activeType, kind: activeKind }} placeholder="搜索组织名称…" />
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import type { loader as rootLoader } from "../root";
 import { useChangelogDot } from "../components/shell/Sidebar";
 import { pageMeta } from "../lib/seo";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
-import { IconBookmark, IconChart, IconChevronRight, IconFlame, IconGrid, IconHeart, IconHistory, IconMessage, IconMoon, IconPlug } from "../components/icons";
+import { IconBookmark, IconChart, IconChevronRight, IconFlame, IconGrid, IconHeart, IconHistory, IconMail, IconMessage, IconMoon, IconPlug } from "../components/icons";
 
 /** Shared caches may keep this page for five minutes. */
 export function headers() {
@@ -42,7 +42,6 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
       { to: "/changelog", label: "更新日志", icon: <IconHistory size={18} /> },
       { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
-      { to: "/subscribe", label: "邮件订阅", icon: <IconMessage size={18} /> },
     ],
   },
 ];
@@ -62,6 +61,16 @@ export default function MorePage() {
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
       <h1 className="pb-4 pt-5 text-[22px] font-bold text-ink lg:pt-1">更多</h1>
+      {/* 手机端唯一的订阅入口：侧栏在手机上不显示，TabBar 也放不下第六个标签，
+          所以这里置顶一张卡片，而不是把它埋在「关于」组的最后一项。 */}
+      <Link to="/subscribe" className="card mb-3 flex items-center gap-3 p-4 transition-colors active:bg-bg-sunk lg:hidden">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-accent-contrast"><IconMail size={20} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-ink">订阅公益总报</span>
+          <span className="block truncate text-[12.5px] text-ink-3">日报、周报、月报直接发到邮箱</span>
+        </span>
+        <IconChevronRight size={16} className="shrink-0 text-ink-4" />
+      </Link>
       <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 2xl:grid-cols-3">
         {GROUPS.map((g) => (
           <Group key={g.title} title={g.title}>
@@ -87,9 +96,10 @@ export default function MorePage() {
         ))}
       </div>
       <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[12px] text-ink-4">
+        <Link to="/subscribe" className="hover:text-ink-2">邮件订阅</Link>
+        <a href="/feed.xml" className="hover:text-ink-2">RSS</a>
         <Link to="/terms" className="hover:text-ink-2">使用规则</Link>
         <Link to="/privacy" className="hover:text-ink-2">隐私说明</Link>
-        <a href="/feed.xml" className="hover:text-ink-2">RSS</a>
         {SITE.icp && <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-ink-2">{SITE.icp}</a>}
       </div>
     </div>

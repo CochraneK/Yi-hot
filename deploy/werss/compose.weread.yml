@@ -4,6 +4,12 @@ services:
       # 2026-10-20 起切回 web 模式：微信读书 Cookie 实测约 2 小时失效、86 次运行 84 次失败、
       # added 恒为 0，这条通道从未产出过文章。web 模式依赖公众平台会话（登录后固定 4 天），
       # 配合「每 3 天扫码一次」可用；扫码入口在管理端顶栏「微信公众号授权」。
+      #
+      # 同日 21:10 实测另外两种模式，都不解决问题（列表接口 ret=200013 频率限制）：
+      #   free_publish → 新端点 /cgi-bin/free_publish 直接非 JSON 响应，publish 空手，
+      #                  仍然回落到 appmsgpublish / appmsg 吃 200013。
+      #   playwright   → 「已加载保存的 Cookie」但「未拦截到 API 响应」，浏览器会话进不了后台。
+      # 所以保持 web；频控只能靠时间冷却 + 串行低频重试（scan_push.py --refresh）。
       # 回滚：把下面一行改回 weread_mp 并 `docker compose ... up -d`。
       GATHER.MODEL: web
       GATHER.CONTENT: "False"

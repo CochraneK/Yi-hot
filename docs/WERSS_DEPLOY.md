@@ -149,6 +149,51 @@ curl -fsS -X GET "http://127.0.0.1:18001/api/v1/wx/mps/update/MP_WXS_实际账�
 - 2026-10-19：重建时漏掉 `compose.werss.yml`，api/worker 被摘出 `yihot_werss` 网络，两个公众号来源连续失败约 21 小时（`getaddrinfo EAI_AGAIN werss`）。
 - 2026-10-13 至 10-20：`feeds.sync_time` 冻结 7 天，微信读书兼容层 84/86 次失败，期间无任何告警。**这是「接口健康 ≠ 内容新鲜」的典型案例**，对应待办：给信源加 `max(published_at)` 新鲜度告警。
 - 2026-10-20：确认部署实际是 `GATHER.MODEL=weread_mp`，公众平台扫码对采集无效；已切回 `web`（`collector = MpsWeb` 实测）并停用 `yihot-weread.timer`。回滚方式：把 `deploy/werss/compose.weread.yml` 里 `GATHER.MODEL` 改回 `weread_mp`，`docker compose ... up -d`，并 `systemctl enable --now yihot-weread.timer`。
+- 2026-10-20 20:07：**同一个断网故障复发**。当天的 rebuild 只带了 `docker-compose.yml`，api/worker 被摘出 `yihot_werss`，两个公众号源立刻 `getaddrinfo EAI_AGAIN werss`。修法：`cd /opt/yihot && sudo docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml up -d --no-build`，不需要重建镜像。判据是 `docker inspect aihot-worker-1` 的网络列表里必须同时有 `aihot_default` 与 `yihot_werss`。**这不是 WeRSS 侧问题，扫码救不了。**
+- 2026-10-20 20:52：重新扫码成功，`wx.lic` 到期时间刷新到 10-24 20:52（+4 天，`login_status: true`）。但随后三个号同时刷新全部 `成功0条`，日志是 `appmsgpublish` 连返 `ret=200013`（`core/wx/model/web.py:69` 的 `频率限制`），三次重试共 3 分钟仍不放行。**结论：扫码只解决会话，不解决频控**；并发刷新会加重封禁，`sync_push` 的 `update_all` 已改成串行且带间隔。
+
+## 频控 200013：扫码救不了的那一段（实测 2026-10-20）
+
+扫码只解决「会话」，不解决「列表接口被限流」。两者要分开判定：
+
+| 现象 | 含义 | 处置 |
+| --- | --- | --- |
+| `qr/status` 的 `login_status=false`、`wx.lic` 时间戳不动 | 会话没续上 | 重启 werss 容器释放扫码锁，重新出码 |
+| `login_status=true`、`wx.lic` 到期时间 +4 天 | 会话正常 | 不要再扫，问题在下一行 |
+| 日志 `频率限制, 第N次重试` / `成功0条` | `appmsgpublish` 返回 `ret=200013` | 等冷却，串行低频重试 |
+
+2026-10-20 20:52 续期成功后，三个号连续刷新全部 `成功0条`。同一天把三种采集模式都试了一遍：
+
+| `GATHER.MODEL` | 结果 |
+| --- | --- |
+| `web` | `appmsgpublish` 返回 200013，重试 3 次（60s+120s）后 `成功0条`，单轮耗时 3 分 16 秒 |
+| `free_publish` | 新端点 `/cgi-bin/free_publish` 返回非 JSON（`Expecting value: line 1 column 1`）；`/cgi-bin/publish` 空手；仍然回落到 `appmsgpublish`、`appmsg` 吃 200013。0.5 秒就结束 |
+| `playwright` | 「已加载保存的 Cookie」→「未拦截到 API 响应，尝试解析页面 DOM」→「Playwright 拦截方式未获取到数据」。26 秒结束，浏览器会话同样进不去后台 |
+
+结论：**没有一条路能绕过 200013**。并发刷新会加重封禁，所以：
+
+1. `scan_push.py` 的 `update_all()` 改成串行，每个号之间留 90 秒；
+2. 新增 `scan_push.py --refresh`，按 **DB 文章数增量**判定结果（不看接口返回的 `total:0`），有新增才发飞书；
+3. 频控通常按小时计，冷却后单号一次就能过。用 `--refresh` 每隔几小时轻试一次，不要连点。
+
+诊断命令（一次看清卡在哪一环）：
+
+```sh
+cd /opt/yihot/tools/werss && sudo python3 scan_push.py --status
+sudo docker logs --since 5m yihot-werss-werss-1 2>&1 | grep -E '采集模式|尝试端点|频率限制|成功|执行耗时'
+```
+
+### 自动重试：`yihot-werss-refresh.timer`
+
+WeRSS 自己没有定时任务（`message_tasks` 三表 0 行，启动日志「没有任务」），所以订阅号列表不会自己动。补了一个 systemd 定时器，每天 **09:07 / 21:07** 各跑一次 `scan_push.py --refresh`：
+
+```sh
+systemctl list-timers yihot-werss-refresh.timer   # 下次时间
+systemctl status yihot-werss-refresh.service      # 上次结果
+journalctl -u yihot-werss-refresh.service -n 30   # 明细
+```
+
+退出码：0 有新增且已通知飞书；3 跑完但 0 新增（可能是真没更新，也可能是频控）；4 会话已过期需要扫码。**只有 exit 0 才代表链路真的通了**。
 
 ## 故障定位
 

@@ -158,12 +158,20 @@ async function saveReport(kind: "daily" | "weekly" | "monthly", key: string, sta
   });
 }
 
-/** Daily report for Beijing date D covers [D-1 08:00, D 08:00) Beijing time. */
-export async function composeDaily(date: string, reason = "scheduled"): Promise<{ key: string; entries: number }> {
+/**
+ * Daily report for Beijing date D covers [D-1 08:00, D 08:00) Beijing time.
+ *
+ * `attribution: "timeline"` (the scheduled default) counts an item in the window its timeline
+ * visibility falls in — what a reader could actually have seen when the issue went out.
+ * `attribution: "published"` counts it by its original publication date instead, which is how
+ * period issues treat late imports; it exists to refill issues that were composed before their
+ * content had been selected (an empty issue never gets recomposed on its own).
+ */
+export async function composeDaily(date: string, reason = "scheduled", opts: { attribution?: "timeline" | "published" } = {}): Promise<{ key: string; entries: number }> {
   const end = new Date(beijingMidnight(date).getTime() + 8 * 3600 * 1000);
   const start = new Date(end.getTime() - 86400000);
   const covered = await recentlyCovered("daily", date);
-  const all = await candidates(start, end);
+  const all = await candidates(start, end, { includeBackfill: opts.attribution === "published" });
   const fresh = all.filter((c) => !covered.has(c.factKey) && !covered.has(`a:${c.itemId}`));
   const perSection = new Map<string, Candidate[]>();
   const flashes: Array<{ itemId: string; title: string; sourceName: string; sourceUrl: string; publishedAt: string }> = [];

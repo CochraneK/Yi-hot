@@ -53,10 +53,17 @@ export default function DailyArchive() {
                     <span className="mt-1.5 text-[10.5px] leading-none text-ink-4">{beijingWeekday(e.key).replace("星期", "周")}</span>
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[15px] font-bold leading-[1.55] text-ink transition-colors group-hover:text-accent">{e.title ?? `${withSubject("日报")} ${e.key}`}</span>
-                    <span className="mt-1 block text-[12px] text-ink-4">
-                      <span className="num">{e.count}</span> 件大事
-                    </span>
+                    {(e.count ?? 0) > 0 ? (
+                      <>
+                        <span className="block text-[15px] font-bold leading-[1.55] text-ink transition-colors group-hover:text-accent">{e.title ?? `${withSubject("日报")} ${e.key}`}</span>
+                        <span className="mt-1 block text-[12px] text-ink-4">
+                          <span className="num">{e.count}</span> 件大事
+                        </span>
+                      </>
+                    ) : (
+                      // 空期（当天没有内容通过精选）不套用通用刊名，直接说明，免得看着像丢标题。
+                      <span className="block text-[14px] leading-[1.55] text-ink-4">本期无入选内容</span>
+                    )}
                   </span>
                 </Link>
               )}

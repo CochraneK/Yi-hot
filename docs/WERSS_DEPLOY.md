@@ -43,7 +43,7 @@ ssh -N -L 18001:127.0.0.1:18001 ubuntu@49.233.72.222
 4. YiHot 后台 → 候选信源 → 添加公众号 RSS，直接粘贴链接（自动转换内部主机），填名称、独立 ID，预览真实标题、日期、原文链接。使用普通 JSON 配置页时手动将 origin 替换为 `http://werss:8001`。
 5. 创建默认暂停来源，检查首抓结果后启用。参与方式从隔离调整为编辑候选前，确认内容范围；全文开关保持关闭。
 
-服务启动不等于公众号采集成功。完成标准是：扫码成功、已添加真实账号、WeRSS feed 有条目、YiHot 预览和入库成功。微信会话失效时需重新扫码；不能保证免维护运行。
+服务启动不等于公众号采集成功。完成标准是：扫码成功、已添加真实账号、WeRSS feed 有条目、YiHot 预览和入库成功。微信会话失效时需重新扫码；不能保证免维护运行。**扫码周期、失效判定与停更检查见下一节「会话有效期与扫码节奏」。**
 
 公众平台文章列表可能返回 `200013: freq control`，同时搜索仍正常；本实例 2026-10-13 已复现。上游 [issue #469](https://github.com/rachelos/we-mp-rss/issues/469) 记录了同类问题。不要持续点击刷新；官方镜像的刷新 API 会异步执行，立即返回 `total=0` 并不代表任务已结束。以 SQLite 入库数和 RSS 实际条目验收。
 
@@ -56,6 +56,67 @@ ssh -N -L 18001:127.0.0.1:18001 ubuntu@49.233.72.222
 本次补丁走已登录微信读书的文章列表，固定移动端表示以取得真实原文短链，拒绝桌面响应的 WR1 不透明 ID；保留真实日期并按文章 ID 去重，缺少必需元数据时不推进游标。正文补抓关闭。`yihot-weread.timer` 每两小时运行，只更新已订阅账号，不发送消息、不使用付费模型。验证：`python deploy/werss/test_weread_compat.py`。
 
 后续管理 WeRSS 始终使用 `docker compose -f compose.yml -f compose.weread.yml`；bootstrap 会在覆盖文件已安装时保留它。定时器状态用 `systemctl status yihot-weread.timer`，任务结果用 `journalctl -u yihot-weread.service`。回滚先停用定时器，再用仅 `compose.yml` 重建 WeRSS；保留 `.env` 和 data。微信读书 Cookie 失效时重新扫码，采集错误会让任务失败，不能把空 feed 报作成功。
+
+## 会话有效期与扫码节奏（实测 2026-10-20）
+
+这一节回答「多久要重新扫一次」和「怎么判断它其实已经停了」。**服务存活、feed 返回 200 都不代表在采集。**
+
+### 三个时间常数
+
+| 凭据 | 实测寿命 | 证据 | 失效后果 |
+| --- | --- | --- | --- |
+| 公众平台会话 `wx.lic` | 登录后**固定 4 天**，重新扫码不延长 | `token_data.expiry.expiry_time = 2026-10-16 22:07:37`，`remaining_seconds=345595`，从 10-12 22:07 首次登录起算；10-13 08:45 重扫后时间未变 | web 模式取文章列表失败 |
+| 微信读书 cookie | **约 2 小时**（单样本，波动未知） | 10-13 08:52 可用 → 10-13 10:53 报 `-2012 登录超时`；`yihot-weread.timer` 86 次运行 84 次失败，`added` 恒为 0 | `weread_mp` 通道实际从未产出文章 |
+| QQ 邮箱 IMAP 授权码 | 未观察到自然过期 | 3 天连续 0 失败，游标正常前移 | 邮件源停更 |
+
+### 三个容易误判的机制
+
+1. **WeRSS 不会自己定时刷新。** `jobs/mps.py:start_job()` 依赖 `message_tasks.cron_exp` 注册 APScheduler 任务；本实例 `message_tasks`、`message_tasks_logs`、`config_management` 三表均为 **0 行**，启动日志第 164 行打印「没有任务」后直接返回。所以 10-13 那 43 / 80 篇是**首次扫描的存量**，之后 `feeds.sync_time` 一直冻结在 `2026-10-13 08:52:56` / `09:24:53`。
+2. **`MP_WXS_` 前缀会强制走微信读书通道。** `jobs/mps.py:72` 判断 `mp.id.startswith("MP_WXS_")` 且存在 weread cookie 时自动切换采集器。**只扫公众平台二维码不会恢复这三个号**——必须刷新微信读书 Cookie，或改 feed id / 清空 weread cookie 让它回落到 web 模式。
+3. **没有自动续期。** `core/weread_cookie_refresh.py` 的 `request_host_refresh()` 依赖宿主机 `host_weread_refresh_agent.py`（`http://host.docker.internal:9876/refresh`），这套代理是给 macOS 本机 Chrome 写的；腾讯云上不存在 → `triggered=False` 静默跳过，日志里没有报错。
+
+### 建议节奏：每 3 天扫一次
+
+4 天是硬过期，**每 3 天扫一次留 1 天余量**，避免刚好在周末/出差时断掉。若确定只用 web 模式（已清空 weread cookie），4 天一次也够，但仍建议按 3 天执行并配合下面的新鲜度检查。
+
+每次扫码后必须验收四件事，缺一不可：
+
+1. WeRSS 的 `feeds.sync_time` 前移到当前时间；
+2. feed 中最新条目的发布日期在 **3 天内**；
+3. YiHot 后台该来源 `health=ok` 且本轮 `added > 0`；
+4. 若走微信读书通道：`journalctl -u yihot-weread.service` 中无 `-2012`。
+
+### 停更判定（不要看 HTTP 200）
+
+feed 可以返回 200 和 30 条旧内容，YiHot 侧也会显示 `ok`、`fail_count=0`。真正的信号是「最后成功同步时间」和「最新条目日期」：
+
+```sh
+cd /opt/werss
+# 1) WeRSS 自己最后成功同步时间（sync_time 是文本时间，不要转 unixepoch）
+sudo docker compose -f compose.yml -f compose.weread.yml exec -T werss \
+  sqlite3 /app/data/we_mp_rss.db "select id, name, sync_time from feeds;"
+# 2) feed 最新条目日期
+curl -fsS "http://127.0.0.1:18001/feed/实际账号ID.rss?is_update=false" | grep -o "<pubDate>[^<]*" | head -3
+# 3) 是否走了微信读书通道、是否在报 -2012
+journalctl -u yihot-weread.service -n 50 --no-pager | grep -E "2012|added"
+```
+
+镜像若未带 `sqlite3`，用 `docker cp` 把 `we_mp_rss.db` 复制到宿主机再用本机 sqlite3 只读打开，**不要直接写库**。
+
+手动触发一次刷新（用于区分"凭据死了"和"确实没新文章"）：
+
+```sh
+# token 由 /api/v1/wx/auth/login 取得，凭据从 .env 经 stdin 传入，不要写进命令行历史
+curl -fsS -X GET "http://127.0.0.1:18001/api/v1/wx/mps/update/MP_WXS_实际账号ID?start_page=0&end_page=1" \
+  -H "Authorization: Bearer <token>"
+```
+
+返回 `total:0` **不代表刷新完成**——官方镜像的刷新是异步的，立即返回 0 是常态；以 60 秒后 `sync_time` 和文章数是否变化为准。若线程内抛 `WereadMPAPIError: -2012`，是凭据失效，不是"没有新文章"。
+
+### 已知故障记录
+
+- 2026-10-19：重建时漏掉 `compose.werss.yml`，api/worker 被摘出 `yihot_werss` 网络，两个公众号来源连续失败约 21 小时（`getaddrinfo EAI_AGAIN werss`）。
+- 2026-10-13 至 10-20：`feeds.sync_time` 冻结 7 天，微信读书兼容层 84/86 次失败，期间无任何告警。**这是「接口健康 ≠ 内容新鲜」的典型案例**，对应待办：给信源加 `max(published_at)` 新鲜度告警。
 
 ## 故障定位
 

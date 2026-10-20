@@ -112,9 +112,18 @@ YiHot canonical Article → Event → Brief / UI
 | charity-intelligence 主数据迁入 YiHot | **未完成** |
 | 当前服务器上的 charity SQLite 原库 | **位置和可访问性未确认** |
 | 微信公众号可用 RSS/付费 API 覆盖率 | **需逐号实测、记录条款和费用** |
+| 自建 WeRSS 公众号链路 | **2026-10-20 实测不可用**：WeRSS 无定时刷新任务，`feeds.sync_time` 自 10-13 冻结，微信读书层 86 次跑失败 84 次；只有「每 3 天手工扫码」可维持 |
+| 小红书 / 微博 / 知乎 / B站 / 抖音 | **未接入**。不自建爬虫；若接只走第三方公开内容 API（EveryInfra），方案与成本见 `PAID_CHANNEL_PROVIDERS.md` |
+| 域名、备案与海外主机 | **未启动，暂不购买**。个人主体 + 时政转载难以完成 ICP 备案；`.news` 不在批复名单内，见 `DOMAIN_AND_HOSTING.md` |
 | 最终三个原仓库停止独立维护 | **未来目标，验收前不得关停/删除** |
 
 **产品决策**：以用户已确认的“项目最终合并”作为目标，旧文件的“仓库永远独立”只适用于短期安全过渡；不因追求代码上的单仓库而牺牲合规、科研证据、历史版本与数据备份。
+
+### 2026-10-20 补充决策（渠道与基础设施）
+
+- **付费采集通道**：已有极致了（Dajiala）用于公众号；新平台优先评估 EveryInfra。列表侧 EveryInfra 约为 Dajiala 的 1/3 价，详情侧 Dajiala 更便宜，二者是分工不是替代。接入必须走 `receipts` + `budgets`，不自建爬虫、不碰签名风控。详见 [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md)。
+- **公众号自建方案**：定位从「免维护自托管」下调为「**每 3 天手工扫码维持**」。WeRSS 没有定时任务、微信会话 4 天硬过期、微信读书 Cookie 约 2 小时失效且无自动续期；详见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。
+- **域名与主机**：暂不购买域名，继续 IP 访问；`.news` 无法备案，`.cn` 备案对个人主体 + 时政转载基本不可行。海外 VPS 只在确定迁站时按核实清单评估，详见 [DOMAIN_AND_HOSTING.md](DOMAIN_AND_HOSTING.md)。
 
 ## 6. 可以直接推进的最小切片
 

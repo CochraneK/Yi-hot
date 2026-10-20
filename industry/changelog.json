@@ -1,6 +1,16 @@
 {
-  "latestVersion": "2026-10-20T12:10",
+  "latestVersion": "2026-10-20T12:40",
   "releases": [
+    {
+      "date": "2026-10-20",
+      "time": "12:40",
+      "kind": "更新",
+      "title": "Agent 接入新增 Skill",
+      "body": [
+        "Claude Code、Codex、Gemini CLI 等工具装一次 Yi-Hot Skill，就能直接问最近的公益动态、热点和日报；装好后无需再更新，本站新增的查询能力会自动生效。",
+        "不装 Skill 也能用：把「Agent 使用说明」地址发给 Agent，它读了就能查，返回整理好的中文摘要与回答提示。"
+      ]
+    },
     {
       "date": "2026-10-20",
       "time": "12:10",

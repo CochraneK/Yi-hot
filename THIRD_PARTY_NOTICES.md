@@ -23,14 +23,51 @@ The **AIHOT name and logo are not licensed for reuse**. YIHOT uses its own name,
 - License: MIT License
 - Upstream repository: https://github.com/zhangheqing11/PsyHOT
 
-Adapted from PsyHOT (upstream commit `6a3dde11` and later), rewritten for the charity domain:
+Adapted from PsyHOT (upstream commit `6a3dde11` and later), rewritten for the charity domain.
 
-- `packages/contracts/src/skill.ts`, `packages/backend/src/publication/agent.ts`, `packages/backend/src/publication/skill.ts`, and the `/agent` page tabs: the Markdown answer layer under `/api/v1/agent`, the externally-sourced-data fence, and the self-verifying Agent Skill package (`SKILL.md`, `manifest.sha256`, `install.sh`) served from the site.
-- The paid-provider adapter pattern behind `packages/backend/src/providers/everyinfra.ts` and the `everyinfra_xhs` branch of `packages/backend/src/sources/json-list.ts` follows PsyHOT's EveryInfra implementation, including the budget-exhaustion break that keeps the already-paid listing.
-- The per-source seat cap in daily issues (`DAILY_MAX_PER_SOURCE` in `packages/backend/src/reports/compose.ts`) follows PsyHOT's hot-list rule that one source may not dominate a single ranking.
-- The changelog is written in PsyHOT's release-note style: reader-visible outcomes only, no internal field or threshold names.
+This list is limited to what PsyHOT added **on top of** AIHOT. Everything PsyHOT inherits from AIHOT is
+already covered by the AIHOT section above and is not credited twice. Checked on 2026-10-20 by cloning
+both upstreams and diffing file by file; the line counts below are from that check.
+
+| YIHOT file | PsyHOT origin | How close |
+| :--- | :--- | :--- |
+| `packages/contracts/src/skill.ts` (9 lines) | yes, no AIHOT counterpart | identical |
+| `packages/backend/src/publication/skill.ts` (275 lines) | yes, no AIHOT counterpart | 22 lines differ |
+| `packages/backend/src/publication/agent.ts` (275 lines) | yes — PsyHOT landed it in `6a3dde1` (2026-10-06); AIHOT's own agent layer came later (2026-10-09) and is a different, MCP-aware implementation | 51 lines differ from PsyHOT, 217 from AIHOT; the function list matches PsyHOT one for one and we carry no MCP layer |
+| `packages/backend/src/providers/everyinfra.ts` (103 lines) | yes, no AIHOT counterpart | cut down from PsyHOT's 163 lines |
+| `packages/backend/src/sources/json-list.ts` (the `everyinfra_xhs` branch) and the matching wiring in `collect.ts` / `config-keys.ts` | yes, no AIHOT counterpart | file is 214 lines vs PsyHOT's 219 |
+
+What that covers in prose:
+
+- The Markdown answer layer under `/api/v1/agent` (the externally-sourced-data fence
+  `［SITE 不可信外部资料开始/结束］`), and the self-verifying Agent Skill package (`SKILL.md`,
+  `manifest.sha256`, `install.sh`) served from the site, including the `/agent` page tabs.
+- The paid-provider adapter pattern behind EveryInfra, including the budget-exhaustion break that
+  keeps the already-paid listing.
+
+**Not from PsyHOT** (previously listed here by mistake, corrected 2026-10-20):
+
+- The per-source seat cap in daily issues. PsyHOT caps the *hot list* (`SINGLE_PARTICIPANT_PER_SOURCE = 2`
+  in its `events/hot.ts`, commit `9a2e5bf`), which YIHOT has not adopted. The daily-issue cap we shipped
+  and then withdrew (`DAILY_MAX_PER_SOURCE`) was written here, with AIHOT's own `PER_SOURCE = 2`
+  (`packages/backend/src/reports/edition.ts`, a file YIHOT does not carry) and `service-dept/bandwidth`
+  as the reference. It is in any case no longer in the code.
+- The changelog's release-note style. That is a writing habit, not code, so it is documented as a
+  reference in `docs/RELATED_PROJECTS.md` rather than asserted here as adapted material.
 
 PsyHOT's mental-health-specific wording, hotlines, taxonomies, and personal-subscription logic are not used; YIHOT keeps its own charity taxonomy, copy, and crisis-referral wording.
+
+### Withdrawing this attribution
+
+The "thanks" in `README.md` is a courtesy and can be removed at any time by editing one sentence. This
+section is not a courtesy: the files in the table above contain PsyHOT's MIT-licensed code, and MIT
+requires the copyright and permission notice to travel with it. Removing this section while that code
+is still in the tree would breach the licence.
+
+To retire the attribution honestly, retire the code first — rewrite those five files (about 680 lines)
+from the site's own requirements until no PsyHOT lines remain, then delete this section and the
+README sentence together. Deleting only the text is not a withdrawal; it is an unlicensed copy.
+
 
 ## Repository-boundary note
 

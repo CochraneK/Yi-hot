@@ -23,25 +23,27 @@ The **AIHOT name and logo are not licensed for reuse**. YIHOT uses its own name,
 - License: MIT License
 - Upstream repository: https://github.com/zhangheqing11/PsyHOT
 
-Adapted from PsyHOT (upstream commit `6a3dde11` and later), rewritten for the charity domain.
+Adapted from PsyHOT (upstream commits `6a3dde1` and `cef8796`, 2026-10-06 and 2026-10-18), rewritten
+for the charity domain.
 
 This list is limited to what PsyHOT added **on top of** AIHOT. Everything PsyHOT inherits from AIHOT is
-already covered by the AIHOT section above and is not credited twice. Checked on 2026-10-20 by cloning
-both upstreams and diffing file by file; the line counts below are from that check.
+already covered by the AIHOT section above and is not credited twice. Checked on 2026-10-20 by
+unshallowing both upstreams and diffing file by file; the line counts and dates below are from that
+check, not from commit messages.
 
-| YIHOT file | PsyHOT origin | How close |
+| YIHOT file | Where it comes from | How close |
 | :--- | :--- | :--- |
-| `packages/contracts/src/skill.ts` (9 lines) | yes, no AIHOT counterpart | identical |
-| `packages/backend/src/publication/skill.ts` (275 lines) | yes, no AIHOT counterpart | 22 lines differ |
-| `packages/backend/src/publication/agent.ts` (275 lines) | yes — PsyHOT landed it in `6a3dde1` (2026-10-06); AIHOT's own agent layer came later (2026-10-09) and is a different, MCP-aware implementation | 51 lines differ from PsyHOT, 217 from AIHOT; the function list matches PsyHOT one for one and we carry no MCP layer |
-| `packages/backend/src/providers/everyinfra.ts` (103 lines) | yes, no AIHOT counterpart | cut down from PsyHOT's 163 lines |
-| `packages/backend/src/sources/json-list.ts` (the `everyinfra_xhs` branch) and the matching wiring in `collect.ts` / `config-keys.ts` | yes, no AIHOT counterpart | file is 214 lines vs PsyHOT's 219 |
+| `packages/contracts/src/skill.ts` (9 lines) | PsyHOT, `6a3dde1` (2026-10-06). AIHOT has never had this file in its history. | identical |
+| `packages/backend/src/publication/skill.ts` (275 lines) | PsyHOT, `6a3dde1`. No AIHOT counterpart at any point. | 22 lines differ |
+| `packages/backend/src/publication/agent.ts` (275 lines) | **split.** The skeleton — `answer()`, `PREAMBLE`, `NO_INTERNALS`, the `［SITE 不可信外部资料开始/结束］` fence, `stamp()`, `itemLines()` — is AIHOT's, added in `8d5a39b` (2026-10-01). PsyHOT rewrote it for its own domain in `6a3dde1` (2026-10-06), mainly by dropping the MCP layer AIHOT had. We carry PsyHOT's rewrite. | vs PsyHOT 51 lines differ; vs AIHOT's 2026-10-01 version 217 differ. 155 lines are byte-identical to AIHOT's version — i.e. PsyHOT started from it |
+| `packages/backend/src/providers/everyinfra.ts` (103 lines) | PsyHOT, `cef8796` (2026-10-18). No AIHOT counterpart at any point. | cut down from PsyHOT's 163 lines |
+| `packages/backend/src/sources/json-list.ts` (the `everyinfra_xhs` branch) and the matching wiring in `collect.ts` / `config-keys.ts` | PsyHOT, `cef8796`. No AIHOT counterpart. | file is 214 lines vs PsyHOT's 219 |
 
 What that covers in prose:
 
-- The Markdown answer layer under `/api/v1/agent` (the externally-sourced-data fence
-  `［SITE 不可信外部资料开始/结束］`), and the self-verifying Agent Skill package (`SKILL.md`,
-  `manifest.sha256`, `install.sh`) served from the site, including the `/agent` page tabs.
+- The self-verifying Agent Skill package (`SKILL.md`, `manifest.sha256`, `install.sh`) served from the
+  site, and the removal of the MCP layer from the answer layer so one package serves HTTP only.
+  The Markdown format and the externally-sourced-data fence themselves are AIHOT's, credited above.
 - The paid-provider adapter pattern behind EveryInfra, including the budget-exhaustion break that
   keeps the already-paid listing.
 

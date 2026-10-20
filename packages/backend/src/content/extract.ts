@@ -11,15 +11,20 @@ import { getArticle } from "../providers/socialdata.ts";
 import { onlyXArticleLink, xArticleText } from "../sources/x.ts";
 import { sanitizeBody, trimTrailingChrome } from "./sanitize.ts";
 import { contentHash } from "./materials.ts";
+import { extractTextItems } from "unpdf";
 
 export interface ExtractedBody {
   html: string;
   text: string;
   images: Array<{ kind: "image"; url: string; width: number | null; height: number | null }>;
-  via: "readability" | "selector" | "jina";
+  via: "readability" | "selector" | "jina" | "pdf";
 }
 
 const MIN_BODY_CHARS = 200;
+/** Stored body ceiling: a PDF attachment can be a whole report; the judging steps read their own cut. */
+const MAX_BODY_CHARS = 60_000;
+/** Attachment budget: a newsletter's PDF is tens of megabytes where a page is under one. */
+const ATTACHMENT_MAX_BYTES = 64 * 1024 * 1024;
 
 /**
  * Containers the CMSes behind Chinese government and foundation sites put their article text in
@@ -103,11 +108,51 @@ function markdownToHtml(md: string): string {
     .join("");
 }
 
+/** A PDF attachment is the article itself (a newsletter, a printed notice): its text layer is the body. */
+async function readablePdf(data: Buffer, url: string): Promise<ExtractedBody | null> {
+  try {
+    const { items } = await extractTextItems(new Uint8Array(data));
+    let raw = "";
+    for (const page of items) {
+      for (const it of page) raw += it.str + (it.hasEOL ? "\n" : "");
+      if (raw.length >= MAX_BODY_CHARS * 2) break;
+    }
+    // Paragraphs as the PDF lays them out; a scanned attachment has no text layer and stays unconfirmed.
+    const paras = raw
+      .split(/(?<=[。！？；])\n|\n{2,}/)
+      .map((p) => collapseWhitespace(p))
+      .filter(Boolean);
+    let body = "";
+    for (const p of paras) {
+      if (body.length + p.length > MAX_BODY_CHARS) break;
+      body += body ? `\n${p}` : p;
+    }
+    if (body.length < MIN_BODY_CHARS) return null;
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return { html: body.split("\n").map((p) => `<p>${esc(p)}</p>`).join(""), text: body, images: [], via: "pdf" };
+  } catch {
+    return null;
+  }
+}
+
+/** A page is fetched with the page budget; an attachment link is retried once with its own, far larger one. */
+async function fetchForBody(url: string) {
+  try {
+    return await guardedFetch(url, { timeoutMs: 20_000, maxBytes: 6 * 1024 * 1024 });
+  } catch (error) {
+    if (!/Response too large/.test(String(error))) throw error;
+    return guardedFetch(url, { timeoutMs: 60_000, maxBytes: ATTACHMENT_MAX_BYTES });
+  }
+}
+
 export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<ExtractedBody | null> {
   try {
-    const res = await guardedFetch(url, { timeoutMs: 20_000, maxBytes: 6 * 1024 * 1024 });
+    const res = await fetchForBody(url);
     const type = res.headers.get("content-type") ?? "";
-    if (res.status === 200 && /html/.test(type)) {
+    if (res.status === 200 && /pdf/i.test(type)) {
+      const got = await readablePdf(res.body, res.url);
+      if (got) return got;
+    } else if (res.status === 200 && /html/.test(type)) {
       const got = readable(res.text(), res.url);
       if (got) return got;
     }

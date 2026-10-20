@@ -30,12 +30,16 @@ export function fullDateTime(iso: string): string {
 }
 
 export interface FeedTimeDisplay {
-  /** Sort key and datetime attribute. Date-only articles sit at Beijing midnight of their own day. */
+  /** The article's own time, and the datetime attribute. Date-only articles sit at Beijing midnight of their own day. */
   at: string;
   label: "原文发表" | "收录";
   /** The source only states a day (government listings): show the date, never a made-up clock time. */
   dateOnly: boolean;
-  /** The moment the list's clock column prints: the article's own time, or our collection time. */
+  /**
+   * The moment the list's clock column prints: the article's own time, or our collection time.
+   * A date-only article is listed where its collection moment falls inside its own day, so the list
+   * still reads newest-first — the sort key in the timeline is this same moment.
+   */
   clockAt: string;
   /** What that clock is, said under it: "收录" when it is not the article's own time. */
   clockLabel: "收录" | null;

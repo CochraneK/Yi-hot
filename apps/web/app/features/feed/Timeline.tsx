@@ -106,7 +106,7 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, 
       className={`group/slot grid grid-cols-[48px_minmax(0,1fr)] border-b border-line-soft py-3.5 last:border-b-0 lg:grid-cols-[64px_22px_minmax(0,1fr)] lg:border-b-0 lg:py-0 lg:pb-3 lg:last:pb-0 ${fresh ? "animate-fade-up" : ""}`}
       style={fresh ? { animationDelay: `${delay}ms` } : undefined}
     >
-      <time dateTime={clockSource} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}；此处是本站收录时间：${fullDateTime(clockSource)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
+      <time dateTime={at} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}；此处是本站收录时间：${fullDateTime(clockSource)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
         {clock}
         {(clockLabel ?? timeLabel) === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
       </time>
@@ -275,7 +275,9 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
     const out: Array<{ day: string; cards: TimelineCard[] }> = [];
     for (const c of state.cards) {
       if (unreadOnly && !unreadVisible(c)) continue;
-      const d = beijingDate(c.anchorAt);
+      // The day the card is filed under, not the clock it prints: a date-only article sits on its own
+      // day while its slot shows when we collected it.
+      const d = c.dayAt ?? beijingDate(c.anchorAt);
       const last = out[out.length - 1];
       if (last && last.day === d) last.cards.push(c);
       else out.push({ day: d, cards: [c] });
@@ -331,11 +333,11 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                   {cards.map((c) => {
                     const fresh = freshKeys.has(c.key);
                     const delay = fresh ? Math.min(order++, 10) * 40 : 0;
-                    // A card anchored at midnight has no clock time of its own: it prints the collection
-                    // time, labelled as such, exactly like the dated lists.
+                    // A card's slot prints its own date when the source states only a day, and under it
+                    // the moment we collected it, labelled as such.
                     const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision);
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={c.anchorAt} timeLabel={display.label} dateOnly={beijingTime(c.anchorAt) === "00:00"} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );

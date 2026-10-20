@@ -5,7 +5,16 @@
  "counts": {
   "approved": 37,
   "excluded": 2,
-  "total_items": 748
+  "total_items": 748,
+  "deployed": {
+   "created": 36,
+   "enabled": 29,
+   "paused": 7,
+   "skipped": 1,
+   "articles_ingested": 213,
+   "fetched_first_round": 606
+  },
+  "note": "enabled 为放行决定；_runtime 为 2026-10-20 生产实测状态。7 条因来源方拒绝（TLS/WAF）暂停，理由见 _runtime.reason。"
  },
  "sources": [
   {
@@ -50,6 +59,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -79,7 +93,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "national_cepf",
@@ -94,6 +108,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "TLS 证书域名不符（ERR_TLS_CERT_ALTNAME_INVALID），降级校验等同放弃身份验证，暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -121,7 +141,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "national_cwdf",
@@ -136,6 +156,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": null,
+    "skipped": "与既有 web-cwdf-news 同地址，查重未建源（该源已 enabled 且 health=ok）",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -163,7 +189,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "national_sclf",
@@ -178,6 +204,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "TLS 缺中间证书（UNABLE_TO_VERIFY_LEAF_SIGNATURE），暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -222,6 +254,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -266,6 +303,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -310,6 +352,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -354,6 +401,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -398,6 +450,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -442,6 +499,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -471,7 +533,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "mzt_guangxi",
@@ -486,6 +548,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "TLS 不支持 SNI（ERR_SSL_TLSV1_UNRECOGNIZED_NAME），暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -515,7 +583,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "mzt_guangxi",
@@ -530,6 +598,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "TLS 不支持 SNI（ERR_SSL_TLSV1_UNRECOGNIZED_NAME），暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -574,6 +648,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -618,6 +697,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -662,6 +746,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -689,7 +778,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "mzt_hunan",
@@ -704,6 +793,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "TLS 曲线错误（ERR_SSL_BAD_ECPOINT），暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -748,6 +843,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -792,6 +892,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -836,6 +941,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -880,6 +990,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -924,6 +1039,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -968,6 +1088,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1012,6 +1137,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1041,7 +1171,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "mzt_jilin",
@@ -1056,6 +1186,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "WAF 拒绝带 URL 的爬虫 UA（去掉 +siteUrl 即 200），不改 UA 伪装，暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1085,7 +1221,7 @@
    ],
    "site_fulltext": false,
    "syndicate_fulltext": false,
-   "enabled": true,
+   "enabled": false,
    "_probe": {
     "source_of": "charity-intelligence/compliance/source-register.yaml",
     "legacy_id": "mzt_jilin",
@@ -1100,6 +1236,12 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": false,
+    "health": "paused",
+    "reason": "WAF 拒绝带 URL 的爬虫 UA（去掉 +siteUrl 即 200），不改 UA 伪装，暂停",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1142,6 +1284,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1184,6 +1331,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1226,6 +1378,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1268,6 +1425,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1312,6 +1474,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1356,6 +1523,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1400,6 +1572,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1444,6 +1621,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1488,6 +1670,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1532,6 +1719,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1574,6 +1766,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   },
   {
@@ -1616,6 +1813,11 @@
     "approved": true,
     "approved_at": "2026-10-20",
     "enable_collection": true
+   },
+   "_runtime": {
+    "enabled": true,
+    "health": "ok",
+    "checked_at": "2026-10-20"
    }
   }
  ],

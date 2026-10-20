@@ -56,10 +56,10 @@ def account(key):
         return json.loads(res.read().decode("utf-8"))
 
 
-def search(key, keyword, limit):
+def search(key, keyword, limit, platform="xiaohongshu", action="search"):
     body = json.dumps({
-        "platform": "xhs",
-        "action": "search",
+        "platform": platform,
+        "action": action,
         "params": {"keyword": keyword, "limit": limit},
     }).encode("utf-8")
     req = urllib.request.Request(
@@ -72,7 +72,8 @@ def search(key, keyword, limit):
 
 
 def text_of(item):
-    parts = [str(item.get(k) or "") for k in ("title", "summary", "desc", "content", "note", "text")]
+    # 各平台字段不同：小红书 title+text，微博 text/content，B站 title+description。
+    parts = [str(item.get(k) or "") for k in ("title", "summary", "desc", "content", "note", "text", "description")]
     return " ".join(p for p in parts if p)
 
 
@@ -92,6 +93,8 @@ def main():
     ap.add_argument("--limit", type=int, default=10, help="每词取回的条数")
     ap.add_argument("--gap", type=float, default=3.0, help="两次调用之间的间隔（秒）")
     ap.add_argument("--max-calls", type=int, default=0, help="最多调几次，0 不限")
+    ap.add_argument("--platform", default="xiaohongshu", help="平台名，见 /api/v1/social/catalog")
+    ap.add_argument("--action", default="search", help="能力名，多数平台是 search")
     ap.add_argument("--out", default="/tmp/keyword-audit.json")
     args = ap.parse_args()
 
@@ -122,7 +125,7 @@ def main():
             print("到达 --max-calls，停")
             break
         try:
-            out = search(key, kw, args.limit)
+            out = search(key, kw, args.limit, args.platform, args.action)
         except urllib.error.HTTPError as exc:
             print("%-22s HTTP %s: %s" % (kw, exc.code, exc.read()[:120].decode("utf-8", "ignore")))
             fails += 1

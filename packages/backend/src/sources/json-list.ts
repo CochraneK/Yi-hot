@@ -205,7 +205,10 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   for (const item of items) {
     if (c.requireBoolean && getPath(item, c.requireBoolean.path) !== c.requireBoolean.equals) continue;
     if (c.minNumeric && !(Number(getPath(item, c.minNumeric.path)) >= Number(c.minNumeric.min))) continue;
-    const title = firstString(item, c.titlePaths ?? (everyInfraPlatform ? ["title"] : undefined));
+    // 微博这类平台没有标题字段，只有正文；配 titlePaths:["text"] 后要截断，
+    // 否则整段正文会当成标题。titleMaxChars 只在配了它时才生效。
+    const rawTitle = firstString(item, c.titlePaths ?? (everyInfraPlatform ? ["title"] : undefined));
+    const title = rawTitle && c.titleMaxChars ? rawTitle.slice(0, Number(c.titleMaxChars)) : rawTitle;
     // 各平台把链接放在不同位置：小红书嵌在 raw.url，公众号直接给顶层 url。
     // 先按配置，再两个位置都试，新平台不用为链接位置改代码。
     const url = (c.urlTemplate && renderTemplate(c.urlTemplate, item)) || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item)) ||

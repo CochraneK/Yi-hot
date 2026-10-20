@@ -78,13 +78,20 @@
 - 列表自带的公开互动数（赞/藏/评/转）只收数字类型，存入 `raw`，目前仅备用，未参与热度计算。
 - 每一次调用都经 `paidRequest` 记账，`budgets` 里 `everyinfra` 默认 5/20/60 次（分/时/天）；**不配 `EVERYINFRA_API_KEY` 时相关信源保持停用**（`enabled: false`），信源报错信息会写明缺 key。
 - 合规边界：只取公开内容、不落全文、互动数只作热度信号不得作为事实证据，详见 [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md) 第 6 节。
-- 小红书信源以 `participation_mode: "hot_signal"` 运行：抓到的笔记只入库，作为已有事件的讨论证据（`groupSignal`），**不单独成为一条动态**。2026-10-20 三轮关键词实测（`公益项目` / `困境儿童 资助` / `事实孤儿`）表明，关键词搜索命中的多是应援、打卡、募捐引流等个人内容，与本站议题不符；换词与收紧噪声闸只能减少、不能根治，因此不让它直接产出条目。
+- 小红书信源按 `publication_rule` 分轨放行（2026-10-20 起）：关键词搜索里同时有「讲得好的人物善举」（分数高）和「机构项目动态/政策」（分数低但正是本站要的），单一分数线必然顾此失彼，所以门槛写在源上——`minScore: 40` 放人物故事，`scoreByCategory: {project: 20, policy: 18}` 放机构动态与政策，但后一条轨要求标题或摘要出现机构/项目主体词（`requireMarkers`），`dropCategories: ["fundraising"]` 拦掉个人募捐征集。规则不过的材料连事件都不建（`events/group.ts` 的 `filtered`），不产生卡片、也不占热度。
+- 这套规则用 2026-10-20 的 31 条实测样本校准过，放行 7 条、无一误入（含一条同为 22 分但只是本地活动推广的软文），样本固化在 `tests/publication-rule.test.ts`。
 
 
 ## 分级、参与方式与全文
 
 - **分级** `tier`：`T1` 官方一手（官网、官方博客、机构）、`T1_5` 官方账号与准官方创作者、`T2` 媒体与个人、`EXCLUDE_MP` 不参与精选。入选门槛按分级不同（`industry/selection.ts`）。
 - **参与方式** `participation_mode`：`editorial` 进精选和全部动态；`hot_signal` 不单独展示，只作为“大家在讨论什么”的热度证据；`isolated` 不进任何公开页面。
+- **按源规则** `publication_rule`（可选，迁移 `0042`）：在 `editorial` 之上再收紧一个源。字段都可选，缺省不限制：
+  - `minScore`：分数硬线，达到即放行，不看类别；
+  - `scoreByCategory`：给指定类别更低的分线，例如 `{"project": 20, "policy": 18}`；
+  - `requireMarkers`：走类别线时，标题或摘要里必须出现其中之一（机构、项目主体词），防止“看起来很有爱”的软文混进来；
+  - `dropCategories`：命中即拦，优先于上面三条（例如个人募捐征集 `fundraising`）。
+  规则不过的材料在归并阶段直接 `filtered`：不建事件、不发布、不计热度。同一份规则同时用于归并与发布两处（`publication/rules.ts`），改一处不会漏另一处。
 - **一手** `first_party`：来源是当事方自己。事件页会优先展示一手报道。
 - **全文**：`site_fulltext` 决定站内能不能显示全文，`syndicate_fulltext` 决定全文 RSS 能不能带正文。两者**默认都关**，只显示摘要和原文链接；来源明确允许时再打开。公众号、付费墙内容不会因为技术上抓得到就获得全文展示。
 

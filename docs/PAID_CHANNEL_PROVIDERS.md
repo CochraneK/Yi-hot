@@ -92,7 +92,7 @@
 
 ## 5. 接入顺序（每阶段独立可停）
 
-**P1 · 只读试跑（2026-10-20 已跑，结论：降级为 `hot_signal`）**
+**P1 · 只读试跑（2026-10-20 已跑，结论：按源规则分轨放行）**
 - 3 个关键词 × 每天 1 次 `search`，`summaryIsBody`，不开详情。
 - 已落地：`providers/everyinfra.ts`、`json-list.ts` 的 `everyinfra_xhs` 适配、`collect.ts` 的详情升级（预算耗尽 break）、`config-keys.ts` 白名单（含 `requireMarkers`/`dropMarkers`）、迁移 `0041`（预算 5/20/60）、`industry/sources.json` 三个关键词信源（**默认 `enabled: false`）。
 - **实测（$1 额度，4 次调用共 $0.0222 ≈ ¥0.16）**：
@@ -100,9 +100,15 @@
   - `困境儿童 资助`（噪声闸收紧后）：出现「白方礼攒 35 万资助贫穷孩子」50 分、「匿名资助 13 年」40 分等好内容，但仍有约 1/3 噪声（娱乐八卦、一对一募捐引流）；
   - `事实孤儿`：6 条，仅 1–2 条有意义。
   - **结论：关键词搜索命中的是 C 端内容，不是公益行业动态；换词与收紧闸只能削峰，不能改变调性。**
-- 处置：`xhs-search-charity-project` 设为 `participation_mode: "hot_signal"` 并启用（每天 1 次，约 ¥0.04/天），**只作已有事件的讨论证据、不单独发布**（`group.ts:631`：非 `editorial` 一律走 `groupSignal`）；`乡村振兴`、`养老 公益` 两个源保持停用。
+- 处置（第二轮，2026-10-20 晚）：不再一刀切降级，改为**按源分轨放行**——`participation_mode: "editorial"` + `publication_rule`（迁移 `0042`）：
+  - `minScore: 40` 放人物善举（分数高但形态是故事）；
+  - `scoreByCategory: {project: 20, policy: 18}` 放机构动态与政策（分数低但正是本站要的）；
+  - 类别轨要求标题/摘要出现机构或项目主体词（`requireMarkers`），把同为 22 分但只是本地活动推广的软文挡在外面；
+  - `dropCategories: ["fundraising"]` 拦个人募捐征集。
+  - 规则不过的材料在归并阶段 `filtered`：不建事件、不发卡片、不计热度。用当天的 31 条实测样本回测，放行 7 条、误入 0 条（`tests/publication-rule.test.ts`）。
+  - 首轮曾短暂降级为 `hot_signal`（只作讨论证据）：它保证“往后不再建事件”，但不回收此前 editorial 期已建的 15 个事件，那批已撤回并清理。
 - 验证：同一关键词采集 15 条入库，公开列表 0 条；`/api/site/pool` 全 10 页 0 条小红书链接。
-- 验收改为：7 天内是否有笔记能与已有事件匹配（`grouping_decisions.verdict` 为 `signal` / `signal-native`）；0 匹配则停用该源。
+- 验收改为：7 天内规则放行的条目是否都有真实机构/项目主体、是否出现误入（软文、个人求助）；误入 >20% 就收紧 `requireMarkers` 或抬 `scoreByCategory`。
 - 注：首次采集的存量帖子若发布时间早于发现时间超过阈值，`isHistorical` 会直接归档（`verdict: historical`），既不建事件也不计信号——匹配统计只看 `signal` / `signal-native`。
 
 **P2 · 机构号**
@@ -136,7 +142,7 @@
 
 ## 8. 待办
 
-- [x] P1 试跑（10-20）：$1 额度跑 4 次（$0.0222），关键词产出与站点议题错位 → 信源降级为 `hot_signal`（只作讨论证据），详见第 5 节。
+- [x] P1 试跑（10-20）：$1 额度跑 4 次（$0.0222），关键词产出与站点议题错位 → 先用 `hot_signal` 挡住，随后改为 `publication_rule` 分轨放行（分数硬线 + 类别线 + 主体词），详见第 5 节。
 - [x] 迁移 `0041`：`budgets ('everyinfra', 5, 20, 60)`——比原计划 10/100/1000 更紧，按 P1+P3 的计划量（约 35 次/天）取两倍余量，失控才断。
 - [ ] 公众号侧：等 WERSS 扫码节奏跑稳后，再评估 EveryInfra 公众号接口；**必须复现并验证 503 不做名字兜底**。
 - [ ] 补「内容新鲜度」告警：`max(published_at)` 距今天数超过阈值就报警，而不是只看 fetch 成功。

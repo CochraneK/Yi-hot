@@ -208,12 +208,18 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
           if (!c.media?.length) c.media = got.body.images;
         }
         // A date-only listing value gives way to the detail page's time on the same day.
-        if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < DAY_MS)) c.publishedAt = got.publishedAt;
+        if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < DAY_MS)) {
+          c.publishedAt = got.publishedAt;
+          if (got.publishedAtPrecision) c.publishedAtPrecision = got.publishedAtPrecision;
+        }
         // A repost's own date can be days before the copy; the page still has to be plausible (not in the
         // future, not older than two months) before it replaces what the listing said.
         else if (got.publishedAt && reposted) {
           const t = got.publishedAt.getTime();
-          if (t <= Date.now() + DAY_MS && t >= c.publishedAt!.getTime() - 60 * DAY_MS) c.publishedAt = got.publishedAt;
+          if (t <= Date.now() + DAY_MS && t >= c.publishedAt!.getTime() - 60 * DAY_MS) {
+            c.publishedAt = got.publishedAt;
+            if (got.publishedAtPrecision) c.publishedAtPrecision = got.publishedAtPrecision;
+          }
         }
       } catch {
         // detail is best effort

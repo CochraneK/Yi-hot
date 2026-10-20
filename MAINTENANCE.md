@@ -765,6 +765,23 @@ npm run sources:audit
 npm run sources:audit:check
 ```
 
+### 借服务器跑后端测试（开发机没有 Docker/PostgreSQL 时）
+
+数据库相关的测试可以在腾讯云的现成环境里跑，测试库与生产库是两个数据库，互不影响。测试库只需建一次：
+
+```bash
+# 1) 建测试库（只建一次）
+ssh yihot "sudo docker exec aihot-db-1 psql -U aihot -d aihot -c 'CREATE DATABASE aihot_test OWNER aihot'"
+# 2) 对测试库跑迁移
+ssh yihot "sudo docker exec -e DATABASE_URL='postgres://aihot:<密码>@db:5432/aihot_test' aihot-api-1 node scripts/migrate.ts"
+# 3) 跑指定测试文件
+ssh yihot "sudo docker exec -e DATABASE_URL='postgres://aihot:<密码>@db:5432/aihot_test' aihot-api-1 node --test tests/agent.test.ts"
+```
+
+- `<密码>` 用 `sudo docker exec aihot-api-1 printenv DATABASE_URL` 现取，不要写进文档、不要提交。
+- 镜像里的 `/app` 是构建时固化的：改了 `tests/` 或源码要重新 `build`，或先 `docker cp` 进容器再跑。
+- 生产镜像不带 `curl`。`tests/agent.test.ts` 的安装器用例要用 `curl` 下载安装包，跑之前先在容器里放一个可用的 `curl`；GitHub Actions 的 runner 自带 `curl`，不受影响。
+
 ### 同步 GitHub
 
 当前开发机的 Git smart HTTP 不稳定，推送必须走仓库脚本：

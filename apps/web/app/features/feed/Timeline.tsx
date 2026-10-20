@@ -10,7 +10,7 @@ import { FeedItem } from "./FeedItem";
 import { IconChevronDown } from "../../components/icons";
 import { RingMark } from "../../components/Logo";
 import { EmptyState } from "../../components/ui/Page";
-import { beijingDate, beijingTime, beijingWeekday } from "../../lib/format";
+import { beijingDate, beijingTime, beijingWeekday, feedDisplayAt, fullDateTime } from "../../lib/format";
 import { markRead, useReadSet } from "../../lib/local-state";
 import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
 import { isHydrated, isReload, markHydrated, readSnapshot, restoreAnchor, saveSnapshot } from "./restore";
@@ -92,21 +92,23 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
 /**
  * One dated slot: the time, the rail (desktop) and the item. As on the original timeline, the rail is a
  * 1px line from this node's centre to the next one's, so the day reads as one continuous thread.
- * A day-precision article has no clock time of its own: the slot shows the day's marker instead of a
- * collection hour dressed up as a publication hour.
+ * A day-precision article has no clock time of its own, so the slot prints when we collected it and says
+ * so under the clock. When that was a different day it prints the date instead, since an hour alone
+ * would read as belonging to the day above it.
  */
-export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; dotColor?: string }) {
+export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; dotColor?: string }) {
+  const clockSource = clockAt ?? at;
+  const collectedAnotherDay = beijingDate(clockSource) !== beijingDate(at);
+  const clock = collectedAnotherDay ? beijingDate(clockSource).slice(5) : beijingTime(clockSource);
   return (
     <li
       data-card-key={dataKey}
       className={`group/slot grid grid-cols-[48px_minmax(0,1fr)] border-b border-line-soft py-3.5 last:border-b-0 lg:grid-cols-[64px_22px_minmax(0,1fr)] lg:border-b-0 lg:py-0 lg:pb-3 lg:last:pb-0 ${fresh ? "animate-fade-up" : ""}`}
       style={fresh ? { animationDelay: `${delay}ms` } : undefined}
     >
-      <time dateTime={at} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
-        {/* A day-precision article has no clock time. The sticky day header already states the date, so
-            the cell stays empty rather than repeating it or printing a placeholder dash. */}
-        {!dateOnly && beijingTime(at)}
-        {!dateOnly && timeLabel === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
+      <time dateTime={clockSource} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}；此处是本站收录时间：${fullDateTime(clockSource)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
+        {clock}
+        {(clockLabel ?? timeLabel) === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />
@@ -329,9 +331,11 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                   {cards.map((c) => {
                     const fresh = freshKeys.has(c.key);
                     const delay = fresh ? Math.min(order++, 10) * 40 : 0;
-                    // A card anchored at midnight has no clock time of its own: the day header is the time.
+                    // A card anchored at midnight has no clock time of its own: it prints the collection
+                    // time, labelled as such, exactly like the dated lists.
+                    const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision);
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={c.anchorAt} dateOnly={beijingTime(c.anchorAt) === "00:00"} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={c.anchorAt} timeLabel={display.label} dateOnly={beijingTime(c.anchorAt) === "00:00"} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );

@@ -35,6 +35,10 @@ export interface FeedTimeDisplay {
   label: "原文发表" | "收录";
   /** The source only states a day (government listings): show the date, never a made-up clock time. */
   dateOnly: boolean;
+  /** The moment the list's clock column prints: the article's own time, or our collection time. */
+  clockAt: string;
+  /** What that clock is, said under it: "收录" when it is not the article's own time. */
+  clockLabel: "收录" | null;
 }
 
 /**
@@ -43,10 +47,11 @@ export interface FeedTimeDisplay {
  * articles whose own date is unknown.
  */
 export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): FeedTimeDisplay {
-  if (!publishedAt) return { at: timelineAt || discoveredAt, label: "收录", dateOnly: false };
-  if (precision === "date") return { at: `${beijingDate(publishedAt)}T00:00:00+08:00`, label: "原文发表", dateOnly: true };
-  if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录", dateOnly: false };
-  return { at: publishedAt, label: "原文发表", dateOnly: false };
+  const collected = timelineAt || discoveredAt;
+  if (!publishedAt) return { at: collected, label: "收录", dateOnly: false, clockAt: collected, clockLabel: "收录" };
+  if (precision === "date") return { at: `${beijingDate(publishedAt)}T00:00:00+08:00`, label: "原文发表", dateOnly: true, clockAt: discoveredAt, clockLabel: "收录" };
+  if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录", dateOnly: false, clockAt: discoveredAt, clockLabel: "收录" };
+  return { at: publishedAt, label: "原文发表", dateOnly: false, clockAt: publishedAt, clockLabel: null };
 }
 
 /** "2026年10月18日" for day-precision sources, where no clock time exists. */

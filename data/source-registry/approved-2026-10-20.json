@@ -1,0 +1,1636 @@
+{
+ "$comment": "由 charity-intelligence 栏目探测 + Yi-Hot 解析器实测产出。approved=已放行，enable_collection=可采集。excluded 为未通过的源（保留原因，勿删）。",
+ "generated_at": "2026-10-20T11:29:34.386Z",
+ "verified_by": "packages/backend/src/sources/web-list.ts#fromHtml",
+ "counts": {
+  "approved": 37,
+  "excluded": 2,
+  "total_items": 748
+ },
+ "sources": [
+  {
+   "id": "web-probe-www-chinacharityfederation-org-316374",
+   "name": "中华慈善总会·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.chinacharityfederation.org/n.html",
+    "itemSelector": "li.clearfix",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://www.chinacharityfederation.org/nv.html"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "national_zhongci",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 10,
+    "verified_dated": 10,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-www-cepf-org-cn-d065ac",
+   "name": "中华环境保护基金会·基金会动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cepf.org.cn/jjhdt/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://www.cepf.org.cn/jjhdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "national_cepf",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 3,
+    "verified_dated": 3,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-www-cwdf-org-cn-1a1272",
+   "name": "中国妇女发展基金会·本会新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
+    "itemSelector": "div.benhuixinwenli2",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "national_cwdf",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 10,
+    "verified_dated": 10,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-www-sclf-org-316374",
+   "name": "中国宋庆龄基金会·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.sclf.org/tzgg/",
+    "itemSelector": "div.list ul li",
+    "linkSelector": "a[target=_blank]",
+    "publishedAtSelector": "span.date",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "national_sclf",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-nmg-gov-cn-316374",
+   "name": "内蒙古自治区民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.nmg.gov.cn/zwgk/tzgg/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.nmg.gov.cn/zwgk/tzgg/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_neimenggu",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 12,
+    "verified_dated": 12,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-nmg-gov-cn-a29c70",
+   "name": "内蒙古自治区民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.nmg.gov.cn/ywdt/gzdt/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.nmg.gov.cn/ywdt/gzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_neimenggu",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 12,
+    "verified_dated": 12,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-sc-gov-cn-316374",
+   "name": "四川省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.sc.gov.cn/scmzt/gsgg/article_list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.sc.gov.cn/scmzt/gsgg/2026/9/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_sichuan",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 8,
+    "verified_dated": 8,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-sc-gov-cn-a29c70",
+   "name": "四川省民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.sc.gov.cn/scmzt/gzdt/article_list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.sc.gov.cn/scmzt/gzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_sichuan",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 19,
+    "verified_dated": 19,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-smzt-gd-gov-cn-316374",
+   "name": "广东省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://smzt.gd.gov.cn/zwgk/tzgg/index.html",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://smzt.gd.gov.cn/zwgk/tzgg/content/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guangdong",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-smzt-gd-gov-cn-ec82f3",
+   "name": "广东省民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://smzt.gd.gov.cn/mzzx/mzyw/index.html",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://smzt.gd.gov.cn/mzzx/mzyw/content/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guangdong",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-gxzf-gov-cn-a29c70",
+   "name": "广西壮族自治区民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "http://mzt.gxzf.gov.cn/zwdt/gzdt/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "http://mzt.gxzf.gov.cn/zwdt/gzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guangxi",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 30,
+    "verified_dated": 30,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-gxzf-gov-cn-ec82f3",
+   "name": "广西壮族自治区民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "http://mzt.gxzf.gov.cn/zwdt/mzyw/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "http://mzt.gxzf.gov.cn/zwdt/mzyw/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guangxi",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 30,
+    "verified_dated": 30,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-xinjiang-gov-cn-316374",
+   "name": "新疆维吾尔自治区民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.xinjiang.gov.cn/xjmzt/c112990/list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.xinjiang.gov.cn/xjmzt/c112990/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_xinjiang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 18,
+    "verified_dated": 18,
+    "verified_date_ratio": 1,
+    "navigation_hits": 1,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-xinjiang-gov-cn-ec82f3",
+   "name": "新疆维吾尔自治区民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.xinjiang.gov.cn/xjmzt/c112988/list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.xinjiang.gov.cn/xjmzt/c112988/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_xinjiang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 17,
+    "verified_dated": 17,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-zj-gov-cn-5b3418",
+   "name": "浙江省民政厅·社会组织年检公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.zj.gov.cn/col/col1648467/index.html",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.zj.gov.cn/art/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_zhejiang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-hunan-gov-cn-ec82f3",
+   "name": "湖南省民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.hunan.gov.cn/mzt/xxgk/gzdt/mzyw/index.html",
+    "itemSelector": "tr",
+    "linkSelector": "a",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    },
+    "publishedAtRegex": "([0-9]{4}[-/.年][0-9]{1,2}[-/.月][0-9]{1,2})"
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_hunan",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-xizang-gov-cn-316374",
+   "name": "西藏自治区民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.xizang.gov.cn/zxzx/tzgg/",
+    "itemSelector": "li.clearfix",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.xizang.gov.cn/zxzx/tzgg/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_xizang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-xizang-gov-cn-a29c70",
+   "name": "西藏自治区民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.xizang.gov.cn/zxzx/gzdt/",
+    "itemSelector": "li.clearfix",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.xizang.gov.cn/zxzx/gzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_xizang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-guizhou-gov-cn-316374",
+   "name": "贵州省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.guizhou.gov.cn/xwzx/tzgg/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.guizhou.gov.cn/xwzx/tzgg/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guizhou",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-guizhou-gov-cn-ec82f3",
+   "name": "贵州省民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.guizhou.gov.cn/xwzx/mzyw/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.guizhou.gov.cn/xwzx/mzyw/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_guizhou",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzj-cq-gov-cn-316374",
+   "name": "重庆市民政局·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/tzgg/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_chongqing",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 10,
+    "verified_dated": 10,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-hlj-gov-cn-316374",
+   "name": "黑龙江省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.hlj.gov.cn/mzt/c103774/public_list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.hlj.gov.cn/mzt/c103774/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_heilongjiang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-hlj-gov-cn-a29c70",
+   "name": "黑龙江省民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.hlj.gov.cn/mzt/c103766/public_list.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.hlj.gov.cn/mzt/c103766/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_heilongjiang",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-jl-gov-cn-316374",
+   "name": "吉林省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.jl.gov.cn/xxgk_2643/tzgg/",
+    "itemSelector": "li.zly_mzt_20170310mzywulli1",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.jl.gov.cn/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_jilin",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-jl-gov-cn-ec82f3",
+   "name": "吉林省民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.jl.gov.cn/mzyw_74261/",
+    "itemSelector": "li.zly_mzt_20170310mzywulli",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mp.weixin.qq.com/s/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_jilin",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 9,
+    "verified_dated": 9,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mz-tj-gov-cn-316374",
+   "name": "天津市民政局·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mz.tj.gov.cn/XWZX289/TZGG8519/",
+    "itemSelector": "div.list-content ul li",
+    "linkSelector": "a",
+    "publishedAtSelector": "div.date",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_tianjin",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mz-tj-gov-cn-ec82f3",
+   "name": "天津市民政局·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mz.tj.gov.cn/XWZX289/MZXW1235/",
+    "itemSelector": "div.list-content ul li",
+    "linkSelector": "a",
+    "publishedAtSelector": "div.date",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_tianjin",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-henan-gov-cn-78ddfb",
+   "name": "河南省民政厅·公告公示",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.henan.gov.cn/xxgk/xxgkml/gggs/",
+    "itemSelector": "div.zfxxgk_zdgkc ul li",
+    "linkSelector": "a",
+    "publishedAtSelector": "b",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_henan",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 24,
+    "verified_dated": 24,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-henan-gov-cn-ec82f3",
+   "name": "河南省民政厅·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.henan.gov.cn/xxgk/mzyw/",
+    "itemSelector": "li",
+    "linkSelector": "a[target=_blank]",
+    "publishedAtSelector": "span.date",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_henan",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 10,
+    "verified_dated": 10,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-fujian-gov-cn-316374",
+   "name": "福建省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.fujian.gov.cn/gk/tzgg/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.fujian.gov.cn/gk/tzgg/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_fujian",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 100,
+    "verified_dated": 100,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-fujian-gov-cn-64140c",
+   "name": "福建省民政厅·民政动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.fujian.gov.cn/yw/mzdt/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.fujian.gov.cn/yw/mzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_fujian",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 105,
+    "verified_dated": 105,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-ln-gov-cn-0283c5",
+   "name": "辽宁省民政厅·图片新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.ln.gov.cn/mzt/tpxw/index.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://www.mca.gov.cn/n152/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_liaoning",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 10,
+    "verified_dated": 10,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-ln-gov-cn-163f7d",
+   "name": "辽宁省民政厅·社会组织评估等级结果公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.ln.gov.cn/mzt/shzzpt/pgzl/shzzpgdjjggg/index.shtml",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.ln.gov.cn/mzt/shzzpt/pgzl/shzzpgdjjggg/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_liaoning",
+    "register_status": "conditional",
+    "robots_status": "declared",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 20,
+    "verified_dated": 20,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-shaanxi-gov-cn-316374",
+   "name": "陕西省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.shaanxi.gov.cn/xw/tzgg/",
+    "itemSelector": "li.clearfix",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.shaanxi.gov.cn/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_shaanxi",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-shaanxi-gov-cn-a29c70",
+   "name": "陕西省民政厅·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.shaanxi.gov.cn/xw/gzdt/",
+    "itemSelector": "li.clearfix",
+    "linkSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://mzt.shaanxi.gov.cn/xw/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_shaanxi",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 15,
+    "verified_dated": 15,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "original selectors passed",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-qinghai-gov-cn-316374",
+   "name": "青海省民政厅·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.qinghai.gov.cn/html/list-562.html",
+    "itemSelector": "div.b",
+    "linkSelector": "a",
+    "publishedAtSelector": "div.addi",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_qinghai",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 8,
+    "verified_dated": 8,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  },
+  {
+   "id": "web-probe-mzt-qinghai-gov-cn-60e980",
+   "name": "青海省民政厅·新闻中心",
+   "kind": "web_list",
+   "config": {
+    "url": "https://mzt.qinghai.gov.cn/html/list-3.html",
+    "itemSelector": "div.b",
+    "linkSelector": "a",
+    "publishedAtSelector": "div.addi",
+    "allowUrlPrefixes": [],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "公益",
+    "charity-probe"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "_probe": {
+    "source_of": "charity-intelligence/compliance/source-register.yaml",
+    "legacy_id": "mzt_qinghai",
+    "register_status": "conditional",
+    "robots_status": "not_found",
+    "verified_by": "yihot packages/backend/src/sources/web-list.ts#fromHtml",
+    "verified_items": 8,
+    "verified_dated": 8,
+    "verified_date_ratio": 1,
+    "navigation_hits": 0,
+    "repair": "selectors re-derived and re-verified",
+    "approved": true,
+    "approved_at": "2026-10-20",
+    "enable_collection": true
+   }
+  }
+ ],
+ "excluded": [
+  {
+   "id": "web-probe-www-cfdp-org-cn-ee1cd9",
+   "name": "中国残疾人福利基金会·党务工作动态",
+   "url": "https://www.cfdp.org.cn/dwgzdt.html",
+   "reason": "纯 JS 渲染：页面 页面 8235 字节，静态抓取拿不到条目，需 Playwright"
+  },
+  {
+   "id": "web-probe-www-cfdp-org-cn-89d56f",
+   "name": "中国残疾人福利基金会·立项公告",
+   "url": "https://www.cfdp.org.cn/lxgz.html",
+   "reason": "纯 JS 渲染：页面 页面 8235 字节，静态抓取拿不到条目，需 Playwright"
+  }
+ ]
+}

@@ -104,7 +104,7 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 
 - 首页 `/` = **精选**；`/all` = **全部动态**。两者都强制 `listedCondition(now) AND p.eligible`。
   - `listedCondition(now)` = `visibility='public' AND (NOT selected OR visible_after <= now)`
-  - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，缺一即 false。
+  - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，再叠加该源的 `publication_rule`（`minScore` / `scoreByCategory` / `requireMarkers` / `dropCategories`，默认无），缺一即 false。
   - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。

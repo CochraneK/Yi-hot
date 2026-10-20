@@ -23,6 +23,7 @@ import { embeddingsAvailable, ensureEmbeddings } from "../providers/embeddings.t
 import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { publishArticle } from "../publication/publish.ts";
+import { passesPublicationRule, type PublicationRule } from "../publication/rules.ts";
 import { mergeStoryInto } from "./merge.ts";
 import {
   BATCH_SYSTEM, BatchSchema, PAIR_SYSTEM, PairSchema, RELATE_PROMPT_VERSION, SIGNAL_SYSTEM, STORY_REVIEW_MIN_CONFIDENCE, SignalSchema, TIE_MIN_CONFIDENCE,
@@ -56,6 +57,7 @@ interface ArticleRow {
   signal_group_id: string | null;
   first_party: boolean;
   participation_mode: string;
+  publication_rule: PublicationRule | null;
   regroup_pending: boolean;
   backfill: boolean;
 }
@@ -571,7 +573,7 @@ export async function linkRelatedStories(): Promise<{ added: number }> {
 export interface GroupResult {
   verdict:
     | "same-fact" | "same-url" | "new-fact-in-story" | "new-story" | "roundup" | "kept" | "standalone" | "manual" | "skipped"
-    | "signal" | "signal-native" | "signal-unmatched" | "historical";
+    | "signal" | "signal-native" | "signal-unmatched" | "historical" | "filtered";
   factId?: number;
   storyId?: number;
   /** Stories compared because this report tied them together (see consolidate). */
@@ -605,7 +607,7 @@ export async function groupArticle(articleId: string, opts: GroupOptions = {}): 
 async function decide(articleId: string, opts: GroupOptions): Promise<GroupResult> {
   const [a] = await sql<ArticleRow[]>`
     SELECT a.id, a.title, a.url, a.published_at, a.discovered_at, a.grouped_at, a.body_text, a.x_post, a.backfill,
-           s.id AS source_id, s.name AS source_name, s.signal_group_id, s.first_party, s.participation_mode,
+           s.id AS source_id, s.name AS source_name, s.signal_group_id, s.first_party, s.participation_mode, s.publication_rule,
            EXISTS (SELECT 1 FROM regroup_pending rp WHERE rp.article_id = a.id) AS regroup_pending
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!a) return { verdict: "skipped" };
@@ -620,6 +622,22 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     return { verdict: "manual", factId: manual.factId };
   }
   const left = opts.force || a.regroup_pending ? await resetAutomatic(articleId) : [];
+
+  const [an] = await sql<{ relevance: string | null; category: string | null; score: string | number | null; title_zh: string | null; summary_zh: string | null; output: Record<string, any> | null }[]>`
+    SELECT relevance, category, score, title_zh, summary_zh, output FROM analyses WHERE article_id = ${articleId} ORDER BY input_revision DESC, id DESC LIMIT 1`;
+
+  // The source's own rule (sources.publication_rule) comes before every other decision: material it refuses
+  // founds no event, gets listed nowhere and is not kept as a signal either — its shape is noise on this site.
+  // It also runs before the historical branch, which would otherwise publish an old post unchecked.
+  if (a.publication_rule && !passesPublicationRule(a.publication_rule, {
+    score: an?.score == null ? null : Number(an.score),
+    category: an?.category ?? null,
+    title: an?.title_zh ?? a.title,
+    summary: an?.summary_zh ?? null,
+  })) {
+    await markGrouped(articleId);
+    return { verdict: "filtered" };
+  }
 
   // History founds no event and adds no heat (isHistorical); a regroup takes it out of any it joined.
   if (isHistorical(a)) {
@@ -637,8 +655,6 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     return { verdict: "kept", factId: kept.factId, storyId: kept.storyId };
   }
 
-  const [an] = await sql<{ relevance: string | null; title_zh: string | null; summary_zh: string | null; output: Record<string, any> | null }[]>`
-    SELECT relevance, title_zh, summary_zh, output FROM analyses WHERE article_id = ${articleId} ORDER BY input_revision DESC, id DESC LIMIT 1`;
   const frame = (an?.output?.fact ?? null) as Record<string, any> | null;
   if (!an || an.relevance !== "pass") {
     await markGrouped(articleId);

@@ -773,7 +773,7 @@
       "tier": "T2",
       "first_party": false,
       "owner_entity_id": null,
-      "participation_mode": "hot_signal",
+      "participation_mode": "editorial",
       "interval_minutes": 1440,
       "tags": [
         "小红书",
@@ -781,7 +781,33 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
-      "enabled": true
+      "enabled": true,
+      "publication_rule": {
+        "minScore": 40,
+        "scoreByCategory": {
+          "project": 20,
+          "policy": 18
+        },
+        "requireMarkers": [
+          "基金会",
+          "协会",
+          "学会",
+          "团委",
+          "妇联",
+          "红十字会",
+          "慈善会",
+          "公益项目",
+          "救助项目",
+          "计划",
+          "政策",
+          "通知",
+          "公示",
+          "政府"
+        ],
+        "dropCategories": [
+          "fundraising"
+        ]
+      }
     },
     {
       "id": "xhs-search-rural-revitalization",

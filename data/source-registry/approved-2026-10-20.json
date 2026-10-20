@@ -35,7 +35,7 @@
    },
    "tier": "T2",
    "first_party": true,
-   "owner_entity_id": null,
+   "owner_entity_id": "china-charity-association",
    "participation_mode": "editorial",
    "interval_minutes": 240,
    "tags": [
@@ -132,7 +132,7 @@
    },
    "tier": "T2",
    "first_party": true,
-   "owner_entity_id": null,
+   "owner_entity_id": "china-women-development-foundation",
    "participation_mode": "editorial",
    "interval_minutes": 240,
    "tags": [

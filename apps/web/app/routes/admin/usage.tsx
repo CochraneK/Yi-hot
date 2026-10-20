@@ -15,8 +15,21 @@ interface Day {
   tokensIn: number;
   tokensOut: number;
   amount: number | null;
+  /** What per-request providers actually debited that day (Beijing). Null when nothing was billed. */
+  paid: number | null;
   currency: string;
   priced: boolean;
+}
+
+interface PerCallRow {
+  service: string;
+  calls: number;
+  failed: number;
+  billed: number;
+  unbilled: number;
+  amount: number | null;
+  currency: string;
+  unit: number | null;
 }
 
 interface Purpose {
@@ -56,13 +69,23 @@ interface Usage {
   prices: Price[];
   daily: Day[];
   purposes: Purpose[];
-  totals: { calls: number; tokensIn: number; tokensOut: number; amount: number | null };
+  totals: { calls: number; tokensIn: number; tokensOut: number; amount: number | null; paid: number | null };
+  /** `token` is our arithmetic from the price table; `api` is what providers really debited. */
+  spend: { token: number | null; api: number | null; total: number | null; currency: string };
+  perCall: {
+    rows: PerCallRow[];
+    calls: number;
+    billed: number;
+    amount: number | null;
+    currency: string;
+    lifetime: { calls: number; billed: number; amount: number | null };
+  };
   averages: { callsPerDay: number; tokensPerCall: number };
   activeDays: number;
-  recent: { days: number; calls: number; tokensIn: number; tokensOut: number; amount: number | null; perDay: number | null; activeDays: number; perDayActive: number | null };
+  recent: { days: number; calls: number; tokensIn: number; tokensOut: number; amount: number | null; paid: number | null; spend: number | null; perDay: number | null; activeDays: number; perDayActive: number | null };
   projection: { amount: number; currency: string; basisDays: number } | null;
   projectedActive: { amount: number; currency: string; basisDays: number } | null;
-  lifetime: { calls: number; tokensIn: number; tokensOut: number; first: string | null; amount: number | null };
+  lifetime: { calls: number; tokensIn: number; tokensOut: number; first: string | null; amount: number | null; apiCalls: number; apiAmount: number | null };
   seenModels: SeenModel[];
   services: string[];
 }
@@ -157,7 +180,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
   return (
     <AdminPage
       title="用量与成本"
-      subtitle="每次模型调用都会记下 token 用量，金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。注意：这里的日期是模型调用的发生时间（北京时间），不是内容的发布时间；一篇 7 月发布的政策文件可能今天才被抓到并分析，token 就记在今天。政府站白天抓取密、夜里几乎不跑，所以曲线的工作日/周末起伏是正常的。"
+      subtitle="每次模型调用都会记下 token 用量，金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。按次计费的采集接口（小红书、公众号这类）不计 token，它们实际扣掉的钱单列在「按次计费的服务商」里，两者相加才是这段时间的真实花费。注意：这里的日期是调用发生的时间（北京时间），不是内容的发布时间；一篇 7 月发布的政策文件可能今天才被抓到并分析，token 就记在今天。政府站白天抓取密、夜里几乎不跑，所以曲线的工作日/周末起伏是正常的。"
       actions={
         <FilterChips
           param="days"
@@ -174,14 +197,18 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
         <Stat label={`调用（近 ${u.days} 天）`} value={num(u.totals.calls)} hint={`有调用的 ${u.activeDays} 天 · 日${num(u.averages.callsPerDay)} 次`} />
         <Stat label="token 合计" value={num(totalTokens)} hint={`输入 ${num(u.totals.tokensIn)} · 输出 ${num(u.totals.tokensOut)}`} />
         <Stat
-          label="估算费用"
-          value={u.totals.amount === null ? "未定价" : money(u.totals.amount, cur)}
-          tone={u.totals.amount === null ? "warn" : undefined}
-          hint={u.totals.amount === null ? "填好单价后才有金额" : `每次调用约 ${money(u.totals.amount / u.totals.calls, cur)}`}
+          label="费用合计"
+          value={u.spend.total === null ? "未定价" : money(u.spend.total, cur)}
+          tone={u.spend.total === null ? "warn" : undefined}
+          hint={
+            u.spend.total === null
+              ? "填好单价后才有金额"
+              : `模型估算 ${u.spend.token === null ? "—" : money(u.spend.token, cur)} · 按次实付 ${u.spend.api === null ? "—" : money(u.spend.api, cur)}`
+          }
         />
         <Stat
           label={`近 ${u.recent.days} 天费用`}
-          value={u.recent.amount === null ? "—" : money(u.recent.amount, cur)}
+          value={u.recent.spend === null ? "—" : money(u.recent.spend, cur)}
           hint={
             u.recent.perDay === null
               ? "暂无数据"
@@ -190,7 +217,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
         />
       </div>
 
-      {!u.priced && (
+      {!u.priced && u.perCall.rows.length === 0 && (
         <div className="mt-4">
           <Empty>
             还没有单价，所以只有 token 没有金额。点下面「计价方式」里的<span className="text-ink-2">新增单价</span>
@@ -211,11 +238,14 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             format={wan}
           />
         </Card>
-        <Card title="每日费用（估算）" right={<span className="text-[12px] text-ink-4">按调用发生日（北京）· {cur}</span>}>
+        <Card title="每日费用" right={<span className="text-[12px] text-ink-4">按调用发生日（北京）· {cur}</span>}>
           <LineChart
             height={220}
             labels={u.daily.map((d) => d.label)}
-            series={[{ key: "cost", label: "估算费用", color: "var(--accent)", values: u.daily.map((d) => d.amount) }]}
+            series={[
+              { key: "cost", label: "模型估算", color: "var(--accent)", values: u.daily.map((d) => d.amount) },
+              { key: "paid", label: "按次实付", color: "var(--amber)", values: u.daily.map((d) => d.paid), dashed: true },
+            ]}
             format={(v) => money(v, cur)}
           />
         </Card>
@@ -252,6 +282,54 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             <ShareBars rows={u.purposes.map((p) => ({ label: p.purpose, value: p.tokensIn + p.tokensOut }))} />
           ) : (
             <Empty>暂无数据</Empty>
+          )}
+        </Card>
+      </div>
+
+      <div className="mt-5">
+        <Card
+          title="按次计费的服务商"
+          pad={false}
+          right={<span className="text-[12px] text-ink-4">实扣金额来自服务商回执，不是估算</span>}
+        >
+          {u.perCall.rows.length ? (
+            <>
+              <DataTable
+                dense
+                rows={u.perCall.rows}
+                rowKey={(r) => r.service}
+                columns={[
+                  { key: "s", label: "服务", render: (r) => <span className="font-mono text-[12px]">{r.service}</span> },
+                  { key: "c", label: "调用", align: "right", render: (r) => num(r.calls) },
+                  { key: "f", label: "失败", align: "right", render: (r) => (r.failed ? <span className="text-ink-3">{num(r.failed)}</span> : <span className="text-ink-4">—</span>) },
+                  { key: "b", label: "已扣费", align: "right", render: (r) => num(r.billed) },
+                  {
+                    key: "u",
+                    label: "未扣费",
+                    align: "right",
+                    render: (r) => (r.unbilled ? <span className="text-ink-3">{num(r.unbilled)}</span> : <span className="text-ink-4">—</span>),
+                  },
+                  { key: "p", label: "单次均价", align: "right", render: (r) => (r.unit === null ? <span className="text-ink-4">—</span> : <span className="whitespace-nowrap">{money(r.unit, r.currency)}</span>) },
+                  {
+                    key: "$",
+                    label: "近段时间实付",
+                    align: "right",
+                    render: (r) => (r.amount === null ? <span className="text-ink-4">未扣费</span> : <span className="whitespace-nowrap font-medium">{money(r.amount, r.currency)}</span>),
+                  },
+                ]}
+              />
+              <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-line px-4 py-2.5 text-[12px] text-ink-3">
+                <span>
+                  近 {u.days} 天共 {num(u.perCall.calls)} 次调用，其中 {num(u.perCall.billed)} 次扣费
+                  {u.perCall.lifetime.calls > u.perCall.calls && ` · 至今累计 ${num(u.perCall.lifetime.calls)} 次、${u.perCall.lifetime.amount === null ? "—" : money(u.perCall.lifetime.amount, u.perCall.currency)}`}
+                </span>
+                <span className="num">
+                  合计 {u.perCall.amount === null ? "—" : money(u.perCall.amount, u.perCall.currency)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <Empty>这段时间没有按次计费的服务调用。</Empty>
           )}
         </Card>
       </div>
@@ -354,9 +432,15 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             {(
               [
                 ["首次调用", u.lifetime.first ? bj(u.lifetime.first, true) : "—"],
-                ["累计调用", `${num(u.lifetime.calls)} 次`],
+                ["累计调用", `${num(u.lifetime.calls + u.lifetime.apiCalls)} 次`],
                 ["累计 token", `${num(u.lifetime.tokensIn + u.lifetime.tokensOut)}（输入 ${num(u.lifetime.tokensIn)} / 输出 ${num(u.lifetime.tokensOut)}）`],
-                ["累计估算费用", u.lifetime.amount === null ? "未定价" : `≈ ${money(u.lifetime.amount, cur)}`],
+                [
+                  "累计费用",
+                  u.lifetime.amount === null && u.lifetime.apiAmount === null
+                    ? "未定价"
+                    : `≈ ${money((u.lifetime.amount ?? 0) + (u.lifetime.apiAmount ?? 0), cur)}`,
+                ],
+                ["其中按次实付", u.lifetime.apiAmount === null ? "—" : `${money(u.lifetime.apiAmount, cur)}（${num(u.lifetime.apiCalls)} 次）`],
                 ["近 7 天有调用", `${u.recent.activeDays} 天（日均 ${u.recent.perDay === null ? "—" : money(u.recent.perDay!, cur)}）`],
                 [
                   "月化区间",

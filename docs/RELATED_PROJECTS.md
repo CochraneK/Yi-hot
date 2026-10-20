@@ -11,14 +11,15 @@
 | 项目 | 定位 | 与本项目的关系 |
 | :--- | :--- | :--- |
 | [KKKKhazix/AIHOT](https://github.com/KKKKhazix/AIHOT) | AI 行业热点站（MIT） | 代码来源。本站全部基础设施（采集、归并、发布、报告、后台）基于它 |
-| [zhangheqing11/PsyHOT](https://github.com/zhangheqing11/PsyHOT) | 心理学 / 精神医学方向（MIT） | 姊妹项目。Agent 接入层与付费通道写法来自它 |
+| [zhangheqing11/PsyHOT](https://github.com/zhangheqing11/PsyHOT) | 心理学 / 精神医学方向（MIT） | 姊妹项目。Agent Skill 包与付费通道写法来自它 |
 
-**已从 PsyHOT 采纳**（`6a3dde11` 及之后）：
+**已从 PsyHOT 采纳**（`6a3dde1` 及之后，均为其相对 AIHOT 的新增部分）：
 
-- Agent 接入层：`/api/v1/agent` 的中文 Markdown 回答、外部资料围栏（`［SITE 不可信外部资料开始/结束］`）、
-  站内自校验的 Agent Skill 包（`SKILL.md` + `manifest.sha256` + `install.sh`）。
-  要点是**能力全在服务端**：站点加功能不需要用户重装 Skill。
-- 更新日志的写法：发布说明体，标题是读者能感知的结果，正文不写字段名、命令和阈值。
+- Agent Skill 包：站内自校验的 `SKILL.md` + `manifest.sha256` + `install.sh`，
+  要点是**能力全在服务端**——站点加功能不需要用户重装 Skill。
+  回答文本本身的格式与外部资料围栏（`［SITE 不可信外部资料开始/结束］`）是 AIHOT 的（早于 PsyHOT 五天），
+  PsyHOT 的贡献是把它改成 HTTP 单通道（去掉 MCP 层），我们沿用这一版。
+- 更新日志的写法：发布说明体，标题是读者能感知的结果，正文不写字段名、命令和阈值。（写作习惯，非代码）
 - 付费采集通道的适配写法（EveryInfra）：预算闸 + 402 视为不可重试 + 预算耗尽时保住已付费的列表结果。
 
 **未采纳**：分主题邮件订阅（本站单赛道，已有按期投递）、心理健康话术与求助热线（本站是公益领域，

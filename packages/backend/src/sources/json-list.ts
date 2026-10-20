@@ -140,19 +140,36 @@ function engagementOf(item: unknown): Record<string, number> {
   return out;
 }
 
+/**
+ * EveryInfra 的 adapter 有两个名字：`everyinfra_xhs` 是 2026-10 只接小红书时留下的，
+ * `everyinfra` 是泛化之后的写法（平台由 `everyinfraPlatform` 指定）。两者都认，
+ * 老配置不必改。新增平台只要加一条源配置，不用动这里。
+ */
+function everyInfraPlatformOf(c: SourceRow["config"]): string | null {
+  if (c.adapter === "everyinfra_xhs") return "xiaohongshu";
+  if (c.adapter !== "everyinfra") return null;
+  return String(c.everyinfraPlatform ?? "xiaohongshu");
+}
+
+/** 记账用的 purpose：老的小红书源沿用 `xhs_listing`，新平台按平台名生成。 */
+function everyInfraPurpose(platform: string): string {
+  return platform === "xiaohongshu" ? "xhs_listing" : `${platform}_listing`;
+}
+
 export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   const c = source.config;
+  const everyInfraPlatform = everyInfraPlatformOf(c);
   // EveryInfra 来源不走公网 URL，改调付费 API（经 receipts 记账与预算熔断）。
   let everyInfraData: unknown = null;
-  if (c.adapter === "everyinfra_xhs") {
+  if (everyInfraPlatform) {
     if (!credential("collectors", "EVERYINFRA_API_KEY")) throw new FetchError("EVERYINFRA_API_KEY 未配置");
     const params = c.everyinfraParams && typeof c.everyinfraParams === "object" ? c.everyinfraParams : {};
     const call = await everyInfraCall<unknown[]>({
-      platform: "xiaohongshu",
+      platform: everyInfraPlatform,
       action: String(c.everyinfraAction ?? "search"),
       params: params as Record<string, unknown>,
       subject: source.id,
-      purpose: "xhs_listing",
+      purpose: everyInfraPurpose(everyInfraPlatform),
       window: String(source.cursor?.lastCheckedAt ?? Math.floor(Date.now() / 600_000)),
     });
     everyInfraData = call.response;
@@ -180,7 +197,7 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
       throw new FetchError("response is not JSON");
     }
   }
-  let items = c.itemsPath ? getPath(data, c.itemsPath) : c.jsonKey ? getPath(data, c.jsonKey) : c.adapter === "everyinfra_xhs" ? getPath(data, "results") : data;
+  let items = c.itemsPath ? getPath(data, c.itemsPath) : c.jsonKey ? getPath(data, c.jsonKey) : everyInfraPlatform ? getPath(data, "results") : data;
   if (c.itemsObjectValues && items && typeof items === "object" && !Array.isArray(items)) items = Object.values(items);
   if (!Array.isArray(items)) throw new FetchError("items path did not resolve to an array");
 
@@ -188,25 +205,30 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   for (const item of items) {
     if (c.requireBoolean && getPath(item, c.requireBoolean.path) !== c.requireBoolean.equals) continue;
     if (c.minNumeric && !(Number(getPath(item, c.minNumeric.path)) >= Number(c.minNumeric.min))) continue;
-    const title = firstString(item, c.titlePaths ?? (c.adapter === "everyinfra_xhs" ? ["title"] : undefined));
+    const title = firstString(item, c.titlePaths ?? (everyInfraPlatform ? ["title"] : undefined));
+    // 各平台把链接放在不同位置：小红书嵌在 raw.url，公众号直接给顶层 url。
+    // 先按配置，再两个位置都试，新平台不用为链接位置改代码。
     const url = (c.urlTemplate && renderTemplate(c.urlTemplate, item)) || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item)) ||
-      (c.adapter === "everyinfra_xhs" ? renderTemplate("{raw:url}", item) : null);
+      (everyInfraPlatform ? (firstString(item, ["url"]) || renderTemplate("{raw:url}", item)) : null);
     if (!title || !url) continue;
-    const externalId = c.externalIdPath ? getPath(item, c.externalIdPath) : c.adapter === "everyinfra_xhs" ? getPath(item, "id") : null;
-    const summary = firstString(item, c.summaryPaths ?? (c.adapter === "everyinfra_xhs" ? ["text"] : undefined));
+    const externalId = c.externalIdPath ? getPath(item, c.externalIdPath) : everyInfraPlatform ? getPath(item, "id") : null;
+    // 公众号的历史文章列表只给标题和链接，没有正文摘要——`summaryIsBody` 对它无效，
+    // 正文留给 article_detail 或抽取器。
+    const summary = firstString(item, c.summaryPaths ?? (everyInfraPlatform ? ["text", "description", "digest"] : undefined));
     const raw = item && typeof item === "object" ? { ...(item as Record<string, unknown>) } : { value: item };
     for (const k of c.rawDropKeys ?? []) delete (raw as Record<string, unknown>)[k];
     const summaryIsBody = c.summaryIsBody === true && !!summary;
     out.push({
       url,
       title: collapseWhitespace(stripTags(title)),
-      author: firstString(item, c.authorPaths ?? (c.adapter === "everyinfra_xhs" ? ["author_name"] : undefined)),
-      publishedAt: toDate(getPath(item, c.publishedAtPath ?? (c.adapter === "everyinfra_xhs" ? "posted_at" : "")), c.publishedAtUnit),
+      author: firstString(item, c.authorPaths ?? (everyInfraPlatform ? ["author_name", "account_name", "name"] : undefined)),
+      publishedAt: toDate(getPath(item, c.publishedAtPath ?? (everyInfraPlatform ? "posted_at" : "")), c.publishedAtUnit),
       excerpt: summary ? collapseWhitespace(stripTags(summary)).slice(0, 2000) : null,
       bodyText: summaryIsBody ? stripTags(summary!) : null,
       bodyStatus: summaryIsBody ? "ok" : "pending",
       // 小红书列表自带的公开互动数：热度排序按它加权（P4 再开，先收着）。
-      raw: { externalId: externalId ?? null, ...(c.adapter === "everyinfra_xhs" ? engagementOf(item) : {}) },
+      // 公众号列表没有这些字段，engagementOf 自然返回空对象。
+      raw: { externalId: externalId ?? null, ...(everyInfraPlatform ? engagementOf(item) : {}) },
     });
   }
   if (items.length > 0 && out.length === 0 && !c.requireBoolean && !c.minNumeric) throw new FetchError("no items mapped (check title/url paths)");

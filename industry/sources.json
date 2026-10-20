@@ -1,1005 +1,1317 @@
 {
-  "$comment": "公益领域示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖。之后在后台“信源”里增删改。字段说明见 docs/customize.md。",
-  "sources": [
-    {
-      "id": "web-mca-civil-news",
-      "name": "民政部·民政要闻",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.mca.gov.cn/n152/n164/index.html",
-        "itemSelector": "tr",
-        "linkSelector": "td.arlisttd a",
-        "publishedAtSelector": "td.timedefault",
-        "allowUrlPrefixes": [
-          "https://www.mca.gov.cn/n152/n164/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-civil-affairs",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "政策"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mca-notice",
-      "name": "民政部·通知公告",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.mca.gov.cn/n152/n165/index.html",
-        "itemSelector": "tr",
-        "linkSelector": "td.arlisttd a",
-        "publishedAtSelector": "td.timedefault",
-        "allowUrlPrefixes": [
-          "https://www.mca.gov.cn/n152/n165/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-civil-affairs",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "政策"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mca-business",
-      "name": "民政部·业务动态",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.mca.gov.cn/n152/n167/index.html",
-        "itemSelector": "tr",
-        "linkSelector": "td.arlisttd a",
-        "publishedAtSelector": "td.timedefault",
-        "allowUrlPrefixes": [
-          "https://www.mca.gov.cn/n152/n167/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-civil-affairs",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mca-local",
-      "name": "民政部·地方动态",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.mca.gov.cn/n152/n168/index.html",
-        "itemSelector": "tr",
-        "linkSelector": "td.arlisttd a",
-        "publishedAtSelector": "td.timedefault",
-        "allowUrlPrefixes": [
-          "https://www.mca.gov.cn/n152/n168/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1_5",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "一线"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "json-foundation-center-fti",
-      "name": "基金会中心网·动态",
-      "kind": "json_list",
-      "config": {
-        "url": "https://api.foundationcenter.org.cn/api/HomeAPI/News",
-        "method": "POST",
-        "bodyJson": {
-          "Id": 12
-        },
-        "headers": {
-          "Referer": "https://www.foundationcenter.org.cn/"
-        },
-        "itemsPath": "data.NewList",
-        "titlePaths": [
-          "Title"
-        ],
-        "urlTemplate": "{raw:Url}",
-        "publishedAtPath": "PublishDate",
-        "_aihot": {
-          "initialBackfillLimit": 12,
-          "initialBackfillMonths": 36
-        }
-      },
-      "tier": "T1_5",
-      "first_party": true,
-      "owner_entity_id": "foundation-center",
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "机构",
-        "研究"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cca-federation-news",
-      "name": "中国慈善联合会·联合会动态",
-      "kind": "web_list",
-      "config": {
-        "url": "https://charityalliance.org.cn/dl/771e1p1pcD.html",
-        "itemSelector": ".xwin1z > a",
-        "titleSelector": "h2",
-        "publishedAtSelector": "span",
-        "allowUrlPrefixes": [
-          "https://charityalliance.org.cn/ds/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "china-charity-federation",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-nandu-org-news",
-      "name": "南都公益基金会·机构动态",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.naradafoundation.org/category/32",
-        "itemSelector": "#list-content .media",
-        "linkSelector": ".media-heading a",
-        "publishedAtSelector": ".time",
-        "allowUrlPrefixes": [
-          "https://www.naradafoundation.org/content/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "south-metro-public-welfare",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-oxfam",
-      "name": "Oxfam 乐施会·新闻",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://www.oxfam.org/en/rss.xml",
-        "allowUrlPrefixes": [
-          "https://www.oxfam.org/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1_5",
-      "first_party": true,
-      "owner_entity_id": "oxfam",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "海外",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-givedirectly",
-      "name": "GiveDirectly·动态",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://www.givedirectly.org/feed",
-        "allowUrlPrefixes": [
-          "https://www.givedirectly.org/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "first_party": true,
-      "owner_entity_id": "givedirectly",
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "海外",
-        "捐赠"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-savethechildren-cn",
-      "name": "救助儿童会中国·最新进展",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.savethechildren.org.cn/news_0",
-        "itemSelector": "ul.index_news_list > li",
-        "linkSelector": "a",
-        "titleSelector": ".index_news_list_h1",
-        "publishedAtSelector": ".index_news_list_h2",
-        "allowUrlPrefixes": [
-          "http://www.savethechildren.org.cn/news/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12,
-          "initialBackfillMonths": 36
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "save-the-children",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cctf-news",
-      "name": "中国儿童少年基金会·动态",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.cctf.org.cn/news/",
-        "itemSelector": ".video_list li",
-        "linkSelector": "h3 a",
-        "titleSelector": "h3 a",
-        "publishedAtSelector": "p.date",
-        "allowUrlPrefixes": [
-          "https://www.cctf.org.cn/news/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12,
-          "initialBackfillMonths": 36
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "cctf",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-moe-news",
-      "name": "教育部·工作动态",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/",
-        "itemSelector": "#list li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "publishedAtSelector": "span",
-        "allowUrlPrefixes": [
-          "http://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-education",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "政策"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-court-spc-news",
-      "name": "最高人民法院·新闻",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.court.gov.cn/zixun/gengduo/24.html",
-        "itemSelector": ".sec_list li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "publishedAtSelector": "i.date",
-        "allowUrlPrefixes": [
-          "http://www.court.gov.cn/zixun/xiangqing/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "supreme-people-court",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "法治"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "json-women-wq",
-      "name": "全国妇联·依法维权",
-      "kind": "json_list",
-      "config": {
-        "url": "https://www.women.org.cn/5524//5528/NewsList_0.json",
-        "itemsPath": "info",
-        "titlePaths": [
-          "ovtitle",
-          "title"
-        ],
-        "urlTemplate": "{raw:url}",
-        "publishedAtPath": "issueTime",
-        "summaryPaths": [
-          "description"
-        ],
-        "externalIdPath": "id",
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "维权"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-onefoundation-news",
-      "name": "壹基金·最新活动",
-      "kind": "web_list",
-      "config": {
-        "url": "https://onefoundation.cn/news/",
-        "itemSelector": "a[share-title]",
-        "linkSelector": "a",
-        "titleSelector": "h2",
-        "publishedAtSelector": "time",
-        "allowUrlPrefixes": [
-          "https://onefoundation.cn/news/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12,
-          "initialBackfillMonths": 36
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "one-foundation",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cfpa-news",
-      "name": "中国乡村发展基金会·机构新闻",
-      "kind": "web_list",
-      "config": {
-        "url": "http://cfpa.org.cn/news/news.aspx",
-        "itemSelector": ".main_list li.clearfix",
-        "linkSelector": "a",
-        "titleSelector": "h3",
-        "publishedAtSelector": "span",
-        "allowUrlPrefixes": [
-          "http://cfpa.org.cn/news/news_detail.aspx"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12,
-          "initialBackfillMonths": 36
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "china-rural-development-foundation",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "机构"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-un-news",
-      "name": "联合国新闻（中文）",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml",
-        "allowUrlPrefixes": [
-          "https://news.un.org/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "海外",
-        "政策"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mee-hjyw",
-      "name": "生态环境部·环保要闻",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.mee.gov.cn/ywdt/hjywnews/",
-        "itemSelector": "dl dt",
-        "linkSelector": "a.cjcx_biaobnan",
-        "titleSelector": "a.cjcx_biaobnan",
-        "publishedAtSelector": "span.cjcx_shijian",
-        "allowUrlPrefixes": [
-          "http://www.mee.gov.cn/ywdt/hjywnews/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-ecology-environment",
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "官方",
-        "政策",
-        "环境"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mee-xwfb",
-      "name": "生态环境部·新闻发布",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.mee.gov.cn/ywdt/xwfb/",
-        "itemSelector": "dl dt",
-        "linkSelector": "a.cjcx_biaobnan",
-        "titleSelector": "a.cjcx_biaobnan",
-        "publishedAtSelector": "span.cjcx_shijian",
-        "allowUrlPrefixes": [
-          "http://www.mee.gov.cn/ywdt/xwfb/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "ministry-of-ecology-environment",
-      "participation_mode": "editorial",
-      "interval_minutes": 300,
-      "tags": [
-        "官方",
-        "环境",
-        "数据"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mee-zcwj",
-      "name": "生态环境部·政策文件",
-      "kind": "web_list",
-      "config": {
-        "url": "http://www.mee.gov.cn/zcwj/",
-        "itemSelector": "ul li:has(a[href$='.shtml']), ul li:has(a[href$='.html'])",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "http://www.mee.gov.cn/zcwj/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12
-        },
-        "publishedAtSelector": "span.date"
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "官方",
-        "政策",
-        "环境"
-      ],
-      "site_fulltext": true,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cwdf-news",
-      "name": "中国妇女发展基金会·本会新闻",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
-        "itemSelector": ".benhuixinwen > ul > li",
-        "linkSelector": ".benhuixinwenli21 a[title]",
-        "titleFromAttribute": true,
-        "publishedAtSelector": ".benhuixinwenli23 span",
-        "allowUrlPrefixes": [
-          "https://www.cwdf.org.cn/index.php?m=content&c=index&a=show&catid=26"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 20
-        }
-      },
-      "tier": "T1_5",
-      "first_party": true,
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "机构动态",
-        "性别平等"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cdpf-news",
-      "name": "中国残联·残联要闻",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.cdpf.org.cn/xwzx/clyw2/index.htm",
-        "itemSelector": "ul.subRightList > li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "publishedAtSelector": "span",
-        "allowUrlPrefixes": [
-          "https://www.cdpf.org.cn/xwzx/clyw2/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "owner_entity_id": "china-disabled-persons-federation",
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "残障融合"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-mem-emergency-news",
-      "name": "应急管理部·应急要闻",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.mem.gov.cn/xw/yjyw/",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "publishedAtSelector": "span",
-        "allowUrlPrefixes": [
-          "https://www.mem.gov.cn/xw/yjyw/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "官方",
-        "应急救援"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "web-cac-policy",
-      "name": "中国网信网·政策法规",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.cac.gov.cn/wxzw/zcfg/A093703index_1.htm",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "publishedAtSelector": "span",
-        "publishedAtRegex": "(\\d{4}-\\d{2}-\\d{2})",
-        "allowUrlPrefixes": [
-          "https://www.cac.gov.cn/20"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 12
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "官方",
-        "网络保护",
-        "政策"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "xhs-search-charity-project",
-      "name": "小红书 · 公益项目",
-      "kind": "json_list",
-      "config": {
-        "adapter": "everyinfra_xhs",
-        "everyinfraAction": "search",
-        "everyinfraParams": {
-          "keyword": "困境儿童 资助",
-          "date_range": "last_7_days",
-          "sort": "newest"
-        },
-        "summaryIsBody": true,
-        "ingestNoiseFilter": {
-          "requireMarkers": [
-            "公益项目",
-            "公益活动",
-            "慈善",
-            "捐赠",
-            "募捐",
-            "基金会",
-            "志愿服务",
-            "义工",
-            "乡村振兴",
-            "帮扶",
-            "救助",
-            "助学",
-            "敬老",
-            "月捐",
-            "配捐",
-            "99公益日",
-            "困境",
-            "受助",
-            "留守儿童",
-            "孤儿",
-            "资助",
-            "困境儿童"
-          ],
-          "dropMarkers": [
-            "带货",
-            "好物",
-            "护肤",
-            "减肥",
-            "课程",
-            "训练营",
-            "招生",
-            "招聘",
-            "塔罗",
-            "星座",
-            "考研",
-            "备考",
-            "上岸",
-            "私信",
-            "团购",
-            "招募",
-            "接单",
-            "副业",
-            "变现",
-            "应援",
-            "粉丝",
-            "生日",
-            "打卡",
-            "抽奖",
-            "同款",
-            "代购",
-            "返图",
-            "开箱",
-            "积分",
-            "明星",
-            "周边",
-            "拼团"
-          ]
-        },
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T2",
-      "first_party": false,
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 1440,
-      "tags": [
-        "小红书",
-        "关键词"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true,
-      "publication_rule": {
-        "minScore": 40,
-        "scoreByCategory": {
-          "project": 20,
-          "policy": 18
-        },
-        "requireMarkers": [
-          "基金会",
-          "协会",
-          "学会",
-          "团委",
-          "妇联",
-          "红十字会",
-          "慈善会",
-          "公益项目",
-          "救助项目",
-          "计划",
-          "政策",
-          "通知",
-          "公示",
-          "政府"
-        ],
-        "dropCategories": [
-          "fundraising"
-        ]
-      }
-    },
-    {
-      "id": "xhs-search-rural-revitalization",
-      "name": "小红书 · 乡村振兴",
-      "kind": "json_list",
-      "config": {
-        "adapter": "everyinfra_xhs",
-        "everyinfraAction": "search",
-        "everyinfraParams": {
-          "keyword": "乡村振兴",
-          "date_range": "last_7_days",
-          "sort": "newest"
-        },
-        "summaryIsBody": true,
-        "ingestNoiseFilter": {
-          "requireMarkers": [
-            "公益",
-            "慈善",
-            "捐赠",
-            "募捐",
-            "基金会",
-            "志愿",
-            "义工",
-            "乡村振兴",
-            "帮扶",
-            "救助",
-            "助学",
-            "敬老",
-            "月捐",
-            "配捐",
-            "99公益日"
-          ],
-          "dropMarkers": [
-            "带货",
-            "好物",
-            "护肤",
-            "减肥",
-            "课程",
-            "训练营",
-            "招生",
-            "招聘",
-            "塔罗",
-            "星座",
-            "考研",
-            "备考",
-            "上岸",
-            "私信",
-            "团购",
-            "招募",
-            "接单",
-            "副业",
-            "变现"
-          ]
-        },
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T2",
-      "first_party": false,
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 1440,
-      "tags": [
-        "小红书",
-        "关键词"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true,
-      "publication_rule": {
-        "minScore": 40,
-        "scoreByCategory": {
-          "project": 20,
-          "policy": 18
-        },
-        "requireMarkers": [
-          "基金会",
-          "协会",
-          "学会",
-          "团委",
-          "妇联",
-          "红十字会",
-          "慈善会",
-          "公益项目",
-          "救助项目",
-          "计划",
-          "政策",
-          "通知",
-          "公示",
-          "政府"
-        ],
-        "dropCategories": [
-          "fundraising"
-        ]
-      }
-    },
-    {
-      "id": "xhs-search-elderly-care",
-      "name": "小红书 · 养老助老",
-      "kind": "json_list",
-      "config": {
-        "adapter": "everyinfra_xhs",
-        "everyinfraAction": "search",
-        "everyinfraParams": {
-          "keyword": "养老 公益",
-          "date_range": "last_7_days",
-          "sort": "newest"
-        },
-        "summaryIsBody": true,
-        "ingestNoiseFilter": {
-          "requireMarkers": [
-            "公益",
-            "慈善",
-            "捐赠",
-            "募捐",
-            "基金会",
-            "志愿",
-            "义工",
-            "乡村振兴",
-            "帮扶",
-            "救助",
-            "助学",
-            "敬老",
-            "月捐",
-            "配捐",
-            "99公益日"
-          ],
-          "dropMarkers": [
-            "带货",
-            "好物",
-            "护肤",
-            "减肥",
-            "课程",
-            "训练营",
-            "招生",
-            "招聘",
-            "塔罗",
-            "星座",
-            "考研",
-            "备考",
-            "上岸",
-            "私信",
-            "团购",
-            "招募",
-            "接单",
-            "副业",
-            "变现"
-          ]
-        },
-        "_aihot": {
-          "initialBackfillLimit": 10
-        }
-      },
-      "tier": "T2",
-      "first_party": false,
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 1440,
-      "tags": [
-        "小红书",
-        "关键词"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true,
-      "publication_rule": {
-        "minScore": 40,
-        "scoreByCategory": {
-          "project": 20,
-          "policy": 18
-        },
-        "requireMarkers": [
-          "基金会",
-          "协会",
-          "学会",
-          "团委",
-          "妇联",
-          "红十字会",
-          "慈善会",
-          "公益项目",
-          "救助项目",
-          "计划",
-          "政策",
-          "通知",
-          "公示",
-          "政府"
-        ],
-        "dropCategories": [
-          "fundraising"
-        ]
-      }
+ "$comment": "公益领域示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖。之后在后台“信源”里增删改。字段说明见 docs/customize.md。",
+ "sources": [
+  {
+   "id": "web-mca-civil-news",
+   "name": "民政部·民政要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.mca.gov.cn/n152/n164/index.html",
+    "itemSelector": "tr",
+    "linkSelector": "td.arlisttd a",
+    "publishedAtSelector": "td.timedefault",
+    "allowUrlPrefixes": [
+     "https://www.mca.gov.cn/n152/n164/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
     }
-  ]
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-civil-affairs",
+   "participation_mode": "editorial",
+   "interval_minutes": 120,
+   "tags": [
+    "官方",
+    "政策"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mca-notice",
+   "name": "民政部·通知公告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.mca.gov.cn/n152/n165/index.html",
+    "itemSelector": "tr",
+    "linkSelector": "td.arlisttd a",
+    "publishedAtSelector": "td.timedefault",
+    "allowUrlPrefixes": [
+     "https://www.mca.gov.cn/n152/n165/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-civil-affairs",
+   "participation_mode": "editorial",
+   "interval_minutes": 120,
+   "tags": [
+    "官方",
+    "政策"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mca-business",
+   "name": "民政部·业务动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.mca.gov.cn/n152/n167/index.html",
+    "itemSelector": "tr",
+    "linkSelector": "td.arlisttd a",
+    "publishedAtSelector": "td.timedefault",
+    "allowUrlPrefixes": [
+     "https://www.mca.gov.cn/n152/n167/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-civil-affairs",
+   "participation_mode": "editorial",
+   "interval_minutes": 120,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mca-local",
+   "name": "民政部·地方动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.mca.gov.cn/n152/n168/index.html",
+    "itemSelector": "tr",
+    "linkSelector": "td.arlisttd a",
+    "publishedAtSelector": "td.timedefault",
+    "allowUrlPrefixes": [
+     "https://www.mca.gov.cn/n152/n168/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1_5",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "一线"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "json-foundation-center-fti",
+   "name": "基金会中心网·动态",
+   "kind": "json_list",
+   "config": {
+    "url": "https://api.foundationcenter.org.cn/api/HomeAPI/News",
+    "method": "POST",
+    "bodyJson": {
+     "Id": 12
+    },
+    "headers": {
+     "Referer": "https://www.foundationcenter.org.cn/"
+    },
+    "itemsPath": "data.NewList",
+    "titlePaths": [
+     "Title"
+    ],
+    "urlTemplate": "{raw:Url}",
+    "publishedAtPath": "PublishDate",
+    "_aihot": {
+     "initialBackfillLimit": 12,
+     "initialBackfillMonths": 36
+    }
+   },
+   "tier": "T1_5",
+   "first_party": true,
+   "owner_entity_id": "foundation-center",
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "机构",
+    "研究"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cca-federation-news",
+   "name": "中国慈善联合会·联合会动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://charityalliance.org.cn/dl/771e1p1pcD.html",
+    "itemSelector": ".xwin1z > a",
+    "titleSelector": "h2",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://charityalliance.org.cn/ds/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "china-charity-federation",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-nandu-org-news",
+   "name": "南都公益基金会·机构动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.naradafoundation.org/category/32",
+    "itemSelector": "#list-content .media",
+    "linkSelector": ".media-heading a",
+    "publishedAtSelector": ".time",
+    "allowUrlPrefixes": [
+     "https://www.naradafoundation.org/content/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "south-metro-public-welfare",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "rss-oxfam",
+   "name": "Oxfam 乐施会·新闻",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.oxfam.org/en/rss.xml",
+    "allowUrlPrefixes": [
+     "https://www.oxfam.org/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1_5",
+   "first_party": true,
+   "owner_entity_id": "oxfam",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "海外",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "rss-givedirectly",
+   "name": "GiveDirectly·动态",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.givedirectly.org/feed",
+    "allowUrlPrefixes": [
+     "https://www.givedirectly.org/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": "givedirectly",
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "海外",
+    "捐赠"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-savethechildren-cn",
+   "name": "救助儿童会中国·最新进展",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.savethechildren.org.cn/news_0",
+    "itemSelector": "ul.index_news_list > li",
+    "linkSelector": "a",
+    "titleSelector": ".index_news_list_h1",
+    "publishedAtSelector": ".index_news_list_h2",
+    "allowUrlPrefixes": [
+     "http://www.savethechildren.org.cn/news/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12,
+     "initialBackfillMonths": 36
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "save-the-children",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cctf-news",
+   "name": "中国儿童少年基金会·动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cctf.org.cn/news/",
+    "itemSelector": ".video_list li",
+    "linkSelector": "h3 a",
+    "titleSelector": "h3 a",
+    "publishedAtSelector": "p.date",
+    "allowUrlPrefixes": [
+     "https://www.cctf.org.cn/news/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12,
+     "initialBackfillMonths": 36
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "cctf",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-moe-news",
+   "name": "教育部·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/",
+    "itemSelector": "#list li",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "http://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-education",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "政策"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-court-spc-news",
+   "name": "最高人民法院·新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.court.gov.cn/zixun/gengduo/24.html",
+    "itemSelector": ".sec_list li",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "publishedAtSelector": "i.date",
+    "allowUrlPrefixes": [
+     "http://www.court.gov.cn/zixun/xiangqing/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "supreme-people-court",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "法治"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "json-women-wq",
+   "name": "全国妇联·依法维权",
+   "kind": "json_list",
+   "config": {
+    "url": "https://www.women.org.cn/5524//5528/NewsList_0.json",
+    "itemsPath": "info",
+    "titlePaths": [
+     "ovtitle",
+     "title"
+    ],
+    "urlTemplate": "{raw:url}",
+    "publishedAtPath": "issueTime",
+    "summaryPaths": [
+     "description"
+    ],
+    "externalIdPath": "id",
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "维权"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-onefoundation-news",
+   "name": "壹基金·最新活动",
+   "kind": "web_list",
+   "config": {
+    "url": "https://onefoundation.cn/news/",
+    "itemSelector": "a[share-title]",
+    "linkSelector": "a",
+    "titleSelector": "h2",
+    "publishedAtSelector": "time",
+    "allowUrlPrefixes": [
+     "https://onefoundation.cn/news/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12,
+     "initialBackfillMonths": 36
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "one-foundation",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cfpa-news",
+   "name": "中国乡村发展基金会·机构新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "http://cfpa.org.cn/news/news.aspx",
+    "itemSelector": ".main_list li.clearfix",
+    "linkSelector": "a",
+    "titleSelector": "h3",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "http://cfpa.org.cn/news/news_detail.aspx"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12,
+     "initialBackfillMonths": 36
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "china-rural-development-foundation",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "机构"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "rss-un-news",
+   "name": "联合国新闻（中文）",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml",
+    "allowUrlPrefixes": [
+     "https://news.un.org/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "海外",
+    "政策"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mee-hjyw",
+   "name": "生态环境部·环保要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.mee.gov.cn/ywdt/hjywnews/",
+    "itemSelector": "dl dt",
+    "linkSelector": "a.cjcx_biaobnan",
+    "titleSelector": "a.cjcx_biaobnan",
+    "publishedAtSelector": "span.cjcx_shijian",
+    "allowUrlPrefixes": [
+     "http://www.mee.gov.cn/ywdt/hjywnews/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-ecology-environment",
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "官方",
+    "政策",
+    "环境"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mee-xwfb",
+   "name": "生态环境部·新闻发布",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.mee.gov.cn/ywdt/xwfb/",
+    "itemSelector": "dl dt",
+    "linkSelector": "a.cjcx_biaobnan",
+    "titleSelector": "a.cjcx_biaobnan",
+    "publishedAtSelector": "span.cjcx_shijian",
+    "allowUrlPrefixes": [
+     "http://www.mee.gov.cn/ywdt/xwfb/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "ministry-of-ecology-environment",
+   "participation_mode": "editorial",
+   "interval_minutes": 300,
+   "tags": [
+    "官方",
+    "环境",
+    "数据"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mee-zcwj",
+   "name": "生态环境部·政策文件",
+   "kind": "web_list",
+   "config": {
+    "url": "http://www.mee.gov.cn/zcwj/",
+    "itemSelector": "ul li:has(a[href$='.shtml']), ul li:has(a[href$='.html'])",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "allowUrlPrefixes": [
+     "http://www.mee.gov.cn/zcwj/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12
+    },
+    "publishedAtSelector": "span.date"
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "官方",
+    "政策",
+    "环境"
+   ],
+   "site_fulltext": true,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cwdf-news",
+   "name": "中国妇女发展基金会·本会新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26",
+    "itemSelector": ".benhuixinwen > ul > li",
+    "linkSelector": ".benhuixinwenli21 a[title]",
+    "titleFromAttribute": true,
+    "publishedAtSelector": ".benhuixinwenli23 span",
+    "allowUrlPrefixes": [
+     "https://www.cwdf.org.cn/index.php?m=content&c=index&a=show&catid=26"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 20
+    }
+   },
+   "tier": "T1_5",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 180,
+   "tags": [
+    "机构动态",
+    "性别平等"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cdpf-news",
+   "name": "中国残联·残联要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cdpf.org.cn/xwzx/clyw2/index.htm",
+    "itemSelector": "ul.subRightList > li",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://www.cdpf.org.cn/xwzx/clyw2/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "china-disabled-persons-federation",
+   "participation_mode": "editorial",
+   "interval_minutes": 120,
+   "tags": [
+    "官方",
+    "残障融合"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-mem-emergency-news",
+   "name": "应急管理部·应急要闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.mem.gov.cn/xw/yjyw/",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "publishedAtSelector": "span",
+    "allowUrlPrefixes": [
+     "https://www.mem.gov.cn/xw/yjyw/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 120,
+   "tags": [
+    "官方",
+    "应急救援"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "web-cac-policy",
+   "name": "中国网信网·政策法规",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cac.gov.cn/wxzw/zcfg/A093703index_1.htm",
+    "itemSelector": "li",
+    "linkSelector": "a",
+    "titleSelector": "a",
+    "publishedAtSelector": "span",
+    "publishedAtRegex": "(\\d{4}-\\d{2}-\\d{2})",
+    "allowUrlPrefixes": [
+     "https://www.cac.gov.cn/20"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 180,
+   "tags": [
+    "官方",
+    "网络保护",
+    "政策"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false
+  },
+  {
+   "id": "xhs-search-charity-project",
+   "name": "小红书 · 公益项目",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra_xhs",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "困境儿童 资助",
+     "date_range": "last_7_days",
+     "sort": "newest"
+    },
+    "summaryIsBody": true,
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益项目",
+      "公益活动",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "义工",
+      "乡村振兴",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "月捐",
+      "配捐",
+      "99公益日",
+      "困境",
+      "受助",
+      "留守儿童",
+      "孤儿",
+      "资助",
+      "困境儿童"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "护肤",
+      "减肥",
+      "课程",
+      "训练营",
+      "招生",
+      "招聘",
+      "塔罗",
+      "星座",
+      "考研",
+      "备考",
+      "上岸",
+      "私信",
+      "团购",
+      "招募",
+      "接单",
+      "副业",
+      "变现",
+      "应援",
+      "粉丝",
+      "生日",
+      "打卡",
+      "抽奖",
+      "同款",
+      "代购",
+      "返图",
+      "开箱",
+      "积分",
+      "明星",
+      "周边",
+      "拼团"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "小红书",
+    "关键词"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "requireMarkers": [
+     "基金会",
+     "协会",
+     "学会",
+     "团委",
+     "妇联",
+     "红十字会",
+     "慈善会",
+     "公益项目",
+     "救助项目",
+     "计划",
+     "政策",
+     "通知",
+     "公示",
+     "政府"
+    ],
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "xhs-search-rural-revitalization",
+   "name": "小红书 · 乡村振兴",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra_xhs",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "乡村振兴",
+     "date_range": "last_7_days",
+     "sort": "newest"
+    },
+    "summaryIsBody": true,
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿",
+      "义工",
+      "乡村振兴",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "月捐",
+      "配捐",
+      "99公益日"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "护肤",
+      "减肥",
+      "课程",
+      "训练营",
+      "招生",
+      "招聘",
+      "塔罗",
+      "星座",
+      "考研",
+      "备考",
+      "上岸",
+      "私信",
+      "团购",
+      "招募",
+      "接单",
+      "副业",
+      "变现"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "小红书",
+    "关键词"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "requireMarkers": [
+     "基金会",
+     "协会",
+     "学会",
+     "团委",
+     "妇联",
+     "红十字会",
+     "慈善会",
+     "公益项目",
+     "救助项目",
+     "计划",
+     "政策",
+     "通知",
+     "公示",
+     "政府"
+    ],
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "xhs-search-elderly-care",
+   "name": "小红书 · 养老助老",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra_xhs",
+    "everyinfraAction": "search",
+    "everyinfraParams": {
+     "keyword": "养老 公益",
+     "date_range": "last_7_days",
+     "sort": "newest"
+    },
+    "summaryIsBody": true,
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿",
+      "义工",
+      "乡村振兴",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "月捐",
+      "配捐",
+      "99公益日"
+     ],
+     "dropMarkers": [
+      "带货",
+      "好物",
+      "护肤",
+      "减肥",
+      "课程",
+      "训练营",
+      "招生",
+      "招聘",
+      "塔罗",
+      "星座",
+      "考研",
+      "备考",
+      "上岸",
+      "私信",
+      "团购",
+      "招募",
+      "接单",
+      "副业",
+      "变现"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "小红书",
+    "关键词"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "requireMarkers": [
+     "基金会",
+     "协会",
+     "学会",
+     "团委",
+     "妇联",
+     "红十字会",
+     "慈善会",
+     "公益项目",
+     "救助项目",
+     "计划",
+     "政策",
+     "通知",
+     "公示",
+     "政府"
+    ],
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-save-the-children",
+   "name": "公众号 · 救助儿童会北京代表处",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_ae5dedc87e58"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": "save-the-children",
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-unicef",
+   "name": "公众号 · 联合国儿童基金会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_1bee427990af"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-cctf",
+   "name": "公众号 · 中国儿童少年基金会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_33dbee28e97c"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-ccafc",
+   "name": "公众号 · 中华儿慈会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_9cf7080ed716"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-red-cross",
+   "name": "公众号 · 中国红十字会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_79453fdac36e"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-charity-alliance",
+   "name": "公众号 · 中国慈善联合会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_0e8ff12a04aa"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-cydf",
+   "name": "公众号 · 中国青少年发展基金会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_19af03fe3336"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "wechat-oa-cfrf",
+   "name": "公众号 · 中国乡村发展基金会",
+   "kind": "json_list",
+   "config": {
+    "adapter": "everyinfra",
+    "everyinfraPlatform": "wechat_oa",
+    "everyinfraAction": "account_articles",
+    "everyinfraParams": {
+     "account": "gh_dbcd4e3548a0"
+    },
+    "_aihot": {
+     "initialBackfillLimit": 10
+    }
+   },
+   "tier": "T2",
+   "first_party": false,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "公众号",
+    "EveryInfra",
+    "source-review-2026-10-21"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "scoreByCategory": {
+     "project": 20,
+     "policy": 18
+    },
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  }
+ ]
 }

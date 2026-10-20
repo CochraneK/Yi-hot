@@ -16,7 +16,9 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
     ...COLLECTED, "url", "mode", "method", "headers", "bodyJson", "jsonKey", "windowVar", "itemsPath", "itemsObjectValues",
     "titlePaths", "summaryPaths", "summaryIsBody", "authorPaths", "publishedAtPath", "publishedAtUnit", "externalIdPath",
     "urlTemplate", "urlTemplateFallback", "rawDropKeys", "requireBoolean", "minNumeric",
-    "adapter", "everyinfraAction", "everyinfraParams", "everyinfraDetail",
+    // adapter=everyinfra 时由 everyinfraPlatform 指定平台（xiaohongshu / wechat_oa / weibo …），
+    // 新平台只加配置、不改代码；everyinfra_xhs 是只接小红书时的老写法。
+    "adapter", "everyinfraPlatform", "everyinfraAction", "everyinfraParams", "everyinfraDetail",
   ],
   // X accounts are mostly read in shards, which apply only these.
   x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType"],
@@ -39,7 +41,7 @@ const NESTED: Record<string, string[]> = {
 };
 
 const VALUES: Record<string, string[]> = {
-  adapter: ["mimo_home", "everyinfra_xhs"],
+  adapter: ["mimo_home", "everyinfra_xhs", "everyinfra"],
   parseMode: ["html", "markdown", "docusaurus_changelog"],
 };
 

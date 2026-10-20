@@ -692,6 +692,216 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "xhs-search-charity-project",
+      "name": "小红书 · 公益项目",
+      "kind": "json_list",
+      "config": {
+        "adapter": "everyinfra_xhs",
+        "everyinfraAction": "search",
+        "everyinfraParams": {
+          "keyword": "公益项目",
+          "date_range": "last_7_days",
+          "sort": "newest"
+        },
+        "summaryIsBody": true,
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "公益",
+            "慈善",
+            "捐赠",
+            "募捐",
+            "基金会",
+            "志愿",
+            "义工",
+            "乡村振兴",
+            "帮扶",
+            "救助",
+            "助学",
+            "敬老",
+            "月捐",
+            "配捐",
+            "99公益日"
+          ],
+          "dropMarkers": [
+            "带货",
+            "好物",
+            "护肤",
+            "减肥",
+            "课程",
+            "训练营",
+            "招生",
+            "招聘",
+            "塔罗",
+            "星座",
+            "考研",
+            "备考",
+            "上岸",
+            "私信",
+            "团购",
+            "招募",
+            "接单",
+            "副业",
+            "变现"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "小红书",
+        "关键词"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "xhs-search-rural-revitalization",
+      "name": "小红书 · 乡村振兴",
+      "kind": "json_list",
+      "config": {
+        "adapter": "everyinfra_xhs",
+        "everyinfraAction": "search",
+        "everyinfraParams": {
+          "keyword": "乡村振兴",
+          "date_range": "last_7_days",
+          "sort": "newest"
+        },
+        "summaryIsBody": true,
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "公益",
+            "慈善",
+            "捐赠",
+            "募捐",
+            "基金会",
+            "志愿",
+            "义工",
+            "乡村振兴",
+            "帮扶",
+            "救助",
+            "助学",
+            "敬老",
+            "月捐",
+            "配捐",
+            "99公益日"
+          ],
+          "dropMarkers": [
+            "带货",
+            "好物",
+            "护肤",
+            "减肥",
+            "课程",
+            "训练营",
+            "招生",
+            "招聘",
+            "塔罗",
+            "星座",
+            "考研",
+            "备考",
+            "上岸",
+            "私信",
+            "团购",
+            "招募",
+            "接单",
+            "副业",
+            "变现"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "小红书",
+        "关键词"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "xhs-search-elderly-care",
+      "name": "小红书 · 养老助老",
+      "kind": "json_list",
+      "config": {
+        "adapter": "everyinfra_xhs",
+        "everyinfraAction": "search",
+        "everyinfraParams": {
+          "keyword": "养老 公益",
+          "date_range": "last_7_days",
+          "sort": "newest"
+        },
+        "summaryIsBody": true,
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "公益",
+            "慈善",
+            "捐赠",
+            "募捐",
+            "基金会",
+            "志愿",
+            "义工",
+            "乡村振兴",
+            "帮扶",
+            "救助",
+            "助学",
+            "敬老",
+            "月捐",
+            "配捐",
+            "99公益日"
+          ],
+          "dropMarkers": [
+            "带货",
+            "好物",
+            "护肤",
+            "减肥",
+            "课程",
+            "训练营",
+            "招生",
+            "招聘",
+            "塔罗",
+            "星座",
+            "考研",
+            "备考",
+            "上岸",
+            "私信",
+            "团购",
+            "招募",
+            "接单",
+            "副业",
+            "变现"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "小红书",
+        "关键词"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

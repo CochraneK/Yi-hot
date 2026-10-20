@@ -50,7 +50,7 @@ test("the guide lists every ability; unknown parameters are refused", async () =
   const guide = await get("/api/v1/agent");
   assert.equal(guide.status, 200);
   assert.match(guide.type, /text\/markdown/);
-  for (const p of ["/api/v1/agent/latest", "/api/v1/agent/search?q=", "/api/v1/agent/hot", "/api/v1/agent/daily", "/api/v1/agent/weekly", "/api/v1/agent/monthly", "category=research", "12356"]) {
+  for (const p of ["/api/v1/agent/latest", "/api/v1/agent/search?q=", "/api/v1/agent/hot", "/api/v1/agent/daily", "/api/v1/agent/weekly", "/api/v1/agent/monthly", "category=policy", "12356"]) {
     assert.ok(guide.body.includes(p), `the guide mentions ${p}`);
   }
   assert.equal((await get("/api/v1/agent?x=1")).status, 400);

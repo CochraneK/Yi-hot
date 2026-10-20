@@ -370,7 +370,7 @@ LLM_EXTRA_JSON={"enable_thinking":false}
 | --- | --- | --- | --- |
 | RSS/Atom | 媒体、机构更新 | worker 定时读取 | feed 停更、日期不规范 |
 | 网站列表 | 政府部门、机构官网 | 列表页与详情页解析 | 网站改版、验证码、403 |
-| 微信公众号 | 公益时报、机构公众号 | WeRSS 和微信读书兼容层 | 登录失效、微信频控 |
+| 微信公众号 | 公益时报、机构公众号 | WeRSS（web 模式，每 3 天扫码） | 登录失效、微信频控 |
 | 邮件简报 | AmCham、慈善纪事简报 | QQ IMAP 发件人白名单 | 授权码失效、模板变化 |
 | 外部推送 | 受控采集脚本 | `POST /api/ingest/items` | token 泄露、错误数据 |
 
@@ -397,7 +397,7 @@ ssh -N -L 18001:127.0.0.1:18001 <服务器用户>@<服务器地址>
 
 然后打开 <http://127.0.0.1:18001>，使用 `/opt/werss/.env` 中的管理账号登录。验收必须同时确认：扫码成功、账号已添加、feed 有真实条目、Yi-Hot 能预览和入库、日期及原文链接正确。详见 [`docs/WERSS_DEPLOY.md`](docs/WERSS_DEPLOY.md)。
 
-扫码会话**登录后固定 4 天过期**，重新扫码也不会延长，因此按**每 3 天**一次维护；微信读书 Cookie 约 2 小时失效且不会自动续期。若考虑改用付费接口（EveryInfra / 极致了）替代自建，先读 [`docs/PAID_CHANNEL_PROVIDERS.md`](docs/PAID_CHANNEL_PROVIDERS.md)。
+扫码会话**登录后固定 4 天过期**，重新扫码也不会延长，因此按**每 3 天**一次维护。日常不用记命令：双击 `tools/werss/werss-scan.cmd` 会自动建隧道并打开管理端，点「刷新授权」扫码，再逐个公众号点「刷新」；用 `tools/werss/werss-status.cmd` 复核新鲜度。采集模式已于 2026-10-20 切回 `web`，微信读书那条路（约 2 小时失效）已停用。若考虑改用付费接口（EveryInfra / 极致了）替代自建，先读 [`docs/PAID_CHANNEL_PROVIDERS.md`](docs/PAID_CHANNEL_PROVIDERS.md)。
 
 ### 邮件来源
 
@@ -669,7 +669,7 @@ console.log(data.items);
 
 | 频率 | 检查内容 | 正常表现 |
 | --- | --- | --- |
-| **每 3 天** | **公众号扫码会话** | **重新扫码后 `feeds.sync_time` 前移，feed 最新条目在 3 天内**（微信会话 4 天硬过期，见 `docs/WERSS_DEPLOY.md`） |
+| **每 3 天** | **公众号扫码会话** | **双击 `tools/werss/werss-scan.cmd` → 「刷新授权」扫码 → 逐号点「刷新」→ `werss-status.cmd` 全绿**（微信会话 4 天硬过期，见 `docs/WERSS_DEPLOY.md`） |
 | 每周 | 首页、动态、主题、总报 | 最近几天有内容，日期和链接合理 |
 | 每周 | 后台运行与信源 | worker 持续运行，无成片失败 |
 | 每周 | 各来源内容新鲜度 | 每个启用来源的最新发布日期在预期周期内；**feed 返回 200 但长期没有新条目要当故障处理** |
@@ -706,18 +706,17 @@ curl -fsS http://127.0.0.1/yihot/api/health
 cd /opt/werss
 sudo docker compose -f compose.yml -f compose.weread.yml ps
 sudo docker compose -f compose.yml -f compose.weread.yml logs --tail=80
-systemctl status yihot-weread.timer
-journalctl -u yihot-weread.service -n 80 --no-pager
+sudo docker exec yihot-werss-werss-1 env | grep GATHER.MODEL   # 应为 web
 ```
 
-微信返回频控时不要反复刷新；登录失效时通过 SSH 隧道重新扫码。
+微信返回频控时不要反复刷新；登录失效时双击 `tools/werss/werss-scan.cmd`（或走 SSH 隧道 `ssh -N -L 18001:127.0.0.1:18001 yihot`），点「刷新授权」重新扫码。日常新鲜度检查用 `tools/werss/werss-status.cmd`。
 
 **停更排查按这个顺序**（feed 返回 200 不等于在采集）：
 
-1. WeRSS 的 `feeds.sync_time` 是否还停在几天前；
+1. `werss-status.cmd` 里「最后同步」是否还停在几天前、公众平台会话是否「已过期」；
 2. feed 最新条目的 `pubDate` 是否是近期；
-3. 是否被强制走微信读书通道并在报 `-2012 登录超时`；
-4. 手动刷新一次，看 `sync_time` 与文章数是否变化。
+3. 采集模式是否是 `web`（2026-10-20 起应为 web；若是 `weread_mp` 说明配置被改回，那条路 2 小时就失效）；
+4. 扫码后是否对每个号点了「刷新」——只扫码不刷新不会拉取新文章。
 
 扫码会话是**登录后固定 4 天硬过期**，建议**每 3 天扫一次**并检查内容新鲜度。完整的判定命令见 `docs/WERSS_DEPLOY.md`「会话有效期与扫码节奏」。付费第三方通道（EveryInfra / 极致了）的取舍见 `docs/PAID_CHANNEL_PROVIDERS.md`。
 
@@ -1033,7 +1032,7 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 6. 预览日期、标题、原文短链和摘要。
 7. 立即采集少量样本，核对公开结果后启用。
 
-不要复制 WeRSS 后台 API 地址。微信会话失效时重新扫码，不需要重建 Yi-Hot 来源。扫码会话固定 4 天过期，**按每 3 天一次维护**；扫码后必须确认 feed 最新条目在 3 天内，不能只看接口是否可访问。
+不要复制 WeRSS 后台 API 地址。微信会话失效时重新扫码，不需要重建 Yi-Hot 来源。扫码会话固定 4 天过期，**按每 3 天一次维护**；扫码后必须在文章页对每个号点「刷新」，并确认 feed 最新条目在 3 天内，不能只看接口是否可访问。一键入口：`tools/werss/werss-scan.cmd`。
 
 ### 邮件来源
 
@@ -1141,7 +1140,7 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 
 2026-10-19 曾因重建时只加载基础 Compose 和网页代理覆盖、漏掉 `compose.werss.yml`，导致 worker 解析不到 `werss`。恢复时必须同时加载 `docker-compose.yml`、`compose.futureme-proxy.yml` 和 `compose.werss.yml`；两处公众号随后手动采集成功，健康状态恢复为 `ok`。
 
-**2026-10-20 复核：这张表只代表「已登记」，不代表「在持续采集」。** WeRSS 自身没有定时刷新任务（`message_tasks` 表 0 行，启动日志打印「没有任务」），两个公众号的 `feeds.sync_time` 从 10-13 08:52 / 09:24 起冻结，爱德传一从未同步；微信读书兼容层 86 次运行失败 84 次。恢复需先重新扫码，之后按**每 3 天**一次维护。
+**2026-10-20 复核：这张表只代表「已登记」，不代表「在持续采集」。** WeRSS 自身没有定时刷新任务（`message_tasks` 表 0 行，启动日志打印「没有任务」），两个公众号的 `feeds.sync_time` 从 10-13 08:52 / 09:24 起冻结，爱德传一从未同步；微信读书兼容层 86 次运行失败 84 次。当日已把 `GATHER.MODEL` 切回 `web` 并停用 `yihot-weread.timer`；恢复采集需先扫码，之后按**每 3 天**一次维护。
 
 ### 新增微信公众号 RSS：逐步点击教程
 
@@ -1173,9 +1172,11 @@ ssh -N -L 28001:127.0.0.1:18001 <服务器用户>@49.233.72.222
 
 #### 第 2 步：确认微信登录仍有效
 
-在 WeRSS 管理页检查微信公众平台或微信读书登录状态。失效时点击相应登录入口，用具备权限的微信扫码并在手机确认。扫码二维码只用于这次服务器会话，不要截图发给他人。
+在 WeRSS 管理页点顶部**「刷新授权」**（扫描图标），用公众号管理员微信扫码并在手机确认。**不要点「微信读书授权」**——那条路约 2 小时失效，2026-10-20 起已停用。扫码二维码只用于这次服务器会话，不要截图发给他人。
 
-如果出现 `200013: freq control`，停止反复刷新，等待一段时间后由定时任务重试。扫码成功不等于采集成功。
+登录态在**登录后固定 4 天**过期，扫码不会延长已有会话；按每 3 天一次维护。扫码成功不等于采集成功，还要在文章页对每个号点一次「刷新」。日常可直接双击 `tools/werss/werss-scan.cmd`，它会自动建隧道并打开页面。
+
+如果出现 `200013: freq control`，停止反复刷新，等待一段时间后再试。
 
 #### 第 3 步：搜索并添加公众号
 
@@ -1460,7 +1461,7 @@ Yi-Hot 核心服务使用 Docker Compose，满足条件的 NAS 可以运行。�
 
 核心可以从 `docker-compose.yml` 开始，公众号采集再加入 `compose.werss.yml`。NAS GUI 导入 Compose 时要确认它没有改写 volume 名、网络名、健康检查或 `stop_grace_period`。
 
-Synology/QNAP 等 NAS 未必使用 systemd。邮件采集、邮件投递和微信读书兼容任务可以用 NAS 计划任务调用一次性容器，或新增常驻调度容器。无论采用哪种方式，都要满足：
+Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以用 NAS 计划任务调用一次性容器，或新增常驻调度容器。无论采用哪种方式，都要满足：
 
 - 同一任务同一时刻只有一个实例；
 - 配置和状态目录持久化；

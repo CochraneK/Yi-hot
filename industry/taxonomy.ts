@@ -116,6 +116,14 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
   "ministry-of-civil-affairs": { name: "民政部", displayTag: "民政部", aliases: ["民政部"] },
   "ministry-of-ecology-environment": { name: "生态环境部", displayTag: "生态环境部", aliases: ["生态环境部", "环保部", "环境保护部", "黄润秋"] },
   "save-the-children": { name: "救助儿童会", displayTag: "救助儿童会", aliases: ["救助儿童会", "Save the Children", "国际救助儿童会"] },
+  // 以下 6 个此前在 industry/sources.json 里已设 owner_entity_id，但实体未登记，导致归属不生效。
+  // 这些信源都是机构自有的一手栏目（first_party），登记后其动态才进入对应机构主题。
+  "ministry-of-education": { name: "教育部", displayTag: "教育部", aliases: ["教育部"] },
+  "supreme-people-court": { name: "最高人民法院", displayTag: "最高人民法院", aliases: ["最高人民法院", "最高法"] },
+  "cctf": { name: "中国儿童少年基金会", displayTag: "中国儿童少年基金会", aliases: ["中国儿童少年基金会", "儿基会"] },
+  "china-disabled-persons-federation": { name: "中国残联", displayTag: "中国残联", aliases: ["中国残联", "中国残疾人联合会"] },
+  "oxfam": { name: "乐施会", displayTag: "乐施会", aliases: ["乐施会", "Oxfam"] },
+  "givedirectly": { name: "GiveDirectly", displayTag: "GiveDirectly", aliases: ["GiveDirectly"] },
 };
 
 /**

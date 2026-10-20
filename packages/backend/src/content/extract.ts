@@ -16,10 +16,23 @@ export interface ExtractedBody {
   html: string;
   text: string;
   images: Array<{ kind: "image"; url: string; width: number | null; height: number | null }>;
-  via: "readability" | "jina";
+  via: "readability" | "selector" | "jina";
 }
 
 const MIN_BODY_CHARS = 200;
+
+/**
+ * Containers the CMSes behind Chinese government and foundation sites put their article text in
+ * (TRS/WCM editors, and the generic names the rest use). Readability scores a whole document and gives
+ * up on some of these layouts — a TRS page whose paragraphs all sit in one styled div scores below its
+ * threshold — while the container itself is unambiguous. Tried only after Readability returns nothing,
+ * longest match wins, so a page Readability already reads is never re-cut.
+ */
+const BODY_SELECTORS = [
+  ".trs_editor_view", ".TRS_Editor", ".trs_editor", "#docContent", ".docContent",
+  "#zoom", ".article-content", ".article_content", ".articleContent", "#articleContent",
+  ".content_main", ".view-content", "#content", ".content", "article", "#view", ".view",
+];
 
 export function readable(html: string, url: string): ExtractedBody | null {
   const { document } = parseHTML(html);
@@ -31,10 +44,10 @@ export function readable(html: string, url: string): ExtractedBody | null {
     // no head
   }
   const article = new Readability(document as unknown as ConstructorParameters<typeof Readability>[0], { charThreshold: MIN_BODY_CHARS, keepClasses: false }).parse();
-  if (!article?.content) return null;
+  if (!article?.content) return bySelector(document, url);
   const clean = trimTrailingChrome(sanitizeBody(article.content, url));
   const text = stripTags(clean);
-  if (text.length < MIN_BODY_CHARS) return null;
+  if (text.length < MIN_BODY_CHARS) return bySelector(document, url);
   const images: ExtractedBody["images"] = [];
   for (const m of clean.matchAll(/<img\b[^>]*\bsrc="([^"]+)"[^>]*>/gi)) {
     const w = /\bwidth="(\d+)"/.exec(m[0]);
@@ -43,6 +56,27 @@ export function readable(html: string, url: string): ExtractedBody | null {
     if (images.length >= 12) break;
   }
   return { html: clean, text, images, via: "readability" };
+}
+
+/** The first article container on the page, when Readability found nothing usable. */
+type BodyCandidate = { textContent: string | null; innerHTML: string };
+
+function bySelector(document: ReturnType<typeof parseHTML>["document"], url: string): ExtractedBody | null {
+  // Ordered by precision: an editor-specific container wins over the generic `.content` that often
+  // wraps the headline, the byline and the share buttons as well.
+  for (const selector of BODY_SELECTORS) {
+    let nodes: BodyCandidate[];
+    try { nodes = [...document.querySelectorAll(selector)] as unknown as BodyCandidate[]; } catch { continue; }
+    for (const el of nodes) {
+      const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+      if (text.length < MIN_BODY_CHARS) continue;
+      const clean = trimTrailingChrome(sanitizeBody(el.innerHTML, url));
+      const body = stripTags(clean);
+      if (body.length < MIN_BODY_CHARS) continue;
+      return { html: clean, text: body, images: [], via: "selector" };
+    }
+  }
+  return null;
 }
 
 function markdownToHtml(md: string): string {

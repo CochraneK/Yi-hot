@@ -132,7 +132,7 @@ flowchart LR
 
 本项目基于 **[KKKKhazix/AIHOT](https://github.com/KKKKhazix/AIHOT)** 的 MIT 许可代码定制。感谢 AIHOT 的原始作者和开源贡献者。本仓库保留原始 [LICENSE](LICENSE)、[NOTICE](NOTICE) 和 [第三方归属说明](THIRD_PARTY_NOTICES.md)。AIHOT 的商标、名称及 Logo 不因代码许可而自动获得授权；救助儿童会及新闻来源的名称、标识和内容亦各有权利归属。
 
-Agent 接入（`/api/v1/agent` 的 Markdown 回答层、站内可分发的 Agent Skill 包）、付费采集通道的适配写法，以及日报与热点的“单一信源席位上限”，来自同框架的姊妹项目 **[PsyHOT](https://github.com/zhangheqing11/PsyHOT)**（MIT，心理学方向），已按公益场景重写；致谢其作者。同类项目的写法取舍见 [docs/RELATED_PROJECTS.md](docs/RELATED_PROJECTS.md)。
+Agent 接入（`/api/v1/agent` 的 Markdown 回答层、站内可分发的 Agent Skill 包）与付费采集通道（EveryInfra）的适配写法，来自同框架的姊妹项目 **[PsyHOT](https://github.com/zhangheqing11/PsyHOT)**（MIT，心理学方向），已按公益场景重写。这两处是 PsyHOT 在 AIHOT 框架之外自己加的东西，AIHOT 本体没有；其余采集、归并、发布、报告与后台均来自 AIHOT。逐文件清单见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，同类项目的写法取舍见 [docs/RELATED_PROJECTS.md](docs/RELATED_PROJECTS.md)。
 
 ---
 

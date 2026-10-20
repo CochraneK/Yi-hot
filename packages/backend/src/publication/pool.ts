@@ -54,6 +54,10 @@ export async function withSearchCapacity<T>(fn: (db: Db) => Promise<T>): Promise
 export function searchTerms(q: string): string[] {
   return q
     .toLowerCase()
+    // "多模态RAG" means 多模态 and rag: split where Han meets a Latin word. Digits alone stay attached,
+    // so "10月" is still one term rather than 10 and 月.
+    .replace(/(\p{Script=Han})(?=[a-z])/gu, "$1 ")
+    .replace(/([a-z][a-z0-9]*)(?=\p{Script=Han})/gu, "$1 ")
     .split(/\s+/)
     .map((t) => t.trim())
     .filter(Boolean)
@@ -72,13 +76,20 @@ export function directMatchCondition(terms: string[]) {
  * the start of a body whose full text may be shown, as the API documents it ("title / Chinese
  * title / Chinese summary / body"). Results stay in time order.
  */
+/** A plain Latin or digit term must start a word in the body: "rag" is not inside "storage". */
+function bodyTermMatch(t: string) {
+  const like = sql`ps.body LIKE ${"%" + t + "%"}`;
+  // Escaped terms ("qx\%") and Chinese terms keep the plain substring rule.
+  return /^[a-z0-9]+$/.test(t) ? sql`${like} AND ps.body ~ ${"(^|[^a-z0-9])" + t}` : like;
+}
+
 export function publicMatchCondition(terms: string[]) {
   if (terms.length === 0) return sql``;
   // Keep the body lookup correlated to the time-ordered candidates. Without OFFSET 0, PostgreSQL
   // may hash every matching body in pool_search before serving even the first 40 recent items.
   return terms.reduce(
     (acc, t) => sql`${acc} AND (p.search_text LIKE ${"%" + t + "%"} OR EXISTS (
-      SELECT 1 FROM pool_search ps WHERE ps.article_id = p.article_id AND ps.body LIKE ${"%" + t + "%"} OFFSET 0))`,
+      SELECT 1 FROM pool_search ps WHERE ps.article_id = p.article_id AND ${bodyTermMatch(t)} OFFSET 0))`,
     sql``,
   );
 }
@@ -198,18 +209,22 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
         FULL JOIN (SELECT article_id FROM pool_search WHERE body LIKE ${"%" + terms[0]! + "%"}) b ON b.article_id = d.article_id`
         : sql`SELECT ps.article_id, (${partScore}) AS part FROM pool_search ps WHERE ${anyMatch}`;
       type RankedRow = Omit<ItemRow, "id"> & { id: string | null; rel: number; total: number };
+      // Equal relevance: a published selected item first, then the higher quality score, then the
+      // newest. Relevance has only a few tiers, so without this a low-scoring unselected item could
+      // outrank the selected report of the same event just by being newer.
+      const tie = sql`(CASE WHEN p.selected AND p.visible_after <= ${now} THEN 1000 ELSE 0 END) + coalesce(p.score, 0)`;
       const result = await db<RankedRow[]>`
         WITH matches AS ${splitFields ? sql`MATERIALIZED` : sql`NOT MATERIALIZED`} (${matches}), scored AS MATERIALIZED (
-          SELECT p.article_id, coalesce(p.published_at, p.timeline_at) AS display_at, matches.part + (${titleScore}) AS rel
+          SELECT p.article_id, coalesce(p.published_at, p.timeline_at) AS display_at, matches.part + (${titleScore}) AS rel, ${tie} AS tie
           FROM matches JOIN publications p ON p.article_id = matches.article_id JOIN sources s ON s.id = p.source_id
           WHERE ${listedCondition(now)} AND p.eligible ${filters}
         ), page AS MATERIALIZED (
-          SELECT article_id, rel FROM scored ORDER BY rel DESC, display_at DESC, article_id DESC
+          SELECT article_id, rel, tie FROM scored ORDER BY rel DESC, tie DESC, display_at DESC, article_id DESC
           LIMIT ${POOL_PAGE_SIZE} OFFSET ${offset}
         ), total AS (SELECT count(*) AS n FROM (SELECT 1 FROM scored LIMIT ${cap}) capped)
         SELECT hydrated.*, total.n AS total FROM total LEFT JOIN LATERAL (
-          SELECT ${ITEM_COLUMNS}, page.rel ${ITEM_FROM} JOIN page ON page.article_id = p.article_id
-        ) hydrated ON true ORDER BY hydrated.rel DESC, coalesce(hydrated.published_at, hydrated.timeline_at) DESC, hydrated.id DESC`;
+          SELECT ${ITEM_COLUMNS}, page.rel, page.tie ${ITEM_FROM} JOIN page ON page.article_id = p.article_id
+        ) hydrated ON true ORDER BY hydrated.rel DESC, hydrated.tie DESC, coalesce(hydrated.published_at, hydrated.timeline_at) DESC, hydrated.id DESC`;
       const rows = result.filter((r): r is ItemRow & { rel: number; total: number } => r.id !== null);
       return { rows, total: Number(result[0]!.total) };
     }

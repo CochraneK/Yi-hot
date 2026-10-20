@@ -71,3 +71,13 @@ test("query-identified articles are not mistaken for their index.php listing", (
   const items = fromHtml('<li><a href="/index.php?a=show&catid=26&id=1">一条通过查询参数标识的完整新闻</a></li>', source.config.url, source);
   assert.equal(items.length, 1);
 });
+
+test('"at" between the date and the time joins them like a space', () => {
+  assert.equal(iso("Sep 26, 2026 at 10:30"), "2026-09-26T02:30:00.000Z");
+  assert.equal(iso("Published Sep 26, 2026 at 10:30 AM"), "2026-09-26T02:30:00.000Z");
+  assert.equal(iso("2026-09-26 at 10:30"), "2026-09-26T02:30:00.000Z");
+  assert.equal(iso("March 8, 2026 at 02:30", "+00:00"), "2026-03-08T02:30:00.000Z");
+  // An abbreviated month may end with a period, AP style.
+  assert.equal(iso("Sept. 26, 2026"), "2026-09-25T16:00:00.000Z");
+  assert.equal(iso("26 Sept. 2026"), "2026-09-25T16:00:00.000Z");
+});

@@ -83,6 +83,11 @@ export interface GroupInfo {
   developmentCount: number;
   /** The newest development when it is not the card's own fact: why the card sits where it does. */
   latestDevelopment?: { factId: string; title: string; at: string } | null;
+  /**
+   * The selected reports of this group under the current filters. The timeline's reader-side unread
+   * filter keeps a group while any of them is unread; other callers omit it.
+   */
+  memberIds?: string[];
 }
 
 export interface TimelineCard {

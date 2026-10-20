@@ -168,6 +168,9 @@ export async function loadTimeline(q: TimelineQuery): Promise<Omit<TimelineRespo
       reportCount: new Set(reports.filter((r) => byFact.has(r.fact_id)).map((r) => r.article_id)).size,
       developmentCount: byFact.size,
       latestDevelopment: newest ? { factId: newest.public_id, title: newest.title, at: new Date(firstSeen(newestRows)).toISOString() } : null,
+      // The selected reports this card stands for: the reader-side "unread only" filter keeps the
+      // card while any of them is unread. Bounded, so one large group cannot bloat the payload.
+      memberIds: [...new Set([...byFact.values()].flat().map((m) => m.id))].slice(0, 30),
     };
     const showGroup = group.reportCount > 1 || group.developmentCount > 1;
     planned.push({ key: g.gk, anchorAt: g.anchor_at.toISOString(), id: rep.id, group: showGroup ? group : null });

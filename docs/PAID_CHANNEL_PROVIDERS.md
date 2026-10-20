@@ -76,7 +76,37 @@
 2. **预算耗尽时 `break` 不 `throw`**。保住已经付费的列表结果，用摘要入库，比整批回滚更划算。
 3. **互动数只收 `number` 类型**。`"5"` 这种字符串直接丢弃，否则热度排序会被脏数据带偏。
 
-平台覆盖范围（对全仓库检索）：微博 / 知乎 / B站 / 抖音 **0 命中**。实际只有 xhs（EveryInfra）、公众号（EveryInfra）、X（SocialData）、Bluesky（公共 API）、RSS、web_list、json_list。**不要假设对方覆盖了更多平台。**
+PsyHOT 用到的范围（对全仓库检索）：微博 / 知乎 / B站 / 抖音 **0 命中**，只有 xhs 与公众号。这是**对方仓库**的覆盖面，不是 EveryInfra 的。
+
+### 4. EveryInfra 实际覆盖哪些平台（2026-10-20 查官方能力目录）
+
+`GET https://api.everyinfra.com/api/v1/social/catalog`（无需 key）返回 **90 个平台、413 项能力**，每项带 `required_params`、`mode`、`price_usd`。中文内容平台一个不缺：
+
+| 平台 | 关键能力 | 单价（USD/次） |
+| --- | --- | ---: |
+| `xiaohongshu` 小红书 | `search`、`user_posts`、`note`、`video`、`comments`、`hashtag`、`trending` | 0.00556 |
+| `wechat_oa` 公众号 | `account_articles`（历史文章）、`account_today_articles`（当日）、`article_search`、`article_detail`、`article_metrics`、`wechat_index` | 0.00556 |
+| `weibo` 微博 | `search`、`profile`、`comments`、`trending` | 0.00056 |
+| `zhihu` 知乎 | `search`、`content_detail`、`content_comments`、`user_articles` | 0.00056 |
+| `douyin` 抖音 | `search`、`user_posts`、`video`、`trending`、**`transcript`（视频文稿）** | 0.00056 |
+| `bilibili` B站 | `search`、`user_posts`、`video`、**`subtitles`（字幕）** | 0.00056 |
+| `kuaishou` 快手 | `search`、`user_posts` | 0.00056 |
+| `toutiao` 头条 | `article`、`user_posts` | 0.00056 |
+| `douban` 豆瓣 | `search`、`group_topic` | 0.00139 |
+| `web` 通用网页 | `search` | 0.00139 |
+
+另含淘宝 / 京东 / 1688 / 闲鱼 / 拼多多系（`taobao`、`jd`、`alibaba1688`、`xianyu`、`temu`）、以及 X、TikTok、YouTube、Instagram、Reddit 等海外平台，共 90 个。
+
+**对本站有意义的两个数字**：
+
+- 公众号走 EveryInfra 是 **$0.00556/次**。现有 Dajiala 是 ¥0.14 列表 + ¥0.03 正文，26 个号每天一次约 ¥109/月；
+  EveryInfra 的 `account_today_articles` 同样规模约 **$4.3/月（≈¥31）**，且不需要每 3 天扫码。
+  差别在于覆盖率与稳定性尚未实测——这是换掉 WeRSS 的候选，不是结论。
+- 微博 / 知乎 / 抖音 / B站 单价只有小红书的 **1/10**（0.00056，即 $0.56/千次）。若要做机构官微或视频号，
+  成本不构成障碍，障碍是内容质量与发布规则。
+
+**本文其余部分未改动。** 上述能力以官方 catalog 为准；价格随调价变动，实付以控制台回执为准。
+
 
 ## 4. 落到本仓库要改什么
 

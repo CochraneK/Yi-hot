@@ -103,6 +103,7 @@
 - 处置：`xhs-search-charity-project` 设为 `participation_mode: "hot_signal"` 并启用（每天 1 次，约 ¥0.04/天），**只作已有事件的讨论证据、不单独发布**（`group.ts:631`：非 `editorial` 一律走 `groupSignal`）；`乡村振兴`、`养老 公益` 两个源保持停用。
 - 验证：同一关键词采集 15 条入库，公开列表 0 条；`/api/site/pool` 全 10 页 0 条小红书链接。
 - 验收改为：7 天内是否有笔记能与已有事件匹配（`grouping_decisions.verdict` 为 `signal` / `signal-native`）；0 匹配则停用该源。
+- 注：首次采集的存量帖子若发布时间早于发现时间超过阈值，`isHistorical` 会直接归档（`verdict: historical`），既不建事件也不计信号——匹配统计只看 `signal` / `signal-native`。
 
 **P2 · 机构号**
 - 5 个公益机构的小红书官方号 `user_posts`，`limit: 20`。

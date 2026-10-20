@@ -31,7 +31,8 @@ const MIN_BODY_CHARS = 200;
 const BODY_SELECTORS = [
   ".trs_editor_view", ".TRS_Editor", ".trs_editor", "#docContent", ".docContent",
   "#zoom", ".article-content", ".article_content", ".articleContent", "#articleContent",
-  ".content_main", ".view-content", "#content", ".content", "article", "#view", ".view",
+  ".arc_body", ".art_cont", ".content_body", ".content_main", ".view-content",
+  "#content", ".content", "article", "#view", ".view",
 ];
 
 export function readable(html: string, url: string): ExtractedBody | null {

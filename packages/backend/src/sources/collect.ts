@@ -6,7 +6,7 @@ import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { queueProcessing } from "../jobs/content.ts";
 import { BudgetExceededError } from "../providers/receipts.ts";
 import { fetchRss } from "./rss.ts";
-import { allowed, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
+import { allowed, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
 import { everyInfraXhsNote } from "../providers/everyinfra.ts";
@@ -184,8 +184,11 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         continue;
       }
       if (!d || detailUsed >= detailBudget) continue;
+      // A reposted article (the listing links another site) carries the repost date; its own page has
+      // the publication date, which can be days earlier than the listing's.
+      const reposted = d.publishedAtForExternal === true && externalLink(c.url, String(source.config.url ?? ""));
       const need: DetailNeed = {
-        date: !c.publishedAt || d.upgradeDatePrecision === true,
+        date: !c.publishedAt || d.upgradeDatePrecision === true || reposted,
         title: !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
         summary: !!d.summarySelector && !c.excerpt,
         body: source.participation_mode === "editorial" && !c.bodyText && (!c.bodyStatus || c.bodyStatus === "pending"),
@@ -206,6 +209,12 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         }
         // A date-only listing value gives way to the detail page's time on the same day.
         if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < DAY_MS)) c.publishedAt = got.publishedAt;
+        // A repost's own date can be days before the copy; the page still has to be plausible (not in the
+        // future, not older than two months) before it replaces what the listing said.
+        else if (got.publishedAt && reposted) {
+          const t = got.publishedAt.getTime();
+          if (t <= Date.now() + DAY_MS && t >= c.publishedAt!.getTime() - 60 * DAY_MS) c.publishedAt = got.publishedAt;
+        }
       } catch {
         // detail is best effort
       }

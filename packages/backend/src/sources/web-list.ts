@@ -82,6 +82,51 @@ export function jsonLdPublished($: cheerio.CheerioAPI, html: string): string | n
 /** Prefix rules ignore the scheme: a Jina listing of an http:// address links its posts over http. */
 const overHttps = (url: string) => url.replace(/^http:\/\//i, "https://");
 
+// Suffixes where the registrable name is the third label from the right ("mca.gov.cn", not "gov.cn").
+const MULTI_LABEL_SUFFIX = new Set(["gov.cn", "org.cn", "com.cn", "net.cn", "edu.cn", "ac.cn", "gov.hk", "com.hk", "gov.tw", "co.uk", "org.uk", "co.jp", "or.jp"]);
+
+/** The site a URL belongs to, ignoring www and its CMS subdomains ("mzt.ln.gov.cn" → "ln.gov.cn"). */
+export function siteHost(url: string): string {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./i, "");
+    const parts = host.split(".");
+    const suffix = parts.slice(-2).join(".");
+    if (parts.length >= 3 && MULTI_LABEL_SUFFIX.has(suffix)) return parts.slice(-3).join(".");
+    return parts.length >= 2 ? suffix : host;
+  } catch {
+    return "";
+  }
+}
+
+/** A listing that links a different site is reposting: its own date is the repost date, not the publication date. */
+export function externalLink(url: string, listing: string): boolean {
+  const a = siteHost(url);
+  const b = siteHost(listing);
+  return !!a && !!b && a !== b;
+}
+
+/**
+ * The publication date a detail page states, for reposted articles where the listing only knows when it
+ * copied the piece. Reads metadata first, then the byline an article page prints ("时间：2026-10-13",
+ * "2026-10-13 14:02:19 来源：新华网"), scanning only the opening of the visible text so a footer or a
+ * related-article list cannot supply it.
+ */
+export function pagePublishedAt(html: string): Date | null {
+  const $ = cheerio.load(html);
+  const meta = $('meta[property="article:published_time"], meta[name="pubdate"], meta[name="publishdate"], meta[name="PubDate"], meta[itemprop="datePublished"], meta[name="date"]').attr("content");
+  const fromMeta = parseLooseDate(meta);
+  if (fromMeta) return fromMeta;
+  const fromJsonLd = parseLooseDate(jsonLdPublished($, html));
+  if (fromJsonLd) return fromJsonLd;
+  const fromTime = parseLooseDate($("time[datetime]").first().attr("datetime"));
+  if (fromTime) return fromTime;
+  const text = collapseWhitespace($("body").text()).slice(0, 3000);
+  const labeled = /(?:发布时间|发布日期|发稿时间|时间|日期)\s*[：:]\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s*\d{1,2}:\d{2}(?::\d{2})?)?)/.exec(text);
+  if (labeled) return parseLooseDate(labeled[1]);
+  const bare = /(\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/.exec(text);
+  return parseLooseDate(bare?.[1]);
+}
+
 export function allowed(url: string, source: SourceRow): boolean {
   const allow: string[] = (source.config.allowUrlPrefixes ?? []).map(overHttps);
   const deny: string[] = (source.config.denyUrlPrefixes ?? []).map(overHttps);
@@ -383,6 +428,8 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
       const meta = $('meta[property="article:published_time"], meta[name="pubdate"], meta[itemprop="datePublished"]').attr("content");
       publishedAt = parseLooseDate(meta) ?? parseLooseDate(jsonLdPublished($, html!)) ?? parseLooseDate($("time[datetime]").first().attr("datetime"));
     }
+    // Reposted articles: the target page, not the listing, knows when the piece was published.
+    if (!publishedAt && html && d.publishedAtForExternal === true) publishedAt = pagePublishedAt(html);
   }
 
   let title: string | null = null;

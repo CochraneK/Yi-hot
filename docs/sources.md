@@ -64,7 +64,7 @@
 小红书这类平台的公开内容接口，**不自己写爬虫**：签名、风控、账号池和版权风险都不该由本项目承担。小红书内容经 EveryInfra 的公开内容 API 读取，作为 `json_list` 的一个 `adapter` 分支接入（写法参考同源项目 PsyHOT）：
 
 > 同一 provider 还覆盖公众号（`wechat_oa`）、微博、知乎、抖音、B站等 90 个平台，单价与能力见
-> [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md#4-everyinfra-实际覆盖哪些平台2026-10-20-查官方能力目录)。
+> [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md#31-everyinfra-实际覆盖哪些平台2026-10-20-查官方能力目录)。
 > 目前只启用了小红书这一路。
 
 ```json

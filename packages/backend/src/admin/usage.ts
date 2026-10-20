@@ -38,6 +38,29 @@ interface PurposeRow extends DayModelRow {
   purpose: string;
 }
 
+/**
+ * A paid provider that bills per request rather than per token (EveryInfra, Dajiala, SocialData,
+ * Jina…). The distinguishing mark is `usage IS NULL`: those adapters never receive token counts,
+ * and the provider's own charge lands in `receipts.cost` with `cost_basis = 'actual'`. They were
+ * invisible on this page until now because every query here filtered on `usage IS NOT NULL`.
+ */
+interface PerCallRow {
+  service: string;
+  calls: number;
+  failed: number;
+  billed: number;
+  amount: string | null;
+  currency: string | null;
+}
+
+interface PerCallDayRow {
+  day: string;
+  service: string;
+  calls: number;
+  amount: string | null;
+  currency: string | null;
+}
+
 const BJ_MS = 8 * 3600_000;
 
 const serviceOf = (model: string | null): string | null =>
@@ -74,7 +97,7 @@ function dayKeys(days: number): string[] {
 export async function usageOverview(days = 30) {
   const d = Math.min(365, Math.max(1, Math.floor(days)));
   const since = new Date(Date.now() - d * 86400_000);
-  const [byDay, byPurpose, prices, lifetime, seen] = await Promise.all([
+  const [byDay, byPurpose, prices, lifetime, seen, perCall, perCallDay, perCallLife] = await Promise.all([
     sql<DayModelRow[]>`
       SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.model,
              count(*)::int AS calls,
@@ -106,10 +129,46 @@ export async function usageOverview(days = 30) {
       FROM receipt_attempts a
       WHERE a.started_at >= ${since} AND a.origin = 'live'
       GROUP BY 1 ORDER BY 2 DESC`,
+    // Per-request services. `sum(cost)` stays NULL when no attempt carried a charge, which is how a
+    // service that was called but never billed (402, rejected key) is told apart from one that was
+    // simply not used — the row still shows calls, with no amount.
+    sql<PerCallRow[]>`
+      SELECT a.service, count(*)::int AS calls,
+             count(*) FILTER (WHERE a.status = 'failed')::int AS failed,
+             count(*) FILTER (WHERE a.cost IS NOT NULL)::int AS billed,
+             sum(a.cost) AS amount, max(a.currency) AS currency
+      FROM receipt_attempts a
+      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL
+      GROUP BY 1 ORDER BY 2 DESC`,
+    sql<PerCallDayRow[]>`
+      SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.service,
+             count(*)::int AS calls, sum(a.cost) AS amount, max(a.currency) AS currency
+      FROM receipt_attempts a
+      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL
+      GROUP BY 1, 2`,
+    sql<PerCallRow[]>`
+      SELECT a.service, count(*)::int AS calls,
+             count(*) FILTER (WHERE a.status = 'failed')::int AS failed,
+             count(*) FILTER (WHERE a.cost IS NOT NULL)::int AS billed,
+             sum(a.cost) AS amount, max(a.currency) AS currency
+      FROM receipt_attempts a
+      WHERE a.origin = 'live' AND a.usage IS NULL
+      GROUP BY 1 ORDER BY 2 DESC`,
   ]);
 
   const keys = dayKeys(d);
   const buckets = new Map(keys.map((k) => [k, { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, currency: "USD" as string, priced: false }]));
+
+  // Per-request charges, keyed by Beijing day so they can sit on the same axis as the token
+  // estimate. Kept separate from `amount` rather than summed into it: one is the provider's actual
+  // debit, the other is our own arithmetic from a price table, and merging them would hide which.
+  const paidByDay = new Map<string, { amount: number; currency: string }>();
+  for (const row of perCallDay) {
+    if (row.amount === null) continue;
+    const prev = paidByDay.get(row.day) ?? { amount: 0, currency: row.currency ?? "USD" };
+    prev.amount += Number(row.amount);
+    paidByDay.set(row.day, prev);
+  }
 
   for (const row of byDay) {
     const b = buckets.get(row.day);
@@ -148,13 +207,45 @@ export async function usageOverview(days = 30) {
 
   const daily = keys.map((k) => {
     const b = buckets.get(k)!;
-    return { day: k, label: k.slice(5), calls: b.calls, tokensIn: b.tokensIn, tokensOut: b.tokensOut, amount: b.priced ? b.amount : null, currency: b.currency, priced: b.priced };
+    const paid = paidByDay.get(k);
+    return {
+      day: k,
+      label: k.slice(5),
+      calls: b.calls,
+      tokensIn: b.tokensIn,
+      tokensOut: b.tokensOut,
+      amount: b.priced ? b.amount : null,
+      paid: paid ? paid.amount : null,
+      currency: b.currency,
+      priced: b.priced,
+    };
   });
 
   const totals = daily.reduce(
-    (a, x) => ({ calls: a.calls + x.calls, tokensIn: a.tokensIn + x.tokensIn, tokensOut: a.tokensOut + x.tokensOut, amount: a.amount + (x.amount ?? 0) }),
-    { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0 },
+    (a, x) => ({ calls: a.calls + x.calls, tokensIn: a.tokensIn + x.tokensIn, tokensOut: a.tokensOut + x.tokensOut, amount: a.amount + (x.amount ?? 0), paid: a.paid + (x.paid ?? 0) }),
+    { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, paid: 0 },
   );
+
+  // One row per per-request service. `unit` is the average actual charge per billed call — the
+  // number to compare against the provider's advertised price when a receipt looks off. A service
+  // with calls but `amount: null` was called and never charged (402, rejected key, or a run that
+  // failed before the provider answered), which is a different situation from "not used".
+  const perCallRows = perCall.map((r) => {
+    const amount = r.amount === null ? null : Number(r.amount);
+    return {
+      service: r.service,
+      calls: r.calls,
+      failed: r.failed,
+      billed: r.billed,
+      unbilled: r.calls - r.billed,
+      amount,
+      currency: r.currency ?? "USD",
+      unit: amount !== null && r.billed > 0 ? amount / r.billed : null,
+    };
+  });
+  const apiBilled = perCallRows.reduce((n, r) => n + r.billed, 0);
+  const apiCalls = perCallRows.reduce((n, r) => n + r.calls, 0);
+  const apiAmount = perCallRows.reduce((n, r) => n + (r.amount ?? 0), 0);
   const window = daily.filter((x) => x.calls > 0);
   const activeDays = window.length;
   const currency = daily.find((x) => x.priced)?.currency ?? prices[0]?.currency ?? "USD";
@@ -173,22 +264,37 @@ export async function usageOverview(days = 30) {
       lifePriced = true;
     }
   }
+  const lifeApiCalls = perCallLife.reduce((n, r) => n + r.calls, 0);
+  const lifeApiBilled = perCallLife.reduce((n, r) => n + r.billed, 0);
+  const lifeApiAmount = perCallLife.reduce((n, r) => n + (r.amount === null ? 0 : Number(r.amount)), 0);
 
   // Run rate: the trailing week is a far better basis than "average over active days", which the
   // one-off first backfill (and holiday lulls) skew badly. Quoting the basis keeps it honest.
   const recentDays = Math.min(7, d);
   const recent = daily.slice(-recentDays);
   const recentTotals = recent.reduce(
-    (a, x) => ({ calls: a.calls + x.calls, tokensIn: a.tokensIn + x.tokensIn, tokensOut: a.tokensOut + x.tokensOut, amount: a.amount + (x.amount ?? 0) }),
-    { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0 },
+    (a, x) => ({ calls: a.calls + x.calls, tokensIn: a.tokensIn + x.tokensIn, tokensOut: a.tokensOut + x.tokensOut, amount: a.amount + (x.amount ?? 0), paid: a.paid + (x.paid ?? 0) }),
+    { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, paid: 0 },
   );
   const recentAmount = recentTotals.amount || null;
-  const perDayRecent = recentAmount === null ? null : recentAmount / recentDays;
+  // Daily average and the 30-day projection both use token estimate + paid API, since a month of
+  // keyword searches costs real money even though it burns no tokens.
+  const recentApiSpend = recentTotals.paid || null;
+  const recentTotalSpend = recentAmount === null && recentApiSpend === null ? null : (recentAmount ?? 0) + (recentApiSpend ?? 0);
+  const perDayRecent = recentTotalSpend === null ? null : recentTotalSpend / recentDays;
   // Two lenses on purpose: the calendar average is dragged down by quiet days (holidays, weekends)
   // and the active-day average back up by whatever spike happened, so neither is authoritative on
   // its own — the page shows both rather than picking one.
   const recentActive = recent.filter((x) => x.calls > 0).length;
   const perDayActive = recentActive ? recentTotals.amount / recentActive : null;
+
+  // Two kinds of money on this page and they must not be added silently: `tokenSpend` is our own
+  // arithmetic from the price table, `apiSpend` is what providers actually debited. The headline
+  // uses their sum because "what does this cost me" is the question being asked, but the split is
+  // always shown next to it.
+  const tokenSpend = totals.amount || null;
+  const apiSpend = apiBilled > 0 ? apiAmount : null;
+  const totalSpend = tokenSpend === null && apiSpend === null ? null : (tokenSpend ?? 0) + (apiSpend ?? 0);
 
   return {
     days: d,
@@ -197,16 +303,38 @@ export async function usageOverview(days = 30) {
     prices,
     daily,
     purposes: [...purposes.values()].sort((a, b) => b.tokensIn + b.tokensOut - (a.tokensIn + a.tokensOut)),
-    totals: { ...totals, amount: totals.amount || null },
+    totals: { ...totals, amount: tokenSpend, paid: apiSpend },
+    spend: { token: tokenSpend, api: apiSpend, total: totalSpend, currency },
+    // Per-request providers, the ones that never report tokens. Without this block they were
+    // invisible here: every other query on the page filters on `usage IS NOT NULL`.
+    perCall: {
+      rows: perCallRows,
+      calls: apiCalls,
+      billed: apiBilled,
+      amount: apiSpend,
+      currency,
+      lifetime: { calls: lifeApiCalls, billed: lifeApiBilled, amount: lifeApiBilled > 0 ? lifeApiAmount : null },
+    },
     averages: {
       callsPerDay: activeDays ? Math.round(totals.calls / activeDays) : 0,
       tokensPerCall: totals.calls ? Math.round((totals.tokensIn + totals.tokensOut) / totals.calls) : 0,
     },
     activeDays,
-    recent: { days: recentDays, ...recentTotals, amount: recentAmount, perDay: perDayRecent, activeDays: recentActive, perDayActive },
+    recent: {
+      days: recentDays,
+      ...recentTotals,
+      amount: recentAmount,
+      paid: recentApiSpend,
+      spend: recentTotalSpend,
+      perDay: perDayRecent,
+      activeDays: recentActive,
+      perDayActive,
+    },
     // Monthly projection = trailing-week calendar daily average × 30. Treat it as an order of
-    // magnitude, not a forecast: the site's history is short and holiday weeks read low.
-    projection: perDayRecent === null ? null : { amount: perDayRecent * 30, currency, basisDays: recentDays },
+    // magnitude, not a forecast: the site's history is short and holiday weeks read low. The paid
+    // leg is projected the same way, then added, so a month of paid API calls is not hidden behind
+    // a token estimate that rounds to zero.
+    projection: recentTotalSpend === null ? null : { amount: (recentTotalSpend / recentDays) * 30, currency, basisDays: recentDays },
     projectedActive: perDayActive === null ? null : { amount: perDayActive * 30, currency, basisDays: recentDays },
     lifetime: {
       calls: lifeCalls,
@@ -214,6 +342,8 @@ export async function usageOverview(days = 30) {
       tokensOut: lifeOut,
       first: lifeFirst,
       amount: lifePriced ? lifeAmount : null,
+      apiCalls: lifeApiCalls,
+      apiAmount: lifeApiBilled > 0 ? lifeApiAmount : null,
     },
     // Model names that actually appear in receipts during the window, plus the service the registry
     // maps them to. A name with `service: null` is not in MODELS, so no price row can ever match it —

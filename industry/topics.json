@@ -227,6 +227,166 @@
       ]
     },
     {
+      "slug": "china-disabled-persons-federation",
+      "name": "中国残联",
+      "group": "company",
+      "entityId": "china-disabled-persons-federation",
+      "tags": [
+        "中国残联",
+        "entity:china-disabled-persons-federation"
+      ],
+      "definition": "中国残联（中国残疾人联合会）的政策动向、残疾人福利与无障碍事业的持续追踪。",
+      "related": [
+        "disability-inclusion",
+        "elderly-care",
+        "policy"
+      ]
+    },
+    {
+      "slug": "cctf",
+      "name": "中国儿童少年基金会",
+      "group": "company",
+      "entityId": "cctf",
+      "tags": [
+        "中国儿童少年基金会",
+        "entity:cctf"
+      ],
+      "definition": "中国儿童少年基金会（儿基会）的春蕾计划、儿童救助与基金治理的持续追踪。",
+      "related": [
+        "child-care",
+        "child-education",
+        "gender-equality"
+      ]
+    },
+    {
+      "slug": "ministry-of-education",
+      "name": "教育部",
+      "group": "company",
+      "entityId": "ministry-of-education",
+      "tags": [
+        "教育部",
+        "entity:ministry-of-education"
+      ],
+      "definition": "教育部涉及公益、学生资助、校园健康与儿童发展的政策与执行动向。",
+      "related": [
+        "child-education",
+        "child-mental-health",
+        "policy"
+      ]
+    },
+    {
+      "slug": "supreme-people-court",
+      "name": "最高人民法院",
+      "group": "company",
+      "entityId": "supreme-people-court",
+      "tags": [
+        "最高人民法院",
+        "entity:supreme-people-court"
+      ],
+      "definition": "最高人民法院涉及慈善组织、募捐与公益产权的司法解释与典型案例。",
+      "related": [
+        "policy",
+        "policy-advocacy",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "givedirectly",
+      "name": "GiveDirectly",
+      "group": "company",
+      "entityId": "givedirectly",
+      "tags": [
+        "GiveDirectly",
+        "entity:givedirectly"
+      ],
+      "definition": "GiveDirectly 的直接现金转移支付实验、效果评估与在地合作的持续追踪。",
+      "related": [
+        "international",
+        "fundraising",
+        "research"
+      ]
+    },
+    {
+      "slug": "oxfam",
+      "name": "乐施会",
+      "group": "company",
+      "entityId": "oxfam",
+      "tags": [
+        "乐施会",
+        "entity:oxfam"
+      ],
+      "definition": "乐施会（Oxfam）在中国的扶贫、性别平等与气候公正项目及研究报告。",
+      "related": [
+        "international",
+        "gender-equality",
+        "emergency-relief"
+      ]
+    },
+    {
+      "slug": "china-charity-association",
+      "name": "中华慈善总会",
+      "group": "company",
+      "entityId": "china-charity-association",
+      "tags": [
+        "中华慈善总会",
+        "entity:china-charity-association"
+      ],
+      "definition": "中华慈善总会的救灾募捐、项目执行与行业协调的持续追踪。",
+      "related": [
+        "emergency-relief",
+        "medical-relief",
+        "transparency"
+      ]
+    },
+    {
+      "slug": "china-women-development-foundation",
+      "name": "中国妇女发展基金会",
+      "group": "company",
+      "entityId": "china-women-development-foundation",
+      "tags": [
+        "中国妇女发展基金会",
+        "entity:china-women-development-foundation"
+      ],
+      "definition": "中国妇女发展基金会（妇基会）的母亲邮包、母亲健康快车与农村妇女发展项目。",
+      "related": [
+        "gender-equality",
+        "child-care",
+        "rural-revitalization"
+      ]
+    },
+    {
+      "slug": "all-china-womens-federation",
+      "name": "全国妇联",
+      "group": "company",
+      "entityId": "all-china-womens-federation",
+      "tags": [
+        "全国妇联",
+        "entity:all-china-womens-federation"
+      ],
+      "definition": "中华全国妇女联合会的维权服务、家庭建设与妇女发展政策动向。",
+      "related": [
+        "gender-equality",
+        "child-protection",
+        "policy-advocacy"
+      ]
+    },
+    {
+      "slug": "chuanyi-foundation",
+      "name": "爱德传一基金",
+      "group": "company",
+      "entityId": "chuanyi-foundation",
+      "tags": [
+        "爱德传一基金",
+        "entity:chuanyi-foundation"
+      ],
+      "definition": "爱德传一基金的慈善纪事简报、公益研究与行业观察的持续追踪。",
+      "related": [
+        "research",
+        "philanthropy",
+        "trends"
+      ]
+    },
+    {
       "slug": "rural-revitalization",
       "name": "乡村振兴",
       "group": "field",

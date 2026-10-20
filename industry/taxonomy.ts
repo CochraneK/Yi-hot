@@ -124,6 +124,11 @@ export const ENTITIES: Record<string, { name: string; displayTag: string | null;
   "china-disabled-persons-federation": { name: "中国残联", displayTag: "中国残联", aliases: ["中国残联", "中国残疾人联合会"] },
   "oxfam": { name: "乐施会", displayTag: "乐施会", aliases: ["乐施会", "Oxfam"] },
   "givedirectly": { name: "GiveDirectly", displayTag: "GiveDirectly", aliases: ["GiveDirectly"] },
+  // 以下 4 个是一手信源自有栏目（first_party），内容量已经够单独成页，此前未登记导致归属不生效。
+  "china-charity-association": { name: "中华慈善总会", displayTag: "中华慈善总会", aliases: ["中华慈善总会"] },
+  "china-women-development-foundation": { name: "中国妇女发展基金会", displayTag: "中国妇女发展基金会", aliases: ["中国妇女发展基金会", "妇基会", "母亲邮包", "超仁妈妈"] },
+  "all-china-womens-federation": { name: "中华全国妇女联合会", displayTag: "全国妇联", aliases: ["中华全国妇女联合会", "全国妇联", "妇联"] },
+  "chuanyi-foundation": { name: "爱德传一基金", displayTag: "爱德传一基金", aliases: ["爱德传一基金", "爱德传一"] },
 };
 
 /**
@@ -143,6 +148,10 @@ export const IDENTITY_LEXICON: ReadonlyArray<{ id: string; name: string; pattern
   { id: "foundation-center", name: "基金会中心网", patterns: [/基金会中心网|中基透明指数/i] },
   { id: "ministry-of-civil-affairs", name: "民政部", patterns: [/民政部/i] },
   { id: "save-the-children", name: "救助儿童会", patterns: [/救助儿童会|Save the Children/i] },
+  { id: "china-charity-association", name: "中华慈善总会", patterns: [/中华慈善总会/i] },
+  { id: "china-women-development-foundation", name: "中国妇女发展基金会", patterns: [/中国妇女发展基金会|妇基会|母亲邮包|超仁妈妈/i] },
+  { id: "all-china-womens-federation", name: "中华全国妇女联合会", patterns: [/中华全国妇女联合会|全国妇联/i] },
+  { id: "chuanyi-foundation", name: "爱德传一基金", patterns: [/爱德传一基金|爱德传一/i] },
 ];
 
 /** 这些域名上的文章，发布方就是对应的机构（托管平台如 GitHub、arXiv 不算）。 */
@@ -154,6 +163,12 @@ export const PUBLISHER_DOMAINS: ReadonlyArray<{ entityId: string; domains: reado
   { entityId: "foundation-center", domains: ["foundationcenter.org.cn"] },
   { entityId: "china-rural-development-foundation", domains: ["crdf.org.cn", "cfrd.org.cn", "cfpa.org.cn"] },
   { entityId: "save-the-children", domains: ["savethechildren.org.cn"] },
+  { entityId: "china-charity-association", domains: ["chinacharityfederation.org"] },
+  { entityId: "china-women-development-foundation", domains: ["cwdf.org.cn"] },
+  { entityId: "all-china-womens-federation", domains: ["women.org.cn"] },
+  { entityId: "cctf", domains: ["cctf.org.cn"] },
+  { entityId: "china-disabled-persons-federation", domains: ["cdpf.org.cn"] },
+  { entityId: "supreme-people-court", domains: ["court.gov.cn"] },
 ];
 
 /** 原文里的这些写法也算提到了对应机构。 */

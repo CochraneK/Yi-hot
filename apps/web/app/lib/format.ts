@@ -29,12 +29,30 @@ export function fullDateTime(iso: string): string {
   return `${beijingDate(iso)} ${beijingTime(iso)}`;
 }
 
-/** Date-only source timestamps parse as Beijing midnight; use collection time for the clock display. */
-export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): { at: string; label: "原文发表" | "收录" } {
-  if (!publishedAt) return { at: timelineAt || discoveredAt, label: "收录" };
-  if (precision === "date") return { at: `${beijingDate(publishedAt)}T${beijingTime(discoveredAt)}:00+08:00`, label: "收录" };
-  if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录" };
-  return { at: publishedAt, label: "原文发表" };
+export interface FeedTimeDisplay {
+  /** Sort key and datetime attribute. Date-only articles sit at Beijing midnight of their own day. */
+  at: string;
+  label: "原文发表" | "收录";
+  /** The source only states a day (government listings): show the date, never a made-up clock time. */
+  dateOnly: boolean;
+}
+
+/**
+ * What the feed shows for an article's time. A source that states only a day keeps that day; borrowing
+ * the collection clock would present a fetch time as the publication time. "收录" is reserved for
+ * articles whose own date is unknown.
+ */
+export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): FeedTimeDisplay {
+  if (!publishedAt) return { at: timelineAt || discoveredAt, label: "收录", dateOnly: false };
+  if (precision === "date") return { at: `${beijingDate(publishedAt)}T00:00:00+08:00`, label: "原文发表", dateOnly: true };
+  if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录", dateOnly: false };
+  return { at: publishedAt, label: "原文发表", dateOnly: false };
+}
+
+/** "2026年10月18日" for day-precision sources, where no clock time exists. */
+export function feedDateLabel(iso: string): string {
+  const [y, m, d] = beijingDate(iso).split("-").map(Number) as [number, number, number];
+  return `${y}年${m}月${d}日`;
 }
 
 /** "9月24日 10:51" (Beijing), for lists that span days. */

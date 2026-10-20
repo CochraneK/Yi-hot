@@ -15,7 +15,10 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
   const today = beijingDate(Date.now());
   const days = useMemo(() => {
     const out: Array<{ day: string; items: FeedItemSummary[] }> = [];
-    const ordered = [...items].sort((a, b) => Date.parse(feedDisplayAt(b.publishedAt, b.discoveredAt, b.timelineAt, b.publishedAtPrecision).at) - Date.parse(feedDisplayAt(a.publishedAt, a.discoveredAt, a.timelineAt, a.publishedAtPrecision).at));
+    // Day-precision items share midnight as their key, so the collection moment breaks the tie and
+    // keeps the order stable from run to run.
+    const key = (it: FeedItemSummary) => Date.parse(feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision).at);
+    const ordered = [...items].sort((a, b) => key(b) - key(a) || Date.parse(b.discoveredAt) - Date.parse(a.discoveredAt));
     for (const it of ordered) {
       const d = beijingDate(feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision).at);
       const last = out[out.length - 1];
@@ -34,7 +37,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
             {list.map((it) => {
               const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
               return (
-                <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
+                <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                   <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
                 </TimelineSlot>
               );

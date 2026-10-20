@@ -11,4 +11,6 @@ export const FEATURES = {
   leaderboard: false,
   /** Codex 重置监控：盯 OpenAI Codex 负责人在 X 上的额度重置公告（/codex-reset）。需要 SocialData。公益行业无此需求。 */
   codexResetMonitor: false,
+  /** 监管记录：民政部行政处罚与全国社会组织活动异常名录 / 严重违法失信名单公告（/records）。每天同步一次。 */
+  regulatoryRecords: true,
 } as const;

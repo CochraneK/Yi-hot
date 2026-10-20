@@ -16,6 +16,7 @@ import { addDays, beijingDate, isoWeekLabel } from "@aihot/contracts/time";
 import { runLeaderboardRound } from "@aihot/backend/leaderboard/method/run";
 import { refreshLeaderboard } from "@aihot/backend/leaderboard/fetch/refresh";
 import { monitorTick } from "@aihot/backend/monitor/scan";
+import { syncMcaRecords } from "@aihot/backend/records/sync";
 import { dailyRetention } from "@aihot/backend/operations/retention";
 import { submitIndexNow } from "@aihot/backend/operations/indexnow";
 import { checkAlerts, sendDigest } from "@aihot/backend/operations/alerts";
@@ -93,6 +94,10 @@ export const SCHEDULES: Scheduled[] = [
         { name: "monitor.tick", cron: "* * * * *", run: () => monitorTick() },
         { name: "monitor.lookback", cron: "40 4 * * *", run: () => monitorTick({ lookbackHours: 48 }) },
       ]
+    : []),
+  // 监管记录：民政部行政处罚与异常名录/严重违法失信公告，上游每天更新，错过的槽位补跑一次。
+  ...(FEATURES.regulatoryRecords
+    ? [{ name: "records.mca-sync", cron: "35 6 * * *", missed: "once" as const, run: () => syncMcaRecords() }]
     : []),
 ];
 

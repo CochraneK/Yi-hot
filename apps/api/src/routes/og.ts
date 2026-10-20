@@ -30,6 +30,7 @@ const PAGES: Record<string, OgCard> = {
   changelog: { kicker: "更新日志", title: `${SITE.name} 更新日志`, subtitle: "功能更新、优化、公告与下线记录。" },
   feedback: { kicker: "反馈", title: "告诉我们哪里可以更好", subtitle: "内容、功能、接入，或来源方的更正与下架请求。" },
   agent: { kicker: "Agent 接入", title: `让 Agent 直接使用 ${SITE.name}`, subtitle: "MCP、RSS 与 REST API v1，匿名只读。" },
+  records: { kicker: "监管记录", title: "处罚与失信名录，一处可查", subtitle: "民政部行政处罚，以及活动异常名录、严重违法失信名单的列入与移出公告，每天同步。" },
 };
 
 /**
@@ -58,7 +59,7 @@ export function registerOg(app: FastifyInstance) {
   app.get("/og/pages/:file", async (req, reply) => {
     const name = (req.params as { file: string }).file.replace(/\.png$/, "");
     const card = PAGES[name];
-    if ((name === "leaderboard" && !FEATURES.leaderboard) || (name === "codex-reset" && !FEATURES.codexResetMonitor)) return notFound(reply);
+    if ((name === "leaderboard" && !FEATURES.leaderboard) || (name === "codex-reset" && !FEATURES.codexResetMonitor) || (name === "records" && !FEATURES.regulatoryRecords)) return notFound(reply);
     if (!card || !(req.params as { file: string }).file.endsWith(".png")) return notFound(reply);
     return send(req, reply, card, 86400);
   });

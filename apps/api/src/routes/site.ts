@@ -11,6 +11,7 @@ import { loadStoryFollowups } from "@aihot/backend/publication/followups";
 import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/groups";
 import { loadTopicTags } from "@aihot/backend/publication/topics";
 import { loadHotStrip } from "@aihot/backend/events/hot-read";
+import { loadRecords } from "@aihot/backend/records/read";
 import { loadChangelog, siteMeta } from "@aihot/backend/site/meta";
 import { loadContact, loadMakerAvatar } from "@aihot/backend/site/contact";
 import { loadSiteStats } from "@aihot/backend/site/stats";
@@ -185,6 +186,22 @@ export function registerSite(app: FastifyInstance) {
     if (!data) return sendProblem(req, reply, { status: 404, code: "not_found", detail: "topic page not found", cacheControl: "public, max-age=60" });
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "topic", cacheControl: "public, max-age=60, s-maxage=60" });
   }));
+
+  // 监管记录：民政部处罚与异常名录/严重失信公告。上游每天更新，缓存五分钟。
+  if (FEATURES.regulatoryRecords) {
+    app.get("/api/site/records", siteHandler(async (req, reply) => {
+      const q = looseQuery(req);
+      const data = await loadRecords({
+        types: q.type ? q.type.split(",").map((t) => t.trim()).filter(Boolean) : null,
+        kind: q.kind ?? null,
+        q: q.q ?? null,
+        page: Number(q.page) || 1,
+        pageSize: Number(q.pageSize) || 20,
+      });
+      const { generatedAt: _g, ...content } = data;
+      return sendJsonWithEtag(req, reply, data, { etagPrefix: "records", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
+    }));
+  }
 
   registerFeedback(app);
 

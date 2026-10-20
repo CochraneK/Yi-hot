@@ -131,6 +131,8 @@ docs/memory/MEMORY.md、tools/README.md 和 secrets/README.md。
 5. [`secrets/README.md`](secrets/README.md)：凭据加密归档。
 6. [`docs/sources.md`](docs/sources.md)：信源类型与配置。
 7. [`docs/selection.md`](docs/selection.md)：精选判断与校准。
+8. [`docs/PAID_CHANNEL_PROVIDERS.md`](docs/PAID_CHANNEL_PROVIDERS.md)：付费采集通道（极致了 / EveryInfra）的取舍、价格与接入顺序。
+9. [`docs/DOMAIN_AND_HOSTING.md`](docs/DOMAIN_AND_HOSTING.md)：域名、备案与海外主机的决策记录。
 
 最低验证命令：
 
@@ -395,6 +397,8 @@ ssh -N -L 18001:127.0.0.1:18001 <服务器用户>@<服务器地址>
 
 然后打开 <http://127.0.0.1:18001>，使用 `/opt/werss/.env` 中的管理账号登录。验收必须同时确认：扫码成功、账号已添加、feed 有真实条目、Yi-Hot 能预览和入库、日期及原文链接正确。详见 [`docs/WERSS_DEPLOY.md`](docs/WERSS_DEPLOY.md)。
 
+扫码会话**登录后固定 4 天过期**，重新扫码也不会延长，因此按**每 3 天**一次维护；微信读书 Cookie 约 2 小时失效且不会自动续期。若考虑改用付费接口（EveryInfra / 极致了）替代自建，先读 [`docs/PAID_CHANNEL_PROVIDERS.md`](docs/PAID_CHANNEL_PROVIDERS.md)。
+
 ### 邮件来源
 
 当前白名单包含：
@@ -538,9 +542,11 @@ console.log(data.items);
 | 腾讯云 2核2GB 主机 | **实际购买价 ¥99/年，折合 ¥8.25/月** | 当前项目真实成本；续费前查看控制台新价格 |
 | Yi-Hot 模型 API | 约 ¥35–63/月 | 依据生产真实 token 和当前后台高峰单价推算 |
 | WeRSS 软件 | ¥0 软件订阅费 | 自托管开源软件，但占用服务器 CPU、内存和磁盘 |
+| 可选：第三方采集 API | 未启用。EveryInfra 约 ¥32–102/月；极致了 26 个公众号/天约 ¥109/月（不含正文） | 按次计费，**必须先配 `budgets` 熔断**；方案见 `docs/PAID_CHANNEL_PROVIDERS.md` |
 | QQ 邮件收取和发送 | 当前无单独 API 费 | 使用已有 QQ 邮箱；受个人邮箱发送限制和风控约束 |
 | GitHub 私有仓库 | 当前可为 ¥0 | 取决于 GitHub 账号方案和 Actions 用量 |
 | HTTPS | 当前没有单独证书费 | 若使用域名可申请 ACME 免费证书；域名另计 |
+| 域名（可选） | 未购买。`.cn` 约 ¥35–39 首年、¥45–55 续费；`.news` 首年 $7.96–9.78 但续费 $26+ | 个人主体 + 时政转载难以完成备案，见 `docs/DOMAIN_AND_HOSTING.md` |
 | 异地备份 | 尚未形成已核实固定账单 | 建议另留 ¥1–20/月，取决于保留周期、容量和下载流量 |
 
 不含域名和可选备份时，现阶段可以先按：
@@ -663,8 +669,10 @@ console.log(data.items);
 
 | 频率 | 检查内容 | 正常表现 |
 | --- | --- | --- |
+| **每 3 天** | **公众号扫码会话** | **重新扫码后 `feeds.sync_time` 前移，feed 最新条目在 3 天内**（微信会话 4 天硬过期，见 `docs/WERSS_DEPLOY.md`） |
 | 每周 | 首页、动态、主题、总报 | 最近几天有内容，日期和链接合理 |
 | 每周 | 后台运行与信源 | worker 持续运行，无成片失败 |
+| 每周 | 各来源内容新鲜度 | 每个启用来源的最新发布日期在预期周期内；**feed 返回 200 但长期没有新条目要当故障处理** |
 | 每周 | AmCham 和慈善纪事邮件 | IMAP 游标前移，发布日期正确 |
 | 每月 | 用量与成本 | 调用和费用没有突然跳升 |
 | 每月 | 磁盘、内存、容器 | 磁盘低于 80%，无重启循环 |
@@ -703,6 +711,15 @@ journalctl -u yihot-weread.service -n 80 --no-pager
 ```
 
 微信返回频控时不要反复刷新；登录失效时通过 SSH 隧道重新扫码。
+
+**停更排查按这个顺序**（feed 返回 200 不等于在采集）：
+
+1. WeRSS 的 `feeds.sync_time` 是否还停在几天前；
+2. feed 最新条目的 `pubDate` 是否是近期；
+3. 是否被强制走微信读书通道并在报 `-2012 登录超时`；
+4. 手动刷新一次，看 `sync_time` 与文章数是否变化。
+
+扫码会话是**登录后固定 4 天硬过期**，建议**每 3 天扫一次**并检查内容新鲜度。完整的判定命令见 `docs/WERSS_DEPLOY.md`「会话有效期与扫码节奏」。付费第三方通道（EveryInfra / 极致了）的取舍见 `docs/PAID_CHANNEL_PROVIDERS.md`。
 
 ### 邮件故障
 
@@ -1016,7 +1033,7 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 6. 预览日期、标题、原文短链和摘要。
 7. 立即采集少量样本，核对公开结果后启用。
 
-不要复制 WeRSS 后台 API 地址。微信会话失效时重新扫码，不需要重建 Yi-Hot 来源。
+不要复制 WeRSS 后台 API 地址。微信会话失效时重新扫码，不需要重建 Yi-Hot 来源。扫码会话固定 4 天过期，**按每 3 天一次维护**；扫码后必须确认 feed 最新条目在 3 天内，不能只看接口是否可访问。
 
 ### 邮件来源
 
@@ -1123,6 +1140,8 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 “出现在 WeRSS”与“已纳入 Yi-Hot”是两件事：WeRSS 里有账号，只表示已登记公众号；必须有文章、feed 可读，并在 Yi-Hot 建立启用的 RSS 来源后才算完成接入。
 
 2026-10-19 曾因重建时只加载基础 Compose 和网页代理覆盖、漏掉 `compose.werss.yml`，导致 worker 解析不到 `werss`。恢复时必须同时加载 `docker-compose.yml`、`compose.futureme-proxy.yml` 和 `compose.werss.yml`；两处公众号随后手动采集成功，健康状态恢复为 `ok`。
+
+**2026-10-20 复核：这张表只代表「已登记」，不代表「在持续采集」。** WeRSS 自身没有定时刷新任务（`message_tasks` 表 0 行，启动日志打印「没有任务」），两个公众号的 `feeds.sync_time` 从 10-13 08:52 / 09:24 起冻结，爱德传一从未同步；微信读书兼容层 86 次运行失败 84 次。恢复需先重新扫码，之后按**每 3 天**一次维护。
 
 ### 新增微信公众号 RSS：逐步点击教程
 

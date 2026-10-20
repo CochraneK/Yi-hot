@@ -59,6 +59,11 @@
 
 每个公众号按它的抓取间隔检查一次（查列表按次计费），新文章的正文一并取回。
 
+### 第三方社交平台内容 API（尚未接入）
+
+小红书、抖音这类平台的公开内容接口，**不自己写爬虫**：签名、风控、账号池和版权风险都不该由本项目承担。若将来接入，应作为 `json_list` 的一个 `adapter` 分支（参考同源项目 PsyHOT 的 `everyinfra_xhs` 写法），provider 放在 `packages/backend/src/providers/`，调用统一经 `paidRequest`，并在 `budgets` 里单独设上限。取舍、价格与分阶段接入顺序见 [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md)。
+
+
 ## 分级、参与方式与全文
 
 - **分级** `tier`：`T1` 官方一手（官网、官方博客、机构）、`T1_5` 官方账号与准官方创作者、`T2` 媒体与个人、`EXCLUDE_MP` 不参与精选。入选门槛按分级不同（`industry/selection.ts`）。

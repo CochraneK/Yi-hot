@@ -40,6 +40,7 @@ export const IconDownload = (p: P) => (<Svg {...p}><path d="M12 4v11M7 10l5 5 5-
 export const IconImage = (p: P) => (<Svg {...p}><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><circle cx="9" cy="9" r="1.6" /><path d="M20.5 15.5l-4.5-4.5-9 9.5" /></Svg>);
 export const IconShare = (p: P) => (<Svg {...p}><circle cx="18" cy="5.5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="18.5" r="2.5" /><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1" /></Svg>);
 export const IconMenu = (p: P) => (<Svg {...p}><path d="M4 7h16M4 12h16M4 17h16" /></Svg>);
+export const IconMail = (p: P) => (<Svg {...p}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3.8 6.6L12 13l8.2-6.4" /></Svg>);
 export const IconClose = (p: P) => (<Svg {...p}><path d="M6 6l12 12M18 6L6 18" /></Svg>);
 export const IconArrowUp = (p: P) => (<Svg {...p}><path d="M12 19V5M6 11l6-6 6 6" /></Svg>);
 export const IconTrendUp = (p: P) => (<Svg {...p}><path d="M3 17l6-6 4 4 8-8" /><path d="M15 7h6v6" /></Svg>);

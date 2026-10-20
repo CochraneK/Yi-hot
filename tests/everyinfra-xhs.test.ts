@@ -41,6 +41,9 @@ const CONFIG = {
 
 let savedBudget: { per_day: number } | null = null;
 before(async () => {
+  // 测试库可能没跑 0041 迁移（没有预算行 = 无限制），先按迁移补上再保存原值。
+  await sql`INSERT INTO budgets (service, per_minute, per_hour, per_day, note) VALUES
+            ('everyinfra', 5, 20, 60, 'test seed') ON CONFLICT (service) DO NOTHING`;
   savedBudget = (await sql<{ per_day: number }[]>`SELECT per_day FROM budgets WHERE service = 'everyinfra'`)[0] ?? null;
   await sql`INSERT INTO sources (id, name, kind, config, tier, participation_mode, cursor, next_fetch_at)
             VALUES (${SOURCE}, 'Test XHS', 'json_list', ${sql.json(CONFIG)}, 'T2', 'editorial',

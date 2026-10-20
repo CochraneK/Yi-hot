@@ -9,6 +9,7 @@ import { fetchRss } from "./rss.ts";
 import { allowed, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
+import { everyInfraXhsNote } from "../providers/everyinfra.ts";
 import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog, type XRead } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 import { publishArticle } from "../publication/publish.ts";
@@ -34,6 +35,9 @@ export function noiseFiltered(c: Candidate, source: SourceRow): boolean {
   const has = (text: string, words: string[] | undefined) => (words ?? []).some((k) => text.includes(k.toLowerCase()));
   const title = c.title.toLowerCase();
   const hay = `${title}\n${(c.excerpt ?? "").toLowerCase()}`;
+  // 关键词搜索会带回大量只是沾边的内容：requireMarkers 要求标题或摘要至少点名其中一个才保留；
+  // keepIfMatches 是豁免，无论要求还是丢弃都保留。
+  if (f.requireMarkers?.length && !has(hay, f.requireMarkers) && !has(hay, f.keepIfMatches)) return true;
   if (has(hay, f.keepIfMatches)) return false;
   return has(title, f.dropMarkersTitleOnly) || has(hay, f.dropMarkers);
 }
@@ -139,9 +143,35 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       candidates = candidates.slice(0, MAX_ITEMS_PER_RUN);
     }
 
+    // EveryInfra 小红书：列表自带摘要（summaryIsBody 时即正文）。开启 everyinfraDetail 后，只对
+    // 没见过的笔记升级详情；已入库的 URL 不再产生第二次详情费。预算耗尽时 break 而不是 throw：
+    // 保住已经付费拿到的列表结果、用摘要入库，比整批回滚更划算。
+    const known = await storedTitles(candidates.map((c) => c.url));
+    if (source.kind === "json_list" && source.config.adapter === "everyinfra_xhs" && source.config.everyinfraDetail === true) {
+      for (const c of candidates) {
+        if (known.has(c.url)) continue;
+        try {
+          const note = await everyInfraXhsNote(c.url, { subject: source.id, identity: c.url });
+          if (note.title) c.title = note.title;
+          if (note.text) {
+            c.bodyText = note.text;
+            c.bodyStatus = "ok";
+          }
+          if (note.author) c.author = note.author;
+          if (note.postedAt) {
+            const at = new Date(note.postedAt);
+            if (Number.isFinite(at.getTime())) c.publishedAt = at;
+          }
+          c.raw = { ...(c.raw && typeof c.raw === "object" ? c.raw : {}), everyinfra: { noteReceiptId: note.receiptId } };
+        } catch (error) {
+          if (error instanceof BudgetExceededError) break;
+          // 详情临时不可用时，列表结果仍然有用。
+        }
+      }
+    }
+
     // Detail pages only for material we have not seen (bounded per run), and only for what the listing lacks.
     const d = source.config.detail;
-    const known = await storedTitles(candidates.map((c) => c.url));
     const detailBudget = Number(d?.maxFetches ?? 0);
     let detailUsed = 0;
     for (const c of candidates) {

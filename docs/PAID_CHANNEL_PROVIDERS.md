@@ -1,7 +1,7 @@
 # 付费采集通道：现状、候选与接入方案
 
-> **决策快照 · 2026-10-20**。本文只回答「要不要买、买哪家、怎么接、怎么算钱、怎么不踩坑」，**不代表已实现**。
-> 关联文档：[WERSS_DEPLOY.md](WERSS_DEPLOY.md)（自建公众号采集）、[SOURCE_GOVERNANCE_DESIGN.md](SOURCE_GOVERNANCE_DESIGN.md)（信源状态机）、[INTEGRATION_ROADMAP.md](INTEGRATION_ROADMAP.md)（三库整合路线图）。
+> **决策快照 · 2026-10-20（P1 已于同日落地，见第 5 节标注）**。本文回答「要不要买、买哪家、怎么接、怎么算钱、怎么不踩坑」。
+> 关联文档：[WERSS_DEPLOY.md](WERSS_DEPLOY.md)（自建公众号采集）、[SOURCE_GOVERNANCE_DESIGN.md](SOURCE_GOVERNANCE_DESIGN.md)（信源状态机）、[INTEGRATION_ROADMAP.md](INTEGRATION_ROADMAP.md)（三库整合路线图）、[sources.md](sources.md)（信源类型与 EveryInfra 接入细节）。
 
 ## 0. 先看结论
 
@@ -92,8 +92,10 @@
 
 ## 5. 接入顺序（每阶段独立可停）
 
-**P1 · 只读试跑（充值 $10 ≈ ¥72）**
+**P1 · 只读试跑（充值 $10 ≈ ¥72）— 代码已就绪，等 key**
 - 3 个关键词 × 每天 1 次 `search`，`summaryIsBody`，不开详情。
+- 已落地：`providers/everyinfra.ts`、`json-list.ts` 的 `everyinfra_xhs` 适配、`collect.ts` 的详情升级（预算耗尽 break）、`config-keys.ts` 白名单（含 `requireMarkers`/`dropMarkers`）、迁移 `0041`（预算 5/20/60）、`industry/sources.json` 三个关键词信源（**默认 `enabled: false`）。
+- 启用步骤：后台或 `.env` 配 `EVERYINFRA_API_KEY` → 在后台把三个小红书信源启用 → 观察 7 天。
 - 观察 7 天：命中率、噪声占比、重复率、单条实际成本。
 - 验收：连续 7 天有新增、无重复付费、月成本低于 ¥35。
 
@@ -128,8 +130,8 @@
 
 ## 8. 待办
 
-- [ ] 决定是否给 EveryInfra 充 $10 做 P1 试跑。
-- [ ] 若做：新增迁移 `0041`，`budgets ('everyinfra', 10, 100, 1000)`。
+- [ ] 决定是否给 EveryInfra 充 $10 做 P1 试跑（代码已就绪，配 key 后启用三个信源即可）。
+- [x] 迁移 `0041`：`budgets ('everyinfra', 5, 20, 60)`——比原计划 10/100/1000 更紧，按 P1+P3 的计划量（约 35 次/天）取两倍余量，失控才断。
 - [ ] 公众号侧：等 WERSS 扫码节奏跑稳后，再评估 EveryInfra 公众号接口；**必须复现并验证 503 不做名字兜底**。
 - [ ] 补「内容新鲜度」告警：`max(published_at)` 距今天数超过阈值就报警，而不是只看 fetch 成功。
-- [ ] 修正 `config-keys.ts` NESTED 白名单，补 `requireMarkers` / `dropMarkers`。
+- [x] 修正 `config-keys.ts` NESTED 白名单，补 `requireMarkers` / `dropMarkers`（`noiseFiltered` 同步实现 requireMarkers）。

@@ -59,9 +59,25 @@
 
 每个公众号按它的抓取间隔检查一次（查列表按次计费），新文章的正文一并取回。
 
-### 第三方社交平台内容 API（尚未接入）
+### 第三方社交平台内容 API（EveryInfra · 小红书）
 
-小红书、抖音这类平台的公开内容接口，**不自己写爬虫**：签名、风控、账号池和版权风险都不该由本项目承担。若将来接入，应作为 `json_list` 的一个 `adapter` 分支（参考同源项目 PsyHOT 的 `everyinfra_xhs` 写法），provider 放在 `packages/backend/src/providers/`，调用统一经 `paidRequest`，并在 `budgets` 里单独设上限。取舍、价格与分阶段接入顺序见 [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md)。
+小红书这类平台的公开内容接口，**不自己写爬虫**：签名、风控、账号池和版权风险都不该由本项目承担。小红书内容经 EveryInfra 的公开内容 API 读取，作为 `json_list` 的一个 `adapter` 分支接入（写法参考同源项目 PsyHOT）：
+
+```json
+{
+  "adapter": "everyinfra_xhs",
+  "everyinfraAction": "search",
+  "everyinfraParams": { "keyword": "公益项目", "date_range": "last_7_days", "sort": "newest" },
+  "summaryIsBody": true,
+  "ingestNoiseFilter": { "requireMarkers": ["公益", "慈善", "基金会"], "dropMarkers": ["带货", "课程"] }
+}
+```
+
+- `adapter: "everyinfra_xhs"` 时不再抓公网 URL，改调 `POST /api/v1/social`；列表字段有默认映射（`results` / `title` / `text` / `url` / `id` / `author_name` / `posted_at`），**没有链接的笔记直接丢弃**；`summaryIsBody` 让列表摘要直接当正文，跳过详情付费。
+- `everyinfraDetail: true` 才会对没见过的笔记调 `note` 详情（按次计费）；已入库的 URL 不再产生第二次详情费，预算耗尽时断开详情、保住已付费的列表结果。
+- 列表自带的公开互动数（赞/藏/评/转）只收数字类型，存入 `raw`，目前仅备用，未参与热度计算。
+- 每一次调用都经 `paidRequest` 记账，`budgets` 里 `everyinfra` 默认 5/20/60 次（分/时/天）；**不配 `EVERYINFRA_API_KEY` 时相关信源保持停用**（`enabled: false`），信源报错信息会写明缺 key。
+- 合规边界：只取公开内容、不落全文、互动数只作热度信号不得作为事实证据，详见 [PAID_CHANNEL_PROVIDERS.md](PAID_CHANNEL_PROVIDERS.md) 第 6 节。
 
 
 ## 分级、参与方式与全文

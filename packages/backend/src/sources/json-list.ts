@@ -3,6 +3,7 @@ import { credential } from "../config.ts";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
+import { everyInfraCall } from "../providers/everyinfra.ts";
 
 export function getPath(obj: unknown, path: string): unknown {
   if (!path) return obj;
@@ -128,31 +129,58 @@ function embeddedJson(html: string, source: SourceRow): unknown {
   throw new FetchError(`embedded key ${key} not found`);
 }
 
+/** EveryInfra 小红书适配：互动数只收 number 类型（"5" 这种字符串会带偏热度排序，直接丢弃）。 */
+const ENGAGEMENT_KEYS = ["like_count", "collect_count", "comment_count", "share_count"] as const;
+function engagementOf(item: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const k of ENGAGEMENT_KEYS) {
+    const v = getPath(item, k);
+    if (typeof v === "number" && Number.isFinite(v)) out[k] = v;
+  }
+  return out;
+}
+
 export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   const c = source.config;
+  // EveryInfra 来源不走公网 URL，改调付费 API（经 receipts 记账与预算熔断）。
+  let everyInfraData: unknown = null;
+  if (c.adapter === "everyinfra_xhs") {
+    if (!credential("collectors", "EVERYINFRA_API_KEY")) throw new FetchError("EVERYINFRA_API_KEY 未配置");
+    const params = c.everyinfraParams && typeof c.everyinfraParams === "object" ? c.everyinfraParams : {};
+    const call = await everyInfraCall<unknown[]>({
+      platform: "xiaohongshu",
+      action: String(c.everyinfraAction ?? "search"),
+      params: params as Record<string, unknown>,
+      subject: source.id,
+      purpose: "xhs_listing",
+      window: String(source.cursor?.lastCheckedAt ?? Math.floor(Date.now() / 600_000)),
+    });
+    everyInfraData = call.response;
+  }
   const url = String(c.url ?? "");
   const headers: Record<string, string> = { accept: "application/json, text/html;q=0.9", ...(c.headers ?? {}) };
   if (/^https:\/\/api\.github\.com\//.test(url)) {
     const token = credential("collectors", "GITHUB_TOKEN");
     if (token) headers.authorization = `Bearer ${token}`;
   }
-  const res = await guardedFetch(url, {
+  const res = everyInfraData ? null : await guardedFetch(url, {
     method: c.method ?? "GET",
     headers: c.bodyJson ? { ...headers, "content-type": "application/json" } : headers,
     body: c.bodyJson ? JSON.stringify(c.bodyJson) : undefined,
     timeoutMs: 25_000,
   });
-  if (res.status !== 200) throw new FetchError(`HTTP ${res.status}`, res.status);
+  if (res && res.status !== 200) throw new FetchError(`HTTP ${res.status}`, res.status);
   let data: unknown;
-  if (c.mode === "html_json_key" || c.mode === "html_window_var") data = embeddedJson(res.text(), source);
+  if (everyInfraData) data = everyInfraData;
+  else if (c.mode === "html_json_key" || c.mode === "html_window_var") data = embeddedJson(res!.text(), source);
   else {
     try {
-      data = JSON.parse(res.text());
+      data = JSON.parse(res!.text());
     } catch {
       throw new FetchError("response is not JSON");
     }
   }
-  let items = c.itemsPath ? getPath(data, c.itemsPath) : c.jsonKey ? getPath(data, c.jsonKey) : data;
+  let items = c.itemsPath ? getPath(data, c.itemsPath) : c.jsonKey ? getPath(data, c.jsonKey) : c.adapter === "everyinfra_xhs" ? getPath(data, "results") : data;
   if (c.itemsObjectValues && items && typeof items === "object" && !Array.isArray(items)) items = Object.values(items);
   if (!Array.isArray(items)) throw new FetchError("items path did not resolve to an array");
 
@@ -160,23 +188,25 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
   for (const item of items) {
     if (c.requireBoolean && getPath(item, c.requireBoolean.path) !== c.requireBoolean.equals) continue;
     if (c.minNumeric && !(Number(getPath(item, c.minNumeric.path)) >= Number(c.minNumeric.min))) continue;
-    const title = firstString(item, c.titlePaths);
-    const url = (c.urlTemplate && renderTemplate(c.urlTemplate, item)) || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item));
+    const title = firstString(item, c.titlePaths ?? (c.adapter === "everyinfra_xhs" ? ["title"] : undefined));
+    const url = (c.urlTemplate && renderTemplate(c.urlTemplate, item)) || (c.urlTemplateFallback && renderTemplate(c.urlTemplateFallback, item)) ||
+      (c.adapter === "everyinfra_xhs" ? renderTemplate("{raw:url}", item) : null);
     if (!title || !url) continue;
-    const externalId = c.externalIdPath ? getPath(item, c.externalIdPath) : null;
-    const summary = firstString(item, c.summaryPaths);
+    const externalId = c.externalIdPath ? getPath(item, c.externalIdPath) : c.adapter === "everyinfra_xhs" ? getPath(item, "id") : null;
+    const summary = firstString(item, c.summaryPaths ?? (c.adapter === "everyinfra_xhs" ? ["text"] : undefined));
     const raw = item && typeof item === "object" ? { ...(item as Record<string, unknown>) } : { value: item };
     for (const k of c.rawDropKeys ?? []) delete (raw as Record<string, unknown>)[k];
     const summaryIsBody = c.summaryIsBody === true && !!summary;
     out.push({
       url,
       title: collapseWhitespace(stripTags(title)),
-      author: firstString(item, c.authorPaths),
-      publishedAt: toDate(getPath(item, c.publishedAtPath), c.publishedAtUnit),
+      author: firstString(item, c.authorPaths ?? (c.adapter === "everyinfra_xhs" ? ["author_name"] : undefined)),
+      publishedAt: toDate(getPath(item, c.publishedAtPath ?? (c.adapter === "everyinfra_xhs" ? "posted_at" : "")), c.publishedAtUnit),
       excerpt: summary ? collapseWhitespace(stripTags(summary)).slice(0, 2000) : null,
       bodyText: summaryIsBody ? stripTags(summary!) : null,
       bodyStatus: summaryIsBody ? "ok" : "pending",
-      raw: { externalId: externalId ?? null },
+      // 小红书列表自带的公开互动数：热度排序按它加权（P4 再开，先收着）。
+      raw: { externalId: externalId ?? null, ...(c.adapter === "everyinfra_xhs" ? engagementOf(item) : {}) },
     });
   }
   if (items.length > 0 && out.length === 0 && !c.requireBoolean && !c.minNumeric) throw new FetchError("no items mapped (check title/url paths)");

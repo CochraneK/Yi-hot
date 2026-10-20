@@ -5,7 +5,7 @@ import type { Route } from "./+types/item";
 import type { SiteItemDetail } from "@aihot/contracts/site";
 import { loadOr404 } from "../lib/api.server";
 import { breadcrumbLd, pageMeta, siteUrl, titled } from "../lib/seo";
-import { feedDisplayAt, fullDateTime, relativeTime } from "../lib/format";
+import { feedDateLabel, feedDisplayAt, fullDateTime, relativeTime } from "../lib/format";
 import { markRead } from "../lib/local-state";
 import { SelectedBadge } from "../components/ui/Badge";
 import { ScoreLabel } from "../components/ui/Score";
@@ -198,9 +198,11 @@ export default function ItemPage() {
       <div className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
         {isX ? `@${item.x!.handle} · X` : item.author ?? hostOf(item.links.original)}
       </div>
-      <div className="mt-3 text-[12px] text-ink-4">{display.label === "原文发表" ? "原文发布时间" : "原文日期未知 · 本站收录时间"}</div>
+      <div className="mt-3 text-[12px] text-ink-4">
+        {display.label === "原文发表" ? (display.dateOnly ? "原文发布日期" : "原文发布时间") : "原文日期未知 · 本站收录时间"}
+      </div>
       <time dateTime={publishedIso} className="mono mt-0.5 block text-[12.5px] text-ink-2">
-        {fullDateTime(publishedIso)}
+        {display.dateOnly ? feedDateLabel(publishedIso) : fullDateTime(publishedIso)}
       </time>
       <div className="mt-0.5 text-[12px] text-ink-4" suppressHydrationWarning>
         {relativeTime(publishedIso)}
@@ -289,7 +291,7 @@ export default function ItemPage() {
             {item.author && !isX && <span>· {item.author}</span>}
             <span>·</span>
             {display.label === "收录" && <span>收录于</span>}
-            <time dateTime={publishedIso} className="mono">{fullDateTime(publishedIso)}</time>
+            <time dateTime={publishedIso} className="mono">{display.dateOnly ? feedDateLabel(publishedIso) : fullDateTime(publishedIso)}</time>
             <span suppressHydrationWarning>· {relativeTime(publishedIso)}</span>
             {item.selected && (
               <span className="ml-1 lg:hidden">

@@ -97,6 +97,10 @@ function dayKeys(days: number): string[] {
 export async function usageOverview(days = 30) {
   const d = Math.min(365, Math.max(1, Math.floor(days)));
   const since = new Date(Date.now() - d * 86400_000);
+  // Services billed by token are the registry's own. A failed model call also has `usage IS NULL`,
+  // so without this exclusion a few dead LLM requests would file themselves under per-request
+  // providers with a charge of zero and read as a billing problem that is not there.
+  const tokenServices = [...new Set(Object.values(MODELS).map((m) => m.service))];
   const [byDay, byPurpose, prices, lifetime, seen, perCall, perCallDay, perCallLife] = await Promise.all([
     sql<DayModelRow[]>`
       SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.model,
@@ -138,13 +142,13 @@ export async function usageOverview(days = 30) {
              count(*) FILTER (WHERE a.cost IS NOT NULL)::int AS billed,
              sum(a.cost) AS amount, max(a.currency) AS currency
       FROM receipt_attempts a
-      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL
+      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL AND NOT (a.service = ANY(${tokenServices}))
       GROUP BY 1 ORDER BY 2 DESC`,
     sql<PerCallDayRow[]>`
       SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.service,
              count(*)::int AS calls, sum(a.cost) AS amount, max(a.currency) AS currency
       FROM receipt_attempts a
-      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL
+      WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NULL AND NOT (a.service = ANY(${tokenServices}))
       GROUP BY 1, 2`,
     sql<PerCallRow[]>`
       SELECT a.service, count(*)::int AS calls,
@@ -152,7 +156,7 @@ export async function usageOverview(days = 30) {
              count(*) FILTER (WHERE a.cost IS NOT NULL)::int AS billed,
              sum(a.cost) AS amount, max(a.currency) AS currency
       FROM receipt_attempts a
-      WHERE a.origin = 'live' AND a.usage IS NULL
+      WHERE a.origin = 'live' AND a.usage IS NULL AND NOT (a.service = ANY(${tokenServices}))
       GROUP BY 1 ORDER BY 2 DESC`,
   ]);
 
@@ -349,6 +353,6 @@ export async function usageOverview(days = 30) {
     // maps them to. A name with `service: null` is not in MODELS, so no price row can ever match it —
     // surfacing this is how the operator finds out *why* a figure reads "未定价".
     seenModels: seen.filter((r) => r.model).map((r) => ({ model: r.model as string, service: serviceOf(r.model), calls: r.calls })),
-    services: [...new Set(Object.values(MODELS).map((m) => m.service))].sort(),
+    services: tokenServices.sort(),
   };
 }

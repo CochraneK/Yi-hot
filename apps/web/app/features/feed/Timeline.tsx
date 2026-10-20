@@ -103,9 +103,10 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, 
       style={fresh ? { animationDelay: `${delay}ms` } : undefined}
     >
       <time dateTime={at} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
-        {dateOnly ? <span aria-hidden="true">—</span> : beijingTime(at)}
-        {timeLabel === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
-        {dateOnly && <span className="mt-0.5 block text-[10px] font-normal">日期</span>}
+        {/* A day-precision article has no clock time. The sticky day header already states the date, so
+            the cell stays empty rather than repeating it or printing a placeholder dash. */}
+        {!dateOnly && beijingTime(at)}
+        {!dateOnly && timeLabel === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />

@@ -8,6 +8,7 @@ import type { RegulatoryRecordType, RegulatoryOrgKind } from "@aihot/contracts/r
 import { ENTITIES } from "@aihot/industry/taxonomy";
 import { guardedFetch } from "../lib/http-fetch.ts";
 import { sql } from "../db.ts";
+import { normalizeRegion } from "./region.ts";
 
 const PENALTY_URL = "https://chinanpo.mca.gov.cn/selectXzcfgg?pageNum=1&pageSize=200";
 const NOTICE_URL = "https://chinanpo.mca.gov.cn/selectApOutsideNotice?pageNum=1&pageSize=2500";
@@ -41,6 +42,8 @@ interface RecordRow {
   org_kind: RegulatoryOrgKind | null;
   entity_id: string | null;
   region: string | null;
+  region_province: string | null;
+  region_city: string | null;
   case_no: string | null;
   punish_name: string | null;
   punish_result: string | null;
@@ -137,6 +140,8 @@ function penaltyRows(rows: Record<string, unknown>[]): RecordRow[] {
       org_kind: orgKindOf(code),
       entity_id: entityOf(orgName),
       region: null,
+      region_province: null,
+      region_city: null,
       case_no: text(r.caseNo),
       punish_name: text(r.punishName),
       punish_result: text(r.punishResult),
@@ -164,6 +169,7 @@ function noticeRows(rows: Record<string, unknown>[]): RecordRow[] {
     const recordType = noticeTypeOf(r.type, r.noticeType);
     if (!orgName || !externalId || !published || !recordType) continue;
     const code = text(r.unifiedCode);
+    const region = normalizeRegion(regionOf(text(r.registerManageDept)));
     out.push({
       source_key: NOTICE_SOURCE,
       external_id: externalId,
@@ -173,6 +179,8 @@ function noticeRows(rows: Record<string, unknown>[]): RecordRow[] {
       org_kind: orgKindOf(code),
       entity_id: entityOf(orgName),
       region: regionOf(text(r.registerManageDept)),
+      region_province: region.province,
+      region_city: region.city,
       case_no: text(r.caseCode),
       punish_name: null, punish_result: null, punish_reason: null, punish_basis: null, punish_organ: null, punish_on: null,
       enrol_reason: text(r.enrolReason),
@@ -197,17 +205,20 @@ async function upsert(rows: RecordRow[]): Promise<{ inserted: number; updated: n
     const [res] = await sql<{ inserted: boolean }[]>`
       INSERT INTO regulatory_records (
         source_key, external_id, record_type, org_name, unified_code, org_kind, entity_id, region,
+        region_province, region_city,
         case_no, punish_name, punish_result, punish_reason, punish_basis, punish_organ, punish_on,
         enrol_reason, enrol_gist, enrol_on, remove_reason, remove_gist, remove_on,
         register_dept, address, published_on, raw)
       VALUES (
         ${r.source_key}, ${r.external_id}, ${r.record_type}, ${r.org_name}, ${r.unified_code}, ${r.org_kind}, ${r.entity_id}, ${r.region},
+        ${r.region_province}, ${r.region_city},
         ${r.case_no}, ${r.punish_name}, ${r.punish_result}, ${r.punish_reason}, ${r.punish_basis}, ${r.punish_organ}, ${r.punish_on},
         ${r.enrol_reason}, ${r.enrol_gist}, ${r.enrol_on}, ${r.remove_reason}, ${r.remove_gist}, ${r.remove_on},
         ${r.register_dept}, ${r.address}, ${r.published_on}, ${sql.json(r.raw as never)})
       ON CONFLICT (source_key, external_id) DO UPDATE SET
         record_type = EXCLUDED.record_type, org_name = EXCLUDED.org_name, unified_code = EXCLUDED.unified_code,
         org_kind = EXCLUDED.org_kind, entity_id = EXCLUDED.entity_id, region = EXCLUDED.region,
+        region_province = EXCLUDED.region_province, region_city = EXCLUDED.region_city,
         case_no = EXCLUDED.case_no, punish_name = EXCLUDED.punish_name, punish_result = EXCLUDED.punish_result,
         punish_reason = EXCLUDED.punish_reason, punish_basis = EXCLUDED.punish_basis, punish_organ = EXCLUDED.punish_organ,
         punish_on = EXCLUDED.punish_on, enrol_reason = EXCLUDED.enrol_reason, enrol_gist = EXCLUDED.enrol_gist,

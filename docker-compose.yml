@@ -3,7 +3,14 @@
 name: aihot
 
 x-app: &app
-  build: .
+  build:
+    context: .
+    # Mainland mirrors: set APT_MIRROR=mirrors.aliyun.com and
+    # NPM_REGISTRY=https://registry.npmmirror.com in .env to cut build time from ~20 min to ~3 min.
+    # Both default to empty, so upstream builds are unchanged.
+    args:
+      APT_MIRROR: ${APT_MIRROR:-}
+      NPM_REGISTRY: ${NPM_REGISTRY:-}
   image: aihot-app
   restart: unless-stopped
   environment: &app-env

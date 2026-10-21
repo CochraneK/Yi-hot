@@ -33,10 +33,13 @@ export class ReceiptUnknownError extends Error {
 export class ProviderRejectedError extends Error {
   readonly status: number | null;
   readonly retryable: boolean;
-  constructor(message: string, status: number | null, retryable: boolean) {
+  /** Provider told us when to come back (seconds); null when it did not say. */
+  readonly retryAfterSeconds: number | null;
+  constructor(message: string, status: number | null, retryable: boolean, retryAfterSeconds: number | null = null) {
     super(message);
     this.status = status;
     this.retryable = retryable;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 

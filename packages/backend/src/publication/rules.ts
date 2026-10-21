@@ -57,18 +57,29 @@ export function passesPublicationRule(rule: PublicationRule | null | undefined, 
   return rule.requireMarkers.some((marker) => hay.includes(marker));
 }
 
-/** Public pool (/all): editorial sources, AI relevant, with a Chinese title and summary, and past the source rule. */
+/**
+ * 动态（/all）的全局最低分（2026-10-21 定）。精选门槛管的是“够不够好”，这条只管“够不够格进公开池”：
+ * 0–14 分实测基本是活动通知、文娱短剧和纯转发，混在动态里只会把真正有用的机构动态压下去。
+ * 只对打了分的材料生效（null 分来自不参与评分的信源，照旧放行）；人工覆盖过的条目不受此限。
+ */
+export const POOL_SCORE_FLOOR = 15;
+
+/** Public pool (/all): editorial sources, AI relevant, with a Chinese title and summary, above the floor, and past the source rule. */
 export function isPoolEligible(input: {
   participationMode: string;
   relevance: string | null;
   title: string | null;
   summary: string | null;
   rule?: PublicationRule | null;
-  score?: number | null;
+  score?: number | string | null;
   category?: string | null;
+  /** 有 editorial_overrides 时跳过全局分数地板：编辑已经表过态。 */
+  overridden?: boolean;
 }): boolean {
   if (input.participationMode !== "editorial" || input.relevance !== "pass" || !input.title || !input.summary) return false;
-  return passesPublicationRule(input.rule, { score: input.score ?? null, category: input.category ?? null, title: input.title, summary: input.summary });
+  const score = input.score == null ? null : Number(input.score);
+  if (!input.overridden && score !== null && Number.isFinite(score) && score < POOL_SCORE_FLOOR) return false;
+  return passesPublicationRule(input.rule, { score: score ?? null, category: input.category ?? null, title: input.title, summary: input.summary });
 }
 
 /**

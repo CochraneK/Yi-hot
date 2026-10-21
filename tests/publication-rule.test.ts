@@ -86,6 +86,20 @@ test("isPoolEligible 把源规则接在原有四个条件之后", () => {
   assert.equal(isPoolEligible({ ...base, rule: RULE, score: 12, category: "field" }), false);
   // 非 editorial 的源仍被 participation_mode 拦住，规则救不回来
   assert.equal(isPoolEligible({ ...base, participationMode: "hot_signal", rule: RULE, score: 50, category: "field" }), false);
-  // 没有规则时行为不变
-  assert.equal(isPoolEligible({ ...base, score: 12, category: "field" }), true);
+  // 没有规则时也要过全局分数地板（2026-10-21 起 15 分以下不进动态）
+  assert.equal(isPoolEligible({ ...base, score: 12, category: "field" }), false);
+  assert.equal(isPoolEligible({ ...base, score: 15, category: "field" }), true);
+});
+
+test("全局分数地板：15 分以下不进动态，null 分与人工覆盖照旧", () => {
+  const base = { participationMode: "editorial", relevance: "pass", title: "标题", summary: "摘要" };
+  assert.equal(isPoolEligible({ ...base, score: 14 }), false);
+  assert.equal(isPoolEligible({ ...base, score: 15 }), true);
+  // 不参与评分的信源没有分数，不能被地板误伤
+  assert.equal(isPoolEligible({ ...base, score: null }), true);
+  assert.equal(isPoolEligible({ ...base }), true);
+  // 编辑手动覆盖过的条目不受地板限制
+  assert.equal(isPoolEligible({ ...base, score: 0, overridden: true }), true);
+  // 相关性这一关始终在分数地板之前
+  assert.equal(isPoolEligible({ ...base, relevance: "unknown", score: 80 }), false);
 });

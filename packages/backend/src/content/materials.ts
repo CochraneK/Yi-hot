@@ -171,8 +171,14 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
   if (m.publishedAt && Number.isFinite(m.publishedAt.getTime())) {
     const corrected = decideTimeline(m.publishedAt, existing!.discovered_at,
       m.backfill ?? (existing!.backfill_reason === "stale-on-discovery" ? null : existing!.backfill_reason));
+    // A listing that prints only the day must not erase a time already known to the minute. The
+    // article page was read once (detail.upgradeDatePrecision) and the listing re-renders that same
+    // day as midnight on every fetch, which would walk precision back to "date" — and the feed
+    // prints no clock for "date" at all. A finer claim still wins, so corrections keep working.
+    const downgrade = existing!.published_at_precision === "datetime" &&
+      (m.publishedAtPrecision ?? existing!.published_at_precision) === "date";
     // A newly claimed future date must not erase a previously verified date.
-    if (corrected.publishedAt && (corrected.publishedAt.getTime() !== existing!.published_at?.getTime() ||
+    if (!downgrade && corrected.publishedAt && (corrected.publishedAt.getTime() !== existing!.published_at?.getTime() ||
         corrected.timelineAt.getTime() !== existing!.timeline_at.getTime() || corrected.backfill !== existing!.backfill)) {
       await db`UPDATE articles SET published_at = ${corrected.publishedAt}, published_at_claim = ${m.publishedAt}, published_at_precision = ${m.publishedAtPrecision ?? existing!.published_at_precision},
         timeline_at = ${corrected.timelineAt}, backfill = ${corrected.backfill}, backfill_reason = ${corrected.backfillReason}, updated_at = now()

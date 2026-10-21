@@ -408,6 +408,13 @@ ssh -N -L 18001:127.0.0.1:18001 <服务器用户>@<服务器地址>
 
 扫码会话**登录后固定 4 天过期**，重新扫码也不会延长，因此按**每 3 天**一次维护。日常不用记命令：双击 `tools/werss/werss-scan.cmd` 会自动建隧道并打开管理端，点「刷新授权」扫码，再逐个公众号点「刷新」；用 `tools/werss/werss-status.cmd` 复核新鲜度。采集模式已于 2026-10-20 切回 `web`，微信读书那条路（约 2 小时失效）已停用。若考虑改用付费接口（EveryInfra / 极致了）替代自建，先读 [`docs/PAID_CHANNEL_PROVIDERS.md`](docs/PAID_CHANNEL_PROVIDERS.md)。
 
+#### 走 EveryInfra 的公众号源（`adapter=everyinfra` + `everyinfraPlatform=wechat_oa`）
+
+- **列表只给标题和链接**（`account_articles` 返回里没有摘要字段），正文必须按文章 URL 单独调 `article_detail`，单篇计费；源配置开 `everyinfraDetail: true` 才会抓。
+- **正文在 `content_html` 字段，不在 `content_text`**（2026-10-21 实测踩坑）。`providers/everyinfra.ts` 里的兜底会保留段落换行地剥标签；纯图片贴（正文一个字都没有）用 `digest` 补 `excerpt`，连 digest 都没有的按 `body_status='none'` 只给标题，分析大概率判 unknown——这是预期结果，不用反复重抓。
+- **503 通常是容量问题，不是坏了**：`reason=capacity_exhausted`、`charged:false`、`retry_after` 秒数。调度层会照 `retry_after`（至少 15 分钟）回来重试，且不累加 `fail_count`、不降级健康度。所以看到 `degraded` + `everyinfra HTTP 503 (capacity_exhausted…)` 不必处理，等它自己恢复即可。
+- 改规则后旧数据不会自动重算，需要跑一次 `republishSource`。
+
 ### 邮件来源
 
 当前白名单包含：
@@ -817,6 +824,17 @@ $DC up -d
 ```
 
 **三条命令都必须带全三个 `-f`，一条都不能省。** 少写 `compose.werss.yml`，api/worker 会被摘出 `yihot_werss` 网络，公众号源立刻报 `getaddrinfo EAI_AGAIN werss`——2026-10-19 和 10-20 各踩了一次；少写 `compose.futureme-proxy.yml` 会丢 FutureMe 的出网代理。
+
+**国内构建必须给镜像源，否则会卡 20 分钟以上。** `Dockerfile` 有 `ARG APT_MIRROR`、compose 里映射了
+`APT_MIRROR` / `NPM_REGISTRY` 两个构建参数（默认空 = 走上游，不影响他人）。在服务器 `/opt/yihot/.env` 里设：
+
+```env
+APT_MIRROR=mirrors.aliyun.com
+NPM_REGISTRY=https://registry.npmmirror.com
+```
+
+实测带镜像后 `up -d --build` 约 4 分钟；不加时 Debian 源 + npm 上游源会各自拖十几分钟（`apt-get update`
+单独的 10 分钟很常见），看起来像卡死但其实在下载。
 
 `industry/`、`data/` 和源码会被烘焙进镜像，变化后必须 rebuild。禁止把 `docker cp` 加 `restart` 当成正式部署；容器重建后临时文件会消失，`.env` 也不会在普通 restart 时重新读取。
 

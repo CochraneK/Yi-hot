@@ -189,7 +189,7 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
 
   const eligible = isPoolEligible({
     participationMode: source.participation_mode, relevance, title, summary,
-    rule: source.publication_rule, score, category,
+    rule: source.publication_rule, score, category, overridden: !!override,
   });
   const selected = isSelectable(eligible, judgedSelected, source.tier);
   const reason = selected ? pickString(f.reason, analysis?.reason_zh ?? null) : null;

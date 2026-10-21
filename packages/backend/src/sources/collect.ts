@@ -9,7 +9,7 @@ import { fetchRss } from "./rss.ts";
 import { allowed, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
-import { everyInfraXhsNote } from "../providers/everyinfra.ts";
+import { everyInfraWechatArticle, everyInfraXhsNote } from "../providers/everyinfra.ts";
 import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog, type XRead } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 import { publishArticle } from "../publication/publish.ts";
@@ -166,6 +166,29 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         } catch (error) {
           if (error instanceof BudgetExceededError) break;
           // 详情临时不可用时，列表结果仍然有用。
+        }
+      }
+    }
+
+    // EveryInfra 公众号：列表只给标题和链接（2026-10-21 实测返回里没有 summary 字段），正文必须按
+    // 文章 URL 单独取（article_detail，单篇计费）。开启 everyinfraDetail 后只对没见过的文章取正文；
+    // 预算耗尽时 break 而不是 throw：保住已经付费拿到的列表结果，比整批回滚更划算。
+    if (source.kind === "json_list" && source.config.adapter === "everyinfra"
+      && source.config.everyinfraPlatform === "wechat_oa" && source.config.everyinfraDetail === true) {
+      for (const c of candidates) {
+        if (known.has(c.url)) continue;
+        try {
+          const article = await everyInfraWechatArticle(c.url, { subject: source.id, identity: c.url });
+          if (article.text) {
+            c.bodyText = article.text;
+            c.bodyStatus = "ok";
+          }
+          if (!c.title && article.title) c.title = article.title;
+          if (article.author) c.author = article.author;
+          c.raw = { ...(c.raw && typeof c.raw === "object" ? c.raw : {}), everyinfra: { articleReceiptId: article.receiptId } };
+        } catch (error) {
+          if (error instanceof BudgetExceededError) break;
+          // 正文临时取不到时，标题级的列表结果仍然值得入库。
         }
       }
     }

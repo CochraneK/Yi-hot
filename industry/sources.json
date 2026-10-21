@@ -1008,6 +1008,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_ae5dedc87e58"
@@ -1047,6 +1048,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_1bee427990af"
@@ -1086,6 +1088,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_33dbee28e97c"
@@ -1125,6 +1128,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_9cf7080ed716"
@@ -1164,6 +1168,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_79453fdac36e"
@@ -1203,6 +1208,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_0e8ff12a04aa"
@@ -1242,6 +1248,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_19af03fe3336"
@@ -1281,6 +1288,7 @@
    "config": {
     "adapter": "everyinfra",
     "everyinfraPlatform": "wechat_oa",
+    "everyinfraDetail": true,
     "everyinfraAction": "account_articles",
     "everyinfraParams": {
      "account": "gh_dbcd4e3548a0"

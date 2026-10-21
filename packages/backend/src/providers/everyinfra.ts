@@ -83,6 +83,27 @@ export async function everyInfraCall<T = unknown>(opts: {
   return { results: response.results as T, receiptId: receipt.receiptId, reused: receipt.reused, response };
 }
 
+/** 公众号文章正文：列表接口只给标题和链接（实测没有摘要字段），正文只能按文章 URL 单独取。 */
+export async function everyInfraWechatArticle(articleUrl: string, opts: { subject: string; identity: string }) {
+  const call = await everyInfraCall<Record<string, unknown>>({
+    platform: "wechat_oa",
+    action: "article_detail",
+    params: { url: articleUrl },
+    subject: opts.subject,
+    purpose: "wechat_article",
+    window: opts.identity,
+  });
+  const row = call.results && typeof call.results === "object" ? call.results : {};
+  return {
+    title: typeof row.title === "string" ? row.title : null,
+    text: typeof row.content_text === "string" ? row.content_text : null,
+    author: typeof row.author === "string" ? row.author : null,
+    postedAt: typeof row.posted_at === "string" ? row.posted_at : null,
+    raw: row,
+    receiptId: call.receiptId,
+  };
+}
+
 /** 小红书笔记详情（P3 才开：只对通过预筛、且列表没有正文的笔记调用）。 */
 export async function everyInfraXhsNote(noteUrl: string, opts: { subject: string; identity: string }) {
   const call = await everyInfraCall<Record<string, unknown>>({

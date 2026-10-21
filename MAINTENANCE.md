@@ -1649,3 +1649,13 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以�
 - 邮件订阅现在支持日报、周报、月报；活动订阅再次提交偏好时，必须通过新的确认邮件后才会更新，避免仅凭公开邮箱地址改动订阅。
 - 日期只有来源日期而没有时刻时，数据库保存 `published_at_precision=date`，页面保留原文日期并用收录时刻显示排序；动态列表按展示时间倒序。
 - Docker Compose 不再把 `.env` 全量注入 Web 容器；只有 setup、api、worker 读取服务端凭据。开发示例默认关闭采集和模型调用，生产启用前请显式设置安全阀并填写 `AIHOT_RELEASE`。
+
+## 二十三、儿童权益国际信源与长期覆盖缺口（2026-10-21）
+
+2026-10-21 已在 [`industry/sources.json`](industry/sources.json) **增加四条默认暂停** 的儿童权益/国际公益网页来源：救助儿童会国际新闻、UNICEF 中国新闻资讯、UNICEF 全球新闻稿、UNICEF Innocenti 研究报告。内容列表的标题、原文链接与部分日期已在官方公开 HTML 中核对，但**生产服务器尚未执行 seed、原生抓取预览及权益检查**，不可宣称已上线运行。
+
+- [第一批配置、网页结构核验、上线检查与回滚操作](docs/SOURCE_EXPANSION_2026-10-21.md)
+- [其余 41 个缺口目标与原因（待审核，不可直接导入）](data/source-registry/proposals-child-rights-2026-10-21.json)
+- **同步方法**：在已备份并确认连接生产数据库的部署环境执行 `node --env-file=.env scripts/seed.ts`；该脚本仅插入不存在的 ID，保留现有信源修改。随后按专题文档逐条 Preview、核实授权、人工启用。
+- **费用**：本次不增加付费采集 API；四条处于 `enabled: false`，生产抓取和 AI 费用增量为零。未来启用后的网页/模型消耗由实际回执另行核算，不能把零入口费写成零模型费。
+

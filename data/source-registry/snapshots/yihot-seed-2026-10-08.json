@@ -1,0 +1,199 @@
+{
+  "snapshot_date": "2026-10-08",
+  "source": "industry/sources.json (historical as of 2026-10-08)",
+  "comment": "Frozen only for the read-only three-repository historical audit. Do not use for running YiHot. This file holds only the name, ID, kind and endpoint needed for the 2026-10-08 registry comparison.",
+  "sources": [
+    {
+      "id": "web-mca-civil-news",
+      "name": "民政部·民政要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mca.gov.cn/n152/n164/index.html"
+      }
+    },
+    {
+      "id": "web-mca-notice",
+      "name": "民政部·通知公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mca.gov.cn/n152/n165/index.html"
+      }
+    },
+    {
+      "id": "web-mca-business",
+      "name": "民政部·业务动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mca.gov.cn/n152/n167/index.html"
+      }
+    },
+    {
+      "id": "web-mca-local",
+      "name": "民政部·地方动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mca.gov.cn/n152/n168/index.html"
+      }
+    },
+    {
+      "id": "json-foundation-center-fti",
+      "name": "基金会中心网·动态",
+      "kind": "json_list",
+      "config": {
+        "url": "https://api.foundationcenter.org.cn/api/HomeAPI/News"
+      }
+    },
+    {
+      "id": "web-cca-federation-news",
+      "name": "中国慈善联合会·联合会动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://charityalliance.org.cn/dl/771e1p1pcD.html"
+      }
+    },
+    {
+      "id": "web-nandu-org-news",
+      "name": "南都公益基金会·机构动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.naradafoundation.org/category/32"
+      }
+    },
+    {
+      "id": "rss-oxfam",
+      "name": "Oxfam 乐施会·新闻",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.oxfam.org/en/rss.xml"
+      }
+    },
+    {
+      "id": "rss-givedirectly",
+      "name": "GiveDirectly·动态",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.givedirectly.org/feed"
+      }
+    },
+    {
+      "id": "web-savethechildren-cn",
+      "name": "救助儿童会中国·最新进展",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.savethechildren.org.cn/news_0"
+      }
+    },
+    {
+      "id": "web-cctf-news",
+      "name": "中国儿童少年基金会·动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cctf.org.cn/news/"
+      }
+    },
+    {
+      "id": "web-moe-news",
+      "name": "教育部·工作动态",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.moe.gov.cn/jyb_xwfb/gzdt_gzdt/"
+      }
+    },
+    {
+      "id": "web-court-spc-news",
+      "name": "最高人民法院·新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.court.gov.cn/zixun/gengduo/24.html"
+      }
+    },
+    {
+      "id": "json-women-wq",
+      "name": "全国妇联·依法维权",
+      "kind": "json_list",
+      "config": {
+        "url": "https://www.women.org.cn/5524//5528/NewsList_0.json"
+      }
+    },
+    {
+      "id": "web-onefoundation-news",
+      "name": "壹基金·最新活动",
+      "kind": "web_list",
+      "config": {
+        "url": "https://onefoundation.cn/news/"
+      }
+    },
+    {
+      "id": "web-cfpa-news",
+      "name": "中国乡村发展基金会·机构新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://cfpa.org.cn/news/news.aspx"
+      }
+    },
+    {
+      "id": "rss-un-news",
+      "name": "联合国新闻（中文）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://news.un.org/feed/subscribe/zh/news/all/rss.xml"
+      }
+    },
+    {
+      "id": "web-mee-hjyw",
+      "name": "生态环境部·环保要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.mee.gov.cn/ywdt/hjywnews/"
+      }
+    },
+    {
+      "id": "web-mee-xwfb",
+      "name": "生态环境部·新闻发布",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.mee.gov.cn/ywdt/xwfb/"
+      }
+    },
+    {
+      "id": "web-mee-zcwj",
+      "name": "生态环境部·政策文件",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.mee.gov.cn/zcwj/"
+      }
+    },
+    {
+      "id": "web-cwdf-news",
+      "name": "中国妇女发展基金会·本会新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cwdf.org.cn/index.php?m=content&c=index&a=lists&catid=26"
+      }
+    },
+    {
+      "id": "web-cdpf-news",
+      "name": "中国残联·残联要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cdpf.org.cn/xwzx/clyw2/index.htm"
+      }
+    },
+    {
+      "id": "web-mem-emergency-news",
+      "name": "应急管理部·应急要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.mem.gov.cn/xw/yjyw/"
+      }
+    },
+    {
+      "id": "web-cac-policy",
+      "name": "中国网信网·政策法规",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cac.gov.cn/wxzw/zcfg/A093703index_1.htm"
+      }
+    }
+  ]
+}

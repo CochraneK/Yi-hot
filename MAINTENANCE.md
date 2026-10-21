@@ -1659,3 +1659,11 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以�
 - **同步方法**：在已备份并确认连接生产数据库的部署环境执行 `node --env-file=.env scripts/seed.ts`；该脚本仅插入不存在的 ID，保留现有信源修改。随后按专题文档逐条 Preview、核实授权、人工启用。
 - **费用**：本次不增加付费采集 API；四条处于 `enabled: false`，生产抓取和 AI 费用增量为零。未来启用后的网页/模型消耗由实际回执另行核算，不能把零入口费写成零模型费。
 
+## 二十四、DeepSeek V4.1 Flash 默认模型安全切换（2026-10-21）
+
+生产历史回执截至 2026-10-18 仍显示 `deepseek-chat`，但该旧别名已由 DeepSeek 官方退役。2026-10-21 官方推荐名称是 `deepseek-flash`（V4.1 Flash）；`industry/` 与 `.env.example` **已经支持此模型**，但是 GitHub 示例配置**不会覆盖腾讯云真实 `.env`**，不能只靠代码合并就声称生产已经切换。
+
+- **完整步骤、失败回滚、模型覆盖优先级和价格单位**：[DeepSeek Flash 切换指引](docs/DEEPSEEK_FLASH_SWITCH_2026-10-21.md)。
+- 服务器 `/opt/yihot` 可执行 `python3 tools/switch_deepseek_flash.py` 只读预检；核实后执行 `python3 tools/switch_deepseek_flash.py --apply`，会备份 `.env`、保留同一 `LLM_API_KEY`、设置 `LLM_MODEL=deepseek-flash` 与禁用思考参数，只重建/核验 `api`、`worker` 两容器。
+- 后台 `/yihot/admin/models` 的单阶段模型覆盖优先于环境变量；若存在必须另行核对。单价表匹配 `service=llm` 和新模型名；旧账单价不得直接删掉，后台估算不等于人民币实扣。
+- **本章记录的是迁移方法，不是腾讯云已部署证明**；实施完成后再写具体切换时间、回执和观测结果。

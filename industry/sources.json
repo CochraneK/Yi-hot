@@ -3289,6 +3289,91 @@
       "publication_rule": {
         "minScore": 40
       }
+    },
+    {
+      "id": "gongyi-times",
+      "name": "公益时报·公益资讯",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.gongyishibao.com/html/gongyizixun/list.html",
+        "baseUrl": "http://www.gongyishibao.com",
+        "itemSelector": ".list-inner-text-inner",
+        "linkSelector": "h2 a",
+        "titleSelector": "h2",
+        "allowUrlPrefixes": [
+          "http://www.gongyishibao.com/html/gongyizixun/"
+        ],
+        "publishedAtSelector": ".info span:nth-child(2)",
+        "detail": {
+          "maxFetches": 20,
+          "upgradeDatePrecision": true,
+          "publishedAtSelector": "div.date-source"
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "媒体",
+        "公益"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "web-gongyishibao-yaowen",
+      "name": "公益时报·要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.gongyishibao.com/html/yaowen/list.html",
+        "itemSelector": "div.list-inner",
+        "linkSelector": "h2 a",
+        "publishedAtSelector": "div.info",
+        "allowUrlPrefixes": [
+          "http://www.gongyishibao.com/html/yaowen/"
+        ],
+        "detail": {
+          "maxFetches": 20,
+          "upgradeDatePrecision": true,
+          "publishedAtSelector": "div.date-source"
+        },
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "开奖",
+            "双色球",
+            "招聘",
+            "讣告"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "媒体",
+        "公益"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

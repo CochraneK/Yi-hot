@@ -422,7 +422,11 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
   if (need.date && dateText !== null) {
     if ($ && !dateInJina && d.publishedAtSelector) {
       const el = $(d.publishedAtSelector).first();
-      publishedAt = parseLooseDate(el.attr("datetime") ?? el.attr("title") ?? el.text(), d.publishedAtUtcOffset);
+      const raw = el.attr("datetime") ?? el.attr("title") ?? el.text();
+      publishedAt = parseLooseDate(raw, d.publishedAtUtcOffset);
+      // Same rule as the listing parse: a byline that carries a clock time refines the listing's
+      // day. Without it the caller keeps "date", and the feed then prints no time at all.
+      if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
     if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], d.publishedAtUtcOffset);
     // An authoritative rule is the only source of the date: when its byline is missing, no other

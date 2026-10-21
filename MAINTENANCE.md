@@ -1874,3 +1874,65 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以�
 - 服务器 `/opt/yihot` 可执行 `python3 tools/switch_deepseek_flash.py` 只读预检；核实后执行 `python3 tools/switch_deepseek_flash.py --apply`，会备份 `.env`、保留同一 `LLM_API_KEY`、设置 `LLM_MODEL=deepseek-flash` 与禁用思考参数，只重建/核验 `api`、`worker` 两容器。
 - 后台 `/yihot/admin/models` 的单阶段模型覆盖优先于环境变量；若存在必须另行核对。单价表匹配 `service=llm` 和新模型名；旧账单价不得直接删掉，后台估算不等于人民币实扣。
 - **本章记录的是迁移方法，不是腾讯云已部署证明**；实施完成后再写具体切换时间、回执和观测结果。
+
+## 二十五、发布时间精度：为什么「文章有，时间没有」（2026-10-21）
+
+### 现象
+
+公益时报《2026年善家传承与社会治理交流会在京举办》详情页写着 `2026/10/21 17:45`，
+站上却只显示「10月21日」，没有 17:45。库里 `published_at` 是 `2026-10-21 00:00 +08`。
+
+### 四个环节都可能丢时间，逐层查
+
+1. **源有没有接**。这条其实在库里（`gongyi-times`，已采 74 篇），不是「没收录」。
+2. **列表页精度**。公益时报列表 `.info` 只印 `2026/10/21`，详情页 `.date-source` 才有
+   `2026/10/21 17:45`。列表只到日时，`datePrecision()` 给 `published_at_precision='date'`。
+3. **有没有配 `detail.upgradeDatePrecision`**。配了才会为每条去详情页取更精的时间。
+   `collect.ts` 的注释写得很清楚：detail 只跑「没见过的新文章」，**已入库的永远不会被重新抓**，
+   所以历史数据配了配置也补不回来，必须跑回填。
+4. **`fetchDetail` 的 selector 分支不设 precision（这是 bug，已修）**。
+   `web-list.ts` 列表解析那段是 `publishedAt = parseLooseDate(raw); if (publishedAt) publishedAtPrecision = datePrecision(raw)`，
+   而详情页分支只写了前半句。于是：详情页时间取对了、`precision` 却是 `null`，
+   `collect.ts` 的 `if (got.publishedAtPrecision) ...` 不覆盖，入库仍是列表的 `date`。
+
+### 前端在哪一步把时间抹掉
+
+`apps/web/app/lib/format.ts` 的 `feedDisplayAt()`：
+
+```
+if (precision === "date") return { at: `${beijingDate(publishedAt)}T00:00:00+08:00`, dateOnly: true, ... }
+```
+
+**`precision === 'date'` 就连钟点一起抹成 00:00、只显示日期。** 所以「时间对不对」不止看
+`published_at`，必须同时看 `published_at_precision`——它是前端是否显示钟点的开关。
+
+### 还有一个副本：publications.published_at
+
+动态流/列表读的是 `publications.published_at`（`feeds.ts` 用 `coalesce(p.published_at, p.discovered_at)`
+排序和展示），`articles.published_at` 只是源。改完 articles 必须 `publishArticle(articleId)`
+重新发布，否则前端还是旧时间。`publishArticle` 只在可见性变化时才重算摘要，改时间不会触发 digest 重算，
+是安全的。
+
+### 修法与回填
+
+```bash
+# 1. 给源配 detail（列表只有日期时必须）
+#    "detail": {"maxFetches": 20, "upgradeDatePrecision": true, "publishedAtSelector": "div.date-source"}
+# 2. 回填历史（只修 precision='date' 的，同一天的才认，跨天不认）
+sudo docker exec -w /app aihot-worker-1 node scripts/backfill-date-precision.ts <sourceId> 200
+```
+
+`scripts/backfill-date-precision.ts` 会：抓详情页 → 校验与列表日期同一天 → `decideTimeline` 重算
+`timeline_at`/`backfill` → 写 articles → `publishArticle` 同步 publications。
+
+2026-10-21 实测：`gongyi-times` 74 篇 + `web-gongyishibao-yaowen` 8 篇全部从 `date` 升到 `datetime`，
+目标文章变成 `2026-10-21 17:45`，前端显示「10月21日 17:45 · 原文发表」。
+
+### 教训
+
+- **`precision` 是独立的一等字段，不是 `published_at` 的附注**。抓取、入库、展示三处各有一道门，
+  任何一处不认它，钟点就消失。
+- **改抓取规则要考虑历史数据**。`detail` 只服务新文章是性能取舍，但它意味着「配置生效」和
+  「数据修正」是两件事，后者需要一次性回填脚本。
+- 排查这类问题先查**四张表/三处代码**：`sources.config.detail` → `articles.published_at_precision`
+  → `publications.published_at` → `feedDisplayAt()`，顺序即因果链。

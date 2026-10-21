@@ -17,9 +17,18 @@
       "url": "https://www.gov.cn/",
       "content_type": "policy",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "connected",
       "enabled": false,
-      "reason": "尚无经验证的儿童政策列表解析规则"
+      "reason": "尚无经验证的儿童政策列表解析规则",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": true,
+        "outcome": "connected",
+        "feed": "https://www.gov.cn/pushinfo/v150203/rss.xml",
+        "items": 60,
+        "reason": "实测返回标准 RSS 且有条目，已接入"
+      }
     },
     {
       "id": "coverage-002",
@@ -28,9 +37,16 @@
       "url": "http://www.npc.gov.cn/",
       "content_type": "law",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "官网或法律数据库需单独核实列表、许可与机器人限制"
+      "reason": "官网或法律数据库需单独核实列表、许可与机器人限制",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-003",
@@ -39,9 +55,16 @@
       "url": "http://www.nhc.gov.cn/",
       "content_type": "policy",
       "priority": "P0",
-      "status": "needs_review",
+      "status": "blocked",
       "enabled": false,
-      "reason": "妇幼健康栏目存在，但自动网页访问当前未取得可验证列表"
+      "reason": "妇幼健康栏目存在，但自动网页访问当前未取得可验证列表",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 412,
+        "rss_found": false,
+        "outcome": "blocked",
+        "reason": "首页返回 412，属访问控制/风控拦截；按内容纪律不绕过、不伪造身份，暂不接入"
+      }
     },
     {
       "id": "coverage-004",
@@ -50,9 +73,16 @@
       "url": "https://www.ndcpa.gov.cn/",
       "content_type": "policy",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需先定位儿童传染病与校园卫生通知的稳定栏目"
+      "reason": "需先定位儿童传染病与校园卫生通知的稳定栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-005",
@@ -61,9 +91,16 @@
       "url": "https://www.stats.gov.cn/",
       "content_type": "dataset",
       "priority": "P0",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "统计调查/儿童人口指标应单独建立数据集更新机制"
+      "reason": "统计调查/儿童人口指标应单独建立数据集更新机制",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-006",
@@ -72,9 +109,16 @@
       "url": "https://www.spp.gov.cn/xwfbh/wsfbt/",
       "content_type": "web",
       "priority": "P0",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "未成年人保护有关公告可见，但自动直连返回 403；不绕过访问控制"
+      "reason": "未成年人保护有关公告可见，但自动直连返回 403；不绕过访问控制",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-007",
@@ -83,9 +127,16 @@
       "url": "https://www.mps.gov.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "blocked",
       "enabled": false,
-      "reason": "需限定未成年人保护与儿童安全专题"
+      "reason": "需限定未成年人保护与儿童安全专题",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 521,
+        "rss_found": false,
+        "outcome": "blocked",
+        "reason": "首页返回 521，属访问控制/风控拦截；按内容纪律不绕过、不伪造身份，暂不接入"
+      }
     },
     {
       "id": "coverage-008",
@@ -94,9 +145,16 @@
       "url": "https://www.gqt.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需核查青少年工作新闻栏目"
+      "reason": "需核查青少年工作新闻栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-009",
@@ -105,9 +163,16 @@
       "url": "https://www.ndrc.gov.cn/",
       "content_type": "policy",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需限定儿童社会保障和教育项目投资"
+      "reason": "需限定儿童社会保障和教育项目投资",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-010",
@@ -116,9 +181,16 @@
       "url": "https://www.mohrss.gov.cn/",
       "content_type": "policy",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需限定儿童福利相关社保与就业家庭政策"
+      "reason": "需限定儿童福利相关社保与就业家庭政策",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-011",
@@ -127,9 +199,16 @@
       "url": "https://www.unicef.org/child-protection",
       "content_type": "topic",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "专题页面不是新闻流，需找专门更新栏目"
+      "reason": "专题页面不是新闻流，需找专门更新栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 404,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-012",
@@ -138,9 +217,16 @@
       "url": "https://data.unicef.org/resources/",
       "content_type": "dataset",
       "priority": "P0",
-      "status": "needs_review",
+      "status": "blocked",
       "enabled": false,
-      "reason": "数据资源与研究产品适合独立数据更新追踪；不按普通新闻抓取"
+      "reason": "数据资源与研究产品适合独立数据更新追踪；不按普通新闻抓取",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 403,
+        "rss_found": false,
+        "outcome": "blocked",
+        "reason": "首页返回 403，属访问控制/风控拦截；按内容纪律不绕过、不伪造身份，暂不接入"
+      }
     },
     {
       "id": "coverage-013",
@@ -149,9 +235,18 @@
       "url": "https://www.who.int/zh/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "connected",
       "enabled": false,
-      "reason": "历史候选未核验；优先儿童心理健康与儿童免疫专题"
+      "reason": "历史候选未核验；优先儿童心理健康与儿童免疫专题",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": true,
+        "outcome": "connected",
+        "feed": "https://www.who.int/rss-feeds/news-english.xml",
+        "items": 126,
+        "reason": "实测返回标准 RSS 且有条目，已接入"
+      }
     },
     {
       "id": "coverage-014",
@@ -160,9 +255,16 @@
       "url": "https://www.unesco.org/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "优先教育/儿童与青少年研究新闻或官方 RSS"
+      "reason": "优先教育/儿童与青少年研究新闻或官方 RSS",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-015",
@@ -171,9 +273,16 @@
       "url": "https://www.worldbank.org/",
       "content_type": "research",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "数据和儿童贫困研究需要专题过滤"
+      "reason": "数据和儿童贫困研究需要专题过滤",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-016",
@@ -182,9 +291,16 @@
       "url": "https://www.adb.org/",
       "content_type": "research",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "blocked",
       "enabled": false,
-      "reason": "需要儿童教育/社会保护项目专题"
+      "reason": "需要儿童教育/社会保护项目专题",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 403,
+        "rss_found": false,
+        "outcome": "blocked",
+        "reason": "首页返回 403，属访问控制/风控拦截；按内容纪律不绕过、不伪造身份，暂不接入"
+      }
     },
     {
       "id": "coverage-017",
@@ -193,9 +309,16 @@
       "url": "https://www.ungm.org/",
       "content_type": "opportunity",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "采购机会需另设招标/截止时间模型；优先公开订阅或官方接口"
+      "reason": "采购机会需另设招标/截止时间模型；优先公开订阅或官方接口",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-018",
@@ -204,9 +327,16 @@
       "url": "https://www.cydf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "已有公众号但官网尚无独立抓取信源"
+      "reason": "已有公众号但官网尚无独立抓取信源",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-019",
@@ -215,9 +345,16 @@
       "url": "https://www.cpwf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史合规登记为 conditional，需重新核验许可与栏目"
+      "reason": "历史合规登记为 conditional，需重新核验许可与栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-020",
@@ -226,9 +363,16 @@
       "url": "https://www.crcf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史合规登记为 conditional，需重新核验栏目与重复来源"
+      "reason": "历史合规登记为 conditional，需重新核验栏目与重复来源",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-021",
@@ -237,9 +381,16 @@
       "url": "https://www.isun.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需定位机构项目新闻与公告"
+      "reason": "需定位机构项目新闻与公告",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-022",
@@ -248,9 +399,16 @@
       "url": "https://www.xinhe.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "先核实机构官方域名及栏目"
+      "reason": "先核实机构官方域名及栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-023",
@@ -259,9 +417,16 @@
       "url": "http://www.cdrf.org.cn/",
       "content_type": "research",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "研究报告/儿童发展专题需要独立成果抓取"
+      "reason": "研究报告/儿童发展专题需要独立成果抓取",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-024",
@@ -270,9 +435,16 @@
       "url": "https://www.cswef.org/",
       "content_type": "web",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需核实机构项目及公告列表"
+      "reason": "需核实机构项目及公告列表",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-025",
@@ -281,9 +453,16 @@
       "url": "http://www.cfforum.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需要核实论坛新闻及活动专栏"
+      "reason": "需要核实论坛新闻及活动专栏",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-026",
@@ -292,9 +471,16 @@
       "url": "https://gongyi.qq.com/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史候选未审；避免把平台项目列表当作机构一手新闻"
+      "reason": "历史候选未审；避免把平台项目列表当作机构一手新闻",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-027",
@@ -303,9 +489,16 @@
       "url": "https://www.alibabafoundation.com/",
       "content_type": "web",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史合规登记仅 conditional，需复核可采集栏目"
+      "reason": "历史合规登记仅 conditional，需复核可采集栏目",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-028",
@@ -314,9 +507,16 @@
       "url": "https://cszg.mca.gov.cn/",
       "content_type": "registry",
       "priority": "P0",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史登记为 conditional；涉及检索与人机验证，不得绕过验证码"
+      "reason": "历史登记为 conditional；涉及检索与人机验证，不得绕过验证码",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-029",
@@ -325,9 +525,16 @@
       "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home",
       "content_type": "opportunity",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "机会库应使用官方订阅/开放 API，不能按普通新闻列表抓取"
+      "reason": "机会库应使用官方订阅/开放 API，不能按普通新闻列表抓取",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-030",
@@ -336,9 +543,16 @@
       "url": "https://www.gov.uk/government/organisations/foreign-commonwealth-development-office",
       "content_type": "opportunity",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "blocked",
       "enabled": false,
-      "reason": "历史候选未核验；政府部门政策和采购机会需分开"
+      "reason": "历史候选未核验；政府部门政策和采购机会需分开",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 0,
+        "rss_found": false,
+        "outcome": "blocked",
+        "reason": "首页返回 0，属访问控制/风控拦截；按内容纪律不绕过、不伪造身份，暂不接入"
+      }
     },
     {
       "id": "coverage-031",
@@ -347,9 +561,16 @@
       "url": "http://www.xinhuanet.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史候选有公益频道但未经过解析器确认"
+      "reason": "历史候选有公益频道但未经过解析器确认",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-032",
@@ -358,9 +579,17 @@
       "url": "http://www.people.com.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "stale_rss",
       "enabled": false,
-      "reason": "历史候选有公益频道；优先儿童保护/乡村教育"
+      "reason": "历史候选有公益频道；优先儿童保护/乡村教育",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": true,
+        "rss_stale": true,
+        "outcome": "stale_rss",
+        "reason": "人民网各频道 RSS 仍返回 200 且有 item，但内容已停更：社会/法治/健康最新条目为 2025-06-05，教育频道为 2016 年。接入只会灌入陈旧内容，已剔除。"
+      }
     },
     {
       "id": "coverage-033",
@@ -369,9 +598,18 @@
       "url": "https://www.chinanews.com.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "connected",
       "enabled": false,
-      "reason": "历史合规登记与正式采集无直接关系"
+      "reason": "历史合规登记与正式采集无直接关系",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": true,
+        "outcome": "connected",
+        "feed": "https://www.chinanews.com.cn/rss/politics.xml",
+        "items": 10,
+        "reason": "实测返回标准 RSS 且有条目，已接入"
+      }
     },
     {
       "id": "coverage-034",
@@ -380,9 +618,16 @@
       "url": "https://www.thepaper.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "历史候选公益频道需核实链接和媒体转载权益"
+      "reason": "历史候选公益频道需核实链接和媒体转载权益",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-035",
@@ -391,9 +636,16 @@
       "url": "https://www.caixin.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "付费墙和版权限制：只可采摘要与跳转链接，禁止抓付费正文"
+      "reason": "付费墙和版权限制：只可采摘要与跳转链接，禁止抓付费正文",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-036",
@@ -402,9 +654,16 @@
       "url": "http://www.infzm.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "需核实可公开采集的专题与版权"
+      "reason": "需核实可公开采集的专题与版权",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-037",
@@ -413,9 +672,16 @@
       "url": "https://news.cctv.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "定位儿童/教育安全专题，别把整站热榜当儿童新闻"
+      "reason": "定位儿童/教育安全专题，别把整站热榜当儿童新闻",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-038",
@@ -424,9 +690,16 @@
       "url": "http://paper.jyb.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "数字报需按发布日期/期次取材"
+      "reason": "数字报需按发布日期/期次取材",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-039",
@@ -435,9 +708,16 @@
       "url": "https://www.cnwomen.com.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "先核实未成年人/妇女儿童权益栏目及原始发布者"
+      "reason": "先核实未成年人/妇女儿童权益栏目及原始发布者",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-040",
@@ -446,9 +726,16 @@
       "url": "http://www.cyol.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "先定位青年/儿童公益/未成年人权益专题"
+      "reason": "先定位青年/儿童公益/未成年人权益专题",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     },
     {
       "id": "coverage-041",
@@ -457,9 +744,25 @@
       "url": "http://www.jcrb.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "needs_review",
+      "status": "no_rss",
       "enabled": false,
-      "reason": "可能提供未成年人保护案例，需核实栏目与版权"
+      "reason": "可能提供未成年人保护案例，需核实栏目与版权",
+      "probe": {
+        "probed_at": "2026-10-21",
+        "home_status": 200,
+        "rss_found": false,
+        "outcome": "no_rss",
+        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+      }
     }
-  ]
+  ],
+  "probe_summary": {
+    "probed_at": "2026-10-21",
+    "method": "只读探测：GET 首页 + 常见 RSS 路径 + /robots.txt；不绕过访问控制",
+    "total": 41,
+    "connected": 3,
+    "no_rss": 32,
+    "blocked": 5,
+    "stale_rss": 1
+  }
 }

@@ -1752,6 +1752,337 @@
    "site_fulltext": false,
    "syndicate_fulltext": false,
    "enabled": false
+  },
+  {
+   "id": "rss-gov-cn",
+   "name": "中国政府网·政策推送",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.gov.cn/pushinfo/v150203/rss.xml",
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "99公益日",
+      "公益项目",
+      "社会责任",
+      "ESG",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育"
+     ],
+     "dropMarkers": [
+      "彩票",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "皮肤",
+      "抽卡",
+      "优惠券"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T1_5",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "政策",
+    "政府"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "rss-chinanews-scroll",
+   "name": "中国新闻网·滚动",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.chinanews.com.cn/rss/scroll-news.xml",
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "99公益日",
+      "公益项目",
+      "社会责任",
+      "ESG",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育"
+     ],
+     "dropMarkers": [
+      "彩票",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "皮肤",
+      "抽卡",
+      "优惠券"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "媒体",
+    "综合"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "rss-chinanews-health",
+   "name": "中国新闻网·健康",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.chinanews.com.cn/rss/health.xml",
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "99公益日",
+      "公益项目",
+      "社会责任",
+      "ESG",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育"
+     ],
+     "dropMarkers": [
+      "彩票",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "皮肤",
+      "抽卡",
+      "优惠券"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T2",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "媒体",
+    "健康"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "rss-who-news",
+   "name": "世界卫生组织·新闻",
+   "kind": "rss",
+   "config": {
+    "feedUrl": "https://www.who.int/rss-feeds/news-english.xml",
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "child",
+      "children",
+      "adolescent",
+      "youth",
+      "maternal",
+      "newborn",
+      "infant",
+      "vaccin",
+      "immuniz",
+      "nutrition",
+      "malnutrition",
+      "mental health",
+      "disab",
+      "humanitarian",
+      "emergency",
+      "outbreak",
+      "epidemic",
+      "disease",
+      "health worker",
+      "school",
+      "education",
+      "poverty",
+      "equity",
+      "refugee",
+      "migrant",
+      "violence",
+      "water",
+      "sanitation",
+      "air pollution",
+      "climate",
+      "breastfeed",
+      "birth"
+     ],
+     "dropMarkers": [
+      "lottery",
+      "cryptocurrency",
+      "stock market"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 12
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "海外",
+    "健康"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
   }
  ]
 }

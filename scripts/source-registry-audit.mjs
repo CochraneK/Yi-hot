@@ -189,7 +189,8 @@ export function exportCsv(out) {
 
 export function produce(root = ROOT) {
   return reconcile({
-    seed: loadJson("industry/sources.json", root),
+    // The 2026-10-08 report compares the original 24-row seed, not the ever-growing live industry/sources.json.
+    seed: loadJson(`${SOURCE}/snapshots/yihot-seed-${DATE}.json`, root),
     news: loadJson(`${SOURCE}/imports/newsmail-${DATE}.json`, root),
     charity: loadJson(`${SOURCE}/imports/charity-${DATE}.json`, root),
   });

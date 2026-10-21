@@ -46,6 +46,8 @@ jobs:
 
       - name: Source registry audit (offline, no third-party calls)
         run: npm run sources:audit:check
+      - name: Child-rights source expansion safety checks (offline)
+        run: node --test tests/child-rights-source-coverage.test.mjs
       - name: Install
         run: npm ci --no-audit --no-fund
       - name: Typecheck

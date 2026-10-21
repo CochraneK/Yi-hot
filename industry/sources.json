@@ -1626,6 +1626,130 @@
      "fundraising"
     ]
    }
+  },
+  {
+   "id": "web-stc-global-news",
+   "name": "救助儿童会国际·全球新闻",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.savethechildren.net/news/",
+    "itemSelector": ".views-row",
+    "linkSelector": ".list-card__heading a[href]",
+    "publishedAtSelector": ".list-card__meta-date",
+    "allowUrlPrefixes": [
+     "https://www.savethechildren.net/news/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "国际",
+    "儿童权益",
+    "救助儿童会",
+    "2026-10-21新增待验"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": false
+  },
+  {
+   "id": "web-unicef-cn-press",
+   "name": "联合国儿童基金会中国·新闻资讯",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.unicef.cn/press-centre",
+    "itemSelector": ".card",
+    "linkSelector": "h3.mosaic-heading a[href*='/press-releases/']",
+    "publishedAtSelector": ".tile--date .note",
+    "allowUrlPrefixes": [
+     "https://www.unicef.cn/press-releases/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 6
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "国际",
+    "儿童权益",
+    "UNICEF",
+    "中文",
+    "2026-10-21新增待验"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": false
+  },
+  {
+   "id": "web-unicef-global-press",
+   "name": "联合国儿童基金会全球·新闻稿",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.unicef.org/media/press-releases",
+    "itemSelector": ".card",
+    "linkSelector": "h3.mosaic-heading a[href*='/press-releases/']",
+    "publishedAtSelector": ".tile--date .note",
+    "allowUrlPrefixes": [
+     "https://www.unicef.org/press-releases/"
+    ],
+    "_aihot": {
+     "initialBackfillLimit": 6
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 360,
+   "tags": [
+    "国际",
+    "儿童权益",
+    "UNICEF",
+    "2026-10-21新增待验"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": false
+  },
+  {
+   "id": "web-unicef-innocenti-reports",
+   "name": "UNICEF Innocenti·儿童研究报告",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.unicef.org/innocenti/projects-and-reports",
+    "itemSelector": ".card",
+    "linkSelector": "h3.mosaic-heading a[href*='/innocenti/reports/']",
+    "allowUrlPrefixes": [
+     "https://www.unicef.org/innocenti/reports/"
+    ],
+    "detail": {
+     "maxFetches": 6
+    },
+    "_aihot": {
+     "initialBackfillLimit": 6
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "participation_mode": "editorial",
+   "interval_minutes": 1440,
+   "tags": [
+    "国际",
+    "儿童权益",
+    "研究",
+    "UNICEF",
+    "2026-10-21新增待验"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": false
   }
  ]
 }

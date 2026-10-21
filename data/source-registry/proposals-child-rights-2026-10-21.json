@@ -37,15 +37,16 @@
       "url": "http://www.npc.gov.cn/",
       "content_type": "law",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "blocked",
       "enabled": false,
       "reason": "官网或法律数据库需单独核实列表、许可与机器人限制",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "blocked",
+        "reason": "站方 WAF 拒绝任何含 bot 的 UA（连 Googlebot 也 403），采集器默认 UA 是 YiHotBot/1.0。选择器已验证可用（ul.clist li，27 条、日期全中），源已建但 enabled=false，待定是否改用浏览器 UA",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -73,15 +74,16 @@
       "url": "https://www.ndcpa.gov.cn/",
       "content_type": "policy",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "需先定位儿童传染病与校园卫生通知的稳定栏目",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "CMS 用 JS 注入占位符，静态解析拿不到条目",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -91,15 +93,16 @@
       "url": "https://www.stats.gov.cn/",
       "content_type": "dataset",
       "priority": "P0",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "统计调查/儿童人口指标应单独建立数据集更新机制",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-stats-tzgg：div.list-content li，解析 13 条、日期全中。通知公告离儿童议题远，今日 0 命中",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -109,15 +112,16 @@
       "url": "https://www.spp.gov.cn/xwfbh/wsfbt/",
       "content_type": "web",
       "priority": "P0",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "未成年人保护有关公告可见，但自动直连返回 403；不绕过访问控制",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-spp-wsfbt：ul.li_line li，解析 30 条，首采入库 7、入池 6",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -145,15 +149,16 @@
       "url": "https://www.gqt.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "需核查青少年工作新闻栏目",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-gqt-gzdt：ul.tj3_1 li，解析 46 条。首采入库 8 篇全 pass 但均分 22，0 入池——命中多为少先队活动稿",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -163,15 +168,16 @@
       "url": "https://www.ndrc.gov.cn/",
       "content_type": "policy",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "需限定儿童社会保障和教育项目投资",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-ndrc-xwfb：ul.u-list li，解析 25 条。改用通知公告栏目（新闻发布栏目全是经济形势），今日 0 命中",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -181,15 +187,16 @@
       "url": "https://www.mohrss.gov.cn/",
       "content_type": "policy",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "blocked",
       "enabled": false,
       "reason": "需限定儿童福利相关社保与就业家庭政策",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "blocked",
+        "reason": "首页仅 987 字节，反爬拦截",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -199,15 +206,16 @@
       "url": "https://www.unicef.org/child-protection",
       "content_type": "topic",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "blocked",
       "enabled": false,
       "reason": "专题页面不是新闻流，需找专门更新栏目",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 404,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "blocked",
+        "reason": "URL 已失效，/child-protection 返回 404",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -255,15 +263,16 @@
       "url": "https://www.unesco.org/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "优先教育/儿童与青少年研究新闻或官方 RSS",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "newsroom 页 318KB 但正文由 JS 渲染，静态只有导航链接",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -273,15 +282,16 @@
       "url": "https://www.worldbank.org/",
       "content_type": "research",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "数据和儿童贫困研究需要专题过滤",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "/en/news 重定向到 /ext/en/news，SPA 外壳",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -309,15 +319,16 @@
       "url": "https://www.ungm.org/",
       "content_type": "opportunity",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "spa_auth_required",
       "enabled": false,
       "reason": "采购机会需另设招标/截止时间模型；优先公开订阅或官方接口",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "spa_auth_required",
+        "reason": "UNGM 招标查询需登录，公开页无列表",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -466,15 +477,16 @@
       "url": "http://www.cfforum.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "需要核实论坛新闻及活动专栏",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-cfforum-news：div.media.media-font，解析 11 条、日期全中，今日 0 命中",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -484,15 +496,16 @@
       "url": "https://gongyi.qq.com/",
       "content_type": "web",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "历史候选未审；避免把平台项目列表当作机构一手新闻",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "腾讯公益 1633 字节 SPA 壳",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -502,15 +515,16 @@
       "url": "https://www.alibabafoundation.com/",
       "content_type": "web",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "date_unparseable",
       "enabled": false,
       "reason": "历史合规登记仅 conditional，需复核可采集栏目",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "date_unparseable",
+        "reason": "日期格式为空格分隔的 2026 10 13，parseLooseDate 不支持；且为企业公关稿，价值低",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -537,15 +551,16 @@
       "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home",
       "content_type": "opportunity",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "机会库应使用官方订阅/开放 API，不能按普通新闻列表抓取",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "欧盟 Funding 门户 SPA",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -573,15 +588,16 @@
       "url": "http://www.xinhuanet.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "历史候选有公益频道但未经过解析器确认",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-xinhua-szlb：div.txt，解析 15 条、日期全中，今日 0 命中",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -630,15 +646,16 @@
       "url": "https://www.thepaper.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "历史候选公益频道需核实链接和媒体转载权益",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "澎湃列表走 XHR gateway",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -648,15 +665,16 @@
       "url": "https://www.caixin.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "付费墙和版权限制：只可采摘要与跳转链接，禁止抓付费正文",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "财新列表走 XHR gateway",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -666,15 +684,16 @@
       "url": "http://www.infzm.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "date_unparseable",
       "enabled": false,
       "reason": "需核实可公开采集的专题与版权",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "date_unparseable",
+        "reason": "列表日期是相对时间（7小时前），parseLooseDate 不支持",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -684,15 +703,16 @@
       "url": "https://news.cctv.com/",
       "content_type": "media",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "not_a_feed",
       "enabled": false,
       "reason": "定位儿童/教育安全专题，别把整站热榜当儿童新闻",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "not_a_feed",
+        "reason": "新闻频道无静态列表，只有专题页可解析（专题不是新闻）",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -702,15 +722,16 @@
       "url": "http://paper.jyb.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "数字报需按发布日期/期次取材",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "js_rendered",
+        "reason": "jyb.cn 栏目页全是 481 字节跳转壳，电子版 URL 按日期变化（/2026-10/21/），无法用固定 URL 采集",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -720,15 +741,16 @@
       "url": "https://www.cnwomen.com.cn/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "先核实未成年人/妇女儿童权益栏目及原始发布者",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-cnwomen-news：li.row_one_con_list + href 正则取日期，解析 38 条。首采入库 4 篇，最高 38 分，0 入池——首页是泛新闻流",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -738,15 +760,16 @@
       "url": "http://www.cyol.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "先定位青年/儿童公益/未成年人权益专题",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "connected",
+        "reason": "已接 web-cyol-news：li.news-li + .pdtt_trbs span:last-child，解析 10 条，今日 0 命中",
+        "checked_at": "2026-10-21"
       }
     },
     {
@@ -756,33 +779,28 @@
       "url": "http://www.jcrb.com/",
       "content_type": "media",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "stale_listing",
       "enabled": false,
       "reason": "可能提供未成年人保护案例，需核实栏目与版权",
       "probe": {
         "probed_at": "2026-10-21",
         "home_status": 200,
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "outcome": "stale_listing",
+        "reason": "news.jcrb.com 列表最新条目停在 26-08-07（停更 2 个多月），主站栏目 div.t 只有标题无链接",
+        "checked_at": "2026-10-21"
       }
     }
   ],
   "probe_summary": {
-    "probed_at": "2026-10-21",
-    "method": "只读探测：GET 首页 + 常见 RSS 路径 + /robots.txt；不绕过访问控制",
-    "total": 41,
-    "connected": 3,
-    "no_rss": 32,
-    "blocked": 5,
-    "stale_rss": 1,
-    "vertical_batch_2026_10_21": {
-      "scope": "P0/P1 垂直机构（基金会官网 + 慈善中国），共 8 条",
-      "connected": 5,
-      "spa_auth_required": 1,
-      "js_rendered": 1,
-      "not_a_feed": 1,
-      "method": "定位真实栏目页（不用首页）→ 判断静态/XHR → web_list 选择器 → 项目解析器 dry-run 验证"
-    }
-  }
+    "blocked": 8,
+    "connected": 16,
+    "date_unparseable": 2,
+    "js_rendered": 9,
+    "not_a_feed": 2,
+    "spa_auth_required": 2,
+    "stale_listing": 1,
+    "stale_rss": 1
+  },
+  "probe_summary_note": "2026-10-21 第二轮：A/B 类 16 条逐站找栏目页实测。8 条接成并跑通采集（其中人大因 bot UA 被 WAF 拒、已停用），8 条因 JS 渲染/需登录/停更/日期格式不可解析接不了。"
 }

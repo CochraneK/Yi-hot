@@ -35,7 +35,14 @@ test("the coverage backlog is non-importable and does not duplicate staged IDs",
   // Every entry carries the outcome of its live probe, and every outcome is one we know how to act on.
   // (The backlog started as status "needs_review"; probing replaced that with the real result, so the
   // guard is "a known probe outcome", not a placeholder state.)
-  const PROBE_STATUSES = new Set(["connected", "no_rss", "blocked", "stale_rss", "spa_auth_required", "js_rendered", "not_a_feed"]);
+  const PROBE_STATUSES = new Set([
+    "connected", "no_rss", "blocked", "stale_rss", "spa_auth_required", "js_rendered", "not_a_feed",
+    // A listing that parses but whose newest entry is months old (the site stopped publishing there).
+    "stale_listing",
+    // A listing whose dates are relative ("7小时前") or space-separated ("2026 10 13"), which
+    // parseLooseDate cannot turn into a real day — publishing without a date is not allowed.
+    "date_unparseable",
+  ]);
   const unknown = backlog.pending.filter((x) => !PROBE_STATUSES.has(x.status)).map((x) => `${x.id}:${x.status}`);
   assert.deepEqual(unknown, [], "every pending entry carries a known probe status");
   assert.ok(backlog.pending.every((x) => x.enabled === false));

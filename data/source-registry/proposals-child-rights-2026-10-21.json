@@ -327,15 +327,14 @@
       "url": "https://www.cydf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "spa_auth_required",
       "enabled": false,
       "reason": "已有公众号但官网尚无独立抓取信源",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "spa_auth_required",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "reason": "官网是 Nuxt SPA：首页 481KB 但 HTML 里 0 个 <a>，数据由客户端渲染；api 根地址 work.cydf.org.cn/api 的所有列表接口均返回 401 需登录。按纪律不绕过认证，不接入。该机构已有微信公众号源 wechat-oa-cydf 覆盖（16 篇全 pass）。"
       }
     },
     {
@@ -345,16 +344,19 @@
       "url": "https://www.cpwf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "历史合规登记为 conditional，需重新核验许可与栏目",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "connected",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
-      }
+        "listing_url": "https://www.cpwf.org.cn/category/13",
+        "items_parsed": 10,
+        "adapter": "web_list",
+        "reason": "无官方 RSS，改用栏目页静态解析（web_list）：实测解析出 10 条，标题与发布日期均可提取，已接入"
+      },
+      "source_id": "web-cpwf-news"
     },
     {
       "id": "coverage-020",
@@ -363,16 +365,19 @@
       "url": "https://www.crcf.org.cn/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "历史合规登记为 conditional，需重新核验栏目与重复来源",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "connected",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
-      }
+        "listing_url": "https://www.crcf.org.cn/",
+        "items_parsed": 12,
+        "adapter": "web_list",
+        "reason": "无官方 RSS，改用栏目页静态解析（web_list）：实测解析出 12 条，标题与发布日期均可提取，已接入"
+      },
+      "source_id": "web-crcf-news"
     },
     {
       "id": "coverage-021",
@@ -381,16 +386,19 @@
       "url": "https://www.isun.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "需定位机构项目新闻与公告",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "connected",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
-      }
+        "listing_url": "https://www.isun.org.cn/index.php?m=content&c=index&a=lists&catid=23",
+        "items_parsed": 24,
+        "adapter": "web_list",
+        "reason": "无官方 RSS，改用栏目页静态解析（web_list）：实测解析出 24 条，标题与发布日期均可提取，已接入"
+      },
+      "source_id": "web-isun-news"
     },
     {
       "id": "coverage-022",
@@ -399,16 +407,19 @@
       "url": "https://www.xinhe.org.cn/",
       "content_type": "web",
       "priority": "P2",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "先核实机构官方域名及栏目",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "connected",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
-      }
+        "listing_url": "https://www.xinhe.org.cn/home/info/index/cate_id/21.html",
+        "items_parsed": 11,
+        "adapter": "web_list",
+        "reason": "无官方 RSS，改用栏目页静态解析（web_list）：实测解析出 11 条，标题与发布日期均可提取，已接入"
+      },
+      "source_id": "web-xinhe-news"
     },
     {
       "id": "coverage-023",
@@ -417,15 +428,14 @@
       "url": "http://www.cdrf.org.cn/",
       "content_type": "research",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "js_rendered",
       "enabled": false,
       "reason": "研究报告/儿童发展专题需要独立成果抓取",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "js_rendered",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "reason": "首页与 /zxcg/index.htm 均为导航骨架，实测页面内仅有 1 个日期（2022 年），研究成果列表由 JS 异步加载，静态抓取拿不到条目。需浏览器渲染或找 XHR 接口，暂不接入。"
       }
     },
     {
@@ -435,16 +445,19 @@
       "url": "https://www.cswef.org/",
       "content_type": "web",
       "priority": "P1",
-      "status": "no_rss",
+      "status": "connected",
       "enabled": false,
       "reason": "需核实机构项目及公告列表",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "connected",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
-      }
+        "listing_url": "https://www.cswef.org/cswef/news/index.html",
+        "items_parsed": 12,
+        "adapter": "web_list",
+        "reason": "无官方 RSS，改用栏目页静态解析（web_list）：实测解析出 12 条，标题与发布日期均可提取，已接入"
+      },
+      "source_id": "web-cswef-news"
     },
     {
       "id": "coverage-025",
@@ -507,15 +520,14 @@
       "url": "https://cszg.mca.gov.cn/",
       "content_type": "registry",
       "priority": "P0",
-      "status": "no_rss",
+      "status": "not_a_feed",
       "enabled": false,
       "reason": "历史登记为 conditional；涉及检索与人机验证，不得绕过验证码",
       "probe": {
         "probed_at": "2026-10-21",
-        "home_status": 200,
+        "outcome": "not_a_feed",
         "rss_found": false,
-        "outcome": "no_rss",
-        "reason": "首页与常见 RSS 路径均未返回可用 feed；需人工定位公益/儿童栏目页并验证解析规则后再接入"
+        "reason": "定位是全国慈善信息公开平台（查组织、募捐备案、慈善信托），不是资讯站——没有新闻流可采。虽有 getIndexList1~5.html 接口返回结构化表格，但内容是组织/项目/信托的查询结果快照，不适合作为内容信源。不接入资讯链路。"
       }
     },
     {
@@ -763,6 +775,14 @@
     "connected": 3,
     "no_rss": 32,
     "blocked": 5,
-    "stale_rss": 1
+    "stale_rss": 1,
+    "vertical_batch_2026_10_21": {
+      "scope": "P0/P1 垂直机构（基金会官网 + 慈善中国），共 8 条",
+      "connected": 5,
+      "spa_auth_required": 1,
+      "js_rendered": 1,
+      "not_a_feed": 1,
+      "method": "定位真实栏目页（不用首页）→ 判断静态/XHR → web_list 选择器 → 项目解析器 dry-run 验证"
+    }
   }
 }

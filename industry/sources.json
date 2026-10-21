@@ -2083,6 +2083,548 @@
      "fundraising"
     ]
    }
+  },
+  {
+   "id": "web-cpwf-news",
+   "name": "中国人口福利基金会·新闻动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cpwf.org.cn/category/13",
+    "itemSelector": ".dynamic-item",
+    "linkSelector": "a.content",
+    "titleSelector": ".title",
+    "publishedAtSelector": ".time",
+    "allowUrlPrefixes": [
+     "https://www.cpwf.org.cn/content/"
+    ],
+    "detail": {
+     "maxFetches": 6
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "久久公益",
+      "公益项目",
+      "社会责任",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "大病",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育",
+      "白血病",
+      "患儿",
+      "先心病",
+      "早教",
+      "营养",
+      "幼儿园",
+      "救灾",
+      "应急",
+      "驰援",
+      "人道"
+     ],
+     "dropMarkers": [
+      "彩票开奖",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "优惠券",
+      "抽奖",
+      "招聘启事"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "基金会",
+    "官方",
+    "儿童健康"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "web-cswef-news",
+   "name": "中国社会福利基金会·工作动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.cswef.org/cswef/news/index.html",
+    "itemSelector": ".list-cont",
+    "linkSelector": "h3 a",
+    "titleSelector": "h3 a",
+    "titleFromAttribute": true,
+    "publishedAtSelector": "p.ptime",
+    "allowUrlPrefixes": [
+     "https://www.cswef.org/cswef/news/detail/"
+    ],
+    "detail": {
+     "maxFetches": 6
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "久久公益",
+      "公益项目",
+      "社会责任",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "大病",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育",
+      "白血病",
+      "患儿",
+      "先心病",
+      "早教",
+      "营养",
+      "幼儿园",
+      "救灾",
+      "应急",
+      "驰援",
+      "人道"
+     ],
+     "dropMarkers": [
+      "彩票开奖",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "优惠券",
+      "抽奖",
+      "招聘启事"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "基金会",
+    "官方",
+    "社会福利"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "web-isun-news",
+   "name": "北京新阳光慈善基金会·新闻动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.isun.org.cn/index.php?m=content&c=index&a=lists&catid=23",
+    "itemSelector": ".item-content",
+    "linkSelector": ".item-title a",
+    "titleSelector": ".item-title a",
+    "titleFromAttribute": true,
+    "publishedAtSelector": ".item-data p",
+    "allowUrlPrefixes": [
+     "https://www.isun.org.cn/index.php?m=content&c=index&a=show"
+    ],
+    "detail": {
+     "maxFetches": 6
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "久久公益",
+      "公益项目",
+      "社会责任",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "大病",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育",
+      "白血病",
+      "患儿",
+      "先心病",
+      "早教",
+      "营养",
+      "幼儿园",
+      "救灾",
+      "应急",
+      "驰援",
+      "人道"
+     ],
+     "dropMarkers": [
+      "彩票开奖",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "优惠券",
+      "抽奖",
+      "招聘启事"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "基金会",
+    "民间",
+    "大病救助"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "web-crcf-news",
+   "name": "中国红十字基金会·新闻中心",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.crcf.org.cn/",
+    "itemSelector": ".am-u-lg-4",
+    "linkSelector": "a",
+    "titleSelector": "h3.hidden2",
+    "publishedAtSelector": ".am-thumbnail-caption p",
+    "allowUrlPrefixes": [
+     "https://www.crcf.org.cn/web/article.thtml"
+    ],
+    "detail": {
+     "maxFetches": 6
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "久久公益",
+      "公益项目",
+      "社会责任",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "大病",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育",
+      "白血病",
+      "患儿",
+      "先心病",
+      "早教",
+      "营养",
+      "幼儿园",
+      "救灾",
+      "应急",
+      "驰援",
+      "人道"
+     ],
+     "dropMarkers": [
+      "彩票开奖",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "优惠券",
+      "抽奖",
+      "招聘启事"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "基金会",
+    "官方",
+    "人道救助"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
+  },
+  {
+   "id": "web-xinhe-news",
+   "name": "心和基金会·心和动态",
+   "kind": "web_list",
+   "config": {
+    "url": "https://www.xinhe.org.cn/home/info/index/cate_id/21.html",
+    "itemSelector": "li.way-list-item",
+    "linkSelector": "a",
+    "titleSelector": "h2.text-cut",
+    "publishedAtSelector": ".date",
+    "allowUrlPrefixes": [
+     "https://mp.weixin.qq.com/s/"
+    ],
+    "detail": {
+     "maxFetches": 4
+    },
+    "ingestNoiseFilter": {
+     "requireMarkers": [
+      "公益",
+      "慈善",
+      "捐赠",
+      "募捐",
+      "基金会",
+      "志愿服务",
+      "志愿者",
+      "义工",
+      "帮扶",
+      "救助",
+      "助学",
+      "敬老",
+      "困境",
+      "留守",
+      "孤儿",
+      "残疾",
+      "残障",
+      "未成年人",
+      "儿童",
+      "青少年",
+      "学生",
+      "女童",
+      "乡村",
+      "民政",
+      "社会救助",
+      "福利",
+      "资助",
+      "援助",
+      "献血",
+      "器官捐献",
+      "月捐",
+      "配捐",
+      "久久公益",
+      "公益项目",
+      "社会责任",
+      "事实无人抚养",
+      "流浪",
+      "弃婴",
+      "大病",
+      "监护",
+      "收养",
+      "寄养",
+      "福利院",
+      "特殊教育",
+      "白血病",
+      "患儿",
+      "先心病",
+      "早教",
+      "营养",
+      "幼儿园",
+      "救灾",
+      "应急",
+      "驰援",
+      "人道"
+     ],
+     "dropMarkers": [
+      "彩票开奖",
+      "涨停",
+      "基金净值",
+      "综艺",
+      "票房",
+      "优惠券",
+      "抽奖",
+      "招聘启事"
+     ]
+    },
+    "_aihot": {
+     "initialBackfillLimit": 8
+    }
+   },
+   "tier": "T1",
+   "first_party": true,
+   "owner_entity_id": null,
+   "participation_mode": "editorial",
+   "interval_minutes": 240,
+   "tags": [
+    "基金会",
+    "民间",
+    "儿童早期发展"
+   ],
+   "site_fulltext": false,
+   "syndicate_fulltext": false,
+   "enabled": true,
+   "publication_rule": {
+    "minScore": 40,
+    "dropCategories": [
+     "fundraising"
+    ]
+   }
   }
  ]
 }

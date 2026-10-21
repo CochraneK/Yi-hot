@@ -54,7 +54,9 @@ export async function everyInfraCall<T = unknown>(opts: {
         method: "POST",
         headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify({ platform: opts.platform, action: opts.action, params }),
-        timeoutMs: 60_000,
+        // 公众号大号（红十字会 / 青基会 / 救助儿童会 / UNICEF 等）文章量多，EveryInfra 聚合返回常超过 60s，
+        // 之前的 60s 超时会把它们掐掉、留空且不进动态。放宽到 120s 给足余量。
+        timeoutMs: 120_000,
         maxBytes: 16 * 1024 * 1024,
         route: "direct",
       });

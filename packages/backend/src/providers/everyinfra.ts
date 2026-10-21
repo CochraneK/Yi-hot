@@ -28,6 +28,24 @@ function responseCost(json: EveryInfraEnvelope): CallOutcome["cost"] {
 }
 
 /**
+ * 从错误响应体里读出「什么时候可以再来」。EveryInfra 的 503 长这样：
+ * `{error:{reason:"capacity_exhausted", retry_after:900, message:"... has no capacity right now"}}`
+ * 解析失败不影响主流程，只是退回到普通的可重试错误。
+ */
+function providerErrorInfo(text: string): { message: string; retryAfterSeconds: number | null } {
+  try {
+    const j = JSON.parse(text) as { error?: { reason?: unknown; message?: unknown; retry_after?: unknown } };
+    const reason = typeof j?.error?.reason === "string" ? j.error.reason : "";
+    const msg = typeof j?.error?.message === "string" ? j.error.message : "";
+    const raw = j?.error?.retry_after;
+    const secs = typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? Math.round(raw) : null;
+    return { message: [reason, msg].filter(Boolean).join(": ").slice(0, 160), retryAfterSeconds: secs };
+  } catch {
+    return { message: "", retryAfterSeconds: null };
+  }
+}
+
+/**
  * 一次 EveryInfra 能力调用。结果不确定时不重试：provider 可能已经计费了。
  * 401/402/422 是钥匙、参数或余额问题，重试没有意义；429/503/5xx 稍后重试。
  */
@@ -65,7 +83,16 @@ export async function everyInfraCall<T = unknown>(opts: {
         throw new ProviderRejectedError(`everyinfra HTTP ${res.status}: ${text.slice(0, 300)}`, res.status, false);
       }
       if (res.status === 429 || res.status === 503 || res.status >= 500) {
-        throw new ProviderRejectedError(`everyinfra HTTP ${res.status}`, res.status, true);
+        // 503 最常见的原因不是「坏了」，而是 provider 对该动作暂时没有容量
+        // （"capacity_exhausted"，本次不计费）。响应体里带 retry_after 秒数，
+        // 带出去之后调度器才能按 provider 的节奏重试，而不是按普通失败的退避推到几小时后。
+        const info = providerErrorInfo(text);
+        throw new ProviderRejectedError(
+          `everyinfra HTTP ${res.status}${info.message ? ` (${info.message})` : ""}`,
+          res.status,
+          true,
+          info.retryAfterSeconds,
+        );
       }
       if (res.status < 200 || res.status >= 300) {
         throw new ProviderRejectedError(`everyinfra HTTP ${res.status}: ${text.slice(0, 300)}`, res.status, false);
@@ -83,6 +110,27 @@ export async function everyInfraCall<T = unknown>(opts: {
   return { results: response.results as T, receiptId: receipt.receiptId, reused: receipt.reused, response };
 }
 
+/**
+ * article_detail 返回的是排版用的 `content_html`（实测没有 `content_text`），直接把它丢给分析
+ * 会带上大量标签噪声；这里保留段落换行地剥标签，供没有纯文本字段时兜底。
+ */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|section|div|li|h[1-6]|blockquote|pre|tr|figure)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/[ \t\u00a0]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** 公众号文章正文：列表接口只给标题和链接（实测没有摘要字段），正文只能按文章 URL 单独取。 */
 export async function everyInfraWechatArticle(articleUrl: string, opts: { subject: string; identity: string }) {
   const call = await everyInfraCall<Record<string, unknown>>({
@@ -94,9 +142,16 @@ export async function everyInfraWechatArticle(articleUrl: string, opts: { subjec
     window: opts.identity,
   });
   const row = call.results && typeof call.results === "object" ? call.results : {};
+  const text = typeof row.content_text === "string" && row.content_text.trim()
+    ? row.content_text
+    : typeof row.content_html === "string"
+      ? htmlToText(row.content_html)
+      : null;
   return {
     title: typeof row.title === "string" ? row.title : null,
-    text: typeof row.content_text === "string" ? row.content_text : null,
+    text: text && text.length > 0 ? text : null,
+    // 摘要在正文取不到时还能喂给分析，比直接 unknown 好。
+    digest: typeof row.digest === "string" && row.digest.trim() ? row.digest.trim() : null,
     author: typeof row.author === "string" ? row.author : null,
     postedAt: typeof row.posted_at === "string" ? row.posted_at : null,
     raw: row,

@@ -4,7 +4,7 @@ import { sql } from "../db.ts";
 import { identityKeyFor, upsertMaterial } from "../content/materials.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { queueProcessing } from "../jobs/content.ts";
-import { BudgetExceededError } from "../providers/receipts.ts";
+import { BudgetExceededError, ProviderRejectedError } from "../providers/receipts.ts";
 import { fetchRss } from "./rss.ts";
 import { allowed, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
@@ -182,6 +182,9 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
           if (article.text) {
             c.bodyText = article.text;
             c.bodyStatus = "ok";
+          } else if (article.digest && !c.excerpt) {
+            // 正文取不到时，详情接口的 digest 至少能让分析有依据，不至于直接判定 unknown。
+            c.excerpt = article.digest;
           }
           if (!c.title && article.title) c.title = article.title;
           if (article.author) c.author = article.author;
@@ -264,12 +267,20 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
   } catch (error) {
     const message = String(error instanceof Error ? error.message : error).slice(0, 1000);
     const budget = error instanceof BudgetExceededError;
+    // Provider 明确说了「什么时候可以再来」（如 EveryInfra 的 capacity_exhausted: retry_after=900），
+    // 这不是本源的错：不计失败次数、不降级健康度，按它给的秒数回来重试就好。
+    // 否则 60 分钟间隔的源会被普通退避一路推到 3~6 小时后，白白错过容量恢复的窗口。
+    const cooldown = error instanceof ProviderRejectedError ? error.retryAfterSeconds : null;
     await sql`
       UPDATE sources SET last_fetch_at = now(),
-        fail_count = CASE WHEN ${budget} THEN fail_count ELSE fail_count + 1 END,
+        fail_count = CASE WHEN ${budget} OR ${cooldown !== null} THEN fail_count ELSE fail_count + 1 END,
         last_error = ${message},
-        health = CASE WHEN ${budget} THEN health WHEN fail_count + 1 >= 5 THEN 'failing' ELSE 'degraded' END,
-        next_fetch_at = now() + make_interval(mins => CASE WHEN ${budget} THEN 15 ELSE LEAST(interval_minutes * (fail_count + 2), 360) END),
+        health = CASE WHEN ${budget} OR ${cooldown !== null} THEN health
+          WHEN fail_count + 1 >= 5 THEN 'failing' ELSE 'degraded' END,
+        next_fetch_at = now() + make_interval(secs => CASE
+          WHEN ${cooldown !== null} THEN GREATEST(${cooldown ?? 0}, 900)
+          WHEN ${budget} THEN 900
+          ELSE LEAST(interval_minutes * (fail_count + 2), 360) * 60 END),
         updated_at = now()
       WHERE id = ${sourceId}`;
     await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), found_count = ${found}, new_count = ${created}, error = ${message} WHERE id = ${run!.id}`;

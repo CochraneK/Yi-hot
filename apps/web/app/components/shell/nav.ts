@@ -3,7 +3,7 @@ import { withSubject } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import type { ReactNode } from "react";
 import {
-  IconApps, IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMail, IconMessage, IconPlug, IconShield,
+  IconApps, IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMessage, IconPlug, IconShield,
 } from "../icons";
 
 export interface NavItem {
@@ -25,9 +25,8 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
       { to: "/all", label: "动态", icon: IconList },
       { to: "/hot", label: "热点", icon: IconFlame },
       { to: "/topics", label: "主题", icon: IconGrid },
-      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管记录", icon: IconShield }] : []),
+      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: IconShield }] : []),
       { to: "/starred", label: "收藏", icon: IconBookmark },
-      { to: "/subscribe", label: "订阅", icon: IconMail },
     ],
   },
   // The optional AI-only modules (industry/features.ts).
@@ -45,9 +44,9 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "更多",
     items: [
-      { to: "/agent", label: "Agent 接入", icon: IconPlug },
+      { to: "/agent", label: "Agent", icon: IconPlug },
       { to: "/about", label: "关于", icon: IconHeart },
-      { to: "/changelog", label: "更新日志", icon: IconHistory, changelog: true },
+      { to: "/changelog", label: "更新", icon: IconHistory, changelog: true },
       { to: "/feedback", label: "反馈", icon: IconMessage },
     ],
   },

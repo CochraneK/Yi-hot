@@ -26,7 +26,7 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export function meta() {
-  return pageMeta({ title: "更新日志", description: `${SITE.name} 的功能更新、优化、公告与下线记录。`, path: "/changelog", image: "/og/pages/changelog.png" });
+  return pageMeta({ title: "更新", description: `${SITE.name} 的功能更新、优化、公告与下线记录。`, path: "/changelog", image: "/og/pages/changelog.png" });
 }
 
 const KIND_DOT: Record<Release["kind"], string> = {
@@ -124,7 +124,7 @@ export default function ChangelogPage() {
   return (
     <ReadingLayout aside={aside}>
       <header className="pb-6">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">更新日志</h1>
+        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">更新</h1>
         <p className="mt-1.5 text-[13px] text-ink-3">新功能、调整、下线，都写在这里。</p>
       </header>
       <div className="space-y-4">

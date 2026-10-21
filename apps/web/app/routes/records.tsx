@@ -19,7 +19,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const page = loaderData?.data.page ?? 1;
   const total = loaderData?.data.stats.total ?? 0;
   return pageMeta({
-    title: page > 1 ? `监管记录 · 第 ${page} 页` : "监管记录",
+    title: page > 1 ? `监管 · 第 ${page} 页` : "监管",
     description: total
       ? `民政部行政处罚与全国社会组织活动异常名录、严重违法失信名单公告，已汇集 ${total} 条，每天同步一次。`
       : "民政部行政处罚与全国社会组织活动异常名录、严重违法失信名单公告，每天同步一次。",

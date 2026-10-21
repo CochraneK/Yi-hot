@@ -53,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta({ loaderData }: Route.MetaArgs) {
   // Only the tab is part of the address (the default is not written).
   const path = listPath("/agent", { tab: loaderData && loaderData.tab !== DEFAULT_TAB ? loaderData.tab : null });
-  return pageMeta({ title: "Agent 接入", description: `把 ${SITE.name} 接进你的 Agent：Agent Skill、MCP、RSS、REST API 四种方式，匿名只读，无需 API Key。`, path, image: "/og/pages/agent.png" });
+  return pageMeta({ title: "Agent", description: `把 ${SITE.name} 接进你的 Agent：Agent Skill、MCP、RSS、REST API 四种方式，匿名只读，无需 API Key。`, path, image: "/og/pages/agent.png" });
 }
 
 function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {

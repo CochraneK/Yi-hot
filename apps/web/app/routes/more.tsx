@@ -24,10 +24,10 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     title: "内容",
     rows: [
       { to: "/topics", label: "主题索引", icon: <IconGrid size={18} /> },
-      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管记录", icon: <IconShield size={18} /> }] : []),
+      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
       ...(FEATURES.leaderboard ? [{ to: "/leaderboard", label: "模型榜", icon: <IconChart size={18} /> }] : []),
       ...(FEATURES.codexResetMonitor ? [{ to: "/codex-reset", label: "Tibo重置监控", icon: <IconHistory size={18} /> }] : []),
-      { to: "/agent", label: "Agent 接入", icon: <IconPlug size={18} /> },
+      { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },
     ],
   },
   {
@@ -41,7 +41,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     title: "关于",
     rows: [
       { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
-      { to: "/changelog", label: "更新日志", icon: <IconHistory size={18} /> },
+      { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
       { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
     ],
   },
@@ -62,9 +62,9 @@ export default function MorePage() {
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
       <h1 className="pb-4 pt-5 text-[22px] font-bold text-ink lg:pt-1">更多</h1>
-      {/* 手机端唯一的订阅入口：侧栏在手机上不显示，TabBar 也放不下第六个标签，
-          所以这里置顶一张卡片，而不是把它埋在「关于」组的最后一项。 */}
-      <Link to="/subscribe" className="card mb-3 flex items-center gap-3 p-4 transition-colors active:bg-bg-sunk lg:hidden">
+      {/* 订阅入口：不单独占一个导航模块，而是置顶在「更多」页——手机和桌面都能一眼看到，
+          又不会挤进侧栏「内容」分组。底部页脚另有「邮件订阅 / RSS」常驻链接。 */}
+      <Link to="/subscribe" className="card mb-3 flex items-center gap-3 p-4 transition-colors active:bg-bg-sunk hover:bg-bg-sunk">
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-accent-contrast"><IconMail size={20} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold text-ink">订阅公益总报</span>

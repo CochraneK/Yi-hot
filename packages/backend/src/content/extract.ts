@@ -38,6 +38,12 @@ const BODY_SELECTORS = [
   "#zoom", ".article-content", ".article_content", ".articleContent", "#articleContent",
   ".arc_body", ".art_cont", ".content_body", ".content_main", ".view-content",
   "#content", ".content", "article", "#view", ".view",
+  // 各级政府/机构站用的非 TRS 容器（民政部 artext、西藏 xl-content、浙江 bt-main、陕西 w-content-bg
+  // 包裹的 content、广东 InfoContainer/NewsInfo、生态环境部 content_box 等）。`.main-content` 之类
+  // 整栏容器不放进来——会连导航一起抓成“正文”。
+  ".artext", ".xl-content", ".xl-article", ".content_box", ".bt-main",
+  ".w-container", ".main_content", ".InfoContainer", ".NewsInfo", ".con_doc", ".pages_content",
+  ".news_content", ".article_main", ".detail-content", ".cont_main",
 ];
 
 export function readable(html: string, url: string): ExtractedBody | null {

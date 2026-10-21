@@ -1967,3 +1967,64 @@ if (!downgrade && corrected.publishedAt && ...) { /* UPDATE */ }
   「数据修正」是两件事，后者需要一次性回填脚本。
 - 排查这类问题先查**四张表/三处代码**：`sources.config.detail` → `articles.published_at_precision`
   → `publications.published_at` → `feedDisplayAt()`，顺序即因果链。
+
+## 二十六、聚合平台（今日热榜 tophub）实测与「栏目/词表」定词法（2026-10-21）
+
+### 用户问的是「能不能在聚合新闻平台基础上筛」
+
+RSS 已整体衰退（见上一条），所以查了 tophub.today 这类聚合站。**结论：能爬，但结构上拿不到我们要的东西。**
+
+实测（`https://tophub.today/c/news`，UA=Chrome131）：
+
+| 项 | 结果 |
+|---|---|
+| 可达性 | 200 / 200KB，**无 robots.txt（返回 404 页）**、无登录、无 Cloudflare |
+| 条目数 | 420 条，12 个榜（知乎/微博/微信/澎湃/百度/头条/夸克/搜狗/360/梨视频…） |
+| 发布时间 | **全页零时间戳**（无 `YYYY-MM-DD HH:MM`、无"更新于"） |
+| 链接形态 | **291/420 = 69% 是搜索引擎结果页**（so.com 59、weibo 搜索 51、baidu 51、toutiao 50、夸克 50、sogou 30） |
+| 真文章链接 | 114/420（mp.weixin.qq.com 30、zhihu 50、thepaper 20、pearvideo 10、daily.zhihu 4） |
+| 关键词搜索页 | `/search?q=` 返回 200 但 **0 条目**（空壳）；`/c/edu`、`/c/social` **404** |
+
+**死结在这里**：唯一真对口的条目「父亲猥亵女儿获刑3年」链接指向 `www.so.com`（360 搜索页），
+不在真文章域名白名单里；而有原文链接的那 114 条（微信/知乎/澎湃榜）当天 **0 条**命中儿童议题。
+**有价值的内容恰好都在拿不到原文链接的榜里**——tophub 把热搜词替换成了自己的搜索跳转。
+
+已接入 `web-tophub-news`（`itemSelector: "a[itemid]"` + `titleSelector: "span.t"`，
+`allowUrlPrefixes` 只放行 5 个真文章域名，**不放行搜索页**，配 31 词严格词表）。
+首次采集实测：`found 114, created 1` → 唯一入库的是知乎讨论「为什么现在的孩子越来越容易厌学、躺平」，
+score 12 未入池，且 `published_at` 为空。**按「0 产出留观察一周」纪律观察，预期长期接近 0。**
+
+### 顺手发现：everyinfra 通道已被预算归零，14 个源实际停摆
+
+`budgets.everyinfra` 的 `per_day = 0`（2026-10-21 08:07 更新），备注写明「停止充值，充值后把
+per_day 恢复 150 即可原样启用」。实测：
+
+```
+wechat-oa-unicef                 → failed  Budget for everyinfra exhausted (stopped)
+weibo-search-unattended-children → failed  Budget for everyinfra exhausted (stopped)
+```
+
+受影响：8 个公众号源 + 3 个微博搜索 + 3 个小红书搜索 = **14 个源不再产生新查询**
+（个别源今天还有入库，是 24h 窗口内的缓存复用，不是新查询）。
+
+`fail_count` **不会自动禁用源**（只在运维报表里列"抓取失败的信源"），所以这 14 个源会持续
+报失败、持续出现在报表里。要么恢复预算，要么把它们的 `enabled` 置 false 让状态变干净。
+
+新增的 `weibo-search-child-abuse`（关键词「猥亵儿童 虐待儿童」）就是因此**先以 `enabled=false` 落地**，
+等预算恢复后改回 true 即可，配置本身已验证合法。
+
+### 定词法：先列全量标题人工判定，再反推词表，最后模拟验证
+
+这轮接入中新网教育频道，用的是这个顺序，一次就对（`found 27, created 3`，零误命中）：
+
+1. **拉全量标题打印出来逐条看**，人工标出哪几条真对口。edu 频道 27 条里只有 3 条：
+   儿童青少年高度近视防控、宋庆龄奖学金、辽宁孤困儿童帮扶。其余是高校/职教/学科/论坛。
+2. **拿这 3 条反推词表**，而不是先想一堆词再试。
+3. **模拟跑一遍 `title + excerpt` 上的命中**（注意 `noiseFiltered` 的 `hay` 是标题+摘要，
+   只按标题模拟会严重低估命中），看是否又有误命中：
+   - 34 词版本 → 命中 4 条，多出「京城学子上演人工智能科创实践秀」（desc 里有"青少年"）
+   - **删掉「青少年」「困境」两个宽词** → 32 词，命中 3 条，**全部真对口、零误命中**
+4. 落库后再用 sql 复核 `score/selected`，确认真入池（edu 三条里 1 条 score 60 入池）。
+
+**教训**：`requireMarkers` 里放「青少年」「学生」「校园」「困境」这类词，在综合频道等于不过滤；
+而放之前必须先有"正确答案"（人工标注的样本），否则无法判断词表是松是紧。

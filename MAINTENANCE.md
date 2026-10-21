@@ -390,6 +390,14 @@ LLM_EXTRA_JSON={"enable_thinking":false}
 
 **别踩的坑**：看到源显示 `degraded` 且 `last_error` 是 `everyinfra HTTP 503 (capacity_exhausted…)` 时，不要去重跑、不要去改配置。这是 provider 侧容量耗尽（响应体里 `charged:false`，不计费，且自带 `retry_after` 秒数），调度层会照它给的秒数回来重试。
 
+**DeepSeek 余额耗尽的表现**（2026-10-21 踩过一次）：采集一切正常、文章正常入库，但 `articles.processing_state` 全是 `failed`，`processing_error` 是
+
+```
+HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
+```
+
+**这不是代码问题，是账户没钱了**，全站分析会一起停（不只是新源）。充值后调 `requeueFailed(null)` 把近 30 天的失败文章全部重新排队即可，不用改配置、不用重采。判断依据很简单：`receipts` 里 `service='llm'` 的失败记录会密集出现同一个 402。
+
 ### 免费官方 RSS 现状（2026-10-21 实测）
 
 已接入并产出：
@@ -429,6 +437,28 @@ LLM_EXTRA_JSON={"enable_thinking":false}
 
 - **优先接**：基金会与公益机构官网（青基会、红基会、人口福利基金会、社会福利基金会、发展研究基金会、心和、新阳光）、慈善中国这类**垂直源头**，内容天然贴合站点定位。
 - **慎接**：新华网、澎湃、央视、中青报、财新、南方周末等**综合媒体门户**。它们喂进来的是泛新闻，会稀释公益垂直度，而且要靠更强的过滤词才拦得住——项目已有 25 个 RSS 源在覆盖新闻，重复度很高。真要接，务必先定过滤词再开口子。
+
+### 垂直机构官网接入记录（2026-10-21，第一批）
+
+按上面的工序实做了一批 P0/P1，**8 条里接成 5 条**：
+
+| 源 ID | 机构 | 列表页 | 解析条数 | 列表项选择器 |
+| --- | --- | --- | --- | --- |
+| `web-cpwf-news` | 中国人口福利基金会 | `/category/13` | 10 | `.dynamic-item` |
+| `web-cswef-news` | 中国社会福利基金会 | `/cswef/news/index.html` | 12 | `.list-cont` |
+| `web-isun-news` | 北京新阳光慈善基金会 | `?m=content&c=index&a=lists&catid=23` | 24 | `.item-content` |
+| `web-crcf-news` | 中国红十字基金会 | 首页卡片流 | 12 | `.am-u-lg-4` |
+| `web-xinhe-news` | 心和基金会 | `/home/info/index/cate_id/21.html` | 11 | `li.way-list-item` |
+
+五个站共同点：日期都在列表页，`detail.maxFetches` 控制每次采几篇正文。红基会和心和用的是**首页卡片流**，靠 `allowUrlPrefixes` 把导航链接挡在外面（红基会限定 `/web/article.thtml`，心和限定 `mp.weixin.qq.com/s/`——后者的正文本来就是公众号文章，抓不到正文属正常，`body_status` 会是 `unconfirmed`，但标题+日期够分析判定）。
+
+三条接不了的，**原因都是硬性的**，不要反复重试：
+
+| 站点 | 结论 | 原因 |
+| --- | --- | --- |
+| 中国青少年发展基金会官网 | `spa_auth_required` | Nuxt SPA，首页 481KB 但 HTML 里 0 个 `<a>`；`work.cydf.org.cn/api` 全部接口返回 401 需登录。按纪律不绕过认证。该机构已有公众号源 `wechat-oa-cydf` 覆盖 |
+| 中国发展研究基金会 | `js_rendered` | `/zxcg/index.htm` 是导航骨架，整页只有 1 个日期（2022 年），列表由 JS 异步加载 |
+| 慈善中国 | `not_a_feed` | 它是**信息公开查询平台**（查组织、募捐备案、慈善信托），不是资讯站，没有新闻流。`getIndexList*.html` 返回的是查询快照，不适合当内容源 |
 
 | 类型 | 当前例子 | 采集方式 | 常见问题 |
 | --- | --- | --- | --- |

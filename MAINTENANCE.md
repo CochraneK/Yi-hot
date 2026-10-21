@@ -398,6 +398,34 @@ HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
 
 **这不是代码问题，是账户没钱了**，全站分析会一起停（不只是新源）。充值后调 `requeueFailed(null)` 把近 30 天的失败文章全部重新排队即可，不用改配置、不用重采。判断依据很简单：`receipts` 里 `service='llm'` 的失败记录会密集出现同一个 402。
 
+**恢复三步（2026-10-21 实测走通，可直接照抄）**：
+
+1. 先验余额到账，别盲跑。余额接口有小延迟，刚充完第一次查可能还是旧值，隔几分钟再查一次才是真值：
+   ```
+   ssh yihot "sudo bash -c 'set -a; . /opt/yihot/.env; curl -s -H \"Authorization: Bearer \$LLM_API_KEY\" https://api.deepseek.com/user/balance'"
+   ```
+   看 `is_available:true` 且 `total_balance > 0` 才算真的到账。
+2. 重排队。`/app/.env` 在容器里不存在是正常的（变量由 compose 注入），报 `not found. Continuing without it.` 可以忽略：
+   ```
+   ssh yihot "sudo docker exec -w /app aihot-worker-1 node --env-file-if-exists=/app/.env --input-type=module -e \"const c=await import('@aihot/backend/jobs/content'); const q=await import('@aihot/backend/jobs/queue'); const d=await import('@aihot/backend/db'); console.log(await c.requeueFailed(null)); await q.stopBoss(); await d.closeDb();\""
+   ```
+3. 验结果：`failed` 应为 0，`pgboss.job` 里 `content.analyze` 的 created/active 归零、`state='failed'` 为 0。41 篇积压大约一两分钟跑完（并发 6）。
+
+**flash 的真实价钱与续航**（2026-10-21 实测对账，官方价目表见 api-docs.deepseek.com「模型 & 价格」）：
+
+| 项 | 单价（人民币 / 百万 tokens） |
+| --- | --- |
+| 输入·缓存命中 | 空闲 0.02 / 高峰 0.04 |
+| 输入·缓存未命中 | 空闲 1 / 高峰 2 |
+| 输出 | 空闲 4 / 高峰 8 |
+
+高峰 = 北京时间**工作日** 9:00–12:00、14:00–18:00，其余（含周末、法定节假日）都是空闲价，**高峰是空闲的两倍**。
+
+- 实测基准：165 次调用 / 未命中 183K / 命中 355K / 输出 10K，扣费 **¥0.57**；按价目表回算 ¥0.46，对得上。**可以记成 ≈ ¥0.0035/次调用**。
+- 平静日（约 300 次调用）≈ **¥1/天**；回填或批量重排的日子（1500+ 次）≈ **¥5/天**。
+- 成本八成来自**未命中输入**（命中便宜 50 倍）。24 小时实测命中率约 63%，`score_article` 命中最好（5.1M 命中 / 1.3M 未命中），`prefilter_article` 最差（0.53M / 1.4M）——想省钱先从这里下手，而不是砍信源。
+- **`budgets` 表管不住这件事**：`llm` 的 `per_day` 是 40000 次，远高于实际用量，熔断基本不会触发；真正托底的是账户余额。余额见底时仍是 402 全站停摆，所以**定期查余额**才是唯一有效的兜底，不能指望熔断。
+
 ### 免费官方 RSS 现状（2026-10-21 实测）
 
 已接入并产出：
@@ -450,7 +478,19 @@ HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
 | `web-crcf-news` | 中国红十字基金会 | 首页卡片流 | 12 | `.am-u-lg-4` |
 | `web-xinhe-news` | 心和基金会 | `/home/info/index/cate_id/21.html` | 11 | `li.way-list-item` |
 
-五个站共同点：日期都在列表页，`detail.maxFetches` 控制每次采几篇正文。红基会和心和用的是**首页卡片流**，靠 `allowUrlPrefixes` 把导航链接挡在外面（红基会限定 `/web/article.thtml`，心和限定 `mp.weixin.qq.com/s/`——后者的正文本来就是公众号文章，抓不到正文属正常，`body_status` 会是 `unconfirmed`，但标题+日期够分析判定）。
+五个站共同点：日期都在列表页，`detail.maxFetches` 控制每次采几篇正文。红基会和心和用的是**首页卡片流**，靠 `allowUrlPrefixes` 把导航链接挡在外面（红基会限定 `/web/article.thtml`，心和限定 `mp.weixin.qq.com/s/`）。
+
+**首采核验结果（2026-10-21，等 DeepSeek 余额恢复后才跑完，共 37 篇全部 analyzed）**。这里的 `selected` 用 `publications` 口径（已过硬性 `minScore`），比 `analyses.selected` 严，两个数不能混用：
+
+| 源 ID | 入库 | pass | 入池 | pass 均分 | 结论 |
+| --- | --- | --- | --- | --- | --- |
+| `web-cswef-news` | 8 | 8 | 4 | 44.5 | 最好，留 |
+| `web-cpwf-news` | 8 | 6 | 1 | 35.0 | 留 |
+| `web-crcf-news` | 9 | 9 | 1 | 24.1 | 留，命中率低 |
+| `web-isun-news` | 8 | 8 | 0 | 21.0 | 公示/手册类居多，暂无入池 |
+| `web-xinhe-news` | 4 | 0 | 0 | — | **4/4 `unknown`，见下** |
+
+**和心的坑（已验证，别再假设）**：它的列表项全部外链 `mp.weixin.qq.com`，而 `pageFetchable()`（`content/extract.ts`）**明确把 `mp.weixin.qq.com` 排除在正文抓取之外**（X 帖与微信文章的设计是「要么整篇到达，要么没有」）。所以这 4 篇恒为 `body_status='unconfirmed'`，AI 只拿到标题就保守判 `relevance='unknown'`（分数 22–34，reason 为空），**仍然照常消耗 4 次调用却零入池**。曾以为「标题+日期够判定」，实测证伪。官网自身也没有站内详情页（列表页只有栏目导航，无 detail 路由），改 `allowUrlPrefixes` 救不回来。当前保留是因为更新量极小、成本可忽略，且选题（0-3 岁儿童早期发展）对口；若要动它，要么给 `mp.weixin.qq.com` 的正文开一条受控通路，要么关掉。
 
 三条接不了的，**原因都是硬性的**，不要反复重试：
 

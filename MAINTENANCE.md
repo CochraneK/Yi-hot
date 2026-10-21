@@ -1928,6 +1928,37 @@ sudo docker exec -w /app aihot-worker-1 node scripts/backfill-date-precision.ts 
 2026-10-21 实测：`gongyi-times` 74 篇 + `web-gongyishibao-yaowen` 8 篇全部从 `date` 升到 `datetime`，
 目标文章变成 `2026-10-21 17:45`，前端显示「10月21日 17:45 · 原文发表」。
 
+### 第五道门：列表页会把精度覆盖回去（比上面四条更隐蔽）
+
+`upsertMaterial`（`content/materials.ts`）对已存在的文章只在「通知内容真的变了」时才写新版本。
+但**列表页每次采集都会回报一份 `publishedAt`（00:00 + `date`）**，它与库里已升级的 17:45 不相等，
+于是触发 UPDATE，把 `published_at` 写回 00:00、`published_at_precision` 写回 `date`。
+
+结果：**回填后一小时就复发**。2026-10-21 实测：19:00 回填 74 篇为 `datetime`，
+19:05 跑一次常规采集，列表页上的 20 条全部退回 `date`（另外 54 条已离开列表页没被动）。
+
+修法：`upsertMaterial` 里加了「精度不降级」判定——
+
+```ts
+const downgrade = existing!.published_at_precision === "datetime" &&
+  (m.publishedAtPrecision ?? existing!.published_at_precision) === "date";
+if (!downgrade && corrected.publishedAt && ...) { /* UPDATE */ }
+```
+
+更细的 claim 照常覆盖（详情页仍然可以修正列表页），只有「已知分钟级 → 又被日级覆盖」被拦住。
+
+**验证方式必须包含一次真实采集**：只回填不跑采集，看到的 `datetime` 是假象。
+正确顺序是 回填 → 跑 `collect.ts <sourceId>` → 再查 precision，两者都还是 `datetime` 才算修好。
+
+### 数据改完后 publications 是独立副本，别忘了同步
+
+`backfill-date-precision.ts` 每改一篇都会 `publishArticle()`。**但这个 import 必须真的上传到服务器**——
+镜像构建是 COPY `/opt/yihot` 的当前内容，本地改了没 scp，容器里跑的就是旧脚本，
+表现为「articles 改对了、publications 还是旧值、页面显示"原文日期未知 · 本站收录时间"」。
+
+判断口诀：页面显示「原文日期未知」= `publishedAt` 为 null；显示「原文发布日期」= `precision='date'`；
+显示「原文发布时间」= 正确。三者对应三种不同的数据状态，比看数据库快。
+
 ### 教训
 
 - **`precision` 是独立的一等字段，不是 `published_at` 的附注**。抓取、入库、展示三处各有一道门，

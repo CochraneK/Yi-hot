@@ -426,6 +426,23 @@ HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
 - 成本八成来自**未命中输入**（命中便宜 50 倍）。24 小时实测命中率约 63%，`score_article` 命中最好（5.1M 命中 / 1.3M 未命中），`prefilter_article` 最差（0.53M / 1.4M）——想省钱先从这里下手，而不是砍信源。
 - **`budgets` 表管不住这件事**：`llm` 的 `per_day` 是 40000 次，远高于实际用量，熔断基本不会触发；真正托底的是账户余额。余额见底时仍是 402 全站停摆，所以**定期查余额**才是唯一有效的兜底，不能指望熔断。
 
+### 高峰让路：`ANALYZE_OFFPEAK_ONLY`（2026-10-21 起开启）
+
+DeepSeek 工作日高峰价是空闲价的**两倍**，而原来采集一篇就立刻分析一篇，白天采的稿子全撞在贵的时候。`.env` 里设 `ANALYZE_OFFPEAK_ONLY=true` 后：
+
+- `isPeakAnalysisHour()`（`jobs/content.ts`）把工作日北京时间 **9–12、14–18** 判为高峰；周末全天、其余 17 小时为空闲。
+- 高峰时 `queueProcessing()` 的 **analyze 步骤不入队**，文章停在 `processing_state='new'`；**正文抓取（extract）照常立即执行**，因为抓网页不花钱。
+- `sweepUnprocessed()` 在高峰整体返回 0，积压留到第一个空闲窗口（12:00 或 18:00）一次推给 worker 批量跑。
+- 管理员手动重评（带 `attemptTag`）**不受限制**——人点「现在就要」就是现在就要。
+
+**为什么不是「全攒到夜里」**：`notify/selected.ts` 有 12 小时推送时效门槛（`MAX_AGE_MS`），超过就跳过推送。全攒夜间会让 18:01 采的稿子等到次日 12:00（18 小时），推送直接废掉。所以只压高峰这 7 小时，最长延迟 9 小时（08:59 的稿子 18:00 处理），留在门槛内。
+
+**时间语义不受影响**（这是最容易被误解的一点）：`discovered_at`（收录时刻）和 `published_at`（原始发布时间）在入库那一刻由 `decideTimeline()` 写死，`timeline_at` 由二者推出。改的只是**模型何时跑**，不是时间轴说什么。延迟分析不会把新闻变成历史回填，也不会挪动任何时间。
+
+- 预期省 **20–25%**（不是一半——高峰只占工作日 7 小时），约 ¥30/月 → ¥23/月；批量连续处理还会让 system prompt 前缀更连贯，命中率略升。
+- 关闭方式：`.env` 改 `false` 或删掉该行，重新 `up -d`（不需要 `--build`，这是运行时变量）。
+- **验证方式**：高峰时段查 `select count(*) from articles where processing_state='new'`，应该持续累积而不下降；到 12:00/18:00 后该数应快速归零，同时 `pgboss.job` 里 `content.analyze` 出现一批 created。
+
 ### 免费官方 RSS 现状（2026-10-21 实测）
 
 已接入并产出：

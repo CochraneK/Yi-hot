@@ -50,6 +50,10 @@
 > 所以少了它这几个用 `require` 的部署脚本会被当 ESM 跑、直接报
 > `require is not defined in ES module scope`。**不要删。**
 
+## 生产 DeepSeek 默认模型安全切换
+
+当前 `.env.example` 已是 `deepseek-flash`（非思考），历史生产 `.env` 的 `LLM_MODEL=deepseek-chat` 不会被自动覆盖。在**服务器**（不是 CI 或开发机）将仓库更新后，先执行 `python3 tools/switch_deepseek_flash.py` 预检，再执行 `python3 tools/switch_deepseek_flash.py --apply`。脚本只变更已有的 `.env` 中模型名与思考参数、备份密钥文件，并重建/核验 api 和 worker 容器；不变更后台逐能力覆盖。操作与回滚见 [切换指引](../docs/DEEPSEEK_FLASH_SWITCH_2026-10-21.md)。
+
 ## 常用工作流
 
 ```sh

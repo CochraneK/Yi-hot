@@ -2692,6 +2692,608 @@
       "publication_rule": {
         "minScore": 40
       }
+    },
+    {
+      "id": "web-stats-tzgg",
+      "name": "国家统计局·通知公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.stats.gov.cn/xw/tjxw/tzgg/",
+        "itemSelector": "div.list-content li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "titleFromAttribute": true,
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "https://www.stats.gov.cn/xw/tjxw/tzgg/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "儿童发展纲要",
+            "儿童发展"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "统计",
+        "儿童发展"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-ndrc-xwfb",
+      "name": "国家发展改革委·通知公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.ndrc.gov.cn/xwdt/tzgg/",
+        "itemSelector": "ul.u-list li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "titleFromAttribute": true,
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "https://www.ndrc.gov.cn/xwdt/tzgg/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "普惠托育",
+            "托育服务",
+            "儿童友好城市",
+            "生育支持"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "政策",
+        "儿童友好"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-npc-lfdt",
+      "name": "全国人大·立法动态",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.npc.gov.cn/npc/c2/c183/c199/",
+        "itemSelector": "ul.clist li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "http://www.npc.gov.cn/npc/c2/c30834/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "立法",
+            "法律草案",
+            "修订"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "立法",
+        "未成年人保护"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-cfforum-news",
+      "name": "中国基金会发展论坛·行业资讯",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cfforum.org.cn/category/6",
+        "itemSelector": "div.media.media-font",
+        "linkSelector": "a.media-heading",
+        "titleSelector": "a.media-heading",
+        "publishedAtSelector": ".tag-group span",
+        "allowUrlPrefixes": [
+          "https://www.cfforum.org.cn/content/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "乡村儿童",
+            "助学",
+            "儿童项目"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "行业",
+        "公益",
+        "基金会"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-gqt-gzdt",
+      "name": "共青团中央·工作动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://qnzz.youth.cn/gzdt/",
+        "itemSelector": "ul.tj3_1 li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "font",
+        "allowUrlPrefixes": [
+          "https://news.youth.cn/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "少年儿童",
+            "少先队"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "共青团",
+        "青少年"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-cnwomen-news",
+      "name": "中国妇女报",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cnwomen.com.cn/",
+        "itemSelector": "li.row_one_con_list",
+        "linkSelector": "a",
+        "titleSelector": "a span",
+        "publishedAtRegex": "href=\"[^\"]*?(\\d{4}/\\d{1,2}/\\d{1,2})/",
+        "allowUrlPrefixes": [
+          "https://www.cnwomen.com.cn/202"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "家教",
+            "家风",
+            "母婴"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "媒体",
+        "妇女儿童",
+        "家庭"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-xinhua-szlb",
+      "name": "新华网·时政联播",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.news.cn/politics/szlb/index.html",
+        "itemSelector": "div.txt",
+        "linkSelector": ".tit a",
+        "titleSelector": ".tit a",
+        "publishedAtSelector": ".time",
+        "allowUrlPrefixes": [
+          "http://www.news.cn/politics/",
+          "https://www.news.cn/politics/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "生育",
+            "托育",
+            "幼儿园"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "媒体",
+        "时政",
+        "儿童政策"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-cyol-news",
+      "name": "中国青年报",
+      "kind": "web_list",
+      "config": {
+        "url": "http://news.cyol.com/",
+        "itemSelector": "li.news-li",
+        "linkSelector": "h2 a",
+        "titleSelector": "h2 a",
+        "publishedAtSelector": ".pdtt_trbs span:last-child",
+        "allowUrlPrefixes": [
+          "http://news.cyol.com/gb/news/articles/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "未成年人保护",
+            "儿童权利",
+            "困境儿童",
+            "留守儿童",
+            "孤儿",
+            "事实无人抚养",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "校园欺凌",
+            "学生欺凌",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "女童",
+            "儿童友好",
+            "春蕾",
+            "希望工程",
+            "护苗",
+            "青少年权益",
+            "少年儿童",
+            "少先队"
+          ],
+          "dropMarkers": [
+            "彩票开奖",
+            "涨停",
+            "综艺",
+            "票房",
+            "招聘启事",
+            "征稿",
+            "订阅"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "媒体",
+        "青少年",
+        "共青团"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      }
     }
   ]
 }

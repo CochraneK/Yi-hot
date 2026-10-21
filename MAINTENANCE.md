@@ -517,6 +517,48 @@ DeepSeek 工作日高峰价是空闲价的**两倍**，而原来采集一篇就�
 | 中国发展研究基金会 | `js_rendered` | `/zxcg/index.htm` 是导航骨架，整页只有 1 个日期（2022 年），列表由 JS 异步加载 |
 | 慈善中国 | `not_a_feed` | 它是**信息公开查询平台**（查组织、募捐备案、慈善信托），不是资讯站，没有新闻流。`getIndexList*.html` 返回的是查询快照，不适合当内容源 |
 
+### 综媒与政务源接入记录（2026-10-21，第二批 A/B 类 16 条）
+
+41 条清单里剩下的 16 条（4 条 A 类 + 12 条 B 类，均标 `no_rss`）逐站实做，**8 条接成、8 条接不了**。
+
+接成的 8 条（全部跑通 `collect`，选择器已落到 `sources.json`）：
+
+| 源 ID | 站点 | 列表页 | 解析 | 列表项选择器 | 日期选择器 |
+| --- | --- | --- | --- | --- | --- |
+| `web-spp-wsfbt` | 最高人民检察院 | `/xwfbh/wsfbt/` | 30 | `ul.li_line li` | `span` |
+| `web-stats-tzgg` | 国家统计局 | `/xw/tjxw/tzgg/` | 13 | `div.list-content li` | `span` |
+| `web-ndrc-xwfb` | 国家发改委 | `/xwdt/tzgg/` | 25 | `ul.u-list li` | `span` |
+| `web-cfforum-news` | 基金会发展论坛 | `/category/6` | 11 | `div.media.media-font` | `.tag-group span` |
+| `web-gqt-gzdt` | 共青团中央 | `qnzz.youth.cn/gzdt/` | 46 | `ul.tj3_1 li` | `font` |
+| `web-cnwomen-news` | 中国妇女报 | 首页 | 38 | `li.row_one_con_list` | `publishedAtRegex` 取 href 里的日期 |
+| `web-cyol-news` | 中国青年报 | `news.cyol.com` | 10 | `li.news-li` | `.pdtt_trbs span:last-child` |
+| `web-xinhua-szlb` | 新华网·时政联播 | `/politics/szlb/` | 15 | `div.txt` | `.time` |
+
+**这一批最该记住的教训：技术接通 ≠ 内容对口。**
+
+8 条全都能稳定解析、日期全中，但首采实际产出是 **0 条入池**：共青团入库 8 篇全 pass，均分只有 **22**；妇女报入库 4 篇，最高 38 分。原因是这些站的儿童相关内容是**活动报道**（红领巾讲解员、同心营、手拉手）和**个体故事**（职校女孩、技能大赛），不是儿童权利议题。主题词命中不等于议题相关——`requireMarkers` 只保证"提到了儿童"。
+
+**主题词的红线**：只收指向儿童处境/权益的硬词（未成年、留守儿童、困境儿童、校园欺凌、监护、收养、抚养、女童、春蕾、青少年权益…）。行业词（统计、公益、基金会）和泛词（妇女、青年、学生、教育、家庭、女孩）会把整站内容放进来——实测共青团命中率冲到 **76%**、基金会论坛 **91%**，等于没有过滤。收窄后回到共青团 6/46、妇女报 0/38 的合理区间。
+
+接不了的 8 条，**原因都是硬性的**：
+
+| 站点 | 状态 | 原因 |
+| --- | --- | --- |
+| 全国人大 | `blocked` | 选择器完全可用（`ul.clist li`，27 条、日期全中），但站方 WAF **拒绝任何含 `bot` 的 UA**——连 Googlebot 都 403。采集器默认 UA 是 `YiHotBot/1.0`。已建源但 `enabled=false`，不擅自伪装浏览器身份 |
+| UNICEF 儿童保护 | `blocked` | `/child-protection` 已 404，URL 失效 |
+| 人社部 | `blocked` | 首页仅 987 字节，反爬拦截 |
+| UNGM | `spa_auth_required` | 招标查询需登录 |
+| 中国教育报 | `js_rendered` | `jyb.cn` 栏目页全是 481 字节跳转壳；电子版 `paper.jyb.cn/zgjyb/html/2026-10/21/` 的 URL **按日期变化**，无法用固定 URL 采集 |
+| UNESCO / 世界银行 / 腾讯公益 / 欧盟 Funding / 澎湃 / 财新 / 国家疾控局 | `js_rendered` | 列表由 JS 或 XHR 渲染，静态只有导航骨架 |
+| 检察日报 | `stale_listing` | `news.jcrb.com` 列表最新条目停在 **26-08-07**（停更 2 个多月）；主站栏目 `div.t` 只有标题、没有链接 |
+| 央视 | `not_a_feed` | 新闻频道无静态列表，能解析的只有专题页（专题不是新闻流） |
+| 南方周末 / 阿里巴巴公益 | `date_unparseable` | 日期分别是相对时间（`7小时前`）和空格分隔（`2026 10 13`），`parseLooseDate` 都不认 |
+
+**两个新状态的含义**（`tests/child-rights-source-coverage.test.mjs` 已收录）：
+`stale_listing` = 列表能解析但最新条目已是几个月前（站点在该栏目停更），与 RSS 停更同类问题，**接入前必须看最新条目的日期**，别只看 HTTP 200 和条目数；`date_unparseable` = 日期格式是 `parseLooseDate` 处理不了的形态，宁可不接也不发没有发布时间的稿件。
+
+**探测脚本的 GB2312 坑**：共青团、检察日报等政府/媒体站用 `gb2312`，探测脚本若直接 `res.text()` 按 UTF-8 解码会中文全乱、误判成"首页无列表结构"。采集链路本身没问题——`lib/http-fetch.ts` 的 `decodeBody()` 已按 `content-type` → `<meta charset>` 顺序取编码，`gb2312` 一律按 `gbk` 解。写探测脚本时要复刻这段逻辑，否则会白跑。
+
 | 类型 | 当前例子 | 采集方式 | 常见问题 |
 | --- | --- | --- | --- |
 | RSS/Atom | 媒体、机构更新 | worker 定时读取 | feed 停更、日期不规范 |

@@ -24,6 +24,10 @@ export interface RegulatoryRecord {
   /** entityId 对应的展示名（实体词典的 displayTag）。 */
   entityName: string | null;
   region: string | null;
+  /** 归一化后的省/直辖市/自治区简称（如"黑龙江"），脏数据或处罚记录为 null。 */
+  regionProvince: string | null;
+  /** 归一化后的市/地区/自治州（如"佳木斯市"），省直管或脏数据为 null。 */
+  regionCity: string | null;
   caseNo: string | null;
   punishName: string | null;
   punishResult: string | null;
@@ -48,6 +52,10 @@ export interface RegulatoryRecord {
 export interface RegulatoryRecordStats {
   total: number;
   byType: Record<RegulatoryRecordType, number>;
+  /** 各省份记录数（降序）；按省筛选时为全部有省份的记录，不随当前筛选收缩。 */
+  provinces: { province: string; n: number }[];
+  /** 选中省份下的各市记录数（降序）；未选省份时为空。 */
+  cities: { city: string; n: number }[];
   /** 最近一次成功同步的时间（ISO）；从未同步过为 null。 */
   lastSyncedAt: string | null;
 }

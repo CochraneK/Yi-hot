@@ -195,6 +195,8 @@ export function registerSite(app: FastifyInstance) {
         types: q.type ? q.type.split(",").map((t) => t.trim()).filter(Boolean) : null,
         kind: q.kind ?? null,
         q: q.q ?? null,
+        province: q.province ?? null,
+        city: q.city ?? null,
         page: Number(q.page) || 1,
         pageSize: Number(q.pageSize) || 20,
       });

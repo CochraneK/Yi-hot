@@ -1,6 +1,6 @@
-// 监管记录页：民政部行政处罚 + 社会组织活动异常名录 / 严重违法失信名单的列入、移出与送达公告。
-// 筛选用 URL 参数（type / kind / q / page），列表本身是服务端渲染的静态内容。
-import { Link, useSearchParams } from "react-router";
+// 监管页：民政部行政处罚 + 社会组织活动异常名录 / 严重违法失信名单的列入、移出与送达公告。
+// 筛选用 URL 参数（type / kind / q / province / city / page），列表本身是服务端渲染的静态内容。
+import { Link, useNavigate, useSearchParams } from "react-router";
 import type { RegulatoryRecord, RegulatoryRecordsPage } from "@aihot/contracts/records";
 import { SearchField, hrefWith } from "../feed/Filters";
 import { Pagination } from "../feed/DayList";
@@ -38,6 +38,46 @@ function KindChip({ kind, active }: { kind: (typeof ORG_KINDS)[number] | null; a
   );
 }
 
+const selectClass =
+  "h-8 rounded-full border border-line bg-surface pl-3 pr-7 text-[13px] text-ink-2 outline-none transition-colors hover:border-ink-4 focus:border-accent";
+
+/** 省 / 市两级下拉：选省会清空市；选中省后才出现市下拉（市列表由后端按省聚合返回）。 */
+function RegionFilter({
+  provinces,
+  cities,
+  activeProvince,
+  activeCity,
+}: {
+  provinces: { province: string; n: number }[];
+  cities: { city: string; n: number }[];
+  activeProvince: string | null;
+  activeCity: string | null;
+}) {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const goProvince = (province: string) => navigate(hrefWith("/records", params, { province: province || null, city: null }));
+  const goCity = (city: string) => navigate(hrefWith("/records", params, { city: city || null }));
+  if (provinces.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <select aria-label="按省份筛选" value={activeProvince ?? ""} onChange={(e) => goProvince(e.target.value)} className={selectClass}>
+        <option value="">全部省份</option>
+        {provinces.map((p) => (
+          <option key={p.province} value={p.province}>{p.province}（{p.n}）</option>
+        ))}
+      </select>
+      {activeProvince && cities.length > 0 && (
+        <select aria-label="按城市筛选" value={activeCity ?? ""} onChange={(e) => goCity(e.target.value)} className={selectClass}>
+          <option value="">全部城市</option>
+          {cities.map((c) => (
+            <option key={c.city} value={c.city}>{c.city}（{c.n}）</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
 /** 一条记录的关键事实：依据、文号、时间、机关，按类型取相关的几项。 */
 function factsOf(r: RegulatoryRecord): string[] {
   const out: string[] = [];
@@ -54,6 +94,7 @@ function factsOf(r: RegulatoryRecord): string[] {
 }
 
 function RecordCard({ r }: { r: RegulatoryRecord }) {
+  const regionLabel = [r.regionProvince, r.regionCity].filter(Boolean).join(" · ");
   return (
     <article className="card px-4 py-3.5 lg:px-5">
       <div className="flex items-start justify-between gap-3">
@@ -61,6 +102,7 @@ function RecordCard({ r }: { r: RegulatoryRecord }) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-medium ring-1 ring-inset ${RECORD_TYPE_TONES[r.type]}`}>{RECORD_TYPE_LABELS[r.type]}</span>
             {r.orgKind && <span className="text-[11.5px] text-ink-4">{ORG_KIND_LABELS[r.orgKind]}</span>}
+            {regionLabel && <span className="text-[11.5px] text-ink-4">{regionLabel}</span>}
             {r.entityId && r.entityName && (
               <Link to={`/topics/${r.entityId}`} className="text-[11.5px] font-medium text-accent hover:underline">
                 已收录 · {r.entityName}
@@ -81,6 +123,8 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
   const [params] = useSearchParams();
   const activeType = params.get("type");
   const activeKind = params.get("kind");
+  const activeProvince = params.get("province");
+  const activeCity = params.get("city");
   const q = params.get("q");
   const pageCount = Math.max(1, Math.ceil(data.total / data.pageSize));
   const href = (p: number) => hrefWith("/records", params, { page: p <= 1 ? null : String(p) });
@@ -89,9 +133,9 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
   return (
     <div className="pb-10">
       <header className="pb-2 pt-5 lg:pt-1">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">监管记录</h1>
+        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">监管</h1>
         <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-ink-3">
-          民政部对全国性社会组织的行政处罚，以及全国社会组织活动异常名录、严重违法失信名单的列入、移出与送达公告。数据来自中国社会组织政务服务平台公开接口，每天同步一次；组织类型由统一社会信用代码推导。
+          民政部对全国性社会组织的行政处罚，以及全国社会组织活动异常名录、严重违法失信名单的列入、移出与送达公告。数据来自中国社会组织政务服务平台公开接口，每天同步一次；组织类型由统一社会信用代码推导，地区由登记管理机关归一成省 / 市。
         </p>
       </header>
 
@@ -103,6 +147,16 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
       </nav>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-[12px] text-ink-4">地区</span>
+        <RegionFilter
+          provinces={data.stats.provinces}
+          cities={data.stats.cities}
+          activeProvince={activeProvince}
+          activeCity={activeCity}
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <nav aria-label="组织类型" className="flex flex-wrap gap-1.5">
           <KindChip kind={null} active={!activeKind} />
           {ORG_KINDS.map((k) => (
@@ -110,13 +164,21 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
           ))}
         </nav>
         <div className="w-full lg:ml-auto lg:w-60">
-          <SearchField action="/records" defaultValue={q ?? ""} keep={{ type: activeType, kind: activeKind }} placeholder="搜索组织名称…" />
+          <SearchField
+            action="/records"
+            defaultValue={q ?? ""}
+            keep={{ type: activeType, kind: activeKind, province: activeProvince, city: activeCity }}
+            placeholder="搜索组织名称…"
+          />
         </div>
       </div>
 
       <p className="mt-3 text-[12px] text-ink-4">
         共 <span className="num">{data.total.toLocaleString("zh-CN")}</span> 条记录
-        {q && <>，匹配「{q}」</>}；最近同步 {syncNote}
+        {q && <>，匹配「{q}」</>}
+        {activeProvince && <>，{activeProvince}{activeCity ? ` · ${activeCity}` : ""}</>}
+        {activeType && <>，{RECORD_TYPE_LABELS[activeType as RegulatoryRecord["type"]]}</>}
+        ；最近同步 {syncNote}
       </p>
 
       {data.items.length === 0 ? (

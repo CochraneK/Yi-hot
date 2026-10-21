@@ -24,6 +24,25 @@ const QUEUED_STALE = "30 minutes";
 
 type Step = "extract" | "analyze";
 
+/**
+ * Whether paid analysis should wait for the off-peak window. DeepSeek bills weekday peak hours
+ * (Beijing 09:00–12:00 and 14:00–18:00) at double the off-peak rate, so with ANALYZE_OFFPEAK_ONLY
+ * the model calls are held back to the half-price window while body extraction (free) still runs.
+ *
+ * Deferring moves *when* the model runs, never *what* the timeline says: `discovered_at` and
+ * `published_at` are written at ingest by decideTimeline, long before any analysis. The longest wait
+ * is 9 h (a 08:59 article picked up at 18:00), inside the 12 h push freshness gate in
+ * notify/selected.ts, so nothing loses its announcement.
+ */
+export function isPeakAnalysisHour(now = Date.now()): boolean {
+  if (process.env.ANALYZE_OFFPEAK_ONLY !== "true") return false;
+  const beijing = new Date(now + 8 * 3600_000);
+  const weekday = beijing.getUTCDay();
+  if (weekday === 0 || weekday === 6) return false; // weekends are off-peak all day
+  const hour = beijing.getUTCHours();
+  return (hour >= 9 && hour < 12) || (hour >= 14 && hour < 18);
+}
+
 interface Route {
   step: Step;
   /** Not an editorial source: no analysis; the post goes straight to event grouping as discussion evidence. */
@@ -69,6 +88,12 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
   const r = await route(articleId, db);
   if (!r) return null;
   const step = opts.step ?? r.step;
+  // Peak hours: leave the article waiting for the off-peak sweep instead of paying double. An
+  // explicit re-evaluation (attemptTag) is a human asking now, so it is never held back.
+  if (step === "analyze" && !opts.attemptTag && isPeakAnalysisHour()) {
+    await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
+    return null;
+  }
   await db`UPDATE articles SET processing_queued_at = now() WHERE id = ${articleId}`;
   if (step === "extract") return enqueue(QUEUES.extractBody, { articleId }, { singletonKey: articleId, priority: r.historical ? PRIORITY.history : PRIORITY.live }, opts.db);
   if (r.signal && !opts.attemptTag) {
@@ -204,8 +229,13 @@ export async function registerExtractionJobs(boss: PgBoss) {
 /**
  * Safety net: articles waiting for processing that no queue holds (crash between write and enqueue,
  * a lost job, a retry that came due). Articles already queued or running are left alone.
+ *
+ * Peak hours are skipped whole: every article it would pick up is on its way to a paid call, and
+ * holding them here is what lets them run at half price. They keep `processing_state = 'new'`, so
+ * nothing is lost — the first off-peak sweep takes the whole backlog.
  */
 export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
+  if (isPeakAnalysisHour()) return { enqueued: 0 };
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM articles
     WHERE processing_state = 'new' AND created_at < now() - interval '3 minutes'

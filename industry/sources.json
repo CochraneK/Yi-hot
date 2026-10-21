@@ -1628,6 +1628,108 @@
       }
     },
     {
+      "id": "weibo-search-child-abuse",
+      "name": "微博 · 儿童侵害案件（待充值）",
+      "kind": "json_list",
+      "config": {
+        "adapter": "everyinfra",
+        "everyinfraPlatform": "weibo",
+        "everyinfraAction": "search",
+        "everyinfraParams": {
+          "keyword": "猥亵儿童 虐待儿童"
+        },
+        "summaryIsBody": true,
+        "requireBoolean": {
+          "path": "author_verified",
+          "equals": true
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "判刑",
+            "获刑",
+            "判处",
+            "起诉",
+            "批捕",
+            "判决",
+            "立案",
+            "侦查",
+            "通报",
+            "严惩",
+            "追责",
+            "救助",
+            "帮扶",
+            "保护",
+            "预防",
+            "防范",
+            "司法",
+            "检察",
+            "法院",
+            "警方",
+            "民政",
+            "妇联",
+            "公益",
+            "志愿"
+          ],
+          "dropMarkers": [
+            "带货",
+            "好物",
+            "抽奖",
+            "同款",
+            "代购",
+            "返图",
+            "开箱",
+            "团购",
+            "拼团",
+            "超话",
+            "应援",
+            "粉丝",
+            "明星",
+            "周边",
+            "生日",
+            "打卡",
+            "戳我",
+            "t.cn",
+            "唠唠",
+            "抱抱",
+            "动态汇总",
+            "一起为",
+            "求转发",
+            "求扩散"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        },
+        "titlePaths": [
+          "text"
+        ],
+        "titleMaxChars": 60
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 1440,
+      "tags": [
+        "微博",
+        "EveryInfra",
+        "source-review-2026-10-21"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "publication_rule": {
+        "minScore": 40,
+        "scoreByCategory": {
+          "policy": 18,
+          "project": 20
+        },
+        "dropCategories": [
+          "fundraising"
+        ]
+      }
+    },
+    {
       "id": "web-stc-global-news",
       "name": "救助儿童会国际·全球新闻",
       "kind": "web_list",
@@ -2003,6 +2105,171 @@
       "tags": [
         "媒体",
         "健康"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "publication_rule": {
+        "minScore": 40,
+        "dropCategories": [
+          "fundraising"
+        ]
+      }
+    },
+    {
+      "id": "rss-chinanews-edu",
+      "name": "中国新闻网·教育",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.chinanews.com.cn/rss/edu.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "儿童",
+            "中小学生",
+            "留守",
+            "孤困",
+            "孤儿",
+            "事实无人抚养",
+            "残疾儿童",
+            "女童",
+            "欺凌",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "拐卖",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "助学",
+            "奖学金",
+            "助学金",
+            "控辍保学",
+            "营养餐",
+            "儿童友好",
+            "双减",
+            "课后服务",
+            "学前",
+            "幼儿园",
+            "特殊教育",
+            "校园安全",
+            "失学",
+            "辍学"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "涨停",
+            "基金净值",
+            "综艺",
+            "票房",
+            "抽卡",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": true,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "媒体",
+        "教育"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true,
+      "publication_rule": {
+        "minScore": 40,
+        "dropCategories": [
+          "fundraising"
+        ]
+      }
+    },
+    {
+      "id": "web-tophub-news",
+      "name": "今日热榜·新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://tophub.today/c/news",
+        "baseUrl": "https://tophub.today",
+        "itemSelector": "a[itemid]",
+        "titleSelector": "span.t",
+        "allowUrlPrefixes": [
+          "https://mp.weixin.qq.com/",
+          "https://www.thepaper.cn/",
+          "https://www.zhihu.com/question/",
+          "https://daily.zhihu.com/",
+          "https://www.pearvideo.com/"
+        ],
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "未成年",
+            "儿童",
+            "留守",
+            "孤困",
+            "孤儿",
+            "事实无人抚养",
+            "残疾儿童",
+            "女童",
+            "欺凌",
+            "性侵",
+            "猥亵",
+            "虐待",
+            "虐童",
+            "拐卖",
+            "家暴",
+            "监护",
+            "收养",
+            "抚养",
+            "家庭教育",
+            "助学",
+            "失学",
+            "辍学",
+            "营养餐",
+            "儿童友好",
+            "双减",
+            "课后服务",
+            "学前",
+            "幼儿园",
+            "特殊教育",
+            "校园安全",
+            "校园暴力"
+          ],
+          "dropMarkers": [
+            "带货",
+            "好物",
+            "抽奖",
+            "同款",
+            "代购",
+            "开箱",
+            "团购",
+            "超话",
+            "应援",
+            "粉丝",
+            "明星",
+            "周边",
+            "生日",
+            "打卡"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "聚合",
+        "热榜",
+        "媒体"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,

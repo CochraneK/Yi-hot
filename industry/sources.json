@@ -2918,8 +2918,7 @@
       "syndicate_fulltext": false,
       "publication_rule": {
         "minScore": 40
-      },
-      "enabled": false
+      }
     },
     {
       "id": "web-cfforum-news",

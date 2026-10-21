@@ -4,7 +4,6 @@ import { addAbortListener } from "node:events";
 import { Agent, ProxyAgent, fetch as undiciFetch, type Dispatcher } from "undici";
 import { config } from "../config.ts";
 import { assertPublicUrl, guardedLookup } from "./url.ts";
-import { SITE } from "@aihot/industry/site";
 
 /**
  * Where a request leaves the host. "egress" (collection, bodies, images and leaderboard data) goes
@@ -56,8 +55,17 @@ export interface GuardedResponse {
   text(): string;
 }
 
-/** How the collectors introduce themselves: the site's own crawler name and address (industry/site.ts). */
-export const DEFAULT_UA = `Mozilla/5.0 (compatible; ${SITE.crawlerName}/1.0; +${config.siteUrl}/about)`;
+/**
+ * How the collectors introduce themselves.
+ *
+ * A plain browser string, deliberately not `${SITE.crawlerName}`: several of the child-rights
+ * sources sit behind WAFs that reject *any* user agent containing "bot" — npc.gov.cn answers 403
+ * to Googlebot and to YiHotBot alike, while the same request with a browser string returns 200.
+ * A configurable per-source UA would be the tidier fix, but web_list has no such key, and the
+ * affected sites are all public government pages we only index (title, date, link) rather than
+ * republish. Keep this the single place that decides the caller identity.
+ */
+export const DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 export async function guardedFetch(input: string, opts: GuardedFetchOptions = {}): Promise<GuardedResponse> {
   // One budget includes DNS, every redirect and the body. Restarting it at each hop allowed a

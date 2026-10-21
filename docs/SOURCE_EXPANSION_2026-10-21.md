@@ -61,8 +61,50 @@ node --env-file=.env scripts/seed.ts
 | --- | --- |
 | 新闻栏目为官方实际页面 | 已核实（2026-10-21 外部公开网页） |
 | HTML 包含可定位的文章链接和标题 | 已核实（公开网页） |
-| CSS 配置符合 YiHot 支持字段 | 已完成静态审查，CI 待验证 |
-| 腾讯云的原生 Preview 返回正确日期与篇数 | **待验证** |
-| 采集/转载权限复核 | **待验证** |
-| 现网实际入库与健康状态 | **待验证** |
-| 每天实际新增 Token 和费用 | **待验证；目前为零新增生产调用** |
+| CSS 配置符合 YiHot 支持字段 | 已核实：四条均通过生产 `POST /api/admin/sources/preview` 的配置校验 |
+| 腾讯云的原生 Preview 返回正确日期与篇数 | 2 条通过（UNICEF 全球、Innocenti）；2 条被 Cloudflare 挑战拦截（见 §6） |
+| 采集/转载权限复核 | **待法律/授权复核**；两条可访问源已按公开摘要 + 原文入口配置，未开全文转载 |
+| 现网实际入库与健康状态 | 2 条已启用并入库（各 6 篇，见 §6）；2 条保持暂停，未产生任何抓取 |
+| 每天实际新增 Token 和费用 | 首轮 12 篇已产生收据；按 360/1440 分钟间隔，稳态约 4–24 篇/天，待一周后按收据复核 |
+
+## 6. 生产验证与启用结果（2026-10-21 14:48–14:55，腾讯云 49.233.72.222）
+
+四条配置从 GitHub 同步后写入生产库（`sources` 96 → 100 条，新增四条均为 `enabled=false`），再逐条做原生预览：
+
+| 信源 ID | 生产预览 | 结果 |
+| --- | --- | --- |
+| `web-unicef-global-press` | HTTP 200，12 条候选，日期字段正常 | **已启用**（interval 360） |
+| `web-unicef-innocenti-reports` | HTTP 200，6 条候选，列表无日期 | **已启用**（interval 1440，改用详情页发布日期） |
+| `web-stc-global-news` | HTTP 403，`server: cloudflare`，`cf-mitigated: challenge` | 保持暂停 |
+| `web-unicef-cn-press` | HTTP 403，`server: cloudflare`（challenges.cloudflare-cn.com） | 保持暂停 |
+
+### 6.1 两条已打通
+
+- `web-unicef-global-press`：启用后手动抓取 `ok`，回填 6 篇（`initialBackfillLimit`），正文抓取 `body_status=ok`，全部完成分析；评分 36–60，6 篇全部入选并以中文标题公开。
+- `web-unicef-innocenti-reports`：列表页确实没有日期，原配置会让 6 篇全部 `NO-DATE`。已把详情规则改为页面自带的 “Publication date” 区块：
+
+  ```json
+  "detail": {
+    "maxFetches": 6,
+    "publishedAtSelector": ".file-block--publication time[datetime]",
+    "publishedAtAuthoritative": true
+  }
+  ```
+
+  抽查 5 篇报告页该选择器 5/5 命中；启用后 6 篇入库日期为报告真实出版月（2026-06-16 ~ 2026-09-30），而不是页面 `article:published_time`（两者相差数天到数周）。评分 22–42，4 篇入选。
+- 两条源合计：12 篇入库、12 篇分析、10 篇公开（`publications.visibility=public`），无抓取失败。
+- **注意**：`industry/sources.json` 仍保持 `enabled: false`（CI 的 `child-rights-source-coverage` 测试要求 seed 不得自动开采集）；启用状态只存在于生产库，重建库后需在后台重新启用。
+
+### 6.2 两条为什么没打通
+
+两台站点都对腾讯云出口 IP 返回 Cloudflare 托管挑战，不是选择器问题：
+
+- `www.savethechildren.net/news/`、`/rss/news`、`/rss.xml` 全部 403 + `cf-mitigated: challenge`；
+- `www.unicef.cn` 全站（含首页、`/rss.xml`）403；`www.unicef.org/china` 会 302 到 `unicef.cn`，同样 403；
+- 按本手册“不得绕过访问控制”的原则，没有尝试破解挑战、伪装浏览器指纹或加代理；这两条继续暂停，不产生抓取与费用。
+
+可选的下一步（需明确选择，不要默认执行）：
+
+1. **换官方可达栏目**：`https://www.unicef.org/zh/故事` 与 `https://www.savethechildren.org.uk/news` 在生产网络均返回 200，可作为中文 UNICEF / 英国救助儿童会的替代渠道，但内容定位（特稿 / 英国分会）与原“新闻稿 / 国际新闻”不同，需编辑确认。
+2. **保持缺口**：仅保留已有 `web-savethechildren-cn`（中国办公室官网）与 `wechat-oa-unicef` / `wechat-oa-save-the-children`（付费通道，当前 EveryInfra 503）。
+3. **人工引用**：这两站只做人工检索与引用，不进入自动采集。

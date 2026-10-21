@@ -1652,12 +1652,14 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以�
 
 ## 二十三、儿童权益国际信源与长期覆盖缺口（2026-10-21）
 
-2026-10-21 已在 [`industry/sources.json`](industry/sources.json) **增加四条默认暂停** 的儿童权益/国际公益网页来源：救助儿童会国际新闻、UNICEF 中国新闻资讯、UNICEF 全球新闻稿、UNICEF Innocenti 研究报告。内容列表的标题、原文链接与部分日期已在官方公开 HTML 中核对，但**生产服务器尚未执行 seed、原生抓取预览及权益检查**，不可宣称已上线运行。
+2026-10-21 已在 [`industry/sources.json`](industry/sources.json) **增加四条默认暂停** 的儿童权益/国际公益网页来源：救助儿童会国际新闻、UNICEF 中国新闻资讯、UNICEF 全球新闻稿、UNICEF Innocenti 研究报告。内容列表的标题、原文链接与部分日期已在官方公开 HTML 中核对。
+
+**当日下午已完成生产验证**：四条写入生产库（仍全部暂停），原生 Preview 显示 `web-unicef-global-press` 与 `web-unicef-innocenti-reports` 可达并已启用（各回填 6 篇、全部完成分析、10 篇公开）；`web-stc-global-news` 与 `web-unicef-cn-press` 对腾讯云出口返回 Cloudflare 托管挑战（403 + `cf-mitigated: challenge`），按不绕过访问控制的原则保持暂停。Innocenti 的列表页没有日期，已改用详情页 “Publication date” 区块（`.file-block--publication time[datetime]`），避免把页面创建时间当成报告出版时间。
 
 - [第一批配置、网页结构核验、上线检查与回滚操作](docs/SOURCE_EXPANSION_2026-10-21.md)
 - [其余 41 个缺口目标与原因（待审核，不可直接导入）](data/source-registry/proposals-child-rights-2026-10-21.json)
-- **同步方法**：在已备份并确认连接生产数据库的部署环境执行 `node --env-file=.env scripts/seed.ts`；该脚本仅插入不存在的 ID，保留现有信源修改。随后按专题文档逐条 Preview、核实授权、人工启用。
-- **费用**：本次不增加付费采集 API；四条处于 `enabled: false`，生产抓取和 AI 费用增量为零。未来启用后的网页/模型消耗由实际回执另行核算，不能把零入口费写成零模型费。
+- **同步方法**：本次未在服务器运行 seed，而是按 `seed.ts` 相同字段直接插入四条缺失 ID（只插入、不覆盖既有配置），再用后台 `PATCH /api/admin/sources/:id` 启用，保留审计记录。重建库时仍应执行 `node --env-file=.env scripts/seed.ts` 后逐条 Preview、核实授权、人工启用。
+- **费用**：新增源均为免费网页采集，不增加付费采集 API；首轮 12 篇的模型消耗已产生回执，稳态按 360/1440 分钟间隔估算 4–24 篇/天，不能把零入口费写成零模型费。
 
 ## 二十四、DeepSeek V4.1 Flash 默认模型安全切换（2026-10-21）
 

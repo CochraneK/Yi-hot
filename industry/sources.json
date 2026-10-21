@@ -1730,7 +1730,9 @@
      "https://www.unicef.org/innocenti/reports/"
     ],
     "detail": {
-     "maxFetches": 6
+     "maxFetches": 6,
+     "publishedAtSelector": ".file-block--publication time[datetime]",
+     "publishedAtAuthoritative": true
     },
     "_aihot": {
      "initialBackfillLimit": 6

@@ -375,6 +375,45 @@ LLM_EXTRA_JSON={"enable_thinking":false}
 
 ## 五、信息源结构与新增来源
 
+### 当前成本策略：免费 RSS 优先 + DeepSeek flash + EveryInfra 保留待充值
+
+2026-10-21 起按这个顺序花钱，**任何新增信源默认先找免费通道**：
+
+| 层 | 通道 | 现状 |
+| --- | --- | --- |
+| 1 | 免费 RSS/Atom（机构官网、官媒频道、WeRSS） | 主力，已在跑 |
+| 2 | 免费网页列表（政府部门、基金会官网） | 已有 61 个 `web_list` 源 |
+| 3 | AI 分析 | `LLM_MODEL=deepseek-flash`，`LLM_BASE_URL=https://api.deepseek.com/v1` |
+| 4 | EveryInfra 付费接口 | **通道保留、预算归零**，不再产生费用 |
+
+**EveryInfra 为什么是"保留"而不是"删除"**：代码、源配置、正文回补脚本全部原样留着，只是把 `budgets` 里 everyinfra 的 `per_minute/per_hour/per_day` 全设成 0。`checkBudget()` 遇到 `per_* <= 0` 会走内建的 `stopped` 分支——请求在发出前就被拦下，所以**一分钱都不会花**，同时源不会被判失败、不会累计 `fail_count`、不会降级健康度。以后充值，只要把 `per_day` 改回 150（需要补正文时可临时 250），全部八个公众号源立刻恢复原样，**不用改任何代码**。
+
+**别踩的坑**：看到源显示 `degraded` 且 `last_error` 是 `everyinfra HTTP 503 (capacity_exhausted…)` 时，不要去重跑、不要去改配置。这是 provider 侧容量耗尽（响应体里 `charged:false`，不计费，且自带 `retry_after` 秒数），调度层会照它给的秒数回来重试。
+
+### 免费官方 RSS 现状（2026-10-21 实测）
+
+已接入并产出：
+
+| 源 ID | 站点 | 首采入库 | 命中 |
+| --- | --- | --- | --- |
+| `rss-gov-cn` | 中国政府网·政策推送 | 4 | 4 pass（均分 64.8） |
+| `rss-who-news` | 世界卫生组织·新闻 | 60 | 53 pass（88%）|
+| `rss-chinanews-health` | 中国新闻网·健康 | 4 | 3 pass |
+| `rss-chinanews-scroll` | 中国新闻网·滚动 | 2 | 0（时政新闻，被正确过滤）|
+
+**探测时务必检查条目日期，不能只看 HTTP 200。** 人民网各频道 RSS 至今仍返回 200 且有 item，但内容停在 2025-05~06（教育频道甚至是 2016 年的）——这类"活着但已死"的 feed 接入后只会灌入陈旧内容，已在本次清理中剔除。
+
+### 41 条待审信源的探测结论
+
+`data/source-registry/proposals-child-rights-2026-10-21.json` 里 41 条全部做了只读探测（GET 首页 + 常见 RSS 路径 + `/robots.txt`），结论：
+
+- **connected 3 条**：已接入（中国政府网、中国新闻网、世界卫生组织）
+- **stale_rss 2 条**：RSS 可访问但已停更 → 不接
+- **blocked 5 条**：首页返回 403/412/521 或不可达（最高检、公安部、国家卫健委、UNICEF Data、UNESCO、亚行）→ 按内容纪律**不绕过、不伪造身份**
+- **no_rss 31 条**：无官方 RSS → 需人工定位公益/儿童栏目页并验证解析规则后再接
+
+那个文件是"覆盖 backlog"，**不是已批准的采集端点**，不能批量灌进自动 seed。
+
 | 类型 | 当前例子 | 采集方式 | 常见问题 |
 | --- | --- | --- | --- |
 | RSS/Atom | 媒体、机构更新 | worker 定时读取 | feed 停更、日期不规范 |

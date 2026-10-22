@@ -139,6 +139,13 @@ function pageCache(req: import("node:http").IncomingMessage, res: import("node:h
 /** The app lives under this prefix so the host can carry other projects. */
 const PREFIX = "/yihot";
 
+/**
+ * AI 训练 / 抓取型爬虫的 User-Agent 特征。命中即在应用边缘返回 403，既不进入 SSR 也不会代理给 API。
+ * 常规搜索引擎（Googlebot / Bingbot / Baiduspider 等）不在此列，仍可正常收录。robots.txt（由 API 提供）
+ * 已声明禁止这些 UA；这里是不守规矩者的强制兜底。要收紧/放宽，改这一个正则即可。
+ */
+const AI_CRAWLER_RE = /(?:gptbot|chatgpt-user|claudebot|anthropic-ai|claude-web|google-extended|ccbot|bytespider|omgilibot|omgili|applebot-extended|diffbot|petalbot|mj12bot|semrushbot|ahrefsbot|dotbot|dataforseobot|blexbot|scrapy|python-requests|python-urllib|go-http-client|java\/|okhttp|apache-httpclient|headlesschrome|phantomjs)/i;
+
 /** Optional second app on the same public IP, via an isolated Docker-only network.
  * Never expose the FutureMe container directly or reuse the YiHot API namespace.
  * Only a container DNS name on port 8766 is accepted (no arbitrary remote proxy).
@@ -162,6 +169,15 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   const qi = raw.indexOf("?");
   const pathname = qi >= 0 ? raw.slice(0, qi) : raw;
   const search = qi >= 0 ? raw.slice(qi) : "";
+
+  // 反爬：在请求进入路由 / 代理之前拦截已知 AI 训练与抓取型爬虫。robots.txt 自身放行，便于其读取策略。
+  const ua = req.headers["user-agent"] ?? "";
+  const isRobots = pathname === "/robots.txt" || pathname === PREFIX + "/robots.txt";
+  if (!isRobots && AI_CRAWLER_RE.test(ua)) {
+    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+    res.end("Access denied");
+    return;
+  }
 
   // What the app sees: the path with the prefix stripped. Api-owned resources (api/, feed, icons,
   // sitemaps) stay reachable at the root too — browser fetches and api-generated absolute links hit

@@ -53,6 +53,13 @@ function datePrecision(value: string | null | undefined): "date" | "datetime" {
   return value && /\d{1,2}:\d{2}/.test(value) ? "datetime" : "date";
 }
 
+/** The calendar day a moment falls on in a source's offset ("2026-10-22"), for same-day comparisons. */
+export function dayInOffset(at: Date, utcOffset = "+08:00"): string {
+  const m = /^([+-])(\d{2}):?(\d{2})$/.exec(utcOffset);
+  const minutes = m ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 480;
+  return new Date(at.getTime() + minutes * 60_000).toISOString().slice(0, 10);
+}
+
 /** The datePublished of the page's structured data (JSON-LD, also inside @graph or embedded app state). */
 export function jsonLdPublished($: cheerio.CheerioAPI, html: string): string | null {
   const find = (v: unknown, depth = 0): string | null => {
@@ -106,27 +113,52 @@ export function externalLink(url: string, listing: string): boolean {
 }
 
 /**
- * The publication date a detail page states, for reposted articles where the listing only knows when it
- * copied the piece. Reads metadata first, then the byline an article page prints ("时间：2026-10-13",
- * "2026-10-13 14:02:19 来源：新华网"), scanning only the opening of the visible text so a footer or a
- * related-article list cannot supply it. A date that comes with a clock beats a bare day.
+ * Keywords a page uses for the field that holds its publication date. The name is compared case-
+ * insensitively: Chinese government CMSs print "PubDate" and "PublishDate" as often as "pubdate",
+ * and a case-sensitive attribute selector silently matched none of the variants.
  */
-export function pagePublishedAt(html: string): { at: Date; precision: "date" | "datetime" } | null {
+const DATE_META_KEYS = new Set([
+  "article:published_time", "og:release_date", "datepublished", "pubdate", "publishdate", "publish_date",
+  "publishdate2", "publishtime", "publish_time", "publishtime2", "firstpublishedtime", "first_published_at",
+  "release_date", "releasedate", "dc.date", "dc.date.issued", "dc.date.created", "article.published", "created",
+]);
+
+/**
+ * The publication date a detail page states. Reads metadata first, then the byline an article page
+ * prints ("时间：2026-10-13", "2026-10-13 14:02:19 来源：新华网"), scanning only the opening of the
+ * visible text so a footer or a related-article list cannot supply it. A date that comes with a clock
+ * beats a bare day.
+ *
+ * `expectDay` (YYYY-MM-DD in the source's offset) restricts every candidate to that day: a listing
+ * already said which day the piece belongs to, so a clock found elsewhere on the page — a related
+ * article, an update note — cannot move the piece to another day while the caller reads the clock.
+ */
+export function pagePublishedAt(html: string, expectDay?: string | null, utcOffset = "+08:00"): { at: Date; precision: "date" | "datetime" } | null {
   const $ = cheerio.load(html);
   const seen: Array<{ at: Date; precision: "date" | "datetime" }> = [];
   const take = (raw: string | null | undefined) => {
-    const at = parseLooseDate(raw);
-    if (at) seen.push({ at, precision: datePrecision(raw) });
+    const at = parseLooseDate(raw, utcOffset);
+    if (!at) return;
+    if (expectDay && dayInOffset(at, utcOffset) !== expectDay) return;
+    seen.push({ at, precision: datePrecision(raw) });
   };
-  take($('meta[property="article:published_time"], meta[name="pubdate"], meta[name="publishdate"], meta[name="PubDate"], meta[name="date"]').attr("content"));
-  take($('meta[itemprop="datePublished"]').attr("content"));
-  take(jsonLdPublished($, html));
+  for (const el of $("meta[name], meta[property], meta[itemprop]").toArray()) {
+    const key = ($(el).attr("name") ?? $(el).attr("property") ?? $(el).attr("itemprop") ?? "").trim().toLowerCase();
+    if (DATE_META_KEYS.has(key)) take($(el).attr("content"));
+  }
   for (const el of $("time[datetime]").toArray().slice(0, 3)) take($(el).attr("datetime"));
+  take(jsonLdPublished($, html));
   const text = collapseWhitespace($("body").text()).slice(0, 3000);
   const labeled = /(?:发布时间|发布日期|发稿时间|时间|日期)\s*[：:]\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:\s*\d{1,2}:\d{2}(?::\d{2})?)?)/.exec(text);
   if (labeled) take(labeled[1]);
-  const bare = /(\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}(?::\d{2})?)/.exec(text);
+  const bare = /(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?\s+\d{1,2}:\d{2}(?::\d{2})?)/.exec(text);
   if (bare) take(bare[1]);
+  // Nothing but a day: still better than no date at all when the listing printed none, and the
+  // caller's same-day check throws it away when this is a page about some other day.
+  if (!seen.length) {
+    const day = /(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?)/.exec(text);
+    if (day) take(day[1]);
+  }
   return seen.find((s) => s.precision === "datetime") ?? seen[0] ?? null;
 }
 
@@ -388,6 +420,8 @@ export interface DetailNeed {
   summary: boolean;
   /** Reuse HTML already needed for metadata; never fetch a page just for this hint. */
   body?: boolean;
+  /** The day the listing already claimed (YYYY-MM-DD): a clock found on the page must be on that day. */
+  expectDay?: string | null;
 }
 
 /**
@@ -420,25 +454,24 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
   let publishedAtPrecision: "date" | "datetime" | null = null;
   const dateText = dateInJina ? jina : html;
   if (need.date && dateText !== null) {
+    const offset = d.publishedAtUtcOffset ?? "+08:00";
     if ($ && !dateInJina && d.publishedAtSelector) {
       const el = $(d.publishedAtSelector).first();
       const raw = el.attr("datetime") ?? el.attr("title") ?? el.text();
-      publishedAt = parseLooseDate(raw, d.publishedAtUtcOffset);
+      publishedAt = parseLooseDate(raw, offset);
       // Same rule as the listing parse: a byline that carries a clock time refines the listing's
       // day. Without it the caller keeps "date", and the feed then prints no time at all.
       if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
-    if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], d.publishedAtUtcOffset);
+    if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], offset);
     // An authoritative rule is the only source of the date: when its byline is missing, no other
     // timestamp on the page (an update time, a related post) stands in for it.
     const authoritative = d.publishedAtAuthoritative === true && !!(d.publishedAtSelector || d.publishedAtRegex);
-    if (!publishedAt && $ && !dateInJina && !authoritative) {
-      const meta = $('meta[property="article:published_time"], meta[name="pubdate"], meta[itemprop="datePublished"]').attr("content");
-      publishedAt = parseLooseDate(meta) ?? parseLooseDate(jsonLdPublished($, html!)) ?? parseLooseDate($("time[datetime]").first().attr("datetime"));
-    }
-    // Reposted articles: the target page, not the listing, knows when the piece was published.
-    if (!publishedAt && html && d.publishedAtForExternal === true) {
-      const page = pagePublishedAt(html);
+    // Everything else a page states about itself: its metadata under any of the names CMSs use
+    // ("PubDate", "publishdate", …), structured data, <time>, and the byline it prints. One reader
+    // for all of them, restricted to the day the listing already claimed.
+    if (!publishedAt && html && !dateInJina && !authoritative) {
+      const page = pagePublishedAt(html, need.expectDay, offset);
       if (page) {
         publishedAt = page.at;
         publishedAtPrecision = page.precision;

@@ -21,6 +21,7 @@ import { chatJson } from "../providers/llm.ts";
 import { BudgetExceededError, ReceiptBusyError, completeReceipt } from "../providers/receipts.ts";
 import { embeddingsAvailable, ensureEmbeddings } from "../providers/embeddings.ts";
 import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
+import { siteHost } from "../sources/web-list.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { publishArticle } from "../publication/publish.ts";
 import { passesPublicationRule, type PublicationRule } from "../publication/rules.ts";
@@ -54,6 +55,7 @@ interface ArticleRow {
   x_post: { tweetId?: string; replyTo?: string | null; quoted?: { url?: string } | null } | null;
   source_id: string;
   source_name: string;
+  source_kind: string;
   signal_group_id: string | null;
   first_party: boolean;
   participation_mode: string;
@@ -76,8 +78,22 @@ interface Recalled {
   score: number;
 }
 
-export function participantKey(source: { id: string; signal_group_id: string | null }): string {
-  return source.signal_group_id ? `group:${source.signal_group_id}` : `source:${source.id}`;
+/**
+ * Who is speaking when a report joins a story. Usually the source itself, once per window however
+ * many of its articles say the same thing. A search source is not one voice: it collects what
+ * separate sites published, so the site each result came from is the participant. Counting the
+ * search source alone would flatten "five outlets reported this" into "one source mentioned it",
+ * and counting its queries would let a keyword list manufacture heat.
+ */
+type SignalSource = { id: string; signal_group_id: string | null; kind?: string | null; url?: string | null };
+
+export function participantKey(source: SignalSource): string {
+  if (source.signal_group_id) return `group:${source.signal_group_id}`;
+  if (source.kind === "search") {
+    const host = siteHost(String(source.url ?? ""));
+    if (host) return `site:${host}`;
+  }
+  return `source:${source.id}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -323,7 +339,7 @@ async function createFact(db: Db, storyId: number, title: string, frame: Record<
   return row!.id;
 }
 
-async function recordSignal(db: Db, storyId: number, articleId: string, source: { id: string; signal_group_id: string | null }, kind: "editorial" | "signal", observedAt: Date) {
+async function recordSignal(db: Db, storyId: number, articleId: string, source: SignalSource, kind: "editorial" | "signal", observedAt: Date) {
   await db`
     INSERT INTO story_signals (story_id, article_id, participant_key, source_id, kind, observed_at)
     VALUES (${storyId}, ${articleId}, ${participantKey(source)}, ${source.id}, ${kind}, ${observedAt})
@@ -607,12 +623,12 @@ export async function groupArticle(articleId: string, opts: GroupOptions = {}): 
 async function decide(articleId: string, opts: GroupOptions): Promise<GroupResult> {
   const [a] = await sql<ArticleRow[]>`
     SELECT a.id, a.title, a.url, a.published_at, a.discovered_at, a.grouped_at, a.body_text, a.x_post, a.backfill,
-           s.id AS source_id, s.name AS source_name, s.signal_group_id, s.first_party, s.participation_mode, s.publication_rule,
+           s.id AS source_id, s.name AS source_name, s.kind AS source_kind, s.signal_group_id, s.first_party, s.participation_mode, s.publication_rule,
            EXISTS (SELECT 1 FROM regroup_pending rp WHERE rp.article_id = a.id) AS regroup_pending
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!a) return { verdict: "skipped" };
   const observedAt = a.published_at ?? a.discovered_at;
-  const source = { id: a.source_id, signal_group_id: a.signal_group_id };
+  const source = { id: a.source_id, signal_group_id: a.signal_group_id, kind: a.source_kind, url: a.url };
 
   // Manual decisions win over any model decision: a manual membership, or "keep standalone".
   const manual = await manualDecision(sql, articleId);
@@ -845,7 +861,7 @@ async function rematchSignals(articleId: string, queryText: string): Promise<num
  * Discussion evidence (hot_signal sources): the post the item replies to or quotes decides first;
  * otherwise clear candidates are judged, and a nearly identical report attaches without a call.
  */
-async function groupSignal(a: ArticleRow, source: { id: string; signal_group_id: string | null }, observedAt: Date): Promise<GroupResult> {
+async function groupSignal(a: ArticleRow, source: SignalSource, observedAt: Date): Promise<GroupResult> {
   const { referenced } = await relatedPosts(a);
   if (referenced.length) {
     const target = referenced[0]!;

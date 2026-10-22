@@ -9,7 +9,8 @@ import http from "node:http";
 import { after, test } from "node:test";
 import { config } from "@aihot/backend/config";
 import { sanitizeBody, trimTrailingChrome } from "@aihot/backend/content/sanitize";
-import { fetchDetail, fetchWebList, fromHtml, fromMarkdown } from "@aihot/backend/sources/web-list";
+import { fetchDetail, fetchWebList, fromHtml, fromMarkdown, pagePublishedAt } from "@aihot/backend/sources/web-list";
+import { participantKey } from "@aihot/backend/events/group";
 import { fetchRss } from "@aihot/backend/sources/rss";
 import { fetchJsonList } from "@aihot/backend/sources/json-list";
 import { noiseFiltered } from "@aihot/backend/sources/collect";
@@ -204,8 +205,35 @@ test("noise words match whatever their case", () => {
   assert.equal(noiseFiltered(c("iPhone 18 开售", ""), source), true);
 });
 
-test("dates in yyyymmdd and in JSON-LD are read", async () => {
-  const days = await fetchJsonList({ id: "test-json", config: { url: `${site}/days.json`, itemsPath: "data.list", titlePaths: ["ttl"], urlTemplate: "https://example.org/blog/view?seq={seq}", publishedAtPath: "day", publishedAtUnit: "yyyymmdd" } } as never);
+test("a byline clock is read whatever the page calls its date field", () => {
+  const page = (head: string, body: string) => `<html><head>${head}</head><body>${body}</body></html>`;
+  // Chinese government CMSs spell the field "PubDate" / "PublishDate" as often as "pubdate": the name
+  // is matched case-insensitively, so one reader covers both. Before this, the Fujian civil-affairs
+  // page kept "原文发布日期" even though its own <meta name="PubDate"> said 08:42.
+  assert.equal(pagePublishedAt(page('<meta name="PubDate" content="2026-10-22 08:42">', "<p>正文</p>"))?.at.toISOString(), "2026-10-22T00:42:00.000Z");
+  assert.equal(pagePublishedAt(page('<meta name="PublishDate" content="2026-10-22 08:42">', "<p>正文</p>"))?.precision, "datetime");
+  // No metadata at all: the byline the article prints still states it.
+  assert.equal(pagePublishedAt(page("", '<div class="article_time">时间：2026-10-22 08:42</div><p>正文</p>'))?.at.toISOString(), "2026-10-22T00:42:00.000Z");
+  // A clock that belongs to another day than the listing named is not this article's date.
+  assert.equal(pagePublishedAt(page("", "<p>时间：2026-10-20 08:42</p>"), "2026-10-22"), null);
+  // Nothing but a day: a date, not a time — better than nothing where the listing printed none.
+  assert.equal(pagePublishedAt(page("", "<p>2026-10-22</p>"))?.precision, "date");
+});
+
+test("a search source counts by site, every other source by itself", () => {
+  const search = { id: "search-child-rights", signal_group_id: null, kind: "search", url: "https://news.china.com/socialgd/1.html" };
+  assert.equal(participantKey(search), "site:china.com");
+  // Another article on the same site is the same voice, not a second one.
+  assert.equal(participantKey({ ...search, url: "https://m.china.com/a.html" }), "site:china.com");
+  // A government CMS subdomain belongs to its parent site.
+  assert.equal(participantKey({ ...search, url: "https://mzt.hunan.gov.cn/yw/1.htm" }), "site:hunan.gov.cn");
+  // Every other kind speaks as itself, however many of its articles describe the same thing.
+  assert.equal(participantKey({ id: "web-mca-news", signal_group_id: null, kind: "web_list", url: "https://www.mca.gov.cn/a" }), "source:web-mca-news");
+  // An explicit signal group still wins over both.
+  assert.equal(participantKey({ id: "x-1", signal_group_id: "g1", kind: "search", url: "https://a.cn/b" }), "group:g1");
+});
+
+test("dates in yyyymmdd and in JSON-LD are read", async () => {  const days = await fetchJsonList({ id: "test-json", config: { url: `${site}/days.json`, itemsPath: "data.list", titlePaths: ["ttl"], urlTemplate: "https://example.org/blog/view?seq={seq}", publishedAtPath: "day", publishedAtUnit: "yyyymmdd" } } as never);
   assert.deepEqual(days.map((c) => c.publishedAt?.toISOString() ?? null), ["2026-09-22T00:00:00.000Z", null], "February 30 is no date");
   const got = await fetchDetail(`${site}/ld-post`, { id: "test-feed", config: { detail: { maxFetches: 20 } } } as never, { date: true, title: false, summary: false, body: false });
   assert.equal(got.publishedAt?.toISOString(), "2026-09-24T00:00:00.000Z");

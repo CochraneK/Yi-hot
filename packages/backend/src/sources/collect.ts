@@ -6,7 +6,7 @@ import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { queueProcessing } from "../jobs/content.ts";
 import { BudgetExceededError, ProviderRejectedError } from "../providers/receipts.ts";
 import { fetchRss } from "./rss.ts";
-import { allowed, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
+import { allowed, dayInOffset, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
 import { fetchSearch } from "./search.ts";
@@ -27,6 +27,12 @@ export interface CollectResult {
 const MAX_ITEMS_PER_RUN = 60;
 /** 搜索源按「同一天同一查询只真跑一次」计费，因此没有必要比 6 小时更密地调度。 */
 const SEARCH_INTERVAL_MINUTES = 360;
+/**
+ * 每条列表只到日的稿子，去详情页读一次钟点的上限（每个源每轮）。政府栏目与网页搜索的列表几乎
+ * 都只印日期，钟点只在详情页；详情页本来免费，限的是对同一站点的请求节奏，不是钱。
+ * 可用 config._aihot.dateUpgradeMaxFetches 覆盖，0 关闭。
+ */
+const DATE_UPGRADE_MAX_FETCHES = 6;
 
 export function noiseFiltered(c: Candidate, source: SourceRow): boolean {
   const f = source.config.ingestNoiseFilter;
@@ -207,7 +213,12 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     // Detail pages only for material we have not seen (bounded per run), and only for what the listing lacks.
     const d = source.config.detail;
     const detailBudget = Number(d?.maxFetches ?? 0);
+    const dateBudget = Number(source.config._aihot?.dateUpgradeMaxFetches ?? DATE_UPGRADE_MAX_FETCHES);
     let detailUsed = 0;
+    // Its own counter: reading a clock off a page the listing dated only to the day is the one thing
+    // every date-only source needs, and most of them carry no detail config to spend.
+    let dateUsed = 0;
+    const jinaListing = String(source.config.url ?? "").startsWith("https://r.jina.ai/");
     for (const c of candidates) {
       // Listing dates the source marks unreliable are dropped; the detail page's rule decides.
       if (d?.publishedAtAuthoritative === true) c.publishedAt = null;
@@ -217,18 +228,30 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         if (d?.titleSelector || d?.titleRegex) c.title = stored;
         continue;
       }
-      if (!d || detailUsed >= detailBudget) continue;
+      // Declared date-only, which is not the same as "no precision stated": a feed's own pubDate is
+      // a clock already, and only the listing parsers (and search) say when they had a day alone.
+      const dateOnly = !!c.publishedAt && c.publishedAtPrecision === "date";
+      const wantRules = !!d && detailUsed < detailBudget;
+      // A listing read through Jina pays for every page it opens: its clock is only upgraded when the
+      // source asked for it, never automatically.
+      const wantDate = dateOnly && dateUsed < dateBudget && (!jinaListing || d?.upgradeDatePrecision === true);
+      if (!wantRules && !wantDate) continue;
       // A reposted article (the listing links another site) carries the repost date; its own page has
       // the publication date, which can be days earlier than the listing's.
-      const reposted = d.publishedAtForExternal === true && externalLink(c.url, String(source.config.url ?? ""));
+      const reposted = d?.publishedAtForExternal === true && externalLink(c.url, String(source.config.url ?? ""));
       const need: DetailNeed = {
-        date: !c.publishedAt || d.upgradeDatePrecision === true || reposted,
-        title: !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
-        summary: !!d.summarySelector && !c.excerpt,
+        date: wantDate || (wantRules && (!c.publishedAt || d!.upgradeDatePrecision === true || reposted)),
+        title: !!d && !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
+        summary: !!d && !!d.summarySelector && !c.excerpt,
         body: source.participation_mode === "editorial" && !c.bodyText && (!c.bodyStatus || c.bodyStatus === "pending"),
+        // A page read only for its clock must agree with the day the listing named. Search results
+        // name no day of their own (the retrieval index's date is often a day off), so theirs is open.
+        expectDay: dateOnly && source.kind !== "search" ? dayInOffset(c.publishedAt!, d?.publishedAtUtcOffset ?? "+08:00") : null,
       };
       if (!need.date && !need.title && !need.summary) continue;
-      detailUsed += 1;
+      // The rules have their own budget; a page read only for its clock spends the date one.
+      if (need.title || need.summary || !wantDate) detailUsed += 1;
+      else dateUsed += 1;
       try {
         const got = await fetchDetail(c.url, source, need);
         if (got.title) c.title = got.title;
@@ -241,8 +264,11 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
           c.bodyStatus = "ok";
           if (!c.media?.length) c.media = got.body.images;
         }
-        // A date-only listing value gives way to the detail page's time on the same day.
-        if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < DAY_MS)) {
+        // A date-only listing value gives way to the detail page's time on the same day. A search
+        // result's date comes from the retrieval index rather than the page, and is off by a day
+        // often enough (a /20261022/ URL dated 10-21) that the page's own date wins within two days.
+        const claimWindow = source.kind === "search" ? 2 * DAY_MS : DAY_MS;
+        if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < claimWindow)) {
           c.publishedAt = got.publishedAt;
           if (got.publishedAtPrecision) c.publishedAtPrecision = got.publishedAtPrecision;
         }
@@ -261,6 +287,19 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     }
 
     ({ created, revised } = await store(sourceId, candidates, firstImport ? "first-import" : null));
+
+    // What the detail pass did, so "why is this still date-only" is answerable from the run record:
+    // dateOnlyFound is how many listed items stated a day alone, dateUpgrades how many pages were
+    // read just for a clock, detailPages those read for a rule. Recorded even when nothing was new,
+    // which is exactly when someone asks why a source never gains a time.
+    if (candidates.length > 0) {
+      detail = {
+        ...(detail ?? {}),
+        dateOnlyFound: candidates.filter((c) => c.publishedAtPrecision === "date").length,
+        dateUpgrades: dateUsed,
+        detailPages: detailUsed,
+      };
+    }
 
     if (firstImport) nextCursor.initializedAt = new Date().toISOString();
     nextCursor.lastOkAt = new Date().toISOString();

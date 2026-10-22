@@ -1,7 +1,8 @@
 // Live news before history, and discussion posts that come before the first report: a discussion post
 // skips the analysis queue; history (a backfill that was already old when found) waits behind live
-// work and founds no event; a post that found no story is grouped again when a report founds a fact
-// close to it, or when the post it quotes arrives and joins a fact.
+// work, founds no event and adds no heat, but may join a card another report founded; a post that
+// found no story is grouped again when a report founds a fact close to it, or when the post it quotes
+// arrives and joins a fact.
 import { stub, tag } from "./setup.ts";
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
@@ -90,14 +91,35 @@ test("history waits behind live work and founds no event; a new source's post fr
   const old = await report("old", { title: `旧闻 ${T}`, backfill: "first-import", publishedAt: new Date(Date.now() - 30 * 86_400_000) });
   await queueProcessing(old, { step: "analyze" });
   assert.deepEqual([(await job(old))?.name, (await job(old))?.priority], ["content.analyze", -2]);
-  assert.equal((await groupArticle(old)).verdict, "historical");
-  assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id = ${old}`).length, 0);
+  // History may join a card (see the twin test below) but never founds one, and never becomes
+  // evidence of attention: no story, no signal. The loose stub judge matches anything it is handed,
+  // so the verdict itself is not asserted here — what history may not do is asserted instead.
+  const storiesBefore = (await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM stories`)[0]!.n;
+  await groupArticle(old);
+  assert.equal((await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM stories`)[0]!.n, storiesBefore, "history founds no story");
+  assert.equal((await sql`SELECT 1 FROM story_signals WHERE article_id = ${old}`).length, 0, "history adds no heat");
 
   const fresh = await report("fresh", { title: `新闻 ${T}`, backfill: "first-import", publishedAt: new Date(Date.now() - 3_600_000) });
   await queueProcessing(fresh, { step: "analyze" });
   assert.equal((await job(fresh))?.priority, 0);
   assert.notEqual((await groupArticle(fresh)).verdict, "historical");
   assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id = ${fresh}`).length, 1);
+});
+
+test("a backfilled copy of a case already on the site joins that card, and adds no heat", async () => {
+  // The same case picked up again days later (a search result, a source's first import) used to be
+  // published as its own card: one case stood three times in the feed.
+  const title = `某基金会启动 ${TOPIC} 助学金`;
+  const base = await report("twin-base", { title });
+  const founded = await groupArticle(base);
+  assert.ok(founded.storyId, "the live report has a story");
+  const twin = await report("twin-old", { title, backfill: "first-import", publishedAt: new Date(Date.now() - 6 * 86_400_000) });
+  const joined = await groupArticle(twin);
+  assert.equal(joined.verdict, "historical-attached");
+  assert.equal(joined.storyId, founded.storyId, "it joined the existing story");
+  const [pub] = await sql<{ story_id: number | null }[]>`SELECT story_id FROM publications WHERE article_id = ${twin}`;
+  assert.equal(Number(pub?.story_id), founded.storyId, "the two collapse into one card");
+  assert.equal((await sql`SELECT 1 FROM story_signals WHERE article_id = ${twin}`).length, 0, "no heat from history");
 });
 
 test("a discussion post that quotes a post not yet collected joins its story when the original arrives", async () => {

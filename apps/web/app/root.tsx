@@ -13,6 +13,7 @@ import { BackToTop, NavigationProgress } from "./components/shell/Chrome";
 import { RingMark } from "./components/Logo";
 import stcLogo from "@aihot/industry/brand/save-the-children.svg?url&no-inline";
 import { buttonClass } from "./components/ui/Controls";
+import { IconMail } from "./components/icons";
 import { THEME_BOOT_SCRIPT } from "./lib/local-state";
 import { apiGet } from "./lib/api.server";
 import { useHydratedFlag } from "./lib/hydration";
@@ -81,10 +82,18 @@ function SiteShell({ changelogVersion, children }: { changelogVersion: string | 
           up to the list width (--page-max-wide), centred beyond it. */}
       <main id="main" className="min-w-0 flex-1 pb-[calc(72px+env(safe-area-inset-bottom))] lg:px-7 lg:pb-[72px] lg:pt-6">
         <div className="mx-auto w-full max-w-[640px] px-4 lg:max-w-[var(--page-max-wide)] lg:px-0">
-          {/* The sidebar wordmark shows on desktop only, so phones get the same brand row up top. */}
+          {/* The sidebar wordmark shows on desktop only, so phones get the same brand row up top.
+              订阅入口常驻在品牌行右侧：手机上不必进「更多」就能看到，比只放在「更多」页更显眼。 */}
           <div className="flex h-11 items-center gap-3 lg:hidden">
             <img src={stcLogo} alt="救助儿童会 Save the Children" className="h-[22px] w-auto rounded bg-white px-1.5 py-0.5 ring-1 ring-line-soft" />
             <span className="text-[16px] font-black tracking-[-0.03em] text-ink">{SITE.name}</span>
+            <Link
+              to="/subscribe"
+              className="ml-auto flex h-7 items-center gap-1 rounded-full bg-accent px-2.5 text-[12.5px] font-medium text-accent-contrast active:opacity-80"
+            >
+              <IconMail size={13} />
+              订阅
+            </Link>
           </div>
           {children}
         </div>

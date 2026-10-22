@@ -84,8 +84,11 @@ export default function AllPage() {
   // the server never has to know who read what. Turning it on can empty a page, and the note below
   // the list says so instead of leaving a blank screen.
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [selectedOnly, setSelectedOnly] = useState(false);
   const readSet = useReadSet();
-  const items = unreadOnly ? data.items.filter((it) => !readSet.has(it.id)) : data.items;
+  const items = data.items.filter(
+    (it) => (!unreadOnly || !readSet.has(it.id)) && (!selectedOnly || it.selected),
+  );
   const hiddenCount = data.items.length - items.length;
 
   return (
@@ -130,26 +133,43 @@ export default function AllPage() {
         </div>
       )}
 
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-[12px] text-ink-4">{unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}</span>
-        <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
-          只看未读
-        </ToggleChip>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[12px] text-ink-4">
+          {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
+            只看精选
+          </ToggleChip>
+          <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
+            只看未读
+          </ToggleChip>
+        </div>
       </div>
 
       <div className={`transition-opacity duration-200 ${busy ? "opacity-50" : ""}`}>
         {items.length === 0 ? (
           <div className="mt-2 lg:card">
-            {unreadOnly && data.items.length > 0 ? (
+            {data.items.length > 0 && (unreadOnly || selectedOnly) ? (
               <EmptyState
-                title="这一页都读过了"
+                title={
+                  selectedOnly && !unreadOnly
+                    ? "这一页没有精选内容"
+                    : unreadOnly && !selectedOnly
+                      ? "这一页都读过了"
+                      : "没有符合筛选的内容"
+                }
                 action={
-                  <button type="button" onClick={() => setUnreadOnly(false)} className="text-[13px] font-medium text-accent hover:underline">
+                  <button type="button" onClick={() => { setUnreadOnly(false); setSelectedOnly(false); }} className="text-[13px] font-medium text-accent hover:underline">
                     看全部内容
                   </button>
                 }
               >
-                翻到下一页，或者关掉「只看未读」。
+                {selectedOnly && !unreadOnly
+                  ? "关掉「只看精选」，或在主题、搜索里找更多。"
+                  : unreadOnly && !selectedOnly
+                    ? "翻到下一页，或者关掉「只看未读」。"
+                    : "关掉筛选，或者翻到下一页看看。"}
               </EmptyState>
             ) : (
               <EmptyState

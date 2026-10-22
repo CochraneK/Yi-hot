@@ -52,10 +52,13 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
   },
 ];
 
+// 手机底栏固定 5 项（精选关闭时为 4 项 + 此处新增的「热点」）：总报 / 动态 / 热点 / 主题 / 更多。
+// 「主题」「热点」进了底栏后，就不在「更多」页重复出现（见 more.tsx）。
 export const TABBAR: NavItem[] = [
   { to: "/weekly", label: "总报", icon: IconDoc },
   ...(FEATURES.selectedFeed ? [{ to: "/", label: "精选", icon: IconBolt, end: true }] : []),
   { to: "/all", label: "动态", icon: IconList },
+  { to: "/hot", label: "热点", icon: IconFlame },
   { to: "/topics", label: "主题", icon: IconGrid },
   { to: "/more", label: "更多", icon: IconApps, changelog: true },
 ];

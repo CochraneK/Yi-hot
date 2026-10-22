@@ -2096,3 +2096,70 @@ token 估算与按次实付**不再跨币种直接相加**，靠 `USD_CNY_RATE`�
 
 `perDayActive`（活跃日均）原本只用 token 估算做分子，而 `projection`（日历日均）用的是
 token + 按次实付，两个分母不同导致"月化区间"的上界会低于下界。现在同用 `recentTotalSpend`。
+
+## 二十八、站点「更新」页的维护：写什么、怎么生效（2026-10-22）
+
+### 文件与读取链路
+
+`industry/changelog.json` → `packages/backend/src/site/meta.ts`（进程内 `changelogCache`）→
+`GET /api/site/changelog` → `apps/web/app/routes/changelog.tsx`。
+
+数据结构：`{ latestVersion, releases[] }`，每条 `{ date, time, kind, title, body[] }`。
+`kind` 只有四个值：**更新 / 优化 / 公告 / 下线**，页面按这四个值做筛选与彩色圆点。
+`body` 是字符串数组，单段普通文本，`- ` 开头会渲染成列表项，`**粗体**` 会加粗。
+
+### 三个不能靠"看起来对"的约束
+
+1. **`latestVersion` 必须等于第一条的 `date` + `T` + `time`**。侧栏和手机端「更多」的更新红点靠
+   `seen < latestVersion` 的**字符串比较**决定亮不亮（`Sidebar.useChangelogDot`）。改了第一条却忘了
+   改这一项，红点永远不亮——页面本身完全正常，只是没人知道有更新。
+2. **页面不排序**。`changelog.tsx` 按数组顺序分组渲染，同一天内也按数组顺序。新条目放最前面。
+   往末尾追加新条目，读者看到的日期分组顺序就是错的。
+3. **日期不能晚于今天**（北京时间）。写错年份会让新条目排到最前却显示成未来。
+
+`node scripts/changelog-check.mjs`（`npm run changelog:check`，已接入 CI）把这三条连同字段完整性、
+`kind` 合法性、单段长度一起校验。**改完必须跑一次**，否则 CI 会红。
+
+### 什么该写、什么不该写
+
+这份日志是**给读者看的**，判据只有一条：**读者能不能感知**。
+
+该写：新页面（监管）、新来源（WHO / 最高检 / 5 家基金会官网）、卡片显示变化（钟点、日期口径）、
+规则变化（高峰让路导致白天不更新）、内容中断（某类来源暂停）。
+
+不该写：内部重构、模型换代、费用核算修正、脚本与运维开关、后台表单增加一个类型。
+这些记在 MAINTENANCE 与 `.workbuddy/memory/`，它们回答的是"以后怎么处理"，读者不需要。
+
+写数字的唯一规则：**从库里查出来，不凭印象**。本次补录时的口径举例——
+"已进动态 509 条里 237 条精确到分钟"来自 `publications` join `articles` 统计
+`published_at_precision='datetime'`；"监管 2250 条"来自 `regulatory_records`；
+"入库 60 条 29 条进动态、与 122 个源零重复"来自 `articles` 与 URL 交集查询。
+数字会随采集变化，所以日志里写的是**当时的口径**，不必回头改。
+
+### 生效方式（改完不重生效 = 等于没改）
+
+`meta.ts` 的 `changelogCache` 是**进程内缓存**，只在 api 进程启动后第一次读文件时填充：
+
+```bash
+# 1) 先改本地 industry/changelog.json，跑校验
+npm run changelog:check
+# 2) 同步到宿主（下次重建镜像时 COPY 的就是这份）
+tar czf - industry/changelog.json | ssh yihot "sudo tar xzf - -C /opt/yihot"
+# 3) 放进正在运行的 api 容器并重启（不重启读的还是旧缓存）
+ssh yihot "sudo docker cp /opt/yihot/industry/changelog.json aihot-api-1:/app/industry/changelog.json && sudo docker restart aihot-api-1"
+# 4) 验证：接口与页面都要看
+ssh yihot "sudo docker exec aihot-api-1 curl -s http://127.0.0.1:3001/api/site/changelog | head -c 200"
+```
+
+第 4 步别只看接口：`/api/site/changelog` 有 5 分钟 `s-maxage`，页面自身也有 `s-maxage=300`，
+但那是 CDN/共享缓存层的事；直连源站应立刻看到新条目。若接口新、页面旧，先怀疑缓存而不是数据。
+
+### 本次补录了什么（2026-10-20 19:00 之后一直没记）
+
+10-20 深夜到 10-22 中午共 24 小时里改了大量东西，但日志停在 10-20 19:00。补了 8 条：
+监管页上线、机构专题页补到 23 个、公众号正文与超时、高峰让路、卡片显示钟点、信源扩到 122 个、
+三类来源暂停、网页搜索型信源（另有一条 10-20 深夜的订阅入口与 PDF 正文）。
+
+漏更的根源是没有校验：`latestVersion` 与首条不一致时页面照常渲染，没有任何报错。
+现在 `npm run changelog:check` 接进了 CI 的 `Check` job（`Release notes check (offline)`），
+这类遗漏会变成失败而不是静默。

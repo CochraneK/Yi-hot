@@ -15,9 +15,9 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
   const today = beijingDate(Date.now());
   const days = useMemo(() => {
     const out: Array<{ day: string; items: Array<{ it: FeedItemSummary; display: FeedTimeDisplay }> }> = [];
-    // Newest first by what the slot prints, grouped by the day the article belongs to: a date-only
-    // article keeps its own day but sits where its collection clock puts it, so the list never shows a
-    // later clock above an earlier one.
+    // Newest first by what the slot prints, grouped by the day the article belongs to: an article the
+    // source dated only by day has no clock, so it belongs to the day we collected it — the same day
+    // the backend files it under, so the list never shows a later clock above an earlier one.
     const rows = items.map((it) => {
       const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
       return { it, display, day: beijingDate(display.at) };
@@ -41,7 +41,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
           <DayHeader day={day} today={today} count={day === today ? todayCount : null} />
           <ol className="lg:pt-1">
             {list.map(({ it, display }) => (
-              <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
+              <TimelineSlot key={it.id} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                 <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
               </TimelineSlot>
             ))}

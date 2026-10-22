@@ -22,7 +22,7 @@ interface GroupRow {
   gk: string;
   /** Where the card sits in the list: the clock the slot prints (see feedDisplayAt on the site). */
   anchor_at: Date;
-  /** The day the card is filed under — a date-only article stays on its own day; see queryGroupedAnchors. */
+  /** The day the card is filed under — a date-only article files under the day we collected it; see queryGroupedAnchors. */
   day_at: Date;
 }
 
@@ -65,10 +65,14 @@ async function groupPool(q: TimelineQuery, now: Date, storyIds: number[], factId
  * first. Every timeline page, day count and "new items" probe reads this list; it is kept for five
  * seconds per filter scope (a release becomes visible at most that much later).
  *
- * Two keys per card, because a source that states only a day has no clock to sort by: the day it is
- * filed under (its own date) and the position inside that day (when we collected it, which is what
- * the slot prints). Ordering by one key alone put those articles at a day's midnight while their
- * slot showed a later clock, so the list no longer read as newest-first.
+ * Two keys per card: the day it is filed under and the position inside that day.
+ *
+ * A source that states only a day has no clock, so the card is filed where we collected it: both keys
+ * are then the collection moment, which is exactly what the slot prints under the label "收录". Filing
+ * it under its own publication day instead put a 7-day lookback batch on seven different days in the
+ * middle of the list — collected today, shown four screens down, and invisible to anyone reading the
+ * top of the feed. The publication day is still stated (the item page prints it, the slot title says
+ * it), it just no longer decides where the card sits.
  */
 const groupedCache = new Map<string, { at: number; rows: Array<{ gk: string; anchor: number; day: number }> }>();
 const groupedPending = new Map<string, Promise<Array<{ gk: string; anchor: number; day: number }>>>();
@@ -96,8 +100,8 @@ async function queryGroupedAnchors(q: TimelineQuery, now: Date) {
     await sql<{ gk: string; anchor_at: Date; day: string }[]>`
       WITH base AS (
         SELECT coalesce('s' || p.story_id::text, 'f' || p.fact_id::text, 'a' || p.article_id) AS gk,
-          to_char((CASE WHEN a.published_at_precision = 'date' AND p.published_at IS NOT NULL THEN p.published_at ELSE p.sort_at END) + interval '8 hours', 'YYYY-MM-DD') AS day,
-          CASE WHEN a.published_at_precision = 'date' AND p.published_at IS NOT NULL THEN p.discovered_at ELSE p.sort_at END AS pos_at
+          to_char((CASE WHEN a.published_at_precision = 'date' THEN coalesce(p.discovered_at, p.sort_at) ELSE p.sort_at END) + interval '8 hours', 'YYYY-MM-DD') AS day,
+          CASE WHEN a.published_at_precision = 'date' THEN coalesce(p.discovered_at, p.sort_at) ELSE p.sort_at END AS pos_at
         FROM publications p JOIN articles a ON a.id = p.article_id
         WHERE ${selectedCondition(now)} ${filterSql(q)}
       )

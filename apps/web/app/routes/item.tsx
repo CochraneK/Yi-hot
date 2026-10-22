@@ -123,7 +123,7 @@ export default function ItemPage() {
   const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? "正文 · AI 翻译" : lang === "original" && hasTranslation ? "正文 · 原文" : "正文";
   const isX = item.channel === "x" && !!item.x;
   const display = feedDisplayAt(item.publishedAt, item.discoveredAt, item.timelineAt, item.publishedAtPrecision);
-  const publishedIso = display.at;
+  const placedIso = display.at;
   const summaryOnly = item.readingMode === "summary-only";
   const showOutline = item.outline.length >= 3;
   const originalLabel = isX ? "在 X 查看原推" : "打开原文";
@@ -199,14 +199,26 @@ export default function ItemPage() {
         {isX ? `@${item.x!.handle} · X` : item.author ?? hostOf(item.links.original)}
       </div>
       <div className="mt-3 text-[12px] text-ink-4">
-        {display.label === "原文发表" ? (display.dateOnly ? "原文发布日期" : "原文发布时间") : "原文日期未知 · 本站收录时间"}
+        {display.sourceAt === null ? "原文日期未知" : display.dateOnly ? "原文发布日期" : "原文发布时间"}
       </div>
-      <time dateTime={publishedIso} className="mono mt-0.5 block text-[12.5px] text-ink-2">
-        {display.dateOnly ? feedDateLabel(publishedIso) : fullDateTime(publishedIso)}
+      <time dateTime={display.sourceAt ?? display.at} className="mono mt-0.5 block text-[12.5px] text-ink-2">
+        {display.sourceAt === null ? "—" : display.dateOnly ? feedDateLabel(display.sourceAt) : fullDateTime(display.sourceAt)}
       </time>
-      <div className="mt-0.5 text-[12px] text-ink-4" suppressHydrationWarning>
-        {relativeTime(publishedIso)}
-      </div>
+      {display.sourceAt !== null && (
+        <div className="mt-0.5 text-[12px] text-ink-4" suppressHydrationWarning>
+          {relativeTime(display.sourceAt)}
+        </div>
+      )}
+      {/* A date-only article is placed by when we collected it, so the page states that moment too:
+          otherwise the card's position ("today") and this rail ("原文发布日期") look contradictory. */}
+      {display.at !== display.sourceAt && (
+        <>
+          <div className="mt-3 text-[12px] text-ink-4">本站收录时间</div>
+          <time dateTime={display.at} className="mono mt-0.5 block text-[12.5px] text-ink-2">
+            {fullDateTime(display.at)}
+          </time>
+        </>
+      )}
     </RailSection>
   );
   const outline = showOutline && (
@@ -291,8 +303,8 @@ export default function ItemPage() {
             {item.author && !isX && <span>· {item.author}</span>}
             <span>·</span>
             {display.label === "收录" && <span>收录于</span>}
-            <time dateTime={publishedIso} className="mono">{display.dateOnly ? feedDateLabel(publishedIso) : fullDateTime(publishedIso)}</time>
-            <span suppressHydrationWarning>· {relativeTime(publishedIso)}</span>
+            <time dateTime={placedIso} className="mono">{display.dateOnly ? feedDateLabel(placedIso) : fullDateTime(placedIso)}</time>
+            <span suppressHydrationWarning>· {relativeTime(placedIso)}</span>
             {item.selected && (
               <span className="ml-1 lg:hidden">
                 <SelectedBadge />

@@ -42,7 +42,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const topicName = f?.topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === f.topic)?.name ?? null : null;
   return pageMeta({
     title: q ? `搜索：${q}` : topicName ?? "动态",
-    description: `${SITE.name} 收录的动态，优先按原文发布日期排列，可按主题与标签筛选，支持中英文搜索。`,
+    description: `${SITE.name} 收录的动态，按原文发布时间排列；原文只标注日期的，按本站收录时间落位。可按主题与标签筛选，支持中英文搜索。`,
     path: listPath("/all", { channel: f && f.channel !== "all" ? f.channel : null, topic: f?.topic, tag: f?.tag, q, tab: f?.tab === "relevance" ? "relevance" : null, page: page > 1 ? page : null }),
     noindex: !!q,
   });

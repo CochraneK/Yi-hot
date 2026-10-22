@@ -96,17 +96,23 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
  * so under the clock. When that was a different day it prints the date instead, since an hour alone
  * would read as belonging to the day above it.
  */
-export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; dotColor?: string }) {
+export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; dotColor?: string }) {
   const clockSource = clockAt ?? at;
   const collectedAnotherDay = beijingDate(clockSource) !== beijingDate(at);
   const clock = collectedAnotherDay ? beijingDate(clockSource).slice(5) : beijingTime(clockSource);
+  // The card sits where we collected it; a date-only source still knows its own day, so the tooltip
+  // says both rather than letting the collection clock pass as the publication time.
+  const sourceDay = sourceAt ? beijingDate(sourceAt) : null;
+  const title = dateOnly
+    ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
+    : timeLabel ? `${timeLabel}：${at}` : undefined;
   return (
     <li
       data-card-key={dataKey}
       className={`group/slot grid grid-cols-[48px_minmax(0,1fr)] border-b border-line-soft py-3.5 last:border-b-0 lg:grid-cols-[64px_22px_minmax(0,1fr)] lg:border-b-0 lg:py-0 lg:pb-3 lg:last:pb-0 ${fresh ? "animate-fade-up" : ""}`}
       style={fresh ? { animationDelay: `${delay}ms` } : undefined}
     >
-      <time dateTime={at} title={dateOnly ? `原文仅标注日期：${beijingDate(at)}；此处是本站收录时间：${fullDateTime(clockSource)}` : timeLabel ? `${timeLabel}：${at}` : undefined} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
+      <time dateTime={at} title={title} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
         {clock}
         {(clockLabel ?? timeLabel) === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
       </time>
@@ -333,11 +339,11 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                   {cards.map((c) => {
                     const fresh = freshKeys.has(c.key);
                     const delay = fresh ? Math.min(order++, 10) * 40 : 0;
-                    // A card's slot prints its own date when the source states only a day, and under it
-                    // the moment we collected it, labelled as such.
+                    // A card sits where we collected it; a source that states only a day gets no clock,
+                    // so the slot prints the collection clock and says so under it.
                     const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision);
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );

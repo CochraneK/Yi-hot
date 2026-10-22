@@ -24,6 +24,13 @@ SOURCES = {
 }
 IMPACT = re.compile(r"social impact|公益|慈善|esg|可持续|sustainab|乡村|教育|儿童|残障|环境|气候|carbon|community|志愿", re.I)
 DROP = re.compile(r"unsubscribe|退订|取消订阅|manage.*subscription|隐私|privacy|powered by|ICP备", re.I)
+# 本期网页版（灵析 mv 页）：正文就是这一期。旧版只认「完整版/网页版」，本期邮件上写的是
+# 「查看或分享邮件内容」，于是落到下面的往期导航上——抓回整本《慈善纪事简报》2025 年刊，
+# 60000 字上限被一份年度合集填满，模型照它写出「爱德传一基金发布《2025年中国公益慈善纪事》」
+# 这类与当期无关的标题。宁可跳过一期，也不要拿往期合集当正文。
+PAGE_LINK = re.compile(r"完整版|完整邮件|网页版|查看全文|查看或分享邮件内容|在浏览器|网页浏览")
+# 每期固定出现的栏目导航：年刊 PDF、往期第 NN 期、订阅入口。都不是「本期」。
+STANDING_LINK = re.compile(r"年刊|年鉴|往期|合集|订阅|下载|第\s*\d+\s*期|\.pdf", re.I)
 
 
 def decode_header_text(value: str | None) -> str:
@@ -157,9 +164,8 @@ def item_for(source: dict[str, str], message: Message, initial: bool) -> dict | 
         url = (direct or browser or [None])[0]
     else:
         candidates = [(label, clean_redirect_url(url)) for label, url in anchors if not DROP.search(label)]
-        full = [url for label, url in candidates if url and re.search(r"完整版|完整邮件|网页版|查看全文", label)]
-        issue = [url for label, url in candidates if url and "慈善纪事简报" in label]
-        url = (full or issue or [None])[0]
+        page = [url for label, url in candidates if url and PAGE_LINK.search(label) and not STANDING_LINK.search(label)]
+        url = (page or [None])[0]
     if not url:
         return None
     message_id = (message.get("Message-ID") or "").strip()

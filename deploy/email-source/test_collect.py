@@ -33,6 +33,36 @@ class EmailCollectorTests(unittest.TestCase):
         self.assertEqual(item["publishedAt"], "2026-10-13T08:00:00+08:00")
         self.assertTrue(item["raw"]["_aihot"]["backfill"])
 
+    def test_chuanyi_never_takes_the_standing_annual_pdf_as_the_issue(self):
+        # 真实形状：每期邮件都带「《慈善纪事简报》2025年刊」（固定 PDF）和往期第 NN 期导航，
+        # 本期入口写的是「查看或分享邮件内容」。旧逻辑把年刊当成这一期去抓，整本年鉴成了正文。
+        message = EmailMessage()
+        message["Subject"] = "海外动态：近九成美国人接触非营利服务却没有意识到"
+        message["Date"] = "Thu, 22 Oct 2026 08:10:44 +0800"
+        message["Message-ID"] = "<standing@example.org>"
+        message.set_content("fallback")
+        message.add_alternative(
+            '<a href="https://etrack01.com/track/click2/annual.html">《慈善纪事简报》2025年刊</a>'
+            '<a href="https://etrack01.com/track/click2/issue82.html">慈善纪事简报｜第82期 9月纪事</a>'
+            '<a href="https://etrack01.com/track/click2/view.html">查看或分享邮件内容</a>',
+            subtype="html",
+        )
+        item = item_for({"kind": "chuanyi", "name": "爱德传一基金"}, message, False)
+        self.assertEqual(item["url"], "https://etrack01.com/track/click2/view.html")
+
+    def test_chuanyi_without_a_this_issue_link_is_skipped(self):
+        # 只有年刊/往期导航时不能猜：猜错就是拿一份年度合集当今天的内容。
+        message = EmailMessage()
+        message["Subject"] = "海外动态：近九成美国人接触非营利服务却没有意识到"
+        message["Message-ID"] = "<noissue@example.org>"
+        message.set_content("fallback")
+        message.add_alternative(
+            '<a href="https://etrack01.com/track/click2/annual.html">《慈善纪事简报》2025年刊</a>'
+            '<a href="https://etrack01.com/track/click2/issue82.html">慈善纪事简报｜第82期 9月纪事</a>',
+            subtype="html",
+        )
+        self.assertIsNone(item_for({"kind": "chuanyi", "name": "爱德传一基金"}, message, False))
+
     def test_amcham_keeps_email_date(self):
         message = EmailMessage()
         message["Subject"] = "2026 Social Impact Summit"

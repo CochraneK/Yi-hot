@@ -58,8 +58,12 @@ interface Price {
 
 interface SeenModel {
   model: string;
+  /** 调用时记录的 service，价格行按这个 + model 匹配。 */
   service: string | null;
   calls: number;
+  /** 该模型名是否仍在 MODELS 注册表里（只影响提示，不影响计价）。 */
+  registered: boolean;
+  priced: boolean;
 }
 
 interface Usage {
@@ -70,8 +74,9 @@ interface Usage {
   daily: Day[];
   purposes: Purpose[];
   totals: { calls: number; tokensIn: number; tokensOut: number; amount: number | null; paid: number | null };
-  /** `token` is our arithmetic from the price table; `api` is what providers really debited. */
-  spend: { token: number | null; api: number | null; total: number | null; currency: string };
+  /** `token` is our arithmetic from the price table; `api` is what providers really debited. Both are
+   *  folded into `currency`; `unconverted` lists amounts that could not be (no USD_CNY_RATE). */
+  spend: { token: number | null; api: number | null; total: number | null; currency: string; unconverted?: Array<{ currency: string; amount: number }> };
   perCall: {
     rows: PerCallRow[];
     calls: number;
@@ -180,7 +185,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
   return (
     <AdminPage
       title="用量与成本"
-      subtitle="每次模型调用都会记下 token 用量，金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。按次计费的采集接口（小红书、公众号这类）不计 token，它们实际扣掉的钱单列在「按次计费的服务商」里，两者相加才是这段时间的真实花费。注意：这里的日期是调用发生的时间（北京时间），不是内容的发布时间；一篇 7 月发布的政策文件可能今天才被抓到并分析，token 就记在今天。政府站白天抓取密、夜里几乎不跑，所以曲线的工作日/周末起伏是正常的。"
+      subtitle="每次模型调用都会记下 token 用量（含缓存命中与未命中），金额是按「计价方式」里的单价估算的——只有服务商回传了账单才是实付。按次计费的采集接口（小红书、公众号、网页搜索这类）不计 token，它们扣掉的钱单列在「按次计费的服务商」里，两者相加才是这段时间的真实花费。高峰/空闲双价的服务（DeepSeek 工作日 9–12、14–18 翻倍），空闲价填主行、高峰价另建一行并在模型名后加 @peak 后缀。注意：这里的日期是调用发生的时间（北京时间），不是内容的发布时间；一篇 7 月发布的政策文件可能今天才被抓到并分析，token 就记在今天。政府站白天抓取密、夜里几乎不跑，所以曲线的工作日/周末起伏是正常的。"
       actions={
         <FilterChips
           param="days"
@@ -203,7 +208,11 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
           hint={
             u.spend.total === null
               ? "填好单价后才有金额"
-              : `模型估算 ${u.spend.token === null ? "—" : money(u.spend.token, cur)} · 按次实付 ${u.spend.api === null ? "—" : money(u.spend.api, cur)}`
+              : `模型估算 ${u.spend.token === null ? "—" : money(u.spend.token, cur)} · 按次实付 ${u.spend.api === null ? "—" : money(u.spend.api, cur)}${
+                  u.spend.unconverted?.length
+                    ? ` · 另有 ${u.spend.unconverted.map((x) => `${x.currency} ${x.amount.toFixed(2)}`).join("、")} 未折算（设 USD_CNY_RATE 后并入）`
+                    : ""
+                }`
           }
         />
         <Stat
@@ -290,7 +299,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
         <Card
           title="按次计费的服务商"
           pad={false}
-          right={<span className="text-[12px] text-ink-4">实扣金额来自服务商回执，不是估算</span>}
+          right={<span className="text-[12px] text-ink-4">服务商回执为实扣；网页搜索这类按官方单价估算</span>}
         >
           {u.perCall.rows.length ? (
             <>
@@ -386,20 +395,20 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {u.seenModels.map((m) => {
-                  const priced = u.prices.some((p) => p.model === m.model) || (m.service !== null && u.prices.some((p) => p.service === m.service && p.model === ""));
                   return (
-                    <span key={m.model} className="inline-flex items-center gap-1.5 rounded-full bg-bg-sunk px-2.5 py-1 text-[12px] ring-1 ring-line">
+                    <span key={`${m.service}|${m.model}`} className="inline-flex items-center gap-1.5 rounded-full bg-bg-sunk px-2.5 py-1 text-[12px] ring-1 ring-line">
                       <span className="font-mono text-ink-2">{m.model}</span>
-                      {m.service === null ? (
-                        <Badge tone="bad" title="这个模型名不在 MODELS 注册表里，任何单价都不会被匹配">
-                          不在注册表
-                        </Badge>
-                      ) : priced ? (
+                      {m.priced ? (
                         <Badge tone="ok">已定价</Badge>
                       ) : (
                         <Badge tone="warn">未定价</Badge>
                       )}
-                      {!priced && m.service !== null && (
+                      {!m.registered && (
+                        <Badge tone="bad" title="这个名字已不在 MODELS 注册表里（模型改名/下线）。计价用的是调用时记录的 service，所以只要下面有对应单价行仍能算钱；新建源时不要再选它。">
+                          已下线名
+                        </Badge>
+                      )}
+                      {!m.priced && m.service !== null && (
                         <button
                           type="button"
                           className="text-accent hover:underline"
@@ -504,7 +513,7 @@ export default function UsageAdmin({ loaderData: u }: Route.ComponentProps) {
             <Field label={`输出单价（${form.currency} / 百万 token）`}>
               <Input value={form.outputPerMtok} onChange={(e) => setForm({ ...form, outputPerMtok: e.target.value })} inputMode="decimal" placeholder="1.20" />
             </Field>
-            <Field label={`缓存命中单价（${form.currency} / 百万 token，可空）`} hint="暂不参与估算——调用记录里没有区分缓存命中的 token，先留档备查">
+            <Field label={`缓存命中单价（${form.currency} / 百万 token，可填）`} hint="调用记录里带命中/未命中 token 数，命中部分按这个价格算；留空则命中部分按输入单价算（会高估）">
               <Input value={form.cachedPerMtok} onChange={(e) => setForm({ ...form, cachedPerMtok: e.target.value })} inputMode="decimal" />
             </Field>
             <Field label={`按次单价（${form.currency} / 次，可空）`} hint="按调用次数计费的服务填这里；与 token 单价可同时生效（相加）">

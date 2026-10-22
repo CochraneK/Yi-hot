@@ -9,6 +9,7 @@ import { fetchRss } from "./rss.ts";
 import { allowed, externalLink, fetchDetail, fetchWebList, type DetailNeed } from "./web-list.ts";
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
+import { fetchSearch } from "./search.ts";
 import { everyInfraWechatArticle, everyInfraXhsNote } from "../providers/everyinfra.ts";
 import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog, type XRead } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
@@ -24,6 +25,8 @@ export interface CollectResult {
 }
 
 const MAX_ITEMS_PER_RUN = 60;
+/** 搜索源按「同一天同一查询只真跑一次」计费，因此没有必要比 6 小时更密地调度。 */
+const SEARCH_INTERVAL_MINUTES = 360;
 
 export function noiseFiltered(c: Candidate, source: SourceRow): boolean {
   const f = source.config.ingestNoiseFilter;
@@ -119,6 +122,11 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     }
     else if (source.kind === "web_list") candidates = await fetchWebList(source);
     else if (source.kind === "json_list") candidates = await fetchJsonList(source);
+    else if (source.kind === "search") {
+      const s = await fetchSearch(source);
+      candidates = s.candidates;
+      detail = s.detail;
+    }
     else {
       const x = await fetchXSearch(source);
       candidates = x.candidates;
@@ -401,7 +409,7 @@ async function scheduleXShards(): Promise<number> {
 
 /** Every minute: enqueue due sources (enabled, not WeChat/external), oldest due first; X accounts by shard. */
 export async function scheduleDueSources(limit = Number(process.env.FETCH_SCHEDULE_BATCH || 40)): Promise<{ enqueued: number; shards: number }> {
-  const kinds: string[] = (process.env.COLLECT_KINDS || "rss,web_list,json_list,x_search").split(",");
+  const kinds: string[] = (process.env.COLLECT_KINDS || "rss,web_list,json_list,x_search,search").split(",");
   // Listings fetched through Jina Reader are paid; development can leave them out.
   const skipJina = process.env.COLLECT_SKIP_JINA === "true";
   const rows = await sql<{ id: string }[]>`
@@ -425,7 +433,7 @@ export async function adaptIntervals(): Promise<{ updated: number }> {
   const rows = await sql<Array<Pick<SourceRow, "id" | "participation_mode" | "kind" | "config" | "cursor"> & { paid_listing: boolean; per_day: number }>>`
     SELECT s.id, s.participation_mode, s.kind, s.config, s.cursor, coalesce(s.config->>'url', '') LIKE 'https://r.jina.ai/%' AS paid_listing,
       (SELECT count(*) FROM articles a WHERE a.source_id = s.id AND a.discovered_at > now() - interval '7 days' AND NOT a.backfill) / 7.0 AS per_day
-    FROM sources s WHERE s.enabled AND s.kind IN ('rss', 'web_list', 'json_list', 'x_search')`;
+    FROM sources s WHERE s.enabled AND s.kind IN ('rss', 'web_list', 'json_list', 'x_search', 'search')`;
   let updated = 0;
   for (const r of rows) {
     const perDay = Number(r.per_day);
@@ -435,8 +443,11 @@ export async function adaptIntervals(): Promise<{ updated: number }> {
     const max = r.participation_mode === "hot_signal" ? 180 : r.kind === "x_search" || r.paid_listing ? 120 : 60;
     // Listings read through Jina are not looked at more than hourly: busy ones would outrun its daily budget.
     const min = r.paid_listing ? 60 : 15;
-    // X accounts read by shard follow the shard's pace, whatever their own volume.
-    const target = shardHandle(r) ? shardMinutes(r.participation_mode) : perDay <= 0.15 ? max : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * 3))));
+    // X accounts read by shard follow the shard's pace, whatever their own volume. Search sources
+    // follow the pay-once-a-day window instead: asking again sooner only re-reads a stored response.
+    const target = r.kind === "search"
+      ? SEARCH_INTERVAL_MINUTES
+      : shardHandle(r) ? shardMinutes(r.participation_mode) : perDay <= 0.15 ? max : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * 3))));
     const res = await sql`UPDATE sources SET interval_minutes = ${target} WHERE id = ${r.id} AND interval_minutes <> ${target}`;
     updated += res.count;
   }

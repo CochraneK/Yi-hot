@@ -15,6 +15,8 @@ import { llmsTxt, loadLlmsAvailability } from "@aihot/backend/publication/llms";
 const REF = path.join(REPO_ROOT, "reference");
 const ASSETS = path.join(REPO_ROOT, "assets");
 const BRAND = path.join(REPO_ROOT, "industry/brand");
+/** 关于页下方的「公众号内容分析」报告：一个自包含静态页 + 本地图表库（不依赖 CDN）。 */
+const DASHBOARD = path.join(REPO_ROOT, "industry/dashboard");
 
 const TYPES: Record<string, string> = {
   ".json": "application/json; charset=UTF-8",
@@ -54,10 +56,11 @@ async function sendFile(req: FastifyRequest, reply: FastifyReply, file: string, 
 }
 
 function robotsTxt(): string {
-  return [
+  const base = [
     "User-agent: *",
-    "Allow: /api/v1/",
-    "Allow: /api/mcp",
+    "Allow: /",
+    "",
+    // 仅对爬虫隐藏后台、私人和反垃圾页面；公开 API 与内容照常可被收录。
     "Disallow: /api/",
     "Disallow: /admin/",
     "Disallow: /starred",
@@ -201,4 +204,17 @@ export function registerStatic(app: FastifyInstance) {
     const target = (await stat(uploaded).then(() => true, () => false)) ? uploaded : path.join(BRAND, "contact", file);
     return sendFile(req, reply, target, { cacheControl });
   });
+
+  /**
+   * 公众号内容分析报告（industry/dashboard/，由仓库外的 build_dashboard.py 生成）。
+   * 只有这两个文件，白名单写死；页面里的图表库用相对路径引同目录那份，不依赖 CDN。
+   */
+  const DASH_FILES: Record<string, { file: string; type: string }> = {
+    "/about/dashboard": { file: "index.html", type: "text/html; charset=utf-8" },
+    "/about/dashboard/": { file: "index.html", type: "text/html; charset=utf-8" },
+    "/about/dashboard/echarts.min.js": { file: "echarts.min.js", type: "text/javascript; charset=utf-8" },
+  };
+  for (const [route, spec] of Object.entries(DASH_FILES)) {
+    app.get(route, (req, reply) => sendFile(req, reply, path.join(DASHBOARD, spec.file), { type: spec.type, cacheControl: "public, max-age=600" }));
+  }
 }

@@ -63,6 +63,7 @@ def main():
                     "name": x.get("nickname"),
                     "alias": x.get("alias"),
                     "signature": (x.get("signature") or "").replace("\r", " ").replace("\n", " "),
+                    "avatar": x.get("round_head_img") or "",
                     "verify_status": x.get("verify_status"),
                     "service_type": x.get("service_type"),
                     "hit_kw": kw,

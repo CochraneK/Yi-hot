@@ -16,13 +16,23 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const KINDS = new Set(["更新", "优化", "公告", "下线"]);
 // Shape, not just validity. A release note a reader can take in at a glance: a short headline and at
-// most three sentences, each one fact. The long lines this check exists to stop were the ones that
+// most two sentences, each one fact. The long lines this check exists to stop were the ones that
 // explained how the site works internally ("to avoid double billing", "the listing's day would
 // overwrite it") — facts about the build, not about what the reader now gets. The numbers below are
 // where the two reference sites sit (PsyHOT: 12-char titles, 43-char sentences, 69 at the longest).
 const MAX_TITLE_CHARS = 32;
-const MAX_BODY_LINES = 3;
+const MAX_BODY_LINES = 2;
 const MAX_BODY_CHARS = 70;
+/** Two lines and a budget: a third line is usually the scene-setting that swallows the fact. */
+const MAX_BODY_TOTAL = 110;
+
+// Terms from inside the pipeline. A reader has no way to act on them, and a sentence that needs one
+// is a sentence about the build. This is the check that keeps the notes from drifting back into
+// "为什么以前不行" — the reason a note gets written badly is almost always that it is explaining itself.
+const INTERNAL_TERMS = [
+  "入库", "进动态", "回填", "分组", "信号", "计费", "预算", "额度", "幂等",
+  "跑批", "落位", "口径", "阈值", "权重", "字段", "prompt", "容器", "迁移",
+];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
 /** Bold markers are layout, not prose: they count for nothing. */
@@ -66,9 +76,15 @@ releases.forEach((r, i) => {
   if (!Array.isArray(r.body) || r.body.length === 0) fail(where, "body 应为非空数组");
   else {
     if (r.body.length > MAX_BODY_LINES) fail(where, `body 有 ${r.body.length} 行，最多 ${MAX_BODY_LINES} 行`);
+    const total = r.body.reduce((n, line) => n + visibleLength(String(line ?? "")), 0);
+    if (total > MAX_BODY_TOTAL) fail(where, `body 合计 ${total} 字，超过 ${MAX_BODY_TOTAL}；多半是留了一句交代来龙去脉，删掉它`);
     r.body.forEach((line, j) => {
       if (typeof line !== "string" || !line.trim()) fail(where, `body[${j}] 为空`);
       else if (visibleLength(line) > MAX_BODY_CHARS) fail(where, `body[${j}] 有 ${visibleLength(line)} 字，超过 ${MAX_BODY_CHARS}；一句一个事实，长了就拆行`);
+      else {
+        const term = INTERNAL_TERMS.find((t) => line.includes(t));
+        if (term) fail(where, `body[${j}] 出现内部用语「${term}」，读者看不懂也做不了什么；写他在页面上看到的样子`);
+      }
     });
   }
   if (DATE_RE.test(r.date ?? "") && r.date > today) fail(where, `日期 ${r.date} 晚于今天 ${today}`);

@@ -121,6 +121,8 @@ const DATE_META_KEYS = new Set([
   "article:published_time", "og:release_date", "datepublished", "pubdate", "publishdate", "publish_date",
   "publishdate2", "publishtime", "publish_time", "publishtime2", "firstpublishedtime", "first_published_at",
   "release_date", "releasedate", "dc.date", "dc.date.issued", "dc.date.created", "article.published", "created",
+  // The bare name, which Chinese government CMSs pair with PubDate ("2026.10.22 08:50:04 CST").
+  "published", "publishdate1", "info_publishtime", "deploytime",
 ]);
 
 /**

@@ -23,7 +23,9 @@ jobs:
   export:
     name: Render and publish PDFs
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15 分钟不够：装中文字体 + weasyprint 一圈依赖在冷机上要十来分钟，
+    # 39837908016 就是卡在安装步被超时取消（日志一片空白，因为 apt -qq 不出声）。
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,11 +33,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Chinese fonts and PDF renderer
+      # 拆成两步：合在一起时 apt -qq 静默无声，卡住了也看不出是哪一段。
+      - name: Install Chinese fonts
+        timeout-minutes: 12
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq fonts-noto-cjk
-          python -m pip install "weasyprint>=63,<70" "mistune>=3,<4" "beautifulsoup4>=4,<5" "pypdf>=5,<7"
+          sudo apt-get update -qq -o Acquire::Retries=3 -o Acquire::http::Timeout=30
+          sudo apt-get install -y -qq -o Acquire::Retries=3 -o Acquire::http::Timeout=30 fonts-noto-cjk
+      - name: Install PDF renderer
+        timeout-minutes: 12
+        run: |
+          python -m pip install --timeout 60 --retries 5 \
+            "weasyprint>=63,<70" "mistune>=3,<4" "beautifulsoup4>=4,<5" "pypdf>=5,<7"
       - name: Export README, full handbook and combined PDF
         run: python scripts/export_docs_pdf.py
       - name: Upload PDF artifact

@@ -88,8 +88,12 @@ export const ABOUT = {
       { value: "12", label: "个省区市有项目" },
     ],
     report: { href: "/about/dashboard", label: "看看这十二年写过什么" },
-    /** 机构官网（选填）：放在数字下面的一行小字链接。 */
-    site: { label: "救助儿童会官网", href: "https://www.savethechildren.org.cn/" },
+    /**
+     * 机构官网（选填）：放在数字下面的一行小字链接。
+     * 只能用 http：这个域名 443 端口不响应（本机与服务器实测 https 返回 000，http 返回 200），
+     * 公众号文末给的也是 http 链接。哪天它开了 https 再改回来，改之前先 curl 一次。
+     */
+    site: { label: "救助儿童会官网", href: "http://www.savethechildren.org.cn/" },
     qr: { title: "扫码关注公众号", note: "项目进展、一线故事和研究报告，都会先发在这里。" },
   } as null | {
     kicker: string;

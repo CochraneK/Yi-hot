@@ -1427,13 +1427,25 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 
 邮件来源不在通用后台表单里直接填邮箱密码。技术维护者需要：
 
-1. 在 `deploy/email-source/collect.py` 的允许发件人配置中登记来源 ID 和地址；
+1. 在 `deploy/email-source/collect.py` 的允许发件人配置中登记来源 ID 和地址（改的是仓库里那份源本）；
 2. 对代发平台同时核对显示发件人和信封域；
 3. 准备数封真实历史样本，验证正文、链接、日期和退订链接过滤；
 4. 增加或更新数据库来源记录；
-5. 运行邮件采集单元测试；
-6. 部署脚本和配置，手动试跑；
+5. 运行邮件采集单元测试（`python -m pytest deploy/email-source/test_collect.py -q`）；
+6. 把脚本同步到服务器上真正跑的那一份，再手动试跑；
 7. 观察定时器至少一个周期。
+
+**第 6 步有个坑，改之前先看这里**：服务器上真正执行的是 **`/opt/yihot-email/collect.py`**
+（`systemctl cat yihot-email-source.service` 里的 ExecStart 指向它，每 30 分钟跑一次）。
+`/opt/yihot/deploy/email-source/collect.py` 只是随仓库同步过去的一个拷贝，**改它不生效、也不报错**。
+同理，容器镜像里那份（`COPY . .` 带进去的）也没有任务在跑。所以每次改完：
+
+```
+scp deploy/email-source/collect.py <服务器>:/tmp/collect.py
+ssh <服务器> 'sudo cp /tmp/collect.py /opt/yihot-email/collect.py && sudo python3 /opt/yihot-email/collect.py'
+```
+
+改完顺便把 `/opt/yihot/deploy/email-source/` 下那份也覆盖掉，别留下一个旧版本误导后来人。
 
 不要因为一封转发邮件就放宽整个域名。历史回灌使用 `MAIL_BACKFILL_AFTER` 一次性执行，完成后恢复普通增量模式。
 

@@ -21,6 +21,8 @@ const TEMPLATES: Record<string, Record<string, unknown>> = {
   web_list: { url: "https://example.com/blog", baseUrl: "https://example.com", itemSelector: "article", linkSelector: "a", titleSelector: "h2", allowUrlPrefixes: ["https://example.com/blog/"] },
   json_list: { url: "https://example.com/api/posts", mode: "json_api", method: "GET", itemsPath: "data.items", titlePaths: ["title"], urlTemplate: "{raw:url}", summaryPaths: ["summary"] },
   x_search: { query: "from:handle -filter:replies", searchType: "Latest" },
+  // 网页搜索：按请求计费（¥0.005/次），queries 里每个词各算一次；同日同查询只真跑一次。
+  search: { queries: ["关键词 一", "关键词 二"], count: 20, lookbackDays: 7, minAuthority: 2 },
   mp_account: { ghid: "", nickname: "" },
   external: {},
 };

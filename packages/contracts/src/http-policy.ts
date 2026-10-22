@@ -118,6 +118,8 @@ export const API_OWNED_PATTERNS: RegExp[] = [
   /^\/\.well-known\//,
   /^\/(favicon\.ico|icon\.png|icon-192\.png|apple-icon\.png|logo\.svg)$/,
   /^\/(model-providers|leaderboard-sources|og|contact)\//,
+  // 关于页下方的公众号内容分析报告（apps/api/src/routes/static.ts）。
+  /^\/about\/dashboard(\/[\w.-]+)?\/?$/,
   /^\/[0-9a-f]{32}\.txt$/,
   /^\/items\/[^/]+\/markdown$/,
   // The Agent Skill package (packages/backend/src/publication/skill.ts).

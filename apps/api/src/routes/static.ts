@@ -66,6 +66,34 @@ function robotsTxt(): string {
     `Sitemap: ${config.siteUrl}/sitemap.xml`,
     "",
   ].join("\n");
+  // AI 训练 / 大规模抓取型爬虫：无论是否遵守 robots 协议，在应用层一律 403（见 web/server.ts）。
+  // 这里再写一遍，让“礼貌”的同类爬虫也能从 robots 层面自我收敛。
+  const aiBlock = [
+    "# AI 训练 / 大规模抓取爬虫：禁止收录本站内容",
+    "User-agent: GPTBot",
+    "User-agent: ChatGPT-User",
+    "User-agent: ClaudeBot",
+    "User-agent: anthropic-ai",
+    "User-agent: Claude-Web",
+    "User-agent: Google-Extended",
+    "User-agent: CCBot",
+    "User-agent: Bytespider",
+    "User-agent: omgilibot",
+    "User-agent: Omgili",
+    "User-agent: Applebot-Extended",
+    "User-agent: Diffbot",
+    "User-agent: PetalBot",
+    "User-agent: MJ12bot",
+    "User-agent: SemrushBot",
+    "User-agent: AhrefsBot",
+    "User-agent: DotBot",
+    "User-agent: DataForSeoBot",
+    "User-agent: BLEXBot",
+    "User-agent: Scrapy",
+    "Disallow: /",
+    "",
+  ].join("\n");
+  return base + aiBlock;
 }
 
 function manifest() {

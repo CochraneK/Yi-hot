@@ -20,6 +20,8 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
     // 新平台只加配置、不改代码；everyinfra_xhs 是只接小红书时的老写法。
     "adapter", "everyinfraPlatform", "everyinfraAction", "everyinfraParams", "everyinfraDetail",
   ],
+  // 网页搜索：查询词决定覆盖面，不走某站点的栏目结构；结果里的 date 只到日，入库按日级精度。
+  search: [...COLLECTED, "queries", "count", "lookbackDays", "minAuthority", "minRerank", "needContent", "oriQuestion"],
   // X accounts are mostly read in shards, which apply only these.
   x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType"],
   mp_account: ["wxid", "ghid", "nickname"],

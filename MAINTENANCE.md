@@ -2028,3 +2028,69 @@ weibo-search-unattended-children → failed  Budget for everyinfra exhausted (st
 
 **教训**：`requireMarkers` 里放「青少年」「学生」「校园」「困境」这类词，在综合频道等于不过滤；
 而放之前必须先有"正确答案"（人工标注的样本），否则无法判断词表是松是紧。
+
+## 二十七、网页搜索型信源（kind=search）与费用核算口径修正（2026-10-22）
+
+### 为什么要新增一种 kind
+
+`rss` / `web_list` / `json_list` 都绑定在某站点的栏目结构上，`x_search` 绑定 X。它们共同的缺口是
+**覆盖面由别人决定**：专栏不收录的、热榜没选上的，一律拿不到。2026-10-21 的实测把这一点摊开了——
+在 tophub 的 420 条热榜里，唯一真对口的一条（河北邯郸父亲猥亵 12 岁女儿获刑）**只给了一个 360
+搜索页链接**，而有原文链接的 114 条当天 0 命中。
+
+`kind: "search"` 用的是 DeepSeek 网页搜索（`POST /v1/tools/search`，与模型调用同一把 key）。
+覆盖面由 `queries` 决定，不依赖任何站点的栏目。
+
+首跑实测（`search-child-rights`，8 组查询，`count=20`、`lookbackDays=7`）：
+
+- `found 143, created 30`（首导上限 30）
+- 其中 **19 条 score ≥ 40 且入池**，入池率 63%；对比同期 9 条 A/B 类正式媒体源全部 0 入池
+- 拿到的东西是现有 118 个源结构上拿不到的：民政部「农村留守儿童关爱服务质量提升三年行动」总结、
+  江西省「精准摸排、精确建档、精细服务」通知、江西地方标准《困境儿童帮扶转介服务规范》、
+  广西 10 部门「推动儿童福利机构开门办院」指导意见、邯郸案的**多家媒体原文**（而不是搜索页）
+
+### 配置项（`sources.config`）
+
+| 键 | 说明 |
+| --- | --- |
+| `queries` | 查询词数组，**每个元素计一次请求**。支持 `site:` `-site:` `"短语"` `after:` `before:` `lang:` |
+| `count` | 每次查询返回条数，1–50，默认 20。**不影响价格**（按请求计费，不按条数） |
+| `lookbackDays` | 默认 7。查询词里没有 `after:` 时自动追加 `after:<今天-lookbackDays>`；自己写了就不覆盖 |
+| `minAuthority` | 默认 2。`authority` 为 -1/null（未知）时**不丢弃**——字段缺失不等于不对口 |
+| `minRerank` | 默认 0。`rerank_score` 门槛，≥1.5 为强相关 |
+| `needContent` | 默认 false。true 时搜索结果**随附每条正文**，仍然只算一次请求，比逐篇 Fetch 划算得多 |
+| `oriQuestion` | 可选，把原始问题一起送过去改善检索 |
+
+### 三条必须知道的约定
+
+1. **计费按「成功请求」**：¥5 / 1000 次 = ¥0.005/次，只有 HTTP 200 且结果非空才收费，空结果与失败免费。
+   由 `providers/deepseek-tools.ts` 在响应里写 `cost.amount`，单价取 `service_prices` 的
+   `('deepseek-tools','')` 行；查不到行时退回官方价常量，避免"花了钱却显示未扣费"。
+2. **日级幂等**：幂等键含北京日期（`window`），同一查询**同一天只真正请求一次**，后续调度复用
+   已保存的响应且不再计费。所以 `interval_minutes` 设 360 也不会多花钱；`adaptIntervals` 对
+   `kind='search'` 固定为 360。
+3. **发布时间精度是 `date`**：搜索结果的 `date` 只到日，入库时归一到该日 00:00Z 并标
+   `publishedAtPrecision='date'`，前端只显示日期。正文抽取若拿到真实时间会升级精度
+   （`upsertMaterial` 的精度不降级保护会保住它）。
+
+### 费用核算的三处修正（此前金额是错的）
+
+1. **价格匹配改用调用记录上的 `(service, model)`**，不再拿模型名去 `MODELS` 注册表反查 service。
+   反查会随注册表变动失效：`LLM_MODEL` 从 `deepseek-chat` 换成 `deepseek-flash` 之后，
+   `serviceOf("deepseek-chat")` 返回 null，**7937 次历史调用整段静默变成「未定价」**，
+   而 `service_prices` 里那条 `(llm, deepseek-chat)` 明明还在。
+2. **缓存命中单独计价**。usage 里带 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`，
+   命中率约六成；过去 `costOf()` 只读 `input_per_mtok`，把命中的也按未命中算，**高估两倍以上**。
+3. **高峰/空闲双价**。DeepSeek 工作日 9–12、14–18（北京）翻倍。约定「主行=空闲价，高峰价另建一行、
+   model 名后加 `@peak`」（如 `deepseek-flash@peak`）；没有该行就等于不分时段。
+   核对方法：手算某天的 hit/miss/out 与 `daily[].amount` 比对——2026-10-21 手算 ¥3.7597、
+   接口返回 ¥3.75963，吻合。
+
+配套改动：`service_prices` 全部改为 **CNY**（旧行是 USD 0.3/1.2，那是 deepseek-chat 时代的价格）；
+token 估算与按次实付**不再跨币种直接相加**，靠 `USD_CNY_RATE`（.env）折进主币种，折不动就列进
+`spend.unconverted` 如实报出来。
+
+### 顺带修掉的一个老 bug
+
+`perDayActive`（活跃日均）原本只用 token 估算做分子，而 `projection`（日历日均）用的是
+token + 按次实付，两个分母不同导致"月化区间"的上界会低于下界。现在同用 `recentTotalSpend`。

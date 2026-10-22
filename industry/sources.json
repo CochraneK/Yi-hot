@@ -3641,6 +3641,55 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "search-child-rights",
+      "name": "网页搜索·儿童与公益（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "未成年人保护 检察 公益诉讼",
+          "困境儿童 帮扶 政策 通知",
+          "留守儿童 关爱保护 服务",
+          "儿童 性侵 猥亵 判决 法院",
+          "校园欺凌 防治 教育部",
+          "孤儿 事实无人抚养儿童 保障",
+          "残障儿童 康复 救助 政策",
+          "公益慈善 基金会 儿童 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "儿童"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

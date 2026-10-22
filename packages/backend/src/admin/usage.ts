@@ -6,10 +6,16 @@
 // operator-entered unit prices in `service_prices`; a figure is only "actual" when the provider
 // itself reported a charge (`cost_basis = 'actual'`). Days are Beijing calendar days.
 //
-// The price lookup mirrors admin/models.ts on purpose: a price row is matched by
-// (service, model), where `service` is resolved from the MODELS registry, and a row with an empty
-// model acts as that service's catch-all. A model name that is not in the registry gets no price —
-// that is the usual reason a figure shows as "未定价".
+// 价格匹配用 `receipt_attempts` 上记录的 (service, model) —— 那是调用当时的事实 —— 而不是拿
+// model 名去 MODELS 注册表反查 service。反查会随注册表变动而失效：模型改名（deepseek-chat →
+// deepseek-flash）后，历史行会被解析成另一个 service，价格明明在表里却永远匹配不上，整段历史
+// 静默变成「未定价」。注册表只用来提示「这个名字已经不在注册表里了」。
+//
+// 高峰/空闲：DeepSeek 工作日 9–12、14–18（北京）按双倍计价。约定高峰价单独一行，model 名加
+// `@peak` 后缀（如 `deepseek-flash@peak`）；没有这一行就退回主行，等于该服务不分时段。
+//
+// 缓存命中：usage 里带 `prompt_cache_hit_tokens` / `prompt_cache_miss_tokens`，命中部分按
+// `cached_per_mtok` 计。命中率在站点上约六成，只按未命中价算会高估两倍以上。
 import { sql } from "../db.ts";
 import { MODELS } from "../providers/llm.ts";
 
@@ -28,9 +34,14 @@ interface PriceRow {
 
 interface DayModelRow {
   day: string;
+  service: string;
   model: string | null;
+  peak: boolean;
   calls: number;
+  /** prompt_tokens（= 命中 + 未命中），只为展示。 */
   tokens_in: string | null;
+  cache_hit: string | null;
+  cache_miss: string | null;
   tokens_out: string | null;
 }
 
@@ -63,28 +74,73 @@ interface PerCallDayRow {
 
 const BJ_MS = 8 * 3600_000;
 
-const serviceOf = (model: string | null): string | null =>
-  model === null ? null : (Object.values(MODELS).find((m) => m.model === model || m.key === model)?.service ?? null);
+/**
+ * 北京时间工作日 09:00–12:00、14:00–18:00 是 DeepSeek 的高峰价时段（其余时段含周末为半价）。
+ * 法定节假日同样按空闲计价，这里不查节假日表：一年十来天的偏差会让金额略微高估，方向是保守的。
+ */
+const PEAK_SQL = sql`(extract(isodow from a.started_at + interval '8 hours') BETWEEN 1 AND 5
+  AND (extract(hour from a.started_at + interval '8 hours') BETWEEN 9 AND 11
+       OR extract(hour from a.started_at + interval '8 hours') BETWEEN 14 AND 17))`;
 
-const priceFor = (model: string | null, prices: PriceRow[]): PriceRow | null => {
-  const service = serviceOf(model);
-  if (service === null) return null;
-  return prices.find((p) => p.service === service && p.model === model) ?? prices.find((p) => p.service === service && p.model === "") ?? null;
+/** 该模型名是否仍在注册表里（只用于提示，不参与计价）。 */
+const stillRegistered = (model: string | null): boolean =>
+  model === null ? false : Object.values(MODELS).some((m) => m.model === model || m.key === model);
+
+const priceFor = (service: string, model: string | null, peak: boolean, prices: PriceRow[]): PriceRow | null => {
+  const named = model ?? "";
+  const find = (m: string) => prices.find((p) => p.service === service && p.model === m) ?? null;
+  // 高峰价是同一 (service, model) 的另一行，靠 `@peak` 后缀区分；没有这一行说明该服务不分时段。
+  if (peak) {
+    const peakRow = find(`${named}@peak`);
+    if (peakRow) return peakRow;
+  }
+  return find(named) ?? find("");
 };
 
-/**
- * Estimated money for one (tokens, calls) group. A price row may carry per-token rates, a
- * per-request rate, or both — a service that bills per call has no token rates at all, so the
- * per-request side must be applied or such a row would silently contribute nothing.
- */
-const costOf = (tokensIn: number, tokensOut: number, calls: number, p: PriceRow | null): { amount: number; currency: string } | null => {
+interface TokenCost {
+  /** 缓存命中的输入 token。 */
+  hit: number;
+  /** 未命中的输入 token。 */
+  miss: number;
+  out: number;
+}
+
+/** A price row's money for one group. Hit and miss are priced apart: one blended rate misreports by 2×. */
+const costOf = (t: TokenCost, calls: number, p: PriceRow | null): { amount: number; currency: string } | null => {
   if (!p) return null;
   const perCall = p.per_request === null ? 0 : Number(p.per_request);
-  const hasTokenRates = p.input_per_mtok !== null || p.output_per_mtok !== null;
+  const hasTokenRates = p.input_per_mtok !== null || p.cached_per_mtok !== null || p.output_per_mtok !== null;
   if (!hasTokenRates && perCall === 0) return null;
-  const amount = (tokensIn / 1e6) * Number(p.input_per_mtok ?? 0) + (tokensOut / 1e6) * Number(p.output_per_mtok ?? 0) + perCall * calls;
+  // A row without a cache-hit rate (older rows) prices hits at the miss rate — that is what was paid.
+  const hitRate = Number(p.cached_per_mtok ?? p.input_per_mtok ?? 0);
+  const missRate = Number(p.input_per_mtok ?? 0);
+  const outRate = Number(p.output_per_mtok ?? 0);
+  const amount = (t.hit / 1e6) * hitRate + (t.miss / 1e6) * missRate + (t.out / 1e6) * outRate + perCall * calls;
   return { amount, currency: p.currency };
 };
+
+/** Token split of one aggregated row; a record without the cache fields counts as fully missed. */
+const tokensOf = (r: { tokens_in: string | null; cache_hit: string | null; cache_miss: string | null; tokens_out: string | null }): TokenCost => ({
+  hit: Number(r.cache_hit ?? 0),
+  miss: r.cache_miss === null ? Number(r.tokens_in ?? 0) : Number(r.cache_miss),
+  out: Number(r.tokens_out ?? 0),
+});
+
+/**
+ * token 估算与按次实付常常来自不同币种：模型按人民币记账，EveryInfra 的回执是美元。直接把两个
+ * 数字相加会得到一个既不是元也不是美元的合计数，所以按 USD_CNY_RATE 折算。没配汇率就分开如实报，
+ * 不硬编码一个很快就会过时的汇率；返回 null 表示这一笔没能折进主币种。
+ */
+function converter(main: string): (amount: number, from: string) => number | null {
+  const rate = Number(process.env.USD_CNY_RATE ?? 0);
+  return (amount, from) => {
+    if (from === main) return amount;
+    if (!Number.isFinite(rate) || rate <= 0) return null;
+    if (from === "USD" && main === "CNY") return amount * rate;
+    if (from === "CNY" && main === "USD") return amount / rate;
+    return null;
+  };
+}
 
 /** The last `days` Beijing calendar days as `YYYY-MM-DD` keys, oldest first. */
 function dayKeys(days: number): string[] {
@@ -103,36 +159,53 @@ export async function usageOverview(days = 30) {
   const tokenServices = [...new Set(Object.values(MODELS).map((m) => m.service))];
   const [byDay, byPurpose, prices, lifetime, seen, perCall, perCallDay, perCallLife] = await Promise.all([
     sql<DayModelRow[]>`
-      SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day, a.model,
+      SELECT to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day,
+             a.service, a.model, ${PEAK_SQL} AS peak,
              count(*)::int AS calls,
              sum((a.usage->>'prompt_tokens')::bigint) AS tokens_in,
+             sum(coalesce((a.usage->>'prompt_cache_hit_tokens')::bigint, 0)) AS cache_hit,
+             sum(CASE WHEN a.usage->>'prompt_cache_miss_tokens' IS NULL
+                      THEN (a.usage->>'prompt_tokens')::bigint
+                      ELSE (a.usage->>'prompt_cache_miss_tokens')::bigint END) AS cache_miss,
              sum((a.usage->>'completion_tokens')::bigint) AS tokens_out
       FROM receipt_attempts a
       WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NOT NULL
-      GROUP BY 1, 2 ORDER BY 1`,
+      GROUP BY 1, 2, 3, 4 ORDER BY 1`,
     sql<PurposeRow[]>`
-      SELECT r.purpose, a.model, to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day,
+      SELECT r.purpose, a.service, a.model, to_char(a.started_at + interval '8 hours', 'YYYY-MM-DD') AS day,
+             ${PEAK_SQL} AS peak,
              count(*)::int AS calls,
              sum((a.usage->>'prompt_tokens')::bigint) AS tokens_in,
+             sum(coalesce((a.usage->>'prompt_cache_hit_tokens')::bigint, 0)) AS cache_hit,
+             sum(CASE WHEN a.usage->>'prompt_cache_miss_tokens' IS NULL
+                      THEN (a.usage->>'prompt_tokens')::bigint
+                      ELSE (a.usage->>'prompt_cache_miss_tokens')::bigint END) AS cache_miss,
              sum((a.usage->>'completion_tokens')::bigint) AS tokens_out
       FROM receipt_attempts a JOIN receipts r ON r.id = a.receipt_id
       WHERE a.started_at >= ${since} AND a.origin = 'live' AND a.usage IS NOT NULL
-      GROUP BY 1, 2, 3`,
+      GROUP BY 1, 2, 3, 4, 5`,
     sql<PriceRow[]>`
       SELECT service, model, currency, input_per_mtok, cached_per_mtok, output_per_mtok, per_request, source_url, verified_on, note
       FROM service_prices ORDER BY service, model`,
-    sql<{ model: string | null; calls: number; tokens_in: string | null; tokens_out: string | null; first: Date | null }[]>`
-      SELECT a.model, count(*)::int AS calls, sum((a.usage->>'prompt_tokens')::bigint) AS tokens_in,
-             sum((a.usage->>'completion_tokens')::bigint) AS tokens_out, min(a.started_at) AS first
+    sql<Array<DayModelRow & { first: Date | null }>>`
+      SELECT a.service, a.model, ${PEAK_SQL} AS peak,
+             count(*)::int AS calls,
+             sum((a.usage->>'prompt_tokens')::bigint) AS tokens_in,
+             sum(coalesce((a.usage->>'prompt_cache_hit_tokens')::bigint, 0)) AS cache_hit,
+             sum(CASE WHEN a.usage->>'prompt_cache_miss_tokens' IS NULL
+                      THEN (a.usage->>'prompt_tokens')::bigint
+                      ELSE (a.usage->>'prompt_cache_miss_tokens')::bigint END) AS cache_miss,
+             sum((a.usage->>'completion_tokens')::bigint) AS tokens_out,
+             min(a.started_at) AS first
       FROM receipt_attempts a WHERE a.origin = 'live' AND a.usage IS NOT NULL
-      GROUP BY 1`,
-    // The names that actually show up in receipts, so a price row can be created against a name
-    // that exists rather than one guessed from the model registry.
-    sql<{ model: string | null; calls: number }[]>`
-      SELECT a.model, count(*)::int AS calls
+      GROUP BY 1, 2, 3`,
+    // The (service, model) pairs that actually show up in receipts — the pair a price row must
+    // match. `service` here is the one recorded at call time, not one re-derived from the registry.
+    sql<{ model: string | null; service: string; calls: number }[]>`
+      SELECT a.model, a.service, count(*)::int AS calls
       FROM receipt_attempts a
       WHERE a.started_at >= ${since} AND a.origin = 'live'
-      GROUP BY 1 ORDER BY 2 DESC`,
+      GROUP BY 1, 2 ORDER BY 3 DESC`,
     // Per-request services. `sum(cost)` stays NULL when no attempt carried a charge, which is how a
     // service that was called but never billed (402, rejected key) is told apart from one that was
     // simply not used — the row still shows calls, with no amount.
@@ -161,31 +234,39 @@ export async function usageOverview(days = 30) {
   ]);
 
   const keys = dayKeys(d);
-  const buckets = new Map(keys.map((k) => [k, { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, currency: "USD" as string, priced: false }]));
+  // 主币种取 token 侧价格表的币种（DeepSeek 按人民币计价）。按次实付若是别的币种，靠 USD_CNY_RATE
+  // 折进来；折不动时单独报出来，绝不能把两个币种的数字加成一个。
+  const mainCurrency = prices.find((p) => p.currency)?.currency ?? "CNY";
+  const toMain = converter(mainCurrency);
+  const buckets = new Map(keys.map((k) => [k, { calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, priced: false }]));
+  /** 未能折进主币种的按次实付，按币种累计（原值）。 */
+  const unconverted = new Map<string, number>();
 
   // Per-request charges, keyed by Beijing day so they can sit on the same axis as the token
   // estimate. Kept separate from `amount` rather than summed into it: one is the provider's actual
   // debit, the other is our own arithmetic from a price table, and merging them would hide which.
-  const paidByDay = new Map<string, { amount: number; currency: string }>();
+  const paidByDay = new Map<string, number>();
   for (const row of perCallDay) {
     if (row.amount === null) continue;
-    const prev = paidByDay.get(row.day) ?? { amount: 0, currency: row.currency ?? "USD" };
-    prev.amount += Number(row.amount);
-    paidByDay.set(row.day, prev);
+    const currency = row.currency ?? "USD";
+    const converted = toMain(Number(row.amount), currency);
+    if (converted === null) {
+      unconverted.set(currency, (unconverted.get(currency) ?? 0) + Number(row.amount));
+      continue;
+    }
+    paidByDay.set(row.day, (paidByDay.get(row.day) ?? 0) + converted);
   }
 
   for (const row of byDay) {
     const b = buckets.get(row.day);
     if (!b) continue;
-    const tokensIn = Number(row.tokens_in ?? 0);
-    const tokensOut = Number(row.tokens_out ?? 0);
-    const c = costOf(tokensIn, tokensOut, row.calls, priceFor(row.model, prices));
+    const t = tokensOf(row);
+    const c = costOf(t, row.calls, priceFor(row.service, row.model, row.peak, prices));
     b.calls += row.calls;
-    b.tokensIn += tokensIn;
-    b.tokensOut += tokensOut;
+    b.tokensIn += t.hit + t.miss;
+    b.tokensOut += t.out;
     if (c) {
       b.amount += c.amount;
-      b.currency = c.currency;
       b.priced = true;
     }
   }
@@ -194,13 +275,12 @@ export async function usageOverview(days = 30) {
   const purposes = new Map<string, { purpose: string; model: string | null; calls: number; tokensIn: number; tokensOut: number; amount: number; currency: string; priced: boolean }>();
   for (const row of byPurpose) {
     const key = `${row.purpose}|${row.model ?? ""}`;
-    const p = purposes.get(key) ?? { purpose: row.purpose, model: row.model, calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, currency: "USD", priced: false };
-    const tokensIn = Number(row.tokens_in ?? 0);
-    const tokensOut = Number(row.tokens_out ?? 0);
-    const c = costOf(tokensIn, tokensOut, row.calls, priceFor(row.model, prices));
+    const p = purposes.get(key) ?? { purpose: row.purpose, model: row.model, calls: 0, tokensIn: 0, tokensOut: 0, amount: 0, currency: mainCurrency, priced: false };
+    const t = tokensOf(row);
+    const c = costOf(t, row.calls, priceFor(row.service, row.model, row.peak, prices));
     p.calls += row.calls;
-    p.tokensIn += tokensIn;
-    p.tokensOut += tokensOut;
+    p.tokensIn += t.hit + t.miss;
+    p.tokensOut += t.out;
     if (c) {
       p.amount += c.amount;
       p.currency = c.currency;
@@ -211,7 +291,6 @@ export async function usageOverview(days = 30) {
 
   const daily = keys.map((k) => {
     const b = buckets.get(k)!;
-    const paid = paidByDay.get(k);
     return {
       day: k,
       label: k.slice(5),
@@ -219,8 +298,8 @@ export async function usageOverview(days = 30) {
       tokensIn: b.tokensIn,
       tokensOut: b.tokensOut,
       amount: b.priced ? b.amount : null,
-      paid: paid ? paid.amount : null,
-      currency: b.currency,
+      paid: paidByDay.get(k) ?? null,
+      currency: mainCurrency,
       priced: b.priced,
     };
   });
@@ -249,12 +328,21 @@ export async function usageOverview(days = 30) {
   });
   const apiBilled = perCallRows.reduce((n, r) => n + r.billed, 0);
   const apiCalls = perCallRows.reduce((n, r) => n + r.calls, 0);
-  const apiAmount = perCallRows.reduce((n, r) => n + (r.amount ?? 0), 0);
+  // 每个服务保留自己的币种（表格按行显示，行内一致所以是对的）；合计则一律折进主币种。
+  let apiAmount = 0;
+  let apiConverted = false;
+  for (const r of perCallRows) {
+    if (r.amount === null) continue;
+    const converted = toMain(r.amount, r.currency);
+    if (converted === null) continue;
+    apiAmount += converted;
+    apiConverted = true;
+  }
   const window = daily.filter((x) => x.calls > 0);
   const activeDays = window.length;
-  const currency = daily.find((x) => x.priced)?.currency ?? prices[0]?.currency ?? "USD";
-  // Lifetime is priced per model, not with "the first price row that has a model" — that shortcut
-  // silently changes the total when an unrelated row sorts first.
+  const currency = mainCurrency;
+  // Lifetime is priced per (service, model, peak) row, not with "the first price row that has a
+  // model" — that shortcut silently changes the total when an unrelated row sorts first.
   const lifeCalls = lifetime.reduce((n, r) => n + r.calls, 0);
   const lifeIn = lifetime.reduce((n, r) => n + Number(r.tokens_in ?? 0), 0);
   const lifeOut = lifetime.reduce((n, r) => n + Number(r.tokens_out ?? 0), 0);
@@ -262,7 +350,7 @@ export async function usageOverview(days = 30) {
   let lifeAmount = 0;
   let lifePriced = false;
   for (const r of lifetime) {
-    const c = costOf(Number(r.tokens_in ?? 0), Number(r.tokens_out ?? 0), r.calls, priceFor(r.model, prices));
+    const c = costOf(tokensOf(r), r.calls, priceFor(r.service, r.model, r.peak, prices));
     if (c) {
       lifeAmount += c.amount;
       lifePriced = true;
@@ -270,7 +358,12 @@ export async function usageOverview(days = 30) {
   }
   const lifeApiCalls = perCallLife.reduce((n, r) => n + r.calls, 0);
   const lifeApiBilled = perCallLife.reduce((n, r) => n + r.billed, 0);
-  const lifeApiAmount = perCallLife.reduce((n, r) => n + (r.amount === null ? 0 : Number(r.amount)), 0);
+  let lifeApiAmount = 0;
+  for (const r of perCallLife) {
+    if (r.amount === null) continue;
+    const converted = toMain(Number(r.amount), r.currency ?? "USD");
+    if (converted !== null) lifeApiAmount += converted;
+  }
 
   // Run rate: the trailing week is a far better basis than "average over active days", which the
   // one-off first backfill (and holiday lulls) skew badly. Quoting the basis keeps it honest.
@@ -290,15 +383,18 @@ export async function usageOverview(days = 30) {
   // and the active-day average back up by whatever spike happened, so neither is authoritative on
   // its own — the page shows both rather than picking one.
   const recentActive = recent.filter((x) => x.calls > 0).length;
-  const perDayActive = recentActive ? recentTotals.amount / recentActive : null;
+  // 活跃日均要和上面的日历日均用同一个分子（token 估算 + 按次实付），否则两个端点会错位：
+  // 只拿 token 部分除以活跃天数，算出来的"上界"反而比"下界"还低。
+  const perDayActive = recentActive > 0 && recentTotalSpend !== null ? recentTotalSpend / recentActive : null;
 
   // Two kinds of money on this page and they must not be added silently: `tokenSpend` is our own
-  // arithmetic from the price table, `apiSpend` is what providers actually debited. The headline
-  // uses their sum because "what does this cost me" is the question being asked, but the split is
-  // always shown next to it.
+  // arithmetic from the price table, `apiSpend` is what providers actually debited — now both folded
+  // into the main currency. Anything that could not be converted is reported as `unconverted` rather
+  // than being dropped or, worse, added at face value.
   const tokenSpend = totals.amount || null;
-  const apiSpend = apiBilled > 0 ? apiAmount : null;
+  const apiSpend = apiConverted ? apiAmount : null;
   const totalSpend = tokenSpend === null && apiSpend === null ? null : (tokenSpend ?? 0) + (apiSpend ?? 0);
+  const unconvertedRows = [...unconverted.entries()].map(([cur, amount]) => ({ currency: cur, amount }));
 
   return {
     days: d,
@@ -308,7 +404,7 @@ export async function usageOverview(days = 30) {
     daily,
     purposes: [...purposes.values()].sort((a, b) => b.tokensIn + b.tokensOut - (a.tokensIn + a.tokensOut)),
     totals: { ...totals, amount: tokenSpend, paid: apiSpend },
-    spend: { token: tokenSpend, api: apiSpend, total: totalSpend, currency },
+    spend: { token: tokenSpend, api: apiSpend, total: totalSpend, currency, unconverted: unconvertedRows },
     // Per-request providers, the ones that never report tokens. Without this block they were
     // invisible here: every other query on the page filters on `usage IS NOT NULL`.
     perCall: {
@@ -349,10 +445,14 @@ export async function usageOverview(days = 30) {
       apiCalls: lifeApiCalls,
       apiAmount: lifeApiBilled > 0 ? lifeApiAmount : null,
     },
-    // Model names that actually appear in receipts during the window, plus the service the registry
-    // maps them to. A name with `service: null` is not in MODELS, so no price row can ever match it —
-    // surfacing this is how the operator finds out *why* a figure reads "未定价".
-    seenModels: seen.filter((r) => r.model).map((r) => ({ model: r.model as string, service: serviceOf(r.model), calls: r.calls })),
-    services: tokenServices.sort(),
+    // The (service, model) pairs actually seen in receipts, with whether a price row matches them.
+    // `registered: false` means the name is no longer in MODELS (a retired model name such as
+    // deepseek-chat) — that no longer blocks pricing, because matching uses the recorded service,
+    // but it is still worth showing: a new model name needs a price row of its own.
+    seenModels: seen.filter((r) => r.model).map((r) => {
+      const priced = prices.some((p) => p.service === r.service && (p.model === r.model || p.model === "" || p.model === `${r.model}@peak`));
+      return { model: r.model as string, service: r.service, calls: r.calls, registered: stillRegistered(r.model), priced };
+    }),
+    services: [...new Set([...tokenServices, ...seen.map((r) => r.service)])].sort(),
   };
 }

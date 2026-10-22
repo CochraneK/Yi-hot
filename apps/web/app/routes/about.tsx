@@ -178,8 +178,71 @@ function Maker({ maker, contact }: { maker: NonNullable<typeof ABOUT.maker>; con
   );
 }
 
-/** The latest 精选 under the river's paper; it moves on each time an item reaches the paper. */
-function Latest({ item, className = "" }: { item: SiteStats["latest"][number] | undefined; className?: string }) {
+/**
+ * 关于页结尾那一屏（ABOUT.account）：讲这个机构是谁、做什么，而不是解释数据分析过程。
+ * 左边是机构介绍 + 几个事实数字 + 一条数据报告的次级入口，右边是公众号二维码。
+ * 二维码来自后台「设置」的 contact.wechatQr；没配就只渲染文字，不留空卡片。
+ */
+function Account({ account, qr }: { account: NonNullable<typeof ABOUT.account>; qr: string | null }) {
+  return (
+    <section aria-labelledby="account" className="mt-20 border-t border-line pt-12 xl:mt-28 xl:pt-16">
+      {/* 没有二维码时不要留一列空白，文字直接占满整行 */}
+      <div className={`grid gap-10 lg:gap-16 ${qr ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,268px)]" : ""}`}>
+        <div>
+          <Kicker>{account.kicker}</Kicker>
+          <h2 id="account" className="mt-4 text-[26px] font-black leading-[1.3] tracking-[-0.02em] text-ink [text-wrap:balance] xl:text-[34px]">
+            {account.headline}
+          </h2>
+          {/* 机构介绍：一段话或几段话，分开排更好读 */}
+          <div className="mt-5 max-w-[34em] space-y-3.5 text-[15.5px] leading-[1.9] text-ink-2 xl:text-[16.5px]">
+            {(Array.isArray(account.lead) ? account.lead : [account.lead]).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          <dl className="mt-8 grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4">
+            {account.figures.map((f) => (
+              <div key={f.label}>
+                <dt className="num text-[24px] font-black leading-none tracking-[-0.03em] text-ink xl:text-[28px]">{f.value}</dt>
+                <dd className="mt-2 text-[12.5px] leading-[1.6] text-ink-4">{f.label}</dd>
+              </div>
+            ))}
+          </dl>
+          <Link to={account.report.href} reloadDocument className={`${buttonClass("secondary", "lg")} mt-8`}>
+            {account.report.label} <IconArrowRight size={15} />
+          </Link>
+          {account.site && (
+            <p className="mt-4 text-[13px] leading-[1.8] text-ink-4">
+              机构的完整介绍，见
+              <a href={account.site.href} target="_blank" rel="noreferrer noopener" className="text-accent hover:underline">
+                {account.site.label}
+              </a>
+              。
+            </p>
+          )}
+        </div>
+        {qr && (
+          <figure className="card mx-auto w-full max-w-[256px] self-start p-3.5 text-center lg:mx-0">
+            {/* 方码：固定宽高比，避免被卡片拉成长方形 */}
+            <img
+              src={qr}
+              alt="救助儿童会公众号二维码"
+              width={400}
+              height={400}
+              loading="lazy"
+              className="mx-auto block aspect-square w-full rounded-tile object-contain"
+            />
+            <figcaption className="mt-3 border-t border-line pt-3">
+              <div className="text-[14px] font-semibold text-ink">{account.qr.title}</div>
+              <p className="mt-1.5 text-[12.5px] leading-[1.7] text-ink-4">{account.qr.note}</p>
+            </figcaption>
+          </figure>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** The latest 精选 under the river's paper; it moves on each time an item reaches the paper. */function Latest({ item, className = "" }: { item: SiteStats["latest"][number] | undefined; className?: string }) {
   if (!item) return null;
   return (
     <Link to={`/items/${item.id}`} prefetch="intent" className={`group block ${className}`}>
@@ -270,6 +333,8 @@ export default function AboutPage() {
       </section>
 
       {ABOUT.maker && <Maker maker={ABOUT.maker} contact={contact} />}
+
+      {ABOUT.account && <Account account={ABOUT.account} qr={contact.wechatQr} />}
 
       <p className="mt-16 well rounded-card px-5 py-4 text-[13px] leading-[1.85] text-ink-3">
         {ABOUT.copyright}

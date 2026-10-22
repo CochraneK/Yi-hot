@@ -28,6 +28,7 @@ type Step = "extract" | "analyze";
  * Whether paid analysis should wait for the off-peak window. DeepSeek bills weekday peak hours
  * (Beijing 09:00–12:00 and 14:00–18:00) at double the off-peak rate, so with ANALYZE_OFFPEAK_ONLY
  * the model calls are held back to the half-price window while body extraction (free) still runs.
+ * Peak hours are not a full stop: peakSlotsLeft lets a few articles an hour through.
  *
  * Deferring moves *when* the model runs, never *what* the timeline says: `discovered_at` and
  * `published_at` are written at ingest by decideTimeline, long before any analysis. The longest wait
@@ -41,6 +42,38 @@ export function isPeakAnalysisHour(now = Date.now()): boolean {
   if (weekday === 0 || weekday === 6) return false; // weekends are off-peak all day
   const hour = beijing.getUTCHours();
   return (hour >= 9 && hour < 12) || (hour >= 14 && hour < 18);
+}
+
+/** Analyses per peak hour by default: a trickle, not a stop. */
+const PEAK_PER_HOUR = 8;
+
+// Dispatch count for the peak hour in flight, seeded from the receipts so a restart mid-hour does not
+// hand out a second full quota. Cheap, and the only state this module keeps.
+let peakHour = -1;
+let peakDispatched = 0;
+
+/**
+ * Paid analyses still allowed this hour. Off-peak the answer is unlimited; during peak hours it is
+ * ANALYZE_PEAK_PER_HOUR (default 8, 0 = stop entirely, which is what the switch used to mean).
+ *
+ * Holding *everything* back for three hours at a time left the feed visibly frozen all morning and
+ * then dumped the whole backlog at 12:00. A trickle keeps today's news moving while still pushing the
+ * bulk of the work into the half-price window — the sweep runs every five minutes, so the remaining
+ * backlog drains on its own.
+ */
+export async function peakSlotsLeft(now = Date.now()): Promise<number> {
+  if (!isPeakAnalysisHour(now)) return Number.POSITIVE_INFINITY;
+  const perHour = Number(process.env.ANALYZE_PEAK_PER_HOUR ?? PEAK_PER_HOUR);
+  if (!Number.isFinite(perHour) || perHour <= 0) return 0;
+  const hour = Math.floor(now / 3600_000);
+  if (hour !== peakHour) {
+    const [row] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM receipt_attempts a JOIN receipts r ON r.id = a.receipt_id
+      WHERE r.purpose = 'prefilter_article' AND a.origin = 'live' AND a.started_at >= to_timestamp(${hour * 3600})`;
+    peakHour = hour;
+    peakDispatched = row?.n ?? 0;
+  }
+  return Math.max(0, perHour - peakDispatched);
 }
 
 interface Route {
@@ -88,11 +121,16 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
   const r = await route(articleId, db);
   if (!r) return null;
   const step = opts.step ?? r.step;
-  // Peak hours: leave the article waiting for the off-peak sweep instead of paying double. An
-  // explicit re-evaluation (attemptTag) is a human asking now, so it is never held back.
-  if (step === "analyze" && !opts.attemptTag && isPeakAnalysisHour()) {
-    await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
-    return null;
+  // Peak hours: let a trickle through and leave the rest waiting for the sweep, so the feed keeps
+  // moving instead of freezing until the window ends. An explicit re-evaluation (attemptTag) is a
+  // human asking now, so it is never held back.
+  if (step === "analyze" && !opts.attemptTag) {
+    const left = await peakSlotsLeft();
+    if (left <= 0) {
+      await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
+      return null;
+    }
+    if (Number.isFinite(left)) peakDispatched += 1;
   }
   await db`UPDATE articles SET processing_queued_at = now() WHERE id = ${articleId}`;
   if (step === "extract") return enqueue(QUEUES.extractBody, { articleId }, { singletonKey: articleId, priority: r.historical ? PRIORITY.history : PRIORITY.live }, opts.db);
@@ -230,20 +268,25 @@ export async function registerExtractionJobs(boss: PgBoss) {
  * Safety net: articles waiting for processing that no queue holds (crash between write and enqueue,
  * a lost job, a retry that came due). Articles already queued or running are left alone.
  *
- * Peak hours are skipped whole: every article it would pick up is on its way to a paid call, and
- * holding them here is what lets them run at half price. They keep `processing_state = 'new'`, so
- * nothing is lost — the first off-peak sweep takes the whole backlog.
+ * Peak hours take only the hourly trickle (see peakSlotsLeft) and leave the rest alone: everything it
+ * would pick up is on its way to a paid call, and holding it costs nothing — those articles keep
+ * `processing_state = 'new'`, so the off-peak sweep drains the whole backlog.
  */
 export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
-  if (isPeakAnalysisHour()) return { enqueued: 0 };
+  const left = await peakSlotsLeft();
+  if (left <= 0) return { enqueued: 0 };
+  // During peak, ask for a couple of rows per free slot: queueProcessing re-checks the quota itself,
+  // and the rest of the backlog is not worth a per-article route() read every five minutes.
+  const take = Number.isFinite(left) ? Math.min(60, Math.max(2, Math.ceil(left) * 2)) : 500;
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM articles
     WHERE processing_state = 'new' AND created_at < now() - interval '3 minutes'
       AND (processing_retry_at IS NULL OR processing_retry_at <= now())
       AND (processing_queued_at IS NULL OR processing_queued_at < now() - ${QUEUED_STALE}::interval)
-    ORDER BY discovered_at DESC LIMIT 500`;
-  for (const r of rows) await queueProcessing(r.id);
-  return { enqueued: rows.length };
+    ORDER BY discovered_at DESC LIMIT ${take}`;
+  let enqueued = 0;
+  for (const r of rows) if (await queueProcessing(r.id)) enqueued += 1;
+  return { enqueued };
 }
 
 /** How the runs page groups failures: the message with ids and numbers masked. */

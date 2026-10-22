@@ -30,32 +30,46 @@ export function fullDateTime(iso: string): string {
 }
 
 export interface FeedTimeDisplay {
-  /** The article's own time, and the datetime attribute. Date-only articles sit at Beijing midnight of their own day. */
-  at: string;
-  label: "原文发表" | "收录";
-  /** The source only states a day (government listings): show the date, never a made-up clock time. */
-  dateOnly: boolean;
   /**
-   * The moment the list's clock column prints: the article's own time, or our collection time.
-   * A date-only article is listed where its collection moment falls inside its own day, so the list
-   * still reads newest-first — the sort key in the timeline is this same moment.
+   * Where the card sits and the moment the list's clock column prints. It is the article's own time
+   * when the source states a clock, our collection time when it does not — the same moment the
+   * timeline in the backend sorts by.
    */
+  at: string;
+  /** What `at` is. */
+  label: "原文发表" | "收录";
+  /** The source states only a day (government listings, web search): no clock time exists for it. */
+  dateOnly: boolean;
+  /** Alias of `at`, kept because the slot component takes the printed clock separately. */
   clockAt: string;
-  /** What that clock is, said under it: "收录" when it is not the article's own time. */
+  /** Said under the clock: "收录" when `at` is our collection time rather than the article's. */
   clockLabel: "收录" | null;
+  /**
+   * The article's own moment, as the page may state it: Beijing midnight of its day when the source
+   * states only a day, the exact instant otherwise, null when we do not know it at all. Never used
+   * for placement — a date-only article collected today is filed under today.
+   */
+  sourceAt: string | null;
 }
 
 /**
- * What the feed shows for an article's time. A source that states only a day keeps that day; borrowing
- * the collection clock would present a fetch time as the publication time. "收录" is reserved for
- * articles whose own date is unknown.
+ * What the feed shows for an article's time.
+ *
+ * A date-only article is placed by its collection moment, not by the day it was published. A source
+ * that states only a day gives no clock to sort by, so filing the card under its own day pushed a
+ * batch collected today onto seven different days in the middle of the list; the card now sits where
+ * we collected it, the slot says "收录" under that clock, and `sourceAt` still carries the
+ * publication day for the item page and the slot's tooltip. "收录" is also what an article with no
+ * date at all gets.
  */
 export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): FeedTimeDisplay {
   const collected = timelineAt || discoveredAt;
-  if (!publishedAt) return { at: collected, label: "收录", dateOnly: false, clockAt: collected, clockLabel: "收录" };
-  if (precision === "date") return { at: `${beijingDate(publishedAt)}T00:00:00+08:00`, label: "原文发表", dateOnly: true, clockAt: discoveredAt, clockLabel: "收录" };
-  if (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00") return { at: discoveredAt, label: "收录", dateOnly: false, clockAt: discoveredAt, clockLabel: "收录" };
-  return { at: publishedAt, label: "原文发表", dateOnly: false, clockAt: publishedAt, clockLabel: null };
+  // A 00:00 stamp on a datetime-precision article is a date in disguise (the parser filled the clock),
+  // so it is treated like one: no clock to sort by, no clock to print.
+  const dateOnly = publishedAt !== null && (precision === "date" || (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00"));
+  const sourceAt = publishedAt === null ? null : dateOnly ? `${beijingDate(publishedAt)}T00:00:00+08:00` : publishedAt;
+  if (sourceAt === null || dateOnly) return { at: collected, label: "收录", dateOnly, clockAt: collected, clockLabel: "收录", sourceAt };
+  return { at: sourceAt, label: "原文发表", dateOnly: false, clockAt: sourceAt, clockLabel: null, sourceAt };
 }
 
 /** "2026年10月18日" for day-precision sources, where no clock time exists. */

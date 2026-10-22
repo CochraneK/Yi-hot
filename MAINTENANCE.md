@@ -2281,3 +2281,56 @@ ssh yihot "sudo docker exec aihot-api-1 curl -s http://127.0.0.1:3001/api/site/c
 
 这是有意的边界：**列表回答"我今天收到了什么"，日报与推送回答"今天发生了什么"**。两者口径不同不是
 不一致，别为了"统一"把列表改回去、也别顺手把日报改成按收录时间——那会让日报变成"今天抓了多少"。
+
+## 三十、两类「怎么办都修不好」的问题：读不到的页面、重复的卡片（2026-10-22 下午）
+
+### 一、原文印着 8:50，卡片还是只标「收录」——不是解析问题，是页面根本没取到
+
+湖南民政厅那条「长沙社工站…服务儿童 1.05 万余人」原文页有 `<meta name="published"
+content="2026.10.22 08:50:04 CST">`，元数据关键词表里已经有 `published`，回填却一直修不掉。
+直接测才发现握手就失败：
+
+```
+fetch failed  cause: ERR_SSL_BAD_ECPOINT     # Node 22 / OpenSSL 3，默认 ecdhCurve="auto"
+```
+
+服务器**先**提出 X25519 密钥共享，对方回的曲线点 OpenSSL 判为非法，TLS 直接谈崩。浏览器和本机
+curl 都正常，因为它们的曲线顺序不同。改法在 `lib/http-fetch.ts`：
+
+- 正常路径不变；握手报 `ERR_SSL_BAD_ECPOINT` / `EPROTO` 时，**同一个请求换一个只提供 P-256 的
+  Agent 重试一次**（`connect.ecdhCurve = "prime256v1"`）。所有浏览器都能协商 P-256，固定曲线不损失兼容性。
+- 只对直连生效；走 egress 代理的连接不重试（TLS 由代理终止，曲线参数不是我们决定的）。
+
+验证：`guardedFetch` 取该页 → `200 datetime 2026-10-22T00:50:04Z`（=08:50），
+回填脚本随即把这篇文章从 `date` 升为 `datetime`。
+
+**这类站点此前被判成「fetch failed」而停用**（湖南省民政厅 probe 源 `enabled=f`、`fail_count=1`）。
+以后再看到 `fetch failed`，先分清三种：DNS、证书/协议（本文这种）、对端 403/超时。
+
+### 二、同一案件在首页出现好几次——历史条目从来就没进过分组
+
+`groupArticle` 里原本有一句「历史不创设事件」，历史条目直接 `markGrouped` + `publishArticle`，
+**连分组队列都没进**（`processArticle` 里 `!row.historical` 才入队）。而列表按
+`coalesce('s'||story_id, 'f'||fact_id, 'a'||article_id)` 归卡，没 story 就一篇一张卡，于是
+「邯郸父亲猥亵 12 岁女儿」在首页站着三张。
+
+改法：**历史可以「挂靠」，不可以「创设」**。
+
+- `groupArticle`：删掉那段早退，改为 `const history = isHistorical(a)`，照常召回与判定；
+  只接受 `same-fact`（同一个事实/事件），`same-story` 不算；没命中就仍是 `historical` 散着。
+- 写库时历史条目**不写 `story_signals`**（`if (!history) recordSignal(...)`）：合并可以，热度不掺旧闻。
+- 判定标签新增 `historical-attached`；`jobs/events.ts` 不给它排 digest（并入旧卡不该重写旧卡摘要）。
+- `processArticle`：`!row.historical || 收录与原文相距 ≤7 天` 才入队。7 天是搜索回看窗的长度，
+  也是「这个源第一次导入」的跨度；再老的历史每条都要花一次判定去挂靠，没人会翻到那里。
+
+存量清理（可重复跑）：
+
+```
+node --env-file=.env scripts/attach-recent-history.ts --days 7 --source search-child-rights [--dry-run]
+```
+
+实测 53 条：`historical-attached 10`、`same-fact 2`、`historical 11`、`filtered 24`（源规则 40 分线）、
+`new-story 6`（收录与原文相距 <48h，不算历史，正常创设）。事件 203 从此有 3 篇报道、1 张卡。
+
+**顺带一条口径**：`additionalSourceCount` 按**源**算，所以搜索源带来的三篇同源报道显示「0 家额外来源」，
+卡片上是「3 篇报道」。要按站点算来源数得另加字段，别拿 `additionalSourceCount` 当站点数。

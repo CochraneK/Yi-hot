@@ -111,6 +111,9 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
  */
 const PRIORITY = { live: 0, liveSignal: -1, history: -2 } as const;
 
+/** A backfilled item this fresh can still have a live twin on the site (see processArticle). */
+const RECENT_ARRIVAL_MS = 7 * 24 * 3600 * 1000;
+
 /**
  * The one way to hand an article to processing. `attemptTag` makes an explicit re-evaluation a new
  * (paid) request; the same tag reuses its receipt. With `db`, the job commits with the caller's write.
@@ -178,8 +181,13 @@ export async function processArticle(articleId: string, opts: { attemptTag?: str
     }
     if (result.stale) return { state: "stale" }; // the newer revision has its own job
     await publishArticle(articleId);
-    // History is archived but founds no event (isHistorical).
-    if (result.output.relevance === "pass" && !row.historical) await enqueue(QUEUES.group, { articleId }, { singletonKey: articleId, priority: PRIORITY.live });
+    // History is archived but founds no event (isHistorical). It is still grouped when it arrived
+    // this week, so that a backfilled copy of a case already on the site (search's 7-day lookback, a
+    // source's first import) joins that card instead of standing beside it. Grouping only lets such
+    // an item attach — it never founds a story — so an older archive would spend an identity call per
+    // item for a card nobody scrolls to.
+    const recentArrival = row.published_at !== null && row.discovered_at.getTime() - row.published_at.getTime() <= RECENT_ARRIVAL_MS;
+    if (result.output.relevance === "pass" && (!row.historical || recentArrival)) await enqueue(QUEUES.group, { articleId }, { singletonKey: articleId, priority: PRIORITY.live });
     return { state: result.output.relevance };
   } catch (error) {
     if (error instanceof AnalysisInterruptedError || shutdownSignal.signal.aborted) throw error;

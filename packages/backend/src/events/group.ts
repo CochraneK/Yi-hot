@@ -589,7 +589,7 @@ export async function linkRelatedStories(): Promise<{ added: number }> {
 export interface GroupResult {
   verdict:
     | "same-fact" | "same-url" | "new-fact-in-story" | "new-story" | "roundup" | "kept" | "standalone" | "manual" | "skipped"
-    | "signal" | "signal-native" | "signal-unmatched" | "historical" | "filtered";
+    | "signal" | "signal-native" | "signal-unmatched" | "historical" | "historical-attached" | "filtered";
   factId?: number;
   storyId?: number;
   /** Stories compared because this report tied them together (see consolidate). */
@@ -655,12 +655,12 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     return { verdict: "filtered" };
   }
 
-  // History founds no event and adds no heat (isHistorical); a regroup takes it out of any it joined.
-  if (isHistorical(a)) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
-    return { verdict: "historical" };
-  }
+  // History founds no event and adds no heat (isHistorical), but it may still be the same occurrence
+  // as a report already on the site: a search result from three days ago, a source's first import,
+  // the same case picked up by six outlets. It is therefore allowed to attach below — and only to
+  // attach: with no matching occurrence it stays standalone. Before this, every one of those copies
+  // was published as its own card, so one case stood five times in the feed.
+  const history = isHistorical(a);
 
   if (opts.signalOnly || a.participation_mode !== "editorial") return groupSignal(a, source, observedAt);
 
@@ -740,6 +740,14 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     }
   }
 
+  // An old report joins only a fact it matches as an occurrence; a mere "same story" is not enough
+  // for history to add another report to a card.
+  if (history && !factId) {
+    await markGrouped(articleId);
+    await publishArticle(articleId);
+    return { verdict: "historical" };
+  }
+
   const decisionCandidates: DecisionCandidate[] = cands.map((c) => ({
     id: c.factId, score: Math.round(c.score * 1000) / 1000, relation: verdicts.get(c.factId)?.relation, confidence: verdicts.get(c.factId)?.confidence,
   }));
@@ -759,15 +767,18 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     const [hasPrimary] = await tx<{ n: number }[]>`SELECT count(*) AS n FROM fact_articles WHERE fact_id = ${fact} AND role = 'primary'`;
     const role = a.first_party && Number(hasPrimary?.n ?? 0) === 0 ? "primary" : "report";
     await tx`INSERT INTO fact_articles (fact_id, article_id, role, created_at) VALUES (${fact}, ${articleId}, ${role}, ${observedAt}) ON CONFLICT (fact_id, article_id) DO NOTHING`;
-    await recordSignal(tx, story, articleId, source, "editorial", observedAt);
-    await recordDecision(tx, articleId, fact, story, verdict, decisionCandidates, receipts[0] ?? null);
+    // An old report joins the card but is not evidence of attention: no signal, no heat.
+    if (!history) await recordSignal(tx, story, articleId, source, "editorial", observedAt);
+    await recordDecision(tx, articleId, fact, story, history ? "historical-attached" : verdict, decisionCandidates, receipts[0] ?? null);
     await tx`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
     return { manual: null, factId: fact, storyId: story };
   });
   for (const id of receipts) await completeReceipt(sql, id);
   await publishArticle(articleId);
   if (written.manual) return { verdict: "manual", factId: written.manual.factId };
-  const result: GroupResult = { verdict, factId: written.factId!, storyId: written.storyId! };
+  const result: GroupResult = history
+    ? { verdict: "historical-attached", factId: written.factId!, storyId: written.storyId! }
+    : { verdict, factId: written.factId!, storyId: written.storyId! };
 
   // Other stories this report is firmly tied to: one story may have grown two roots. Best effort:
   // the report's own decision is written; a failed comparison is reported in the job's result.

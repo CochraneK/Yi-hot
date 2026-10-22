@@ -6,6 +6,7 @@ import { useChangelogSeen } from "../../lib/local-state";
 import { SIDEBAR, tabIsActive, type NavItem } from "./nav";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { Wordmark } from "../../components/Logo";
+import { IconMail } from "../icons";
 
 /** True while the changelog has an entry newer than the one this reader last opened. */
 export function useChangelogDot(latestVersion: string | null): boolean {
@@ -60,10 +61,19 @@ export function Sidebar({ changelogVersion }: { changelogVersion: string | null 
         ))}
       </nav>
       <div className="mt-2 space-y-2.5 px-1 pt-1">
-        <ThemeSwitch className="mx-1" />
-        <Link to="/subscribe" className="block px-2 text-[11px] text-ink-3 transition-colors hover:text-ink-2">
-          邮件订阅 / RSS
+        {/* 手机上「订阅」常驻在品牌行右侧，桌面这一颗是它的对等入口。
+            原先只是一行 11px 灰字压在侧栏最底部，读者基本看不见，所以改成和手机一致的实色按钮。 */}
+        <Link
+          to="/subscribe"
+          className="flex h-9 items-center justify-center gap-1.5 rounded-control bg-accent text-[13px] font-medium text-accent-contrast transition-opacity hover:opacity-90"
+        >
+          <IconMail size={14} />
+          订阅更新
         </Link>
+        <a href="/feed.xml" className="block text-center text-[10.5px] text-ink-4 transition-colors hover:text-ink-3">
+          或用 RSS 订阅
+        </a>
+        <ThemeSwitch className="mx-1" />
         {SITE.icp && (
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="block px-2 text-[10px] text-ink-4 hover:text-ink-3">
             {SITE.icp}

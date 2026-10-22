@@ -3,7 +3,7 @@ import { withSubject } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import type { ReactNode } from "react";
 import {
-  IconApps, IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMessage, IconPlug, IconShield,
+  IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMenu, IconMessage, IconPlug, IconShield,
 } from "../icons";
 
 export interface NavItem {
@@ -54,13 +54,14 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
 
 // 手机底栏固定 5 项（精选关闭时为 4 项 + 此处新增的「热点」）：总报 / 动态 / 热点 / 主题 / 更多。
 // 「主题」「热点」进了底栏后，就不在「更多」页重复出现（见 more.tsx）。
+// 「更多」用三横线（IconMenu）而不是四宫格：四宫格和「主题」的 IconGrid 在小尺寸下几乎分不出来。
 export const TABBAR: NavItem[] = [
   { to: "/weekly", label: "总报", icon: IconDoc },
   ...(FEATURES.selectedFeed ? [{ to: "/", label: "精选", icon: IconBolt, end: true }] : []),
   { to: "/all", label: "动态", icon: IconList },
   { to: "/hot", label: "热点", icon: IconFlame },
   { to: "/topics", label: "主题", icon: IconGrid },
-  { to: "/more", label: "更多", icon: IconApps, changelog: true },
+  { to: "/more", label: "更多", icon: IconMenu, changelog: true },
 ];
 
 /** Pages reached from the mobile "更多" tab keep that tab highlighted. */

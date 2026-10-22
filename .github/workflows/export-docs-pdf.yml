@@ -13,6 +13,12 @@ on:
 permissions:
   contents: write
 
+# 只允许一个导出在跑。两个同时跑会各自提交一份 PDF、后推的那个被拒，
+# 白白浪费一次 15 分钟的渲染；排队等反而更快。
+concurrency:
+  group: export-docs-pdf
+  cancel-in-progress: false
+
 jobs:
   export:
     name: Render and publish PDFs
@@ -49,4 +55,14 @@ jobs:
             exit 0
           fi
           git commit -m "docs(pdf): refresh rendered YiHot manuals [skip ci]"
-          git push origin HEAD:main
+          # main 可能在渲染这十几分钟里被推过（比如同时推了代码）。裸 push 被拒会让整轮
+          # 跑成失败，PDF 白渲染一遍。先 fetch + rebase 到最新再推，最多重试三次。
+          for i in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; sleep 5; continue; }
+            git push origin HEAD:main && { echo "PDFs published"; exit 0; }
+            echo "push 第 $i 次被拒（远端又前进了），重试"
+            sleep 5
+          done
+          echo "::error::PDF 已渲染但没能推回 main，产物见 artifact，需人工处理"
+          exit 1

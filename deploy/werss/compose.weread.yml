@@ -12,6 +12,9 @@ services:
       # 所以保持 web；频控只能靠时间冷却 + 串行低频重试（scan_push.py --refresh）。
       # 回滚：把下面一行改回 weread_mp 并 `docker compose ... up -d`。
       GATHER.MODEL: web
+      # 首采页数从默认 5 降到 2：每页 5 条，5 页就是单号 25 篇。
+      # 2026-10-20 批量纳号时算过，15 个号按默认值首采最坏 375 篇，模型分析要 ¥9；降到 2 页后约 150 篇。
+      MAX_PAGE: "2"
       GATHER.CONTENT: "False"
       GATHER.CONTENT_AUTO_CHECK: "False"
     volumes:

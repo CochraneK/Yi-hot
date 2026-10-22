@@ -18,7 +18,8 @@
     "typecheck": "tsc -p packages/contracts && tsc -p packages/backend && tsc -p apps/api && tsc -p apps/worker && tsc -p tests && npm run typecheck -w @aihot/web",
     "test": "node --test --test-concurrency=1 --test-timeout=120000 \"tests/*.test.ts\"",
     "sources:audit": "node scripts/source-registry-audit.mjs --write",
-    "sources:audit:check": "node --check scripts/source-registry-audit.mjs && node --test tests/source-registry-audit.test.mjs && node scripts/source-registry-audit.mjs --check"
+    "sources:audit:check": "node --check scripts/source-registry-audit.mjs && node --test tests/source-registry-audit.test.mjs && node scripts/source-registry-audit.mjs --check",
+    "changelog:check": "node --check scripts/changelog-check.mjs && node scripts/changelog-check.mjs"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.1.0",

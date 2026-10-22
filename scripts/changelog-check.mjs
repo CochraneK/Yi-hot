@@ -15,9 +15,18 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const KINDS = new Set(["更新", "优化", "公告", "下线"]);
-const MAX_BODY_CHARS = 220;
+// Shape, not just validity. A release note a reader can take in at a glance: a short headline and at
+// most three sentences, each one fact. The long lines this check exists to stop were the ones that
+// explained how the site works internally ("to avoid double billing", "the listing's day would
+// overwrite it") — facts about the build, not about what the reader now gets. The numbers below are
+// where the two reference sites sit (PsyHOT: 12-char titles, 43-char sentences, 69 at the longest).
+const MAX_TITLE_CHARS = 32;
+const MAX_BODY_LINES = 3;
+const MAX_BODY_CHARS = 70;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}$/;
+/** Bold markers are layout, not prose: they count for nothing. */
+const visibleLength = (s) => s.replace(/\*\*/g, "").trim().length;
 
 const argFile = process.argv.indexOf("--file");
 const file = argFile > -1 ? process.argv[argFile + 1] : join(ROOT, "industry/changelog.json");
@@ -53,12 +62,13 @@ releases.forEach((r, i) => {
   if (!TIME_RE.test(r.time ?? "")) fail(where, `time 格式应为 HH:MM，实际 ${r.time}`);
   if (!KINDS.has(r.kind)) fail(where, `kind 只能是 ${[...KINDS].join(" / ")}，实际 ${r.kind}`);
   if (!r.title?.trim()) fail(where, "title 为空");
-  if (r.title?.length > 40) fail(where, `title 偏长（${r.title.length} 字），页面上会折行`);
+  if (visibleLength(r.title ?? "") > MAX_TITLE_CHARS) fail(where, `title 有 ${visibleLength(r.title)} 字，超过 ${MAX_TITLE_CHARS}，写清变了什么就够`);
   if (!Array.isArray(r.body) || r.body.length === 0) fail(where, "body 应为非空数组");
   else {
+    if (r.body.length > MAX_BODY_LINES) fail(where, `body 有 ${r.body.length} 行，最多 ${MAX_BODY_LINES} 行`);
     r.body.forEach((line, j) => {
       if (typeof line !== "string" || !line.trim()) fail(where, `body[${j}] 为空`);
-      else if (line.length > MAX_BODY_CHARS) fail(where, `body[${j}] 长 ${line.length} 字，超过 ${MAX_BODY_CHARS}`);
+      else if (visibleLength(line) > MAX_BODY_CHARS) fail(where, `body[${j}] 有 ${visibleLength(line)} 字，超过 ${MAX_BODY_CHARS}；一句一个事实，长了就拆行`);
     });
   }
   if (DATE_RE.test(r.date ?? "") && r.date > today) fail(where, `日期 ${r.date} 晚于今天 ${today}`);

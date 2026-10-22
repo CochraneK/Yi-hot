@@ -17,6 +17,7 @@ export type EgressRoute = "egress" | "direct";
 
 let proxyAgent: ProxyAgent | null = null;
 let directAgent: Agent | null = null;
+let pinnedCurveAgent: Agent | null = null;
 
 function proxied(url: URL, route: EgressRoute): boolean {
   if (route !== "egress" || !config.egressProxyUrl) return false;
@@ -33,6 +34,30 @@ function dispatcherFor(viaProxy: boolean): Dispatcher | undefined {
   // Direct connections resolve through the guarded lookup: the address actually dialled is checked.
   directAgent ??= new Agent({ connect: { lookup: guardedLookup as never } });
   return directAgent;
+}
+
+/**
+ * Some government TLS stacks answer Node's preferred X25519 key share with a point OpenSSL refuses
+ * (ERR_SSL_BAD_ECPOINT, e.g. mzt.hunan.gov.cn): the page loads in a browser and in curl, and with
+ * the curve pinned to P-256. Node's "auto" curve list starts with X25519, so the same request is
+ * retried once on an agent that offers only P-256. Every browser still negotiates P-256, so pinning
+ * loses nothing.
+ */
+function pinnedCurveDispatcher(): Dispatcher | undefined {
+  if (config.allowPrivateNetworkFetch) return undefined;
+  pinnedCurveAgent ??= new Agent({ connect: { lookup: guardedLookup as never, ecdhCurve: "prime256v1" } });
+  return pinnedCurveAgent;
+}
+
+/** The handshake error codes a curve change can fix, read off the cause chain undici wraps them in. */
+function brokenHandshake(error: unknown): boolean {
+  let cause: unknown = error;
+  for (let depth = 0; depth < 4 && cause; depth++) {
+    const code = (cause as { code?: string }).code;
+    if (code === "ERR_SSL_BAD_ECPOINT" || code === "EPROTO") return true;
+    cause = (cause as { cause?: unknown }).cause;
+  }
+  return false;
 }
 
 export interface GuardedFetchOptions {
@@ -78,15 +103,25 @@ export async function guardedFetch(input: string, opts: GuardedFetchOptions = {}
   let url = await check(input);
   const maxRedirects = opts.maxRedirects ?? 5;
   const maxBytes = opts.maxBytes ?? 8 * 1024 * 1024;
-  for (let hop = 0; ; hop++) {
-    const res = await undiciFetch(url, {
+  const send = async (target: URL) => {
+    const viaProxy = proxied(target, route);
+    const init = {
       method: opts.method ?? "GET",
       headers: { "user-agent": DEFAULT_UA, "accept-language": "zh-CN,zh;q=0.9,en;q=0.8", ...(opts.headers ?? {}) },
       body: opts.body,
-      redirect: "manual",
-      dispatcher: dispatcherFor(proxied(url, route)),
+      redirect: "manual" as const,
       signal,
-    });
+    };
+    try {
+      return await undiciFetch(target, { ...init, dispatcher: dispatcherFor(viaProxy) });
+    } catch (error) {
+      const pinned = viaProxy ? undefined : pinnedCurveDispatcher();
+      if (!pinned || !brokenHandshake(error)) throw error;
+      return await undiciFetch(target, { ...init, dispatcher: pinned });
+    }
+  };
+  for (let hop = 0; ; hop++) {
+    const res = await send(url);
     if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
       // Release the connection even when the next URL is refused or the redirect limit is reached.
       await res.body?.cancel();

@@ -1,10 +1,10 @@
 [Unit]
-Description=Check approved YiHot newsletter sources every 30 minutes
+Description=Check approved YiHot newsletter sources once per day
 
 [Timer]
-OnBootSec=10min
-OnUnitActiveSec=30min
+OnCalendar=*-*-* 08:00:00
 Persistent=true
+RandomizedDelaySec=300
 
 [Install]
 WantedBy=timers.target

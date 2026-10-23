@@ -6911,6 +6911,160 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "web-cdrf",
+      "name": "中国发展研究基金会",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.cdrf.org.cn/zxdt/index.htm",
+        "baseUrl": "https://www.cdrf.org.cn/",
+        "render": "browser",
+        "parseMode": "html",
+        "itemSelector": "ul.article-list li",
+        "titleSelector": ".article-item-text",
+        "publishedAtSelector": ".article-item-time",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.cdrf.org.cn/"
+        ],
+        "_aihot": {
+          "ingestMaxAgeDays": 0
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "基金会",
+        "研究报告",
+        "儿童发展"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-ndcpa",
+      "name": "国家疾控局",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.ndcpa.gov.cn/jbkzzx/c100008/common/list.html",
+        "baseUrl": "https://www.ndcpa.gov.cn/",
+        "render": "browser",
+        "itemSelector": "ul.listul li",
+        "titleSelector": "p",
+        "publishedAtSelector": "span.time",
+        "allowUrlPrefixes": [
+          "https://www.ndcpa.gov.cn/jbkzzx/"
+        ],
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "首页",
+            "关于",
+            "联系",
+            "English",
+            "隐私",
+            "版权",
+            "登录",
+            "注册",
+            "无障碍"
+          ]
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "疾控",
+        "儿童传染病",
+        "校园卫生"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-jyb",
+      "name": "中国教育报",
+      "kind": "web_list",
+      "config": {
+        "url": "http://paper.jyb.cn/",
+        "render": "browser",
+        "itemSelector": "ul li.one",
+        "allowUrlPrefixes": [
+          "https://paper.jyb.cn/zgjyb/html/"
+        ],
+        "denyUrlPrefixes": [
+          "https://paper.jyb.cn/zgjyb/resfile/"
+        ],
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "首页",
+            "关于",
+            "订阅",
+            "English",
+            "版权",
+            "登录",
+            "注册"
+          ]
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "教育",
+        "未成年人",
+        "校园"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-unesco",
+      "name": "联合国教科文组织",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.unesco.org/zh",
+        "render": "browser",
+        "renderTimeoutMs": 60000,
+        "titleFromAttribute": true,
+        "allowUrlPrefixes": [
+          "https://www.unesco.org/zh/articles/"
+        ],
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "Home",
+            "About",
+            "Contact",
+            "English",
+            "Privacy",
+            "Copyright",
+            "Login",
+            "Register",
+            "阅读更多",
+            "了解更多"
+          ]
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "国际",
+        "教育",
+        "儿童",
+        "青少年"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
     }
   ]
 }

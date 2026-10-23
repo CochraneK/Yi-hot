@@ -71,6 +71,10 @@ services:
       <<: *app-env
       DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
     command: ["node", "apps/worker/src/main.ts"]
+    # tini as PID 1: headless chromium (render: "browser" sources) spawns children whose parents die
+    # mid-render; without an init that reaps, those orphans reparent to node (PID 1) and accumulate as
+    # zombies (~13 per render). Node does not reap non-child_process orphans on its own.
+    init: true
     # On stop the worker lets a paid call in flight finish (STOP_TIMEOUT_MS, 195 s); Docker's default
     # 10 s would kill it mid-call and leave "outcome unknown" receipts that are paid for again.
     stop_grace_period: 210s

@@ -11,6 +11,7 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
   web_list: [
     ...COLLECTED, "url", "baseUrl", "parseMode", "adapter", "cacheToleranceSeconds", "linksStartLine", "preserveUrlFragment",
     "itemSelector", "linkSelector", "titleSelector", "titleFromAttribute", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset",
+    "render", "renderWaitSelector", "renderTimeoutMs",
   ],
   json_list: [
     ...COLLECTED, "url", "mode", "method", "headers", "bodyJson", "jsonKey", "windowVar", "itemsPath", "itemsObjectValues",
@@ -47,6 +48,7 @@ const NESTED: Record<string, string[]> = {
 const VALUES: Record<string, string[]> = {
   adapter: ["mimo_home", "everyinfra_xhs", "everyinfra"],
   parseMode: ["html", "markdown", "docusaurus_changelog"],
+  render: ["browser"],
 };
 
 /** The config entries a source of this kind would ignore or cannot run, e.g. ["adapter=site_cards", "detail.titleFoo"]. */

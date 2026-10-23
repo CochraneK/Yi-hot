@@ -17,6 +17,7 @@ const DUP_SOURCE = `test-rss-dup-${T}`;
 const NOTES_SOURCE = `test-rss-notes-${T}`;
 const GARBLED_SOURCE = `test-rss-garbled-${T}`;
 const CHANGELOG_SOURCE = `test-web-changelog-${T}`;
+const AGE_SOURCE = `test-rss-age-${T}`;
 const DAY = 86_400_000;
 
 const item = (title: string, link: string, daysAgo: number) =>
@@ -25,6 +26,8 @@ const feeds: Record<string, string> = {
   // a foundation's media page lists one report twice, under two titles.
   "/dup.xml": [item(`公益报告 — 透明度专题 ${T}`, `https://example.org/watch-${T}`, 0.1), item(`公开募捐资金流向年度盘点 ${T}`, `https://example.org/watch-${T}`, 0.1)].join(""),
   "/notes.xml": ["september-24", "september-23", "september-22"].map((d, i) => item(`Release notes — ${d} ${T}`, `https://example.org/notes-${T}/overview#${d}`, 0.1 + i)).join(""),
+  // 年龄闸门用：一条刚发的，一条四十天前的（闸门设 2 天，所以它该被拦下）。
+  [`/age-${T}.xml`]: [item(`旧稿 ${T}`, `https://example.org/old-${T}`, 40), item(`新稿 ${T}`, `https://example.org/new-${T}`, 0.1)].join(""),
 };
 // A feed that loses a character here and there on every load, sent as two or three U+FFFD, in titles and
 // in descriptions longer than the excerpt kept from them.
@@ -66,11 +69,14 @@ config.allowPrivateNetworkFetch = true;
 
 before(async () => {
   const cursor = sql.json({ initializedAt: new Date().toISOString() });
+  // 更新日志是档案型页面：越老的条目越是该有的，增量采集的年龄闸门（默认 365 天）会把 2024 年
+  // 那条当成旧稿丢掉，所以那个源显式写 ingestMaxAgeDays: 0 —— 不设闸门。
   await sql`INSERT INTO sources (id, name, kind, config, tier, participation_mode, cursor, next_fetch_at) VALUES
     (${DUP_SOURCE}, 'Test feed', 'rss', ${sql.json({ feedUrl: `${base}/dup.xml` })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
     (${NOTES_SOURCE}, 'Test release notes', 'rss', ${sql.json({ feedUrl: `${base}/notes.xml`, preserveUrlFragment: true })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
     (${GARBLED_SOURCE}, 'Test garbling feed', 'rss', ${sql.json({ feedUrl: `${base}/garbled.xml` })}, 'T1', 'hot_signal', ${cursor}, '2100-01-01'),
-    (${CHANGELOG_SOURCE}, 'Test changelog', 'web_list', ${sql.json({ url: `${base}/updates/`, baseUrl: `${base}/updates/`, parseMode: "docusaurus_changelog", allowUrlPrefixes: [`${base}/updates/`], preserveUrlFragment: true })}, 'T1', 'editorial', ${cursor}, '2100-01-01')`;
+    (${AGE_SOURCE}, 'Test age gate', 'rss', ${sql.json({ feedUrl: `${base}/age-${T}.xml`, _aihot: { ingestMaxAgeDays: 2 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
+    (${CHANGELOG_SOURCE}, 'Test changelog', 'web_list', ${sql.json({ url: `${base}/updates/`, baseUrl: `${base}/updates/`, parseMode: "docusaurus_changelog", allowUrlPrefixes: [`${base}/updates/`], preserveUrlFragment: true, _aihot: { ingestMaxAgeDays: 0 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01')`;
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -101,6 +107,17 @@ test("a feed that garbles different characters on every load keeps one version",
   for (let run = 0; run < 3; run++) assert.equal((await collectSource(GARBLED_SOURCE, { force: true })).status, "ok");
   const rows = await articles(GARBLED_SOURCE);
   assert.deepEqual(rows.map((r) => [r.title, r.revision]), [[title, 1]]);
+});
+
+test("增量采集不收比闸门更老的稿子，拦了几条写进运行记录", async () => {
+  // 归档页会把几年前的老条目一起列出来，增量跑一次就全当新稿灌进来 —— 那是「今天收录了 2024 年的
+  // 稿子」的来路。闸门只管增量（首采另有 initialBackfillMonths），档案型源写 0 关掉。
+  assert.equal((await collectSource(AGE_SOURCE, { force: true })).status, "ok");
+  const rows = await articles(AGE_SOURCE);
+  assert.deepEqual(rows.map((r) => r.title), [`新稿 ${T}`], "四十天前的那条不该进来");
+  const [run] = await sql<{ detail: { droppedOld?: number } | null }[]>`
+    SELECT detail FROM fetch_runs WHERE source_id = ${AGE_SOURCE} ORDER BY id DESC LIMIT 1`;
+  assert.equal(run!.detail?.droppedOld, 1, "整批被拦时也要看得见拦了几条");
 });
 
 test("a changelog's date headings date its updates and are no articles themselves", async () => {

@@ -25,12 +25,22 @@
 docs/SOURCE_M1_LIVE_PROBE_2026-10-08.md、docs/SOURCE_EXPANSION_2026-10-21.md。
 """
 import io
+import json
 import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
 
 TZ = timezone(timedelta(hours=8))
+SEED_JSON = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "industry", "sources.json")
+
+
+def count_seed():
+    """industry/sources.json 里的 seed 条数（JSON 只认数组或 {"sources": [...]} 两种写法）。"""
+    with io.open(SEED_JSON, encoding="utf-8") as f:
+        doc = json.load(f)
+    arr = doc if isinstance(doc, list) else doc.get("sources", [])
+    return len(arr)
 MARK_START = "<!-- SOURCE-REGISTRY:START -->"
 MARK_END = "<!-- SOURCE-REGISTRY:END -->"
 
@@ -113,11 +123,14 @@ def build_section(rows):
     L.append("")
     L.append("> 数据时间：%s（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；" % now)
     L.append("> **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created / 解析条数——技术接通 ≠ 内容对口。")
-    L.append("> 这是**快照**：生产信源以数据库运行时配置为准（含 36 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。")
+    probe = sum(1 for r in rows if r["id"].startswith("web-probe-"))
+    L.append("> 这是**快照**：生产信源以数据库运行时配置为准（含 %d 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。" % probe)
     L.append("")
     L.append("| 指标 | 数值 |")
     L.append("| :--- | :--- |")
-    L.append("| 源总数 | %d（`sources.json` seed 133 + 仅数据库 %d） |" % (total, total - 133))
+    # seed 数从 industry/sources.json 实算：写死会随每次加源立刻失真（曾写 133，实际已 134）。
+    seed = count_seed()
+    L.append("| 源总数 | %d（`sources.json` seed %d + 仅数据库 %d） |" % (total, seed, total - seed))
     L.append("| 启用 / 停用 | %d / %d |" % (enabled, total - enabled))
     L.append("| 有入池 / 主力（≥5） | %d / %d |" % (with_sel, core5))
     L.append("| 入池文章总量 | %d |" % total_sel)

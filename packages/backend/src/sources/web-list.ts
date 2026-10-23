@@ -24,11 +24,17 @@ function atOffset(y: string | number, mo: string | number, d: string | number, h
  * on every host: a time with its zone, and an ISO date alone (UTC midnight). Anything else it would read
  * in the server's local zone (UTC in Docker), so "2026-09-26 10:00" is read in the source's offset instead.
  */
-export function parseLooseDate(value: string | null | undefined, utcOffset = "+08:00"): Date | null {
+export function parseLooseDate(value: string | null | undefined, utcOffset = "+08:00", dayFirst = false): Date | null {
   if (!value) return null;
   // "Sep 26, 2026 at 10:30": "at" joins a date and its time like a space (English listings use it).
   const v = value.trim().replace(/(\d),?\s+at\s+(?=\d{1,2}:\d{2})/gi, "$1 ");
   if (!v) return null;
+  // "28/09/2026": day before month, the order Hong Kong / Macao listings print. Slash forms are
+  // month-first everywhere else (and V8 reads them that way), so a source must opt into this.
+  if (dayFirst) {
+    const dm = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(v);
+    if (dm) return atOffset(dm[3]!, dm[2]!, dm[1]!, dm[4] ?? "00", dm[5] ?? "00", dm[6] ?? "00", utcOffset);
+  }
   if (EXPLICIT_ZONE.test(v) || /^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const direct = Date.parse(v);
     if (Number.isFinite(direct) && /\d{4}/.test(v)) return new Date(direct);
@@ -285,12 +291,12 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     if (c.publishedAtSelector) {
       const dateEl = el.find(c.publishedAtSelector).first();
       const raw = dateEl.attr("datetime") ?? dateEl.attr("title") ?? dateEl.text();
-      publishedAt = parseLooseDate(raw, c.publishedAtUtcOffset);
+      publishedAt = parseLooseDate(raw, c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
       if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
     if (!publishedAt && c.publishedAtRegex) {
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
-      publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset);
+      publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
       if (publishedAt) publishedAtPrecision = datePrecision(m?.[1]);
     }
     seen.add(url);
@@ -473,12 +479,12 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
     if ($ && !dateInJina && d.publishedAtSelector) {
       const el = $(d.publishedAtSelector).first();
       const raw = el.attr("datetime") ?? el.attr("title") ?? el.text();
-      publishedAt = parseLooseDate(raw, offset);
+      publishedAt = parseLooseDate(raw, offset, d.publishedAtDayFirst === true);
       // Same rule as the listing parse: a byline that carries a clock time refines the listing's
       // day. Without it the caller keeps "date", and the feed then prints no time at all.
       if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
-    if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], offset);
+    if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], offset, d.publishedAtDayFirst === true);
     // An authoritative rule is the only source of the date: when its byline is missing, no other
     // timestamp on the page (an update time, a related post) stands in for it.
     const authoritative = d.publishedAtAuthoritative === true && !!(d.publishedAtSelector || d.publishedAtRegex);

@@ -7150,6 +7150,512 @@
       "publication_rule": {
         "minScore": 40
       }
+    },
+    {
+      "id": "web-unicef-hk-news",
+      "name": "联合国儿童基金会中国香港委员会·最新消息",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.unicef.org.hk/zh-hant/news",
+        "baseUrl": "https://www.unicef.org.hk",
+        "itemSelector": "div.item",
+        "linkSelector": "a[href*='/zh-hant/news/latest_news/']",
+        "titleSelector": "span.name",
+        "publishedAtSelector": "span.date",
+        "publishedAtDayFirst": true,
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.unicef.org.hk/zh-hant/news/latest_news/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "中国香港",
+        "儿童权益",
+        "UNICEF",
+        "2026-10-24已启用观察"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "search-mca-hebei",
+      "name": "网页搜索·河北民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "河北 民政 养老服务 政策 通知",
+          "河北 养老机构 普惠 监管 政策",
+          "河北 老年人 高龄津贴 补贴 发放",
+          "河北 养老 助老 志愿服务 活动",
+          "河北 社会救助 低保 特困 政策",
+          "河北 临时救助 困难群众 兜底",
+          "河北 未成年人 儿童福利 保护 政策",
+          "河北 流浪乞讨 救助 管理",
+          "河北 残疾人 补贴 康复 政策",
+          "河北 慈善 社会组织 公益 政策",
+          "河北 社区治理 社会工作 基层",
+          "河北 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "河北",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-shanxi",
+      "name": "网页搜索·山西民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "山西 民政 养老服务 政策 通知",
+          "山西 养老机构 普惠 监管 政策",
+          "山西 老年人 高龄津贴 补贴 发放",
+          "山西 养老 助老 志愿服务 活动",
+          "山西 社会救助 低保 特困 政策",
+          "山西 临时救助 困难群众 兜底",
+          "山西 未成年人 儿童福利 保护 政策",
+          "山西 流浪乞讨 救助 管理",
+          "山西 残疾人 补贴 康复 政策",
+          "山西 慈善 社会组织 公益 政策",
+          "山西 社区治理 社会工作 基层",
+          "山西 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "山西",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-anhui",
+      "name": "网页搜索·安徽民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "安徽 民政 养老服务 政策 通知",
+          "安徽 养老机构 普惠 监管 政策",
+          "安徽 老年人 高龄津贴 补贴 发放",
+          "安徽 养老 助老 志愿服务 活动",
+          "安徽 社会救助 低保 特困 政策",
+          "安徽 临时救助 困难群众 兜底",
+          "安徽 未成年人 儿童福利 保护 政策",
+          "安徽 流浪乞讨 救助 管理",
+          "安徽 残疾人 补贴 康复 政策",
+          "安徽 慈善 社会组织 公益 政策",
+          "安徽 社区治理 社会工作 基层",
+          "安徽 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "安徽",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-jiangxi",
+      "name": "网页搜索·江西民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "江西 民政 养老服务 政策 通知",
+          "江西 养老机构 普惠 监管 政策",
+          "江西 老年人 高龄津贴 补贴 发放",
+          "江西 养老 助老 志愿服务 活动",
+          "江西 社会救助 低保 特困 政策",
+          "江西 临时救助 困难群众 兜底",
+          "江西 未成年人 儿童福利 保护 政策",
+          "江西 流浪乞讨 救助 管理",
+          "江西 残疾人 补贴 康复 政策",
+          "江西 慈善 社会组织 公益 政策",
+          "江西 社区治理 社会工作 基层",
+          "江西 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "江西",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-hainan",
+      "name": "网页搜索·海南民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "海南 民政 养老服务 政策 通知",
+          "海南 养老机构 普惠 监管 政策",
+          "海南 老年人 高龄津贴 补贴 发放",
+          "海南 养老 助老 志愿服务 活动",
+          "海南 社会救助 低保 特困 政策",
+          "海南 临时救助 困难群众 兜底",
+          "海南 未成年人 儿童福利 保护 政策",
+          "海南 流浪乞讨 救助 管理",
+          "海南 残疾人 补贴 康复 政策",
+          "海南 慈善 社会组织 公益 政策",
+          "海南 社区治理 社会工作 基层",
+          "海南 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "海南",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-yunnan",
+      "name": "网页搜索·云南民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "云南 民政 养老服务 政策 通知",
+          "云南 养老机构 普惠 监管 政策",
+          "云南 老年人 高龄津贴 补贴 发放",
+          "云南 养老 助老 志愿服务 活动",
+          "云南 社会救助 低保 特困 政策",
+          "云南 临时救助 困难群众 兜底",
+          "云南 未成年人 儿童福利 保护 政策",
+          "云南 流浪乞讨 救助 管理",
+          "云南 残疾人 补贴 康复 政策",
+          "云南 慈善 社会组织 公益 政策",
+          "云南 社区治理 社会工作 基层",
+          "云南 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "云南",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-gansu",
+      "name": "网页搜索·甘肃民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "甘肃 民政 养老服务 政策 通知",
+          "甘肃 养老机构 普惠 监管 政策",
+          "甘肃 老年人 高龄津贴 补贴 发放",
+          "甘肃 养老 助老 志愿服务 活动",
+          "甘肃 社会救助 低保 特困 政策",
+          "甘肃 临时救助 困难群众 兜底",
+          "甘肃 未成年人 儿童福利 保护 政策",
+          "甘肃 流浪乞讨 救助 管理",
+          "甘肃 残疾人 补贴 康复 政策",
+          "甘肃 慈善 社会组织 公益 政策",
+          "甘肃 社区治理 社会工作 基层",
+          "甘肃 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "甘肃",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-ningxia",
+      "name": "网页搜索·宁夏民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "宁夏 民政 养老服务 政策 通知",
+          "宁夏 养老机构 普惠 监管 政策",
+          "宁夏 老年人 高龄津贴 补贴 发放",
+          "宁夏 养老 助老 志愿服务 活动",
+          "宁夏 社会救助 低保 特困 政策",
+          "宁夏 临时救助 困难群众 兜底",
+          "宁夏 未成年人 儿童福利 保护 政策",
+          "宁夏 流浪乞讨 救助 管理",
+          "宁夏 残疾人 补贴 康复 政策",
+          "宁夏 慈善 社会组织 公益 政策",
+          "宁夏 社区治理 社会工作 基层",
+          "宁夏 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "宁夏",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

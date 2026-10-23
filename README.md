@@ -129,22 +129,22 @@ flowchart LR
 
 ## 🗂️ 信源全名单
 
-> 数据时间：2026-10-23 23:37（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
+> 数据时间：2026-10-24 01:09（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
 > **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created / 解析条数——技术接通 ≠ 内容对口。
 > 这是**快照**：生产信源以数据库运行时配置为准（含 36 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。
 
 | 指标 | 数值 |
 | :--- | :--- |
-| 源总数 | 190（`sources.json` seed 133 + 仅数据库 57） |
-| 启用 / 停用 | 169 / 21 |
-| 有入池 / 主力（≥5） | 142 / 96 |
-| 入池文章总量 | 1273 |
+| 源总数 | 200（`sources.json` seed 142 + 仅数据库 58） |
+| 启用 / 停用 | 178 / 22 |
+| 有入池 / 主力（≥5） | 151 / 102 |
+| 入池文章总量 | 1326 |
 
 | 类型 | 源数 | 启用 | 有入池 | 入池文章 | 占比 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 搜索源（DeepSeek Search） | 61 | 61 | 59 | 698 | 55% |
-| 网页列表源 | 84 | 80 | 60 | 430 | 34% |
-| RSS 源 | 26 | 10 | 9 | 78 | 6% |
+| 搜索源（DeepSeek Search） | 69 | 69 | 67 | 744 | 56% |
+| 网页列表源 | 85 | 81 | 61 | 435 | 33% |
+| RSS 源 | 26 | 10 | 9 | 80 | 6% |
 | JSON / API 列表源 | 17 | 16 | 13 | 52 | 4% |
 | 外部系统源 | 2 | 2 | 1 | 15 | 1% |
 
@@ -152,7 +152,7 @@ flowchart LR
 
 状态：● 主力（入池 ≥5）· 少量（1–4）· △ 有稿零入池 · ○ 从未产出 · ⚠️ 退避中 · ⛔ 停用；数字为**入池 / 产出**。
 
-#### 搜索源（DeepSeek Search）（61 个，入池 698）
+#### 搜索源（DeepSeek Search）（69 个，入池 744）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
@@ -180,6 +180,7 @@ flowchart LR
 | 网页搜索·中国社会报（DeepSeek） | `search-media-chinasocial` | ● 主力 | 12/29 |
 | 网页搜索·社科院社会政策（DeepSeek） | `search-think-cass` | ● 主力 | 12/27 |
 | 网页搜索·免费午餐（DeepSeek） | `search-found-free` | ● 主力 | 11/25 |
+| 网页搜索·江西民政（DeepSeek） | `search-mca-jiangxi` | ● 主力 | 11/15 |
 | 网页搜索·21世纪教育研究院（DeepSeek） | `search-think-21edu` | ● 主力 | 11/28 |
 | 网页搜索·山东妇联（DeepSeek） | `search-women-sd` | ● 主力 | 11/23 |
 | 网页搜索·性别平等（DeepSeek） | `search-gender` | ● 主力 | 10/60 |
@@ -194,20 +195,27 @@ flowchart LR
 | 网页搜索·司法部（DeepSeek） | `search-moj` | ● 主力 | 8/29 |
 | 网页搜索·公安部（DeepSeek） | `search-mps` | ● 主力 | 8/30 |
 | 网页搜索·上海共青团（DeepSeek） | `search-gqt-sh` | ● 主力 | 7/30 |
+| 网页搜索·安徽民政（DeepSeek） | `search-mca-anhui` | ● 主力 | 7/10 |
 | 网页搜索·清华公益慈善研究院（DeepSeek） | `search-think-tsinghua` | ● 主力 | 7/23 |
 | 网页搜索·湖北妇联（DeepSeek） | `search-women-hub` | ● 主力 | 7/49 |
 | 网页搜索·UN Women 妇女署（DeepSeek） | `search-intl-unwomen` | ● 主力 | 6/27 |
 | 网页搜索·最高检未检（DeepSeek） | `search-judicial-spp` | ● 主力 | 6/25 |
+| 网页搜索·山西民政（DeepSeek） | `search-mca-shanxi` | ● 主力 | 6/19 |
 | 网页搜索·财新公益（DeepSeek） | `search-media-caixin` | ● 主力 | 6/17 |
 | 网页搜索·湖北残联（DeepSeek） | `search-cdpf-hub` | ● 主力 | 5/28 |
 | 网页搜索·湖北共青团（DeepSeek） | `search-gqt-hub` | ● 主力 | 5/30 |
 | 网页搜索·UNDP 开发计划署（DeepSeek） | `search-intl-undp` | ● 主力 | 5/29 |
+| 网页搜索·甘肃民政（DeepSeek） | `search-mca-gansu` | ● 主力 | 5/11 |
+| 网页搜索·河北民政（DeepSeek） | `search-mca-hebei` | ● 主力 | 5/13 |
+| 网页搜索·云南民政（DeepSeek） | `search-mca-yunnan` | ● 主力 | 5/9 |
 | 网页搜索·人社部（DeepSeek） | `search-mohrss` | ● 主力 | 5/30 |
 | 网页搜索·上海妇联（DeepSeek） | `search-women-sh` | ● 主力 | 5/24 |
 | 网页搜索·江苏共青团（DeepSeek） | `search-gqt-js` | · 少量 | 4/30 |
 | 网页搜索·WHO 世界卫生组织（DeepSeek） | `search-intl-who` | · 少量 | 4/30 |
 | 网页搜索·法律援助（DeepSeek） | `search-judicial-legalaid` | · 少量 | 4/14 |
+| 网页搜索·宁夏民政（DeepSeek） | `search-mca-ningxia` | · 少量 | 4/12 |
 | 网页搜索·北大社会研究中心（DeepSeek） | `search-think-pku` | · 少量 | 4/24 |
+| 网页搜索·海南民政（DeepSeek） | `search-mca-hainan` | · 少量 | 3/7 |
 | 网页搜索·生态环境（DeepSeek） | `search-environment` | · 少量 | 2/59 |
 | 网页搜索·山东共青团（DeepSeek） | `search-gqt-sd` | · 少量 | 2/29 |
 | 网页搜索·浙江共青团（DeepSeek） | `search-gqt-zj` | · 少量 | 2/29 |
@@ -218,12 +226,12 @@ flowchart LR
 | 网页搜索·国家统计局数据（DeepSeek） | `search-data-stats` | △ 零入池 | 0/30 |
 | 网页搜索·市场监管总局（DeepSeek） | `search-samr` | △ 零入池 | 0/30 |
 
-#### 网页列表源（84 个，入池 430）
+#### 网页列表源（85 个，入池 435）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
 | 公益时报 · 公益资讯 | `gongyi-times` | ● 主力 | 31/85 |
-| 壹基金·最新活动 | `web-onefoundation-news` | ● 主力 | 22/29 |
+| 壹基金·最新活动 | `web-onefoundation-news` | ● 主力 | 23/30 |
 | 福建省民政厅·通知公告 | `web-probe-mzt-fujian-gov-cn-316374` | ● 主力 | 21/60 |
 | 民政部·地方动态 | `web-mca-local` | ● 主力 | 19/34 |
 | 河南省民政厅·公告公示 | `web-probe-mzt-henan-gov-cn-78ddfb` | ● 主力 | 19/24 |
@@ -265,7 +273,8 @@ flowchart LR
 | 青海省民政厅·通知公告 | `web-probe-mzt-qinghai-gov-cn-316374` | · 少量 | 4/9 |
 | 青海省民政厅·新闻中心 | `web-probe-mzt-qinghai-gov-cn-60e980` | · 少量 | 4/17 |
 | 救助儿童会中国·最新进展 | `web-savethechildren-cn` | · 少量 | 4/10 |
-| UNICEF Innocenti·儿童研究报告 | `web-unicef-innocenti-reports` | ⚠️ 退避 | 4/6 |
+| 联合国儿童基金会中国香港委员会·最新消息 | `web-unicef-hk-news` | · 少量 | 4/11 |
+| UNICEF Innocenti·儿童研究报告 | `web-unicef-innocenti-reports` | · 少量 | 4/6 |
 | 世界银行·儿童 | `web-worldbank` | · 少量 | 4/8 |
 | 生态环境部·政策文件 | `web-mee-zcwj` | · 少量 | 3/35 |
 | 应急管理部·应急要闻 | `web-mem-emergency-news` | · 少量 | 3/16 |
@@ -307,12 +316,12 @@ flowchart LR
 | 心和基金会·心和动态 | `web-xinhe-news` | △ 零入池 | 0/4 |
 | 新华网·时政联播 | `web-xinhua-szlb` | ○ 未产出 | 0/0 |
 
-#### RSS 源（26 个，入池 78）
+#### RSS 源（26 个，入池 80）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
 | 世界卫生组织·新闻 | `rss-who-news` | ● 主力 | 31/73 |
-| 中国新闻网·滚动 | `rss-chinanews-scroll` | ● 主力 | 12/77 |
+| 中国新闻网·滚动 | `rss-chinanews-scroll` | ● 主力 | 14/82 |
 | 公益时报（微信公众号） | `wechat-gongyi-times` | ● 主力 | 10/30 |
 | GiveDirectly·动态 | `rss-givedirectly` | ● 主力 | 8/13 |
 | Oxfam 乐施会·新闻 | `rss-oxfam` | ● 主力 | 7/11 |

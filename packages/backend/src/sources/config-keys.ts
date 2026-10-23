@@ -10,7 +10,9 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
   rss: [...COLLECTED, "feedUrl", "summaryIsBody", "preserveUrlFragment", "allowCategories", "denyCategories"],
   web_list: [
     ...COLLECTED, "url", "baseUrl", "parseMode", "adapter", "cacheToleranceSeconds", "linksStartLine", "preserveUrlFragment",
-    "itemSelector", "linkSelector", "titleSelector", "titleFromAttribute", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset",
+    // publishedAtDayFirst：列表/详情页把日期印成 dd/mm/yyyy（港澳站点常见）。斜杠格式默认按
+    // 月在前读，会串日；只有显式打开才按日在前。
+    "itemSelector", "linkSelector", "titleSelector", "titleFromAttribute", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset", "publishedAtDayFirst",
     "render", "renderWaitSelector", "renderTimeoutMs",
   ],
   json_list: [
@@ -39,7 +41,7 @@ const NESTED: Record<string, string[]> = {
   requireBoolean: ["path", "equals"],
   minNumeric: ["path", "min"],
   detail: [
-    "maxFetches", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset", "publishedAtAuthoritative", "upgradeDatePrecision",
+    "maxFetches", "publishedAtSelector", "publishedAtRegex", "publishedAtUtcOffset", "publishedAtDayFirst", "publishedAtAuthoritative", "upgradeDatePrecision",
     "publishedAtForExternal",
     "titleSelector", "titleRegex", "titleAuthoritative", "summarySelector",
   ],

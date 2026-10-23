@@ -3974,6 +3974,1650 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "search-mca-bj",
+      "name": "网页搜索·北京民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北京 民政 养老服务 政策 通知",
+          "北京 养老机构 普惠 监管 政策",
+          "北京 老年人 高龄津贴 补贴 发放",
+          "北京 养老 助老 志愿服务 活动",
+          "北京 社会救助 低保 特困 政策",
+          "北京 临时救助 困难群众 兜底",
+          "北京 未成年人 儿童福利 保护 政策",
+          "北京 流浪乞讨 救助 管理",
+          "北京 残疾人 补贴 康复 政策",
+          "北京 慈善 社会组织 公益 政策",
+          "北京 社区治理 社会工作 基层",
+          "北京 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-sh",
+      "name": "网页搜索·上海民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "上海 民政 养老服务 政策 通知",
+          "上海 养老机构 普惠 监管 政策",
+          "上海 老年人 高龄津贴 补贴 发放",
+          "上海 养老 助老 志愿服务 活动",
+          "上海 社会救助 低保 特困 政策",
+          "上海 临时救助 困难群众 兜底",
+          "上海 未成年人 儿童福利 保护 政策",
+          "上海 流浪乞讨 救助 管理",
+          "上海 残疾人 补贴 康复 政策",
+          "上海 慈善 社会组织 公益 政策",
+          "上海 社区治理 社会工作 基层",
+          "上海 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-sd",
+      "name": "网页搜索·山东民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "山东 民政 养老服务 政策 通知",
+          "山东 养老机构 普惠 监管 政策",
+          "山东 老年人 高龄津贴 补贴 发放",
+          "山东 养老 助老 志愿服务 活动",
+          "山东 社会救助 低保 特困 政策",
+          "山东 临时救助 困难群众 兜底",
+          "山东 未成年人 儿童福利 保护 政策",
+          "山东 流浪乞讨 救助 管理",
+          "山东 残疾人 补贴 康复 政策",
+          "山东 慈善 社会组织 公益 政策",
+          "山东 社区治理 社会工作 基层",
+          "山东 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-js",
+      "name": "网页搜索·江苏民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "江苏 民政 养老服务 政策 通知",
+          "江苏 养老机构 普惠 监管 政策",
+          "江苏 老年人 高龄津贴 补贴 发放",
+          "江苏 养老 助老 志愿服务 活动",
+          "江苏 社会救助 低保 特困 政策",
+          "江苏 临时救助 困难群众 兜底",
+          "江苏 未成年人 儿童福利 保护 政策",
+          "江苏 流浪乞讨 救助 管理",
+          "江苏 残疾人 补贴 康复 政策",
+          "江苏 慈善 社会组织 公益 政策",
+          "江苏 社区治理 社会工作 基层",
+          "江苏 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-zj",
+      "name": "网页搜索·浙江民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "浙江 民政 养老服务 政策 通知",
+          "浙江 养老机构 普惠 监管 政策",
+          "浙江 老年人 高龄津贴 补贴 发放",
+          "浙江 养老 助老 志愿服务 活动",
+          "浙江 社会救助 低保 特困 政策",
+          "浙江 临时救助 困难群众 兜底",
+          "浙江 未成年人 儿童福利 保护 政策",
+          "浙江 流浪乞讨 救助 管理",
+          "浙江 残疾人 补贴 康复 政策",
+          "浙江 慈善 社会组织 公益 政策",
+          "浙江 社区治理 社会工作 基层",
+          "浙江 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mca-hub",
+      "name": "网页搜索·湖北民政（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "湖北 民政 养老服务 政策 通知",
+          "湖北 养老机构 普惠 监管 政策",
+          "湖北 老年人 高龄津贴 补贴 发放",
+          "湖北 养老 助老 志愿服务 活动",
+          "湖北 社会救助 低保 特困 政策",
+          "湖北 临时救助 困难群众 兜底",
+          "湖北 未成年人 儿童福利 保护 政策",
+          "湖北 流浪乞讨 救助 管理",
+          "湖北 残疾人 补贴 康复 政策",
+          "湖北 慈善 社会组织 公益 政策",
+          "湖北 社区治理 社会工作 基层",
+          "湖北 殡葬 婚姻登记 管理服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省级民政"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mohw",
+      "name": "网页搜索·国家卫健委（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "国家卫健委 健康 医疗 公共卫生 政策 通知",
+          "卫健委 老龄 养老 服务 政策",
+          "托育 婴幼儿 照护 政策 通知",
+          "传染病 防控 公共卫生 政策",
+          "医保 医疗 改革 政策 通知",
+          "妇幼 健康 两癌 筛查 公益",
+          "基层 医疗卫生 服务 政策",
+          "健康中国 行动 公益 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mps",
+      "name": "网页搜索·公安部（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "公安部 户籍 身份证 管理 政策",
+          "公安部 打拐 失踪 儿童 救助",
+          "反诈 电信网络诈骗 防范 案例",
+          "禁毒 戒毒 康复 政策",
+          "未成年人 保护 公安 政策",
+          "出入境 管理 便民 服务 政策",
+          "交通安全 未成年人 保护 宣传",
+          "反有组织犯罪 社会治理"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mohrss",
+      "name": "网页搜索·人社部（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "人社部 就业 创业 政策 通知",
+          "社会保障 养老金 社保 政策",
+          "劳动关系 劳动仲裁 权益 政策",
+          "职业技能 培训 补贴 政策",
+          "农民工 工资 保障 政策",
+          "失业保险 稳岗 返还 政策",
+          "新就业形态 劳动者 权益 保护",
+          "人社 公共服务 便民 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-samr",
+      "name": "网页搜索·市场监管总局（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "市场监管 消费者权益 保护 政策",
+          "食品安全 监管 抽检 通报",
+          "反垄断 反不正当竞争 政策",
+          "产品质量 召回 通报",
+          "价格 监管 民生 政策",
+          "特种设备 安全 监管 政策",
+          "假冒伪劣 打击 侵权 案例",
+          "明码标价 计量 民生 监管"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-moj",
+      "name": "网页搜索·司法部（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "司法部 法律援助 政策 通知",
+          "公共法律服务 便民 政策",
+          "普法 法治宣传 公益 活动",
+          "人民调解 基层治理 政策",
+          "社区矫正 帮扶 政策",
+          "司法行政 便民 服务 政策",
+          "律师 法律援助 弱势群体 权益",
+          "法治乡村 建设 公益 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-mof",
+      "name": "网页搜索·财政部（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "财政部 民生 社保 转移支付 政策",
+          "财政 社会救助 补助 资金 通知",
+          "养老金 财政 补贴 政策",
+          "惠民 补贴 资金 管理 政策",
+          "政府采购 公益 服务 政策",
+          "乡村振兴 财政 衔接 资金 政策",
+          "困难群众 救助 财政 保障",
+          "民生支出 预算 政策 通知"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "中央部委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-bj",
+      "name": "网页搜索·北京共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北京 共青团 青年 志愿服务 公益",
+          "北京 青年 创业 就业 帮扶 政策",
+          "北京 希望工程 助学 公益 项目",
+          "北京 青少年 权益 保护 政策",
+          "北京 志愿服务 社区 公益 活动",
+          "北京 少先队 青少年 教育 活动",
+          "北京 青年 社会组织 培育 政策",
+          "北京 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-sh",
+      "name": "网页搜索·上海共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "上海 共青团 青年 志愿服务 公益",
+          "上海 青年 创业 就业 帮扶 政策",
+          "上海 希望工程 助学 公益 项目",
+          "上海 青少年 权益 保护 政策",
+          "上海 志愿服务 社区 公益 活动",
+          "上海 少先队 青少年 教育 活动",
+          "上海 青年 社会组织 培育 政策",
+          "上海 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-sd",
+      "name": "网页搜索·山东共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "山东 共青团 青年 志愿服务 公益",
+          "山东 青年 创业 就业 帮扶 政策",
+          "山东 希望工程 助学 公益 项目",
+          "山东 青少年 权益 保护 政策",
+          "山东 志愿服务 社区 公益 活动",
+          "山东 少先队 青少年 教育 活动",
+          "山东 青年 社会组织 培育 政策",
+          "山东 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-js",
+      "name": "网页搜索·江苏共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "江苏 共青团 青年 志愿服务 公益",
+          "江苏 青年 创业 就业 帮扶 政策",
+          "江苏 希望工程 助学 公益 项目",
+          "江苏 青少年 权益 保护 政策",
+          "江苏 志愿服务 社区 公益 活动",
+          "江苏 少先队 青少年 教育 活动",
+          "江苏 青年 社会组织 培育 政策",
+          "江苏 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-zj",
+      "name": "网页搜索·浙江共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "浙江 共青团 青年 志愿服务 公益",
+          "浙江 青年 创业 就业 帮扶 政策",
+          "浙江 希望工程 助学 公益 项目",
+          "浙江 青少年 权益 保护 政策",
+          "浙江 志愿服务 社区 公益 活动",
+          "浙江 少先队 青少年 教育 活动",
+          "浙江 青年 社会组织 培育 政策",
+          "浙江 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gqt-hub",
+      "name": "网页搜索·湖北共青团（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "湖北 共青团 青年 志愿服务 公益",
+          "湖北 青年 创业 就业 帮扶 政策",
+          "湖北 希望工程 助学 公益 项目",
+          "湖北 青少年 权益 保护 政策",
+          "湖北 志愿服务 社区 公益 活动",
+          "湖北 少先队 青少年 教育 活动",
+          "湖北 青年 社会组织 培育 政策",
+          "湖北 大学生 志愿服务 西部计划"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省团委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-bj",
+      "name": "网页搜索·北京妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北京 妇联 妇女 权益 保障 政策",
+          "北京 妇女 就业 创业 帮扶",
+          "北京 反家暴 家庭 权益 保护",
+          "北京 农村妇女 土地 权益 保障",
+          "北京 妇女儿童 健康 两癌 筛查 公益",
+          "北京 家庭教育 儿童 关爱 活动",
+          "北京 巾帼 志愿服务 公益",
+          "北京 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-sh",
+      "name": "网页搜索·上海妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "上海 妇联 妇女 权益 保障 政策",
+          "上海 妇女 就业 创业 帮扶",
+          "上海 反家暴 家庭 权益 保护",
+          "上海 农村妇女 土地 权益 保障",
+          "上海 妇女儿童 健康 两癌 筛查 公益",
+          "上海 家庭教育 儿童 关爱 活动",
+          "上海 巾帼 志愿服务 公益",
+          "上海 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-sd",
+      "name": "网页搜索·山东妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "山东 妇联 妇女 权益 保障 政策",
+          "山东 妇女 就业 创业 帮扶",
+          "山东 反家暴 家庭 权益 保护",
+          "山东 农村妇女 土地 权益 保障",
+          "山东 妇女儿童 健康 两癌 筛查 公益",
+          "山东 家庭教育 儿童 关爱 活动",
+          "山东 巾帼 志愿服务 公益",
+          "山东 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-js",
+      "name": "网页搜索·江苏妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "江苏 妇联 妇女 权益 保障 政策",
+          "江苏 妇女 就业 创业 帮扶",
+          "江苏 反家暴 家庭 权益 保护",
+          "江苏 农村妇女 土地 权益 保障",
+          "江苏 妇女儿童 健康 两癌 筛查 公益",
+          "江苏 家庭教育 儿童 关爱 活动",
+          "江苏 巾帼 志愿服务 公益",
+          "江苏 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-zj",
+      "name": "网页搜索·浙江妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "浙江 妇联 妇女 权益 保障 政策",
+          "浙江 妇女 就业 创业 帮扶",
+          "浙江 反家暴 家庭 权益 保护",
+          "浙江 农村妇女 土地 权益 保障",
+          "浙江 妇女儿童 健康 两癌 筛查 公益",
+          "浙江 家庭教育 儿童 关爱 活动",
+          "浙江 巾帼 志愿服务 公益",
+          "浙江 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-women-hub",
+      "name": "网页搜索·湖北妇联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "湖北 妇联 妇女 权益 保障 政策",
+          "湖北 妇女 就业 创业 帮扶",
+          "湖北 反家暴 家庭 权益 保护",
+          "湖北 农村妇女 土地 权益 保障",
+          "湖北 妇女儿童 健康 两癌 筛查 公益",
+          "湖北 家庭教育 儿童 关爱 活动",
+          "湖北 巾帼 志愿服务 公益",
+          "湖北 女童 教育 助学 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省妇联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-bj",
+      "name": "网页搜索·北京残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北京 残联 残疾人 康复 救助 政策",
+          "北京 残疾人 就业 帮扶 政策",
+          "北京 孤独症 儿童 康复 救助",
+          "北京 辅助器具 残疾人 适配 补贴",
+          "北京 无障碍环境 建设 残疾人 条例",
+          "北京 残疾人 补贴 托养 照护 服务",
+          "北京 助残 社会组织 公益 项目",
+          "北京 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-sh",
+      "name": "网页搜索·上海残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "上海 残联 残疾人 康复 救助 政策",
+          "上海 残疾人 就业 帮扶 政策",
+          "上海 孤独症 儿童 康复 救助",
+          "上海 辅助器具 残疾人 适配 补贴",
+          "上海 无障碍环境 建设 残疾人 条例",
+          "上海 残疾人 补贴 托养 照护 服务",
+          "上海 助残 社会组织 公益 项目",
+          "上海 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-sd",
+      "name": "网页搜索·山东残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "山东 残联 残疾人 康复 救助 政策",
+          "山东 残疾人 就业 帮扶 政策",
+          "山东 孤独症 儿童 康复 救助",
+          "山东 辅助器具 残疾人 适配 补贴",
+          "山东 无障碍环境 建设 残疾人 条例",
+          "山东 残疾人 补贴 托养 照护 服务",
+          "山东 助残 社会组织 公益 项目",
+          "山东 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-js",
+      "name": "网页搜索·江苏残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "江苏 残联 残疾人 康复 救助 政策",
+          "江苏 残疾人 就业 帮扶 政策",
+          "江苏 孤独症 儿童 康复 救助",
+          "江苏 辅助器具 残疾人 适配 补贴",
+          "江苏 无障碍环境 建设 残疾人 条例",
+          "江苏 残疾人 补贴 托养 照护 服务",
+          "江苏 助残 社会组织 公益 项目",
+          "江苏 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-zj",
+      "name": "网页搜索·浙江残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "浙江 残联 残疾人 康复 救助 政策",
+          "浙江 残疾人 就业 帮扶 政策",
+          "浙江 孤独症 儿童 康复 救助",
+          "浙江 辅助器具 残疾人 适配 补贴",
+          "浙江 无障碍环境 建设 残疾人 条例",
+          "浙江 残疾人 补贴 托养 照护 服务",
+          "浙江 助残 社会组织 公益 项目",
+          "浙江 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-cdpf-hub",
+      "name": "网页搜索·湖北残联（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "湖北 残联 残疾人 康复 救助 政策",
+          "湖北 残疾人 就业 帮扶 政策",
+          "湖北 孤独症 儿童 康复 救助",
+          "湖北 辅助器具 残疾人 适配 补贴",
+          "湖北 无障碍环境 建设 残疾人 条例",
+          "湖北 残疾人 补贴 托养 照护 服务",
+          "湖北 助残 社会组织 公益 项目",
+          "湖北 残疾人 权益 保障 政策"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "省残联"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

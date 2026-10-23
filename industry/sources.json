@@ -8211,6 +8211,471 @@
         "minScore": 40
       },
       "enabled": false
+    },
+    {
+      "id": "web-ahdpf-sxdt",
+      "name": "安徽省残联·市县动态",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.ahdpf.org.cn/xwzx/sxdt/index.html",
+        "itemSelector": "ul.doc_list li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span.right.date",
+        "allowUrlPrefixes": [
+          "https://www.ahdpf.org.cn/xwzx/sxdt/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策",
+            "残疾预防",
+            "困难",
+            "评定",
+            "办证"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "冰雪运动",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育",
+            "飞盘",
+            "赛事",
+            "知识竞赛",
+            "演讲比赛",
+            "征文"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "安徽"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-ahdpf-gzdt",
+      "name": "安徽省残联·残联要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.ahdpf.org.cn/xwzx/gzdt/index.html",
+        "itemSelector": "ul.doc_list li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span.right.date",
+        "allowUrlPrefixes": [
+          "https://www.ahdpf.org.cn/xwzx/gzdt/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策",
+            "残疾预防",
+            "困难",
+            "评定",
+            "办证"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "冰雪运动",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育",
+            "飞盘",
+            "赛事",
+            "知识竞赛",
+            "演讲比赛",
+            "征文"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "安徽"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-xjdpf-news",
+      "name": "新疆维吾尔自治区残联·要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.xjdpf.org.cn/",
+        "itemSelector": "ul.dt-ul-list li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "baseUrl": "http://www.xjdpf.org.cn/",
+        "publishedAtSelector": "div.dt-ul-date",
+        "allowUrlPrefixes": [
+          "http://www.xjdpf.org.cn/info/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策",
+            "残疾预防",
+            "困难",
+            "评定",
+            "办证"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "冰雪运动",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育",
+            "飞盘",
+            "赛事",
+            "知识竞赛",
+            "演讲比赛",
+            "征文"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "官方",
+        "残联",
+        "新疆",
+        "观察"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-hidpf-news",
+      "name": "海南省残联·残联快讯",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.hidpf.org.cn/",
+        "itemSelector": "ul.modContent li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "baseUrl": "https://www.hidpf.org.cn/",
+        "publishedAtRegex": "t(20\\d{2})(\\d{2})(\\d{2})",
+        "allowUrlPrefixes": [
+          "https://www.hidpf.org.cn/xwzx/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策",
+            "残疾预防",
+            "困难",
+            "评定",
+            "办证"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "冰雪运动",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育",
+            "飞盘",
+            "赛事",
+            "知识竞赛",
+            "演讲比赛",
+            "征文"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "海南"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-sxdpf-gzdt",
+      "name": "山西省残联·工作动态",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.sxdpf.org.cn/",
+        "itemSelector": "ul li:has(time)",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "baseUrl": "http://www.sxdpf.org.cn/",
+        "publishedAtSelector": "time",
+        "allowUrlPrefixes": [
+          "http://www.sxdpf.org.cn/zwgk/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策",
+            "残疾预防",
+            "困难",
+            "评定",
+            "办证"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "冰雪运动",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育",
+            "飞盘",
+            "赛事",
+            "知识竞赛",
+            "演讲比赛",
+            "征文"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "官方",
+        "残联",
+        "山西",
+        "观察"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
     }
   ]
 }

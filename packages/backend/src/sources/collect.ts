@@ -42,6 +42,21 @@ const DATE_UPGRADE_MAX_FETCHES = 6;
  */
 const DEFAULT_INGEST_MAX_AGE_DAYS = 365;
 
+/**
+ * 这一轮候选是否来自「列表本身印日期」的页面。
+ *
+ * 年龄闸门对解析不出日期的条目是放行的——它们按收录时间落位，这是刻意的（很多区政府站列表不给日期）。
+ * 但同一个选择器常把侧栏、栏目导航、历史文件一起选中，"2008 年国妇儿工委字〔2008〕1 号"这类归档
+ * 就这样绕过 12 个月窗进了库（2026-10-24 实测：近 30 天 147 篇原文日期早于一年，最老 2018-05）。
+ *
+ * 判据用本轮候选的日期覆盖率：过半且至少 3 条带日期，说明这个列表是给日期的，无日期的当归档丢弃；
+ * 整轮都没日期时保持放行，否则会误杀真正不给日期的站点。
+ */
+function listPrintsDates(candidates: Candidate[]): boolean {
+  const dated = candidates.filter((c) => c.publishedAt).length;
+  return dated >= 3 && dated * 2 >= candidates.length;
+}
+
 export function noiseFiltered(c: Candidate, source: SourceRow): boolean {
   const f = source.config.ingestNoiseFilter;
   const cats: string[] = c.categories ?? [];
@@ -160,14 +175,21 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     const backfillMonths = Number(source.config._aihot?.initialBackfillMonths ?? 12);
     if (firstImport) {
       const cutoff = Date.now() - backfillMonths * 30 * 86400000;
-      candidates = candidates.filter((c) => !c.publishedAt || c.publishedAt.getTime() >= cutoff).slice(0, backfillLimit);
+      // 无日期条目只在"这个列表不给日期"时才收（见 listPrintsDates）。
+      const strict = listPrintsDates(candidates);
+      const before = candidates.length;
+      candidates = candidates
+        .filter((c) => (c.publishedAt ? c.publishedAt.getTime() >= cutoff : !strict))
+        .slice(0, backfillLimit);
+      droppedOld = before - candidates.length;
     } else if (source.kind !== "x_search") {
       // X keeps every post it read: its watermark already covers them, so a cut here would lose them.
       const maxAgeDays = Number(source.config._aihot?.ingestMaxAgeDays ?? DEFAULT_INGEST_MAX_AGE_DAYS);
       if (maxAgeDays > 0) {
         const cutoff = Date.now() - maxAgeDays * 86400000;
+        const strict = listPrintsDates(candidates);
         const before = candidates.length;
-        candidates = candidates.filter((c) => !c.publishedAt || c.publishedAt.getTime() >= cutoff);
+        candidates = candidates.filter((c) => (c.publishedAt ? c.publishedAt.getTime() >= cutoff : !strict));
         droppedOld = before - candidates.length;
       }
       candidates = candidates.slice(0, MAX_ITEMS_PER_RUN);

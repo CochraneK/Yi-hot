@@ -60,6 +60,18 @@ function datePrecision(value: string | null | undefined): "date" | "datetime" {
   return value && /\d{1,2}:\d{2}/.test(value) ? "datetime" : "date";
 }
 
+/**
+ * 正则可能把年月日捕成三组——很多政府站把日期只放在链接里，且年月日中间没有任何分隔符
+ * （`/xwzx/sxdt/202610/t20261021_4165367.shtml`）。三段都是"合理的年/月/日"时拼成
+ * `2026-10-21` 再交给 parseLooseDate；否则原样返回第一组，不多猜。
+ */
+function dateMatchText(m: RegExpExecArray | null): string | undefined {
+  if (!m) return undefined;
+  const [, y, mo, d] = m;
+  if (/^\d{4}$/.test(y ?? "") && /^\d{1,2}$/.test(mo ?? "") && /^\d{1,2}$/.test(d ?? "")) return `${y}-${mo}-${d}`;
+  return m[1];
+}
+
 /** The calendar day a moment falls on in a source's offset ("2026-10-22"), for same-day comparisons. */
 export function dayInOffset(at: Date, utcOffset = "+08:00"): string {
   const m = /^([+-])(\d{2}):?(\d{2})$/.exec(utcOffset);
@@ -296,7 +308,8 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     }
     if (!publishedAt && c.publishedAtRegex) {
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
-      publishedAt = parseLooseDate(m?.[1], c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
+      const text = dateMatchText(m);
+      publishedAt = parseLooseDate(text, c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
       if (publishedAt) publishedAtPrecision = datePrecision(m?.[1]);
     }
     seen.add(url);
@@ -484,7 +497,9 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
       // day. Without it the caller keeps "date", and the feed then prints no time at all.
       if (publishedAt) publishedAtPrecision = datePrecision(raw);
     }
-    if (!publishedAt && d.publishedAtRegex) publishedAt = parseLooseDate(new RegExp(d.publishedAtRegex).exec(dateText)?.[1], offset, d.publishedAtDayFirst === true);
+    if (!publishedAt && d.publishedAtRegex) {
+      publishedAt = parseLooseDate(dateMatchText(new RegExp(d.publishedAtRegex).exec(dateText)), offset, d.publishedAtDayFirst === true);
+    }
     // An authoritative rule is the only source of the date: when its byline is missing, no other
     // timestamp on the page (an update time, a related post) stands in for it.
     const authoritative = d.publishedAtAuthoritative === true && !!(d.publishedAtSelector || d.publishedAtRegex);

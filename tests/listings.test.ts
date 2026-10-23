@@ -18,6 +18,8 @@ const NOTES_SOURCE = `test-rss-notes-${T}`;
 const GARBLED_SOURCE = `test-rss-garbled-${T}`;
 const CHANGELOG_SOURCE = `test-web-changelog-${T}`;
 const AGE_SOURCE = `test-rss-age-${T}`;
+const ARCHIVE_SOURCE = `test-web-archive-${T}`;
+const UNDATED_SOURCE = `test-web-undated-${T}`;
 const DAY = 86_400_000;
 
 const item = (title: string, link: string, daysAgo: number) =>
@@ -50,6 +52,29 @@ ${heading(2, "时间2024-05-17", "时间：2024-05-17")}
 ${heading(3, "fund-flow-disclosure", `募捐资金流向季度公示 ${T}`)}<p>募捐资金流向按季度公示，本季度报告已发布。</p>
 </div></div></div></article></body></html>`;
 const server = http.createServer((req, res) => {
+  // 两种列表：一种印日期（但侧栏混进了几条归档文件，没有日期），一种整页都不印日期。
+  if (req.url?.startsWith(`/archive-${T}/`)) {
+    const dated = [
+      ["儿童康复救助项目启动", "a1", "2026-10-20"],
+      ["未成年人保护工作站挂牌", "a2", "2026-10-18"],
+      ["困境儿童助学名单公示", "a3", "2026-09-30"],
+      ["残障儿童辅具适配完成", "a4", "2025-08-01"],
+    ].map(([t, s, d]) => `<li><a href="/archive-${T}/${s}.html">${t} ${T}</a><span class="d">${d}</span></li>`);
+    const undated = ["2008 年国妇儿工委字 1 号", "2018 年度工作要点"].map(
+      (t, i) => `<li><a href="/archive-${T}/old-${i}.html">${t} ${T}</a></li>`,
+    );
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(`<!doctype html><html><body><ul class="news">${dated.join("")}${undated.join("")}</ul></body></html>`);
+    return;
+  }
+  if (req.url?.startsWith(`/undated-${T}/`)) {
+    const items = ["区残联开展助残日活动", "街道走访困境儿童家庭", "残疾人就业招聘会举行"].map(
+      (t, i) => `<li><a href="/undated-${T}/n${i}.html">${t} ${T}</a></li>`,
+    );
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(`<!doctype html><html><body><ul class="news">${items.join("")}</ul></body></html>`);
+    return;
+  }
   if (req.url === "/updates/") {
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     res.end(changelog);
@@ -76,7 +101,9 @@ before(async () => {
     (${NOTES_SOURCE}, 'Test release notes', 'rss', ${sql.json({ feedUrl: `${base}/notes.xml`, preserveUrlFragment: true })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
     (${GARBLED_SOURCE}, 'Test garbling feed', 'rss', ${sql.json({ feedUrl: `${base}/garbled.xml` })}, 'T1', 'hot_signal', ${cursor}, '2100-01-01'),
     (${AGE_SOURCE}, 'Test age gate', 'rss', ${sql.json({ feedUrl: `${base}/age-${T}.xml`, _aihot: { ingestMaxAgeDays: 2 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
-    (${CHANGELOG_SOURCE}, 'Test changelog', 'web_list', ${sql.json({ url: `${base}/updates/`, baseUrl: `${base}/updates/`, parseMode: "docusaurus_changelog", allowUrlPrefixes: [`${base}/updates/`], preserveUrlFragment: true, _aihot: { ingestMaxAgeDays: 0 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01')`;
+    (${CHANGELOG_SOURCE}, 'Test changelog', 'web_list', ${sql.json({ url: `${base}/updates/`, baseUrl: `${base}/updates/`, parseMode: "docusaurus_changelog", allowUrlPrefixes: [`${base}/updates/`], preserveUrlFragment: true, _aihot: { ingestMaxAgeDays: 0 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
+    (${ARCHIVE_SOURCE}, 'Test archive sidebar', 'web_list', ${sql.json({ url: `${base}/archive-${T}/`, baseUrl: `${base}/archive-${T}/`, itemSelector: "ul.news li", linkSelector: "a", titleSelector: "a", publishedAtSelector: "span.d", allowUrlPrefixes: [`${base}/archive-${T}/`], _aihot: { initialBackfillLimit: 20 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01'),
+    (${UNDATED_SOURCE}, 'Test undated listing', 'web_list', ${sql.json({ url: `${base}/undated-${T}/`, baseUrl: `${base}/undated-${T}/`, itemSelector: "ul.news li", linkSelector: "a", titleSelector: "a", publishedAtSelector: "span.d", allowUrlPrefixes: [`${base}/undated-${T}/`], _aihot: { initialBackfillLimit: 20 } })}, 'T1', 'editorial', ${cursor}, '2100-01-01')`;
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -133,4 +160,26 @@ test("a changelog's date headings date its updates and are no articles themselve
       ["#fund-flow-disclosure", "募捐资金流向季度公示", "2024-05-16T16:00:00.000Z"],
     ],
   );
+});
+
+test("首采丢掉「列表印日期、自己却没有日期」的侧栏归档条目", async () => {
+  // 侧栏、栏目导航、历史文件常和正文用同一种条目选择器。它们解析不出日期，按收录时间落位就绕过了
+  // 12 个月窗——「今天收录了 2018 年的稿子」就是这么来的。判据：本轮过半条目带日期时，无日期的当归档。
+  assert.equal((await collectSource(ARCHIVE_SOURCE, { force: true })).status, "ok");
+  const rows = await articles(ARCHIVE_SOURCE);
+  assert.deepEqual(
+    rows.map((r) => r.title.replace(` ${T}`, "")).sort(),
+    ["儿童康复救助项目启动", "困境儿童助学名单公示", "未成年人保护工作站挂牌"],
+    "四条带日期里 2025-08 那条超窗，两条无日期的当归档丢掉",
+  );
+  const [run] = await sql<{ detail: { droppedOld?: number } | null }[]>`
+    SELECT detail FROM fetch_runs WHERE source_id = ${ARCHIVE_SOURCE} ORDER BY id DESC LIMIT 1`;
+  assert.equal(run!.detail?.droppedOld, 3, "超窗一条 + 无日期两条，都该在运行记录里看得见");
+});
+
+test("整页都不印日期的列表照旧全收，不误杀", async () => {
+  // 很多区政府站的列表就是不给日期，只能靠详情页；这种站若也按「无日期=归档」处理会被清空。
+  assert.equal((await collectSource(UNDATED_SOURCE, { force: true })).status, "ok");
+  const rows = await articles(UNDATED_SOURCE);
+  assert.equal(rows.length, 3);
 });

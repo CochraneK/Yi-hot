@@ -130,21 +130,21 @@ flowchart LR
 
 ## 🗂️ 信源全名单
 
-> 数据时间：2026-10-24 02:02（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
+> 数据时间：2026-10-24 02:48（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
 > **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created / 解析条数——技术接通 ≠ 内容对口。
 > 这是**快照**：生产信源以数据库运行时配置为准（含 36 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。
 
 | 指标 | 数值 |
 | :--- | :--- |
-| 源总数 | 207（`sources.json` seed 150 + 仅数据库 57） |
-| 启用 / 停用 | 186 / 21 |
-| 有入池 / 主力（≥5） | 159 / 109 |
-| 入池文章总量 | 1456 |
+| 源总数 | 212（`sources.json` seed 155 + 仅数据库 57） |
+| 启用 / 停用 | 191 / 21 |
+| 有入池 / 主力（≥5） | 162 / 109 |
+| 入池文章总量 | 1466 |
 
 | 类型 | 源数 | 启用 | 有入池 | 入池文章 | 占比 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 搜索源（DeepSeek Search） | 73 | 73 | 71 | 858 | 59% |
-| 网页列表源 | 89 | 85 | 65 | 451 | 31% |
+| 搜索源（DeepSeek Search） | 73 | 73 | 71 | 861 | 59% |
+| 网页列表源 | 94 | 90 | 68 | 458 | 31% |
 | RSS 源 | 26 | 10 | 9 | 80 | 5% |
 | JSON / API 列表源 | 17 | 16 | 13 | 52 | 4% |
 | 外部系统源 | 2 | 2 | 1 | 15 | 1% |
@@ -153,7 +153,7 @@ flowchart LR
 
 状态：● 主力（入池 ≥5）· 少量（1–4）· △ 有稿零入池 · ○ 从未产出 · ⚠️ 退避中 · ⛔ 停用；数字为**入池 / 产出**。
 
-#### 搜索源（DeepSeek Search）（73 个，入池 858）
+#### 搜索源（DeepSeek Search）（73 个，入池 861）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
@@ -168,8 +168,8 @@ flowchart LR
 | 网页搜索·江苏民政（DeepSeek） | `search-mca-js` | ● 主力 | 21/26 |
 | 网页搜索·山东民政（DeepSeek） | `search-mca-sd` | ● 主力 | 21/29 |
 | 网页搜索·江西民政（DeepSeek） | `search-mca-jiangxi` | ● 主力 | 20/50 |
+| 网页搜索·安徽民政（DeepSeek） | `search-mca-anhui` | ● 主力 | 19/52 |
 | 网页搜索·大病与罕见病儿童救助 | `search-child-medical` | ● 主力 | 18/29 |
-| 网页搜索·安徽民政（DeepSeek） | `search-mca-anhui` | ● 主力 | 18/42 |
 | 网页搜索·北京民政（DeepSeek） | `search-mca-bj` | ● 主力 | 18/18 |
 | 网页搜索·甘肃民政（DeepSeek） | `search-mca-gansu` | ● 主力 | 18/48 |
 | 网页搜索·山东残联（DeepSeek） | `search-cdpf-sd` | ● 主力 | 17/55 |
@@ -178,10 +178,10 @@ flowchart LR
 | 网页搜索·财政部（DeepSeek） | `search-mof` | ● 主力 | 16/28 |
 | 网页搜索·南都观察/报告（DeepSeek） | `search-think-nandu` | ● 主力 | 16/27 |
 | 网页搜索·北师大中国公益研究院（DeepSeek） | `search-think-tass` | ● 主力 | 16/34 |
+| 网页搜索·山西民政（DeepSeek） | `search-mca-shanxi` | ● 主力 | 15/55 |
 | 网页搜索·上海残联（DeepSeek） | `search-cdpf-sh` | ● 主力 | 14/46 |
+| 网页搜索·海南民政（DeepSeek） | `search-mca-hainan` | ● 主力 | 14/43 |
 | 网页搜索·湖北民政（DeepSeek） | `search-mca-hub` | ● 主力 | 14/23 |
-| 网页搜索·山西民政（DeepSeek） | `search-mca-shanxi` | ● 主力 | 14/45 |
-| 网页搜索·海南民政（DeepSeek） | `search-mca-hainan` | ● 主力 | 13/42 |
 | 网页搜索·宁夏民政（DeepSeek） | `search-mca-ningxia` | ● 主力 | 13/43 |
 | 网页搜索·云南民政（DeepSeek） | `search-mca-yunnan` | ● 主力 | 13/46 |
 | 网页搜索·北京残联（DeepSeek） | `search-cdpf-bj` | ● 主力 | 12/44 |
@@ -231,7 +231,7 @@ flowchart LR
 | 网页搜索·国家统计局数据（DeepSeek） | `search-data-stats` | △ 零入池 | 0/30 |
 | 网页搜索·市场监管总局（DeepSeek） | `search-samr` | △ 零入池 | 0/30 |
 
-#### 网页列表源（89 个，入池 451）
+#### 网页列表源（94 个，入池 458）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
@@ -273,6 +273,7 @@ flowchart LR
 | 黑龙江省民政厅·通知公告 | `web-probe-mzt-hlj-gov-cn-316374` | ● 主力 | 5/15 |
 | 吉林省民政厅·通知公告 | `web-probe-mzt-jl-gov-cn-316374` | ● 主力 | 5/20 |
 | 陕西省民政厅·工作动态 | `web-probe-mzt-shaanxi-gov-cn-a29c70` | ● 主力 | 5/15 |
+| 海南省残联·残联快讯 | `web-hidpf-news` | · 少量 | 4/6 |
 | 教育部·工作动态 | `web-moe-news` | · 少量 | 4/41 |
 | 重庆市民政局·通知公告 | `web-probe-mzj-cq-gov-cn-316374` | · 少量 | 4/10 |
 | 河南省民政厅·民政要闻 | `web-probe-mzt-henan-gov-cn-ec82f3` | · 少量 | 4/12 |
@@ -289,10 +290,12 @@ flowchart LR
 | 南都公益基金会·机构动态 | `web-nandu-org-news` | · 少量 | 3/13 |
 | 新疆维吾尔自治区民政厅·通知公告 | `web-probe-mzt-xinjiang-gov-cn-316374` | · 少量 | 3/19 |
 | 西藏自治区民政厅·通知公告 | `web-probe-mzt-xizang-gov-cn-316374` | · 少量 | 3/17 |
+| 安徽省残联·市县动态 | `web-ahdpf-sxdt` | · 少量 | 2/8 |
 | 辽宁省民政厅·图片新闻 | `web-probe-mzt-ln-gov-cn-0283c5` | · 少量 | 2/10 |
 | 浙江省民政厅·社会组织年检公告 | `web-probe-mzt-zj-gov-cn-5b3418` | · 少量 | 2/15 |
 | 今日热榜·新闻 | `web-tophub-news` | · 少量 | 2/5 |
 | 中国发展简报 | `china-development-brief` | · 少量 | 1/10 |
+| 安徽省残联·残联要闻 | `web-ahdpf-gzdt` | · 少量 | 1/8 |
 | 中国人口福利基金会·新闻动态 | `web-cpwf-news` | · 少量 | 1/9 |
 | 中国红十字基金会·新闻中心 | `web-crcf-news` | · 少量 | 1/10 |
 | 辽宁省残联·新闻频道 | `web-lncl-xwpd` | · 少量 | 1/9 |
@@ -319,11 +322,13 @@ flowchart LR
 | 中国宋庆龄基金会·通知公告 | `web-probe-www-sclf-org-316374` | ⛔ 停用 | 0/0 |
 | 国家统计局·通知公告 | `web-stats-tzgg` | ○ 未产出 | 0/0 |
 | 救助儿童会国际·全球新闻 | `web-stc-global-news` | ⛔ 停用 | 0/0 |
+| 山西省残联·工作动态 | `web-sxdpf-gzdt` | △ 零入池 | 0/8 |
 | 澎湃新闻·时事 | `web-thepaper` | △ 零入池 | 0/12 |
 | 联合国教科文组织 | `web-unesco` | △ 零入池 | 0/7 |
 | 联合国儿童基金会中国·新闻资讯 | `web-unicef-cn-press` | ⛔ 停用 | 0/0 |
 | 心和基金会·心和动态 | `web-xinhe-news` | △ 零入池 | 0/4 |
 | 新华网·时政联播 | `web-xinhua-szlb` | ○ 未产出 | 0/0 |
+| 新疆维吾尔自治区残联·要闻 | `web-xjdpf-news` | △ 零入池 | 0/4 |
 
 #### RSS 源（26 个，入池 80）
 

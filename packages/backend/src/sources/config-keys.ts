@@ -30,7 +30,9 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
 
 // Objects with fixed keys (headers and bodyJson are request data, free-form).
 const NESTED: Record<string, string[]> = {
-  _aihot: ["initialBackfillLimit", "initialBackfillMonths", "dateUpgradeMaxFetches"],
+  // ingestMaxAgeDays：增量采集的年龄闸门（见 collect.ts）。首采有 initialBackfillMonths，
+  // 增量原本只看条数，归档页上的老条目会整份灌进来。0 表示不设闸门（档案型源）。
+  _aihot: ["initialBackfillLimit", "initialBackfillMonths", "dateUpgradeMaxFetches", "ingestMaxAgeDays"],
   ingestNoiseFilter: ["dropMarkers", "dropMarkersTitleOnly", "keepIfMatches", "requireMarkers"],
   itemUrlPrefixRewrite: ["from", "to"],
   requireBoolean: ["path", "equals"],

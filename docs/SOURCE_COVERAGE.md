@@ -37,7 +37,7 @@
 
 GiveDirectly（8）、Oxfam 乐施会（7）、Stanford Social Innovation Review（4）、联合国新闻。
 
-### 省级民政（24 省区市在出稿，2026-10-23 深夜实时入池数）
+### 省级民政（表内列出 23 个省区市；2026-10-23 入池历史快照，生产覆盖待复核）
 
 | 省份 | 入池 | 省份 | 入池 |
 | :--- | :--- | :--- | :--- |
@@ -55,6 +55,20 @@ GiveDirectly（8）、Oxfam 乐施会（7）、Stanford Social Innovation Review
 | | | 四川 | 1 ⚠️ |
 
 > 本表为 2026-10-23 深夜对 `publications` 的实时查询，取代原 sel.tsv 快照。**广西 / 湖南 / 吉林由运行时探测源覆盖**（`web-probe-mzt-gxzf-*` 等，不在 `sources.json`）。⚠️ 辽宁（仅图片新闻）、四川仍属"名义覆盖、实质很薄"。
+
+> **2026-10-24 交接核对（仅文档枚举，不是新一次生产查询）**：上表实际列出 **23 个不同省区市**，原标题写“24 省区市”与表格矛盾；下节“空缺 8 省”与 23+8=31 的枚举算术相符。但这**不能证明生产库实际只有 23 省出稿**：有可能是上表漏列了一个在运行时数据库中已入选的来源，也可能是 24 的标题误写。请核对生产 `publications.selected` 与 `sources` 中对应地区的来源（含 `web-probe-*`），按 31 个省级行政区统一映射，修复漏列/重复映射后再更新覆盖率与地图。**在完成数据库复核之前不得对外宣称“23/31”或“24/31”为生产事实。**
+
+用于开始排查的**只读** SQL（输出源级入选数，再根据正式来源配置和运行时探测源逐一归省，不通过字符串猜省名）：
+
+```sql
+SELECT source_id,
+       COUNT(*) FILTER (WHERE selected IS TRUE) AS selected_count
+FROM publications
+GROUP BY source_id
+HAVING COUNT(*) FILTER (WHERE selected IS TRUE) > 0
+ORDER BY selected_count DESC, source_id;
+```
+
 
 ### SPA / JS 渲染站点（2026-10-23 渲染器批次，`render: "browser"`）
 

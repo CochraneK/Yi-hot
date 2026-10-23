@@ -18,6 +18,11 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
+# The inbox proxy (the web app's edge middleware) rejects requests whose User-Agent looks like a
+# bot — urllib's default "Python-urllib/3.x" is blocked with 403 "Access denied". Send the same
+# browser UA the rest of YiHot uses so the ingest POST reaches the API instead of the WAF.
+BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
 SOURCES = {
     "email-amcham-events": {"query": "amchamevent", "name": "AmCham China Events 邮件", "kind": "amcham"},
     "email-amity-chuanyi": {"query": "aidechuany", "name": "爱德传一基金 · 慈善纪事简报", "kind": "chuanyi"},
@@ -189,7 +194,7 @@ def post_items(source_id: str, source_name: str, items: list[dict]) -> dict:
     if len(token) < 16:
         raise RuntimeError("INGEST_TOKEN missing or too short")
     payload = json.dumps({"sourceId": source_id, "sourceName": source_name, "items": items}, ensure_ascii=False).encode()
-    request = urllib.request.Request(endpoint, data=payload, headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"}, method="POST")
+    request = urllib.request.Request(endpoint, data=payload, headers={"Authorization": "Bearer " + token, "Content-Type": "application/json", "User-Agent": BROWSER_UA}, method="POST")
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.loads(response.read())
 
@@ -276,5 +281,12 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        print(json.dumps({"ok": False, "errorType": type(exc).__name__}), file=sys.stderr)
+        detail = str(exc)
+        if isinstance(exc, urllib.request.HTTPError):
+            try:
+                body = exc.read().decode("utf-8", "replace")[:500]
+            except Exception:
+                body = ""
+            detail = f"HTTP {exc.code} {exc.reason}: {body}"
+        print(json.dumps({"ok": False, "errorType": type(exc).__name__, "error": detail}, ensure_ascii=False), file=sys.stderr)
         raise SystemExit(1)

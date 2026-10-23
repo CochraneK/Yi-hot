@@ -70,9 +70,6 @@ export function Sidebar({ changelogVersion }: { changelogVersion: string | null 
           <IconMail size={14} />
           订阅更新
         </Link>
-        <a href="/feed.xml" className="block text-center text-[10.5px] text-ink-4 transition-colors hover:text-ink-3">
-          或用 RSS 订阅
-        </a>
         <ThemeSwitch className="mx-1" />
         {SITE.icp && (
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="block px-2 text-[10px] text-ink-4 hover:text-ink-3">

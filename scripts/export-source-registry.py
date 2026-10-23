@@ -83,6 +83,10 @@ def load_rows(path):
             line = line.rstrip("\n").rstrip("\r")
             if not line:
                 continue
+            # psql 的 \pset 会在结果前后打横幅（"Pager usage is off." / "(N rows)"），
+            # 它们没有竖线分隔，被当成数据行就会把源总数算多一个。只接受真正的 10 列记录。
+            if line.count("|") < 9:
+                continue
             parts = line.split("|")
             while len(parts) < 10:
                 parts.append("")

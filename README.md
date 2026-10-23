@@ -129,14 +129,14 @@ flowchart LR
 
 ## 🗂️ 信源全名单
 
-> 数据时间：2026-10-24 01:09（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
+> 数据时间：2026-10-24 01:16（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
 > **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created / 解析条数——技术接通 ≠ 内容对口。
 > 这是**快照**：生产信源以数据库运行时配置为准（含 36 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。
 
 | 指标 | 数值 |
 | :--- | :--- |
-| 源总数 | 200（`sources.json` seed 142 + 仅数据库 58） |
-| 启用 / 停用 | 178 / 22 |
+| 源总数 | 199（`sources.json` seed 142 + 仅数据库 57） |
+| 启用 / 停用 | 178 / 21 |
 | 有入池 / 主力（≥5） | 151 / 102 |
 | 入池文章总量 | 1326 |
 

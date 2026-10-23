@@ -119,11 +119,282 @@ flowchart LR
 | :--- | :--- |
 | **只想了解产品** | [线上站点](https://49.233.72.222/yihot/) · [分类和标签](docs/topic-axis-migration.md) |
 | **第一次接手维护** | [完整维护手册](MAINTENANCE.md) · [交接总览](docs/PROJECT_CONTEXT.md) |
-| **新增公益信源** | [信源配置](docs/sources.md) · [候选治理与核查](docs/SOURCE_CANDIDATE_TRIAL.md) · [覆盖清单与失败复盘](docs/SOURCE_COVERAGE.md) |
+| **新增公益信源** | [信源配置](docs/sources.md) · [候选治理与核查](docs/SOURCE_CANDIDATE_TRIAL.md) · [覆盖清单与失败复盘](docs/SOURCE_COVERAGE.md) · [README 内信源全名单（含失败记录）](#-信源全名单) |
 | **配置公众号和邮件** | [WeRSS](docs/WERSS_DEPLOY.md) · [邮件采集](docs/EMAIL_SOURCE_DEPLOY.md) · [邮件发送](docs/EMAIL_DELIVERY.md) |
 | **理解系统如何运作** | [技术架构](docs/architecture.md) · [评分与筛选](docs/selection.md) |
 | **同步和重新部署** | [同步工具](tools/README.md) · [运行维护](docs/memory/OPS.md) |
 | **跟踪 AIHOT 上游** | [升级与重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) |
+
+<!-- SOURCE-REGISTRY:START -->
+
+## 🗂️ 信源全名单
+
+> 数据时间：2026-10-23 23:37（北京时间）· 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成；
+> **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created / 解析条数——技术接通 ≠ 内容对口。
+> 这是**快照**：生产信源以数据库运行时配置为准（含 36 个只在数据库的 `web-probe-*` 探测源），重新生成方法见脚本头部注释。
+
+| 指标 | 数值 |
+| :--- | :--- |
+| 源总数 | 190（`sources.json` seed 133 + 仅数据库 57） |
+| 启用 / 停用 | 169 / 21 |
+| 有入池 / 主力（≥5） | 142 / 96 |
+| 入池文章总量 | 1273 |
+
+| 类型 | 源数 | 启用 | 有入池 | 入池文章 | 占比 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 搜索源（DeepSeek Search） | 61 | 61 | 59 | 698 | 55% |
+| 网页列表源 | 84 | 80 | 60 | 430 | 34% |
+| RSS 源 | 26 | 10 | 9 | 78 | 6% |
+| JSON / API 列表源 | 17 | 16 | 13 | 52 | 4% |
+| 外部系统源 | 2 | 2 | 1 | 15 | 1% |
+
+### 全部信源（按类型、按入池降序）
+
+状态：● 主力（入池 ≥5）· 少量（1–4）· △ 有稿零入池 · ○ 从未产出 · ⚠️ 退避中 · ⛔ 停用；数字为**入池 / 产出**。
+
+#### 搜索源（DeepSeek Search）（61 个，入池 698）
+
+| 名称 | ID | 状态 | 入池/产出 |
+| :--- | :--- | :--- | :--- |
+| 网页搜索·老年人权益（DeepSeek） | `search-elderly` | ● 主力 | 43/59 |
+| 网页搜索·残障融合（DeepSeek） | `search-disability` | ● 主力 | 38/58 |
+| 网页搜索·儿童与公益（DeepSeek） | `search-child-rights` | ● 主力 | 36/75 |
+| 网页搜索·浙江残联（DeepSeek） | `search-cdpf-zj` | ● 主力 | 32/54 |
+| 网页搜索·乡村振兴（DeepSeek） | `search-rural` | ● 主力 | 29/55 |
+| 网页搜索·韩红基金会（DeepSeek） | `search-found-han` | ● 主力 | 23/29 |
+| 网页搜索·江苏残联（DeepSeek） | `search-cdpf-js` | ● 主力 | 21/53 |
+| 网页搜索·嫣然天使（DeepSeek） | `search-found-smile` | ● 主力 | 21/25 |
+| 网页搜索·江苏民政（DeepSeek） | `search-mca-js` | ● 主力 | 21/26 |
+| 网页搜索·山东民政（DeepSeek） | `search-mca-sd` | ● 主力 | 21/29 |
+| 网页搜索·北京民政（DeepSeek） | `search-mca-bj` | ● 主力 | 18/18 |
+| 网页搜索·山东残联（DeepSeek） | `search-cdpf-sd` | ● 主力 | 17/55 |
+| 网页搜索·UNHCR 难民署（DeepSeek） | `search-intl-unhcr` | ● 主力 | 17/30 |
+| 网页搜索·国家卫健委（DeepSeek） | `search-mohw` | ● 主力 | 17/30 |
+| 网页搜索·财政部（DeepSeek） | `search-mof` | ● 主力 | 16/28 |
+| 网页搜索·南都观察/报告（DeepSeek） | `search-think-nandu` | ● 主力 | 16/27 |
+| 网页搜索·北师大中国公益研究院（DeepSeek） | `search-think-tass` | ● 主力 | 16/34 |
+| 网页搜索·上海残联（DeepSeek） | `search-cdpf-sh` | ● 主力 | 14/46 |
+| 网页搜索·湖北民政（DeepSeek） | `search-mca-hub` | ● 主力 | 14/23 |
+| 网页搜索·北京残联（DeepSeek） | `search-cdpf-bj` | ● 主力 | 12/44 |
+| 网页搜索·浙江民政（DeepSeek） | `search-mca-zj` | ● 主力 | 12/21 |
+| 网页搜索·中国社会报（DeepSeek） | `search-media-chinasocial` | ● 主力 | 12/29 |
+| 网页搜索·社科院社会政策（DeepSeek） | `search-think-cass` | ● 主力 | 12/27 |
+| 网页搜索·免费午餐（DeepSeek） | `search-found-free` | ● 主力 | 11/25 |
+| 网页搜索·21世纪教育研究院（DeepSeek） | `search-think-21edu` | ● 主力 | 11/28 |
+| 网页搜索·山东妇联（DeepSeek） | `search-women-sd` | ● 主力 | 11/23 |
+| 网页搜索·性别平等（DeepSeek） | `search-gender` | ● 主力 | 10/60 |
+| 网页搜索·上海民政（DeepSeek） | `search-mca-sh` | ● 主力 | 10/17 |
+| 网页搜索·江苏妇联（DeepSeek） | `search-women-js` | ● 主力 | 10/47 |
+| 网页搜索·慈善公益报（DeepSeek） | `search-media-charity` | ● 主力 | 9/22 |
+| 网页搜索·浙江妇联（DeepSeek） | `search-women-zj` | ● 主力 | 9/44 |
+| 网页搜索·慈善信息公开（DeepSeek） | `search-data-charity` | ● 主力 | 8/22 |
+| 网页搜索·真爱梦想（DeepSeek） | `search-found-dream` | ● 主力 | 8/20 |
+| 网页搜索·最高法典型案例（DeepSeek） | `search-judicial-spc` | ● 主力 | 8/52 |
+| 网页搜索·公益时报（DeepSeek） | `search-media-gongyi` | ● 主力 | 8/14 |
+| 网页搜索·司法部（DeepSeek） | `search-moj` | ● 主力 | 8/29 |
+| 网页搜索·公安部（DeepSeek） | `search-mps` | ● 主力 | 8/30 |
+| 网页搜索·上海共青团（DeepSeek） | `search-gqt-sh` | ● 主力 | 7/30 |
+| 网页搜索·清华公益慈善研究院（DeepSeek） | `search-think-tsinghua` | ● 主力 | 7/23 |
+| 网页搜索·湖北妇联（DeepSeek） | `search-women-hub` | ● 主力 | 7/49 |
+| 网页搜索·UN Women 妇女署（DeepSeek） | `search-intl-unwomen` | ● 主力 | 6/27 |
+| 网页搜索·最高检未检（DeepSeek） | `search-judicial-spp` | ● 主力 | 6/25 |
+| 网页搜索·财新公益（DeepSeek） | `search-media-caixin` | ● 主力 | 6/17 |
+| 网页搜索·湖北残联（DeepSeek） | `search-cdpf-hub` | ● 主力 | 5/28 |
+| 网页搜索·湖北共青团（DeepSeek） | `search-gqt-hub` | ● 主力 | 5/30 |
+| 网页搜索·UNDP 开发计划署（DeepSeek） | `search-intl-undp` | ● 主力 | 5/29 |
+| 网页搜索·人社部（DeepSeek） | `search-mohrss` | ● 主力 | 5/30 |
+| 网页搜索·上海妇联（DeepSeek） | `search-women-sh` | ● 主力 | 5/24 |
+| 网页搜索·江苏共青团（DeepSeek） | `search-gqt-js` | · 少量 | 4/30 |
+| 网页搜索·WHO 世界卫生组织（DeepSeek） | `search-intl-who` | · 少量 | 4/30 |
+| 网页搜索·法律援助（DeepSeek） | `search-judicial-legalaid` | · 少量 | 4/14 |
+| 网页搜索·北大社会研究中心（DeepSeek） | `search-think-pku` | · 少量 | 4/24 |
+| 网页搜索·生态环境（DeepSeek） | `search-environment` | · 少量 | 2/59 |
+| 网页搜索·山东共青团（DeepSeek） | `search-gqt-sd` | · 少量 | 2/29 |
+| 网页搜索·浙江共青团（DeepSeek） | `search-gqt-zj` | · 少量 | 2/29 |
+| 网页搜索·北京妇联（DeepSeek） | `search-women-bj` | · 少量 | 2/25 |
+| 网页搜索·财政民生支出（DeepSeek） | `search-data-finance` | · 少量 | 1/24 |
+| 网页搜索·北京共青团（DeepSeek） | `search-gqt-bj` | · 少量 | 1/30 |
+| 网页搜索·世界银行（DeepSeek） | `search-intl-worldbank` | · 少量 | 1/28 |
+| 网页搜索·国家统计局数据（DeepSeek） | `search-data-stats` | △ 零入池 | 0/30 |
+| 网页搜索·市场监管总局（DeepSeek） | `search-samr` | △ 零入池 | 0/30 |
+
+#### 网页列表源（84 个，入池 430）
+
+| 名称 | ID | 状态 | 入池/产出 |
+| :--- | :--- | :--- | :--- |
+| 公益时报 · 公益资讯 | `gongyi-times` | ● 主力 | 31/85 |
+| 壹基金·最新活动 | `web-onefoundation-news` | ● 主力 | 22/29 |
+| 福建省民政厅·通知公告 | `web-probe-mzt-fujian-gov-cn-316374` | ● 主力 | 21/60 |
+| 民政部·地方动态 | `web-mca-local` | ● 主力 | 19/34 |
+| 河南省民政厅·公告公示 | `web-probe-mzt-henan-gov-cn-78ddfb` | ● 主力 | 19/24 |
+| 广西壮族自治区民政厅·民政要闻 | `web-probe-mzt-gxzf-gov-cn-ec82f3` | ● 主力 | 18/30 |
+| 公益时报·要闻 | `web-gongyishibao-yaowen` | ● 主力 | 15/21 |
+| 广东省民政厅·通知公告 | `web-probe-smzt-gd-gov-cn-316374` | ● 主力 | 13/20 |
+| 联合国儿童基金会全球·新闻稿 | `web-unicef-global-press` | ● 主力 | 13/14 |
+| 广东省民政厅·民政要闻 | `web-probe-smzt-gd-gov-cn-ec82f3` | ● 主力 | 11/21 |
+| 福建省民政厅·民政动态 | `web-probe-mzt-fujian-gov-cn-64140c` | ● 主力 | 10/62 |
+| 贵州省民政厅·通知公告 | `web-probe-mzt-guizhou-gov-cn-316374` | ● 主力 | 10/20 |
+| 内蒙古自治区民政厅·通知公告 | `web-probe-mzt-nmg-gov-cn-316374` | ● 主力 | 10/12 |
+| 新疆维吾尔自治区民政厅·民政要闻 | `web-probe-mzt-xinjiang-gov-cn-ec82f3` | ● 主力 | 10/17 |
+| 中国残联·残联要闻 | `web-cdpf-news` | ● 主力 | 9/25 |
+| 中国乡村发展基金会·机构新闻 | `web-cfpa-news` | ● 主力 | 9/12 |
+| 贵州省民政厅·民政要闻 | `web-probe-mzt-guizhou-gov-cn-ec82f3` | ● 主力 | 9/45 |
+| 湖南省民政厅·民政要闻 | `web-probe-mzt-hunan-gov-cn-ec82f3` | ● 主力 | 9/20 |
+| 中国妇女发展基金会·本会新闻 | `web-cwdf-news` | ● 主力 | 8/12 |
+| 天津市民政局·通知公告 | `web-probe-mz-tj-gov-cn-316374` | ● 主力 | 8/15 |
+| 中华慈善总会·通知公告 | `web-probe-www-chinacharityfederation-org-316374` | ● 主力 | 8/10 |
+| 中国网信网·政策法规 | `web-cac-policy` | ● 主力 | 7/24 |
+| 民政部·通知公告 | `web-mca-notice` | ● 主力 | 7/20 |
+| 民政部·民政要闻 | `web-mca-civil-news` | ● 主力 | 6/24 |
+| 广西壮族自治区民政厅·工作动态 | `web-probe-mzt-gxzf-gov-cn-a29c70` | ● 主力 | 6/29 |
+| 陕西省民政厅·通知公告 | `web-probe-mzt-shaanxi-gov-cn-316374` | ● 主力 | 6/18 |
+| 西藏自治区民政厅·工作动态 | `web-probe-mzt-xizang-gov-cn-a29c70` | ● 主力 | 6/15 |
+| 最高人民检察院·新闻发布会 | `web-spp-wsfbt` | ● 主力 | 6/7 |
+| 中国慈善联合会·联合会动态 | `web-cca-federation-news` | ● 主力 | 5/21 |
+| 中国儿童少年基金会·动态 | `web-cctf-news` | ● 主力 | 5/19 |
+| 中国社会福利基金会·工作动态 | `web-cswef-news` | ● 主力 | 5/11 |
+| 民政部·业务动态 | `web-mca-business` | ● 主力 | 5/17 |
+| 天津市民政局·民政要闻 | `web-probe-mz-tj-gov-cn-ec82f3` | ● 主力 | 5/15 |
+| 黑龙江省民政厅·通知公告 | `web-probe-mzt-hlj-gov-cn-316374` | ● 主力 | 5/15 |
+| 吉林省民政厅·通知公告 | `web-probe-mzt-jl-gov-cn-316374` | ● 主力 | 5/20 |
+| 陕西省民政厅·工作动态 | `web-probe-mzt-shaanxi-gov-cn-a29c70` | ● 主力 | 5/15 |
+| 教育部·工作动态 | `web-moe-news` | · 少量 | 4/41 |
+| 重庆市民政局·通知公告 | `web-probe-mzj-cq-gov-cn-316374` | · 少量 | 4/10 |
+| 河南省民政厅·民政要闻 | `web-probe-mzt-henan-gov-cn-ec82f3` | · 少量 | 4/12 |
+| 黑龙江省民政厅·工作动态 | `web-probe-mzt-hlj-gov-cn-a29c70` | · 少量 | 4/26 |
+| 青海省民政厅·通知公告 | `web-probe-mzt-qinghai-gov-cn-316374` | · 少量 | 4/9 |
+| 青海省民政厅·新闻中心 | `web-probe-mzt-qinghai-gov-cn-60e980` | · 少量 | 4/17 |
+| 救助儿童会中国·最新进展 | `web-savethechildren-cn` | · 少量 | 4/10 |
+| UNICEF Innocenti·儿童研究报告 | `web-unicef-innocenti-reports` | ⚠️ 退避 | 4/6 |
+| 世界银行·儿童 | `web-worldbank` | · 少量 | 4/8 |
+| 生态环境部·政策文件 | `web-mee-zcwj` | · 少量 | 3/35 |
+| 应急管理部·应急要闻 | `web-mem-emergency-news` | · 少量 | 3/16 |
+| 南都公益基金会·机构动态 | `web-nandu-org-news` | · 少量 | 3/13 |
+| 新疆维吾尔自治区民政厅·通知公告 | `web-probe-mzt-xinjiang-gov-cn-316374` | · 少量 | 3/19 |
+| 西藏自治区民政厅·通知公告 | `web-probe-mzt-xizang-gov-cn-316374` | · 少量 | 3/17 |
+| 辽宁省民政厅·图片新闻 | `web-probe-mzt-ln-gov-cn-0283c5` | · 少量 | 2/10 |
+| 浙江省民政厅·社会组织年检公告 | `web-probe-mzt-zj-gov-cn-5b3418` | · 少量 | 2/15 |
+| 今日热榜·新闻 | `web-tophub-news` | · 少量 | 2/5 |
+| 中国发展简报 | `china-development-brief` | · 少量 | 1/10 |
+| 中国人口福利基金会·新闻动态 | `web-cpwf-news` | · 少量 | 1/9 |
+| 中国红十字基金会·新闻中心 | `web-crcf-news` | · 少量 | 1/10 |
+| 国家疾控局 | `web-ndcpa` | · 少量 | 1/25 |
+| 吉林省民政厅·民政要闻 | `web-probe-mzt-jl-gov-cn-ec82f3` | · 少量 | 1/18 |
+| 内蒙古自治区民政厅·工作动态 | `web-probe-mzt-nmg-gov-cn-a29c70` | · 少量 | 1/14 |
+| 四川省民政厅·通知公告 | `web-probe-mzt-sc-gov-cn-316374` | · 少量 | 1/8 |
+| 财新网 | `web-caixin` | △ 零入池 | 0/19 |
+| 中国发展研究基金会 | `web-cdrf` | △ 零入池 | 0/10 |
+| 中国基金会发展论坛·行业资讯 | `web-cfforum-news` | ○ 未产出 | 0/0 |
+| 中国妇女报 | `web-cnwomen-news` | △ 零入池 | 0/5 |
+| 最高人民法院·新闻 | `web-court-spc-news` | △ 零入池 | 0/31 |
+| 中国青年报 | `web-cyol-news` | ○ 未产出 | 0/0 |
+| 共青团中央·工作动态 | `web-gqt-gzdt` | △ 零入池 | 0/8 |
+| 北京新阳光慈善基金会·新闻动态 | `web-isun-news` | △ 零入池 | 0/10 |
+| 中国教育报 | `web-jyb` | △ 零入池 | 0/4 |
+| 生态环境部·环保要闻 | `web-mee-hjyw` | △ 零入池 | 0/19 |
+| 生态环境部·新闻发布 | `web-mee-xwfb` | △ 零入池 | 0/8 |
+| 国家发展改革委·通知公告 | `web-ndrc-xwfb` | ○ 未产出 | 0/0 |
+| 全国人大·立法动态 | `web-npc-lfdt` | △ 零入池 | 0/7 |
+| 辽宁省民政厅·社会组织评估等级结果公告 | `web-probe-mzt-ln-gov-cn-163f7d` | △ 零入池 | 0/20 |
+| 四川省民政厅·工作动态 | `web-probe-mzt-sc-gov-cn-a29c70` | △ 零入池 | 0/19 |
+| 中华环境保护基金会·基金会动态 | `web-probe-www-cepf-org-cn-d065ac` | ⛔ 停用 | 0/0 |
+| 中国宋庆龄基金会·通知公告 | `web-probe-www-sclf-org-316374` | ⛔ 停用 | 0/0 |
+| 国家统计局·通知公告 | `web-stats-tzgg` | ○ 未产出 | 0/0 |
+| 救助儿童会国际·全球新闻 | `web-stc-global-news` | ⛔ 停用 | 0/0 |
+| 澎湃新闻·时事 | `web-thepaper` | △ 零入池 | 0/12 |
+| 联合国教科文组织 | `web-unesco` | △ 零入池 | 0/7 |
+| 联合国儿童基金会中国·新闻资讯 | `web-unicef-cn-press` | ⛔ 停用 | 0/0 |
+| 心和基金会·心和动态 | `web-xinhe-news` | △ 零入池 | 0/4 |
+| 新华网·时政联播 | `web-xinhua-szlb` | ○ 未产出 | 0/0 |
+
+#### RSS 源（26 个，入池 78）
+
+| 名称 | ID | 状态 | 入池/产出 |
+| :--- | :--- | :--- | :--- |
+| 世界卫生组织·新闻 | `rss-who-news` | ● 主力 | 31/73 |
+| 中国新闻网·滚动 | `rss-chinanews-scroll` | ● 主力 | 12/77 |
+| 公益时报（微信公众号） | `wechat-gongyi-times` | ● 主力 | 10/30 |
+| GiveDirectly·动态 | `rss-givedirectly` | ● 主力 | 8/13 |
+| Oxfam 乐施会·新闻 | `rss-oxfam` | ● 主力 | 7/11 |
+| 中国政府网·政策推送 | `rss-gov-cn` | · 少量 | 4/4 |
+| Stanford Social Innovation Review | `ssir` | · 少量 | 4/47 |
+| 中国新闻网·教育 | `rss-chinanews-edu` | · 少量 | 1/3 |
+| 中国新闻网·健康 | `rss-chinanews-health` | · 少量 | 1/7 |
+| 联合国新闻（中文） | `rss-un-news` | ⛔ 停用 | 0/0 |
+| 中国美国商会 AmCham China（微信公众号） | `wechat-amcham-china` | △ 零入池 | 0/15 |
+| 字节跳动公益 | `wechat-bytedance-charity` | ⛔ 停用 | 0/0 |
+| 中国慈善联合会 | `wechat-china-charity-alliance` | ⛔ 停用 | 0/0 |
+| 中国儿童福利 | `wechat-china-child-welfare` | ⛔ 停用 | 0/0 |
+| 中国儿童福利协会 | `wechat-china-child-welfare-assoc` | ⛔ 停用 | 0/0 |
+| 中国儿童中心 | `wechat-china-childrens-center` | ⛔ 停用 | 0/0 |
+| 中国志愿 | `wechat-china-volunteer` | ⛔ 停用 | 0/0 |
+| 广州儿童福利和权益保护 | `wechat-guangzhou-child-welfare` | ⛔ 停用 | 0/0 |
+| 广州社联困境儿童关爱中心 | `wechat-guangzhou-ngo-federation-child` | ⛔ 停用 | 0/0 |
+| 韩红爱心慈善基金会 | `wechat-hanhong-foundation` | ⛔ 停用 | 0/0 |
+| 中国红十字会 | `wechat-red-cross-china` | ⛔ 停用 | 0/0 |
+| 中国红十字会总会备灾救灾中心 | `wechat-red-cross-disaster-center` | ⛔ 停用 | 0/0 |
+| 救助儿童会北京代表处 | `wechat-save-the-children-cn` | ⛔ 停用 | 0/0 |
+| 社会救灾 | `wechat-social-disaster-relief` | ⛔ 停用 | 0/0 |
+| 遂溪县教育发展促进会 | `wechat-suixi-education` | ⛔ 停用 | 0/0 |
+| 联合国儿童基金会 | `wechat-unicef` | ⛔ 停用 | 0/0 |
+
+#### JSON / API 列表源（17 个，入池 52）
+
+| 名称 | ID | 状态 | 入池/产出 |
+| :--- | :--- | :--- | :--- |
+| 全国妇联·依法维权 | `json-women-wq` | ● 主力 | 11/21 |
+| 公众号 · 中国青少年发展基金会 | `wechat-oa-cydf` | ⚠️ 退避 | 6/16 |
+| 公众号 · 中国儿童少年基金会 | `wechat-oa-cctf` | ⚠️ 退避 | 5/10 |
+| 公众号 · 中国乡村发展基金会 | `wechat-oa-cfrf` | ⚠️ 退避 | 5/10 |
+| 公众号 · 救助儿童会北京代表处 | `wechat-oa-save-the-children` | ⚠️ 退避 | 5/10 |
+| 微博 · 事实无人抚养儿童 | `weibo-search-unattended-children` | ⚠️ 退避 | 5/6 |
+| 基金会中心网·动态 | `json-foundation-center-fti` | · 少量 | 3/12 |
+| 小红书 · 公益项目 | `xhs-search-charity-project` | ⚠️ 退避 | 3/32 |
+| 公众号 · 中华儿慈会 | `wechat-oa-ccafc` | ⚠️ 退避 | 2/10 |
+| 公众号 · 中国慈善联合会 | `wechat-oa-charity-alliance` | ⚠️ 退避 | 2/10 |
+| 公众号 · 联合国儿童基金会 | `wechat-oa-unicef` | ⚠️ 退避 | 2/10 |
+| 微博 · 困境儿童资助 | `weibo-search-vulnerable-children` | ⚠️ 退避 | 2/8 |
+| 公众号 · 中国红十字会 | `wechat-oa-red-cross` | ⚠️ 退避 | 1/10 |
+| 微博 · 儿童侵害案件 | `weibo-search-child-abuse` | ⛔ 停用 | 0/0 |
+| 微博 · 一对一助学 | `weibo-search-student-aid` | ⚠️ 退避 | 0/4 |
+| 小红书 · 养老助老 | `xhs-search-elderly-care` | ⚠️ 退避 | 0/10 |
+| 小红书 · 乡村振兴 | `xhs-search-rural-revitalization` | ⚠️ 退避 | 0/10 |
+
+#### 外部系统源（2 个，入池 15）
+
+| 名称 | ID | 状态 | 入池/产出 |
+| :--- | :--- | :--- | :--- |
+| 爱德传一基金 · 慈善纪事简报 | `email-amity-chuanyi` | ● 主力 | 15/26 |
+| AmCham China Events 邮件 | `email-amcham-events` | △ 零入池 | 0/16 |
+
+### 尝试过但失败 / 未接 / 否决的信源
+
+> 与上面名单分开：这些**没有形成可用信源**。已接入但零入池的（评分拒绝）不在这里——它们在上面各表里标 △，按"留观察一周"纪律处理。
+
+| 尝试对象 | 类型 | 结果 | 失败 / 受限原因 | 处置 |
+| :--- | :--- | :--- | :--- | :--- |
+| 国家卫健委数据 API | 数据接口 | 未接 | HTTP 412 拒接 | 只接新闻栏；改以 `search-mohw` 搜索源补齐 |
+| 公安部数据 API | 数据接口 | 未接 | HTTP 521 拒接 | 只接新闻栏；改以 `search-mps` 搜索源补齐 |
+| 农业农村部候选列表 | 网页 | 未接 | 核查时只返回 1 条 2026-01 旧内容 | 暂不启用，等其更新 |
+| 国家卫健委妇幼健康页 | 网页 | 未接 | 生产网络触发反爬 | 暂不启用；优先找官方 RSS / JSON |
+| 联合国儿童基金会中国·新闻页 | 网页 | 暂停 | 生产网络反爬，403 | `web-unicef-cn-press` 已 paused，待定 |
+| UNGM（联合国采购） | 网页 | 否决 | 401 需登录 | 格式为招标公告，非新闻；按纪律不接 |
+| cydf.org.cn（青基会官网） | 网页 | 否决 | 401 需登录 | 按纪律不接 |
+| 腾讯公益 | 网页 | 否决 | 项目众筹平台，不是新闻列表 | 格式不对口，非技术问题 |
+| EU Funding & Tenders | 网页 | 否决 | 资助机会库 / 公告 API | 提案应走官方订阅，不作新闻采集 |
+| cepf.org.cn（中华环境保护基金会） | 网页 | 暂停 | HTTPS 证书错配：返回 baishan.com 的证书 | 已 paused；先 `openssl s_client` 看 CN 再定夺 |
+| sclf.org（中国宋庆龄基金会） | 网页 | 暂停 | HTTPS 证书错配：返回别人域名的证书 | 已 paused；同上 |
+| 中国发展简报 `/feed` | RSS | 地址失效 | 404 / 返回 HTML | 改走 `web_list`（`china-development-brief` 已接） |
+| 公益时报 `/rss.xml` | RSS | 地址失效 | 404 / 返回 HTML | 改走 `web_list`（`gongyi-times` 已接） |
+| UNICEF China RSS（M1 探测） | RSS | 探测被拒 | 403（测试出口被拦） | 不由此判为来源失效，不建议绕过 |
+| 聚合热榜（tophub / NewsNow 等） | 热榜 | 已证伪 | 69% 链接被替换成搜索页，且拿不到发布时间 | 不采用 |
+| Jina Reader（r.jina.ai） | 渲染服务 | 不可用 | 生产网络 DNS 落到 Facebook 段后超时，与凭证无关 | 弃用；改无头 chromium 渲染器（见下） |
+| everyinfra 预算归零（14 源） | 采集预算 | 停摆 | `budgets.everyinfra.per_day=0`：8 公众号 + 3 微博 + 3 小红书退避 | 改回 150 即可复活（截至 2026-10-23 仍未恢复） |
+| 18 个 `wechat-*` rss 源 | 公众号 | 停用 | `fail_count=0` 且无 last_error，疑似建源时即关闭 | 待查因：是漏接还是主动停用 |
+
+**已修复的历史故障**（曾失败、现已正常，留在表外备查）：邮件源 `collect.py` 被 403（默认 UA 被边缘中间件拦）→ 换浏览器 UA（`55fa518`）；`deepseek-tools` 日预算 40 次烧光 → 调到 800（约 ¥4/天）；9 个 SPA 站点旧架构抓不到 → 无头 chromium 渲染器，7 解锁 / 2 否决。
+
+<!-- SOURCE-REGISTRY:END -->
 
 ## 🛟 当前状态、反馈与贡献
 

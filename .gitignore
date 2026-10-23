@@ -27,3 +27,6 @@ fontsource-noto-sans-sc-*.tgz
 secrets/*
 !secrets/credentials.env.enc
 !secrets/README.md
+
+# 临时导出：scripts/export-source-registry.py 的输入，每次现从库里导出，不入库
+sources-export.tsv

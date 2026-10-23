@@ -37,7 +37,7 @@ interface Scheduled {
 const collecting = process.env.COLLECT_ENABLED !== "false";
 
 export const SCHEDULES: Scheduled[] = [
-  { name: "content.sweep", cron: "*/5 * * * *", run: sweepUnprocessed },
+  { name: "content.sweep", cron: "*/5 * * * *", run: () => sweepUnprocessed() },
   // Full-text translations of newly selected items (model calls; off with MODEL_CALLS_ENABLED=false).
   { name: "content.translate", cron: "*/5 * * * *", run: () => translatePending() },
   { name: "hot.rank", cron: "*/5 * * * *", run: () => computeHotRanking() },
@@ -45,17 +45,21 @@ export const SCHEDULES: Scheduled[] = [
   { name: "stories.status", cron: "7 * * * *", run: refreshStoryStatuses },
   { name: "stories.links", cron: "12 * * * *", run: linkRelatedStories },
   ...(FEATURES.dailyReports || FEATURES.dailyNewsletter ? [{ name: "reports.daily", cron: "0 8 * * *", missed: "once" as const, run: () => composeDaily(beijingDate(Date.now())) }] : []),
-  { name: "reports.weekly", cron: "0 10 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -7))) },
+  // Weekly and monthly reports run before the 09:00 peak opens: the same model calls at half price,
+  // and the report is still on the site before the working day starts.
+  { name: "reports.weekly", cron: "0 6 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -7))) },
   {
     name: "reports.monthly",
-    cron: "30 10 1 * *",
+    cron: "30 6 1 * *",
     missed: "once",
     run: () => {
       const [y, m] = beijingDate(Date.now()).split("-").map(Number) as [number, number];
       return composeMonthly(m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`);
     },
   },
-  { name: "reports.catch-up", cron: "15 * * * *", run: () => catchUpReports() },
+  // Hourly, but only in half-price hours: a missing report that gets generated at 10:00 costs twice
+  // what it does at 12:15, and nobody reads a backfilled report before noon anyway.
+  { name: "reports.catch-up", cron: "15 0-8,12,13,18-23 * * *", run: () => catchUpReports() },
   { name: "ops.retention", cron: "30 3 * * *", missed: "once", run: () => dailyRetention() },
   { name: "sources.icons", cron: "40 4 * * *", missed: "once", run: () => refreshSourceIcons() },
   // IndexNow for new indexable pages (off unless INDEXNOW_SUBMIT_ENABLED).

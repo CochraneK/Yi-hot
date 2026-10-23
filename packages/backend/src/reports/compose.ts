@@ -332,10 +332,10 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
       generated.push(`daily:${d}`);
     }
   }
-  // Last complete ISO week (Monday 10:00 onwards).
+  // Last complete ISO week (Monday 06:00 onwards, see reports.weekly).
   const dow = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7;
   const lastWeek = isoWeekLabel(addDays(today, -dow - 7));
-  const weekDue = dow > 0 || bjHour >= 10;
+  const weekDue = dow > 0 || bjHour >= 6;
   if (weekDue) {
     const [w] = await sql`SELECT 1 FROM reports WHERE kind = 'weekly' AND key = ${lastWeek}`;
     if (!w) {
@@ -343,10 +343,10 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
       generated.push(`weekly:${lastWeek}`);
     }
   }
-  // Last complete month (1st 10:30 onwards).
+  // Last complete month (1st 06:30 onwards, see reports.monthly).
   const [y, mo, dd] = today.split("-").map(Number) as [number, number, number];
   const prevMonth = mo === 1 ? `${y - 1}-12` : `${y}-${String(mo - 1).padStart(2, "0")}`;
-  const monthDue = dd > 1 || bjHour > 10 || (bjHour === 10 && Number(new Date(now.getTime() + 8 * 3600000).toISOString().slice(14, 16)) >= 30);
+  const monthDue = dd > 1 || bjHour > 6 || (bjHour === 6 && Number(new Date(now.getTime() + 8 * 3600000).toISOString().slice(14, 16)) >= 30);
   if (monthDue) {
     const [m] = await sql`SELECT 1 FROM reports WHERE kind = 'monthly' AND key = ${prevMonth}`;
     if (!m) {

@@ -25,6 +25,11 @@ export interface CollectResult {
 }
 
 const MAX_ITEMS_PER_RUN = 60;
+/**
+ * 首采（新源第一次采集）最多收几条。sources.json 里每个源都显式写了 8（搜索源 12），这里只是
+ * 漏配时的兜底——原来兜底 30，等于「忘了写」就要多付三倍的模型费，而多出来的那 20 篇没人要求。
+ */
+const DEFAULT_INITIAL_BACKFILL_LIMIT = 8;
 /** 搜索源按「同一天同一查询只真跑一次」计费，因此没有必要比 6 小时更密地调度。 */
 const SEARCH_INTERVAL_MINUTES = 360;
 /**
@@ -171,7 +176,9 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     if (source.config.sortByPublishedAt) candidates.sort((a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0));
 
     // First import of a new source: bounded, and archived by source time (never "today", never pushed).
-    const backfillLimit = Number(source.config._aihot?.initialBackfillLimit ?? 30);
+    // The fallback is the same as the value every source in sources.json carries: a source added
+    // without a config used to take 30 articles (≈¥0.11 of analysis for nothing anyone asked for).
+    const backfillLimit = Number(source.config._aihot?.initialBackfillLimit ?? DEFAULT_INITIAL_BACKFILL_LIMIT);
     const backfillMonths = Number(source.config._aihot?.initialBackfillMonths ?? 12);
     if (firstImport) {
       const cutoff = Date.now() - backfillMonths * 30 * 86400000;

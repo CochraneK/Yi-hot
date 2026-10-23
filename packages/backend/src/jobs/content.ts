@@ -7,7 +7,7 @@ import type { PgBoss } from "pg-boss";
 import { sql, type Db } from "../db.ts";
 import { extractArticleBody, pageFetchable } from "../content/extract.ts";
 import { analyzeArticle, AnalysisInterruptedError } from "../editorial/analyze.ts";
-import { isHistorical } from "../content/materials.ts";
+import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
 import { publishArticle } from "../publication/publish.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptBusyError, ReceiptUnknownError } from "../providers/receipts.ts";
 import { ModelOutputError } from "../providers/llm.ts";
@@ -47,6 +47,18 @@ export function isPeakAnalysisHour(now = Date.now()): boolean {
 /** Analyses per peak hour by default: a trickle, not a stop. */
 const PEAK_PER_HOUR = 8;
 
+/**
+ * Whether history has to wait for the half-price window. Today's news gets the hourly trickle even in
+ * peak hours (someone is waiting for it); a backfilled article is weeks old by definition, so a few
+ * hours of waiting costs nothing and halves its price. Measured 2026-10-24 over 30 days: history that
+ * ran inside peak hours was ¥9.93 of ¥31.67 — all of it avoidable.
+ *
+ * Only paid analysis is held; body extraction is free and still runs (see queueProcessing).
+ */
+export function holdsHistoryForOffPeak(now = Date.now()): boolean {
+  return isPeakAnalysisHour(now);
+}
+
 // Dispatch count for the peak hour in flight, seeded from the receipts so a restart mid-hour does not
 // hand out a second full quota. Cheap, and the only state this module keeps.
 let peakHour = -1;
@@ -67,9 +79,12 @@ export async function peakSlotsLeft(now = Date.now()): Promise<number> {
   if (!Number.isFinite(perHour) || perHour <= 0) return 0;
   const hour = Math.floor(now / 3600_000);
   if (hour !== peakHour) {
+    // Both bounds: without the upper one the count includes every later attempt as well, which for the
+    // current hour is the same thing but for any other hour is simply wrong.
     const [row] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM receipt_attempts a JOIN receipts r ON r.id = a.receipt_id
-      WHERE r.purpose = 'prefilter_article' AND a.origin = 'live' AND a.started_at >= to_timestamp(${hour * 3600})`;
+      WHERE r.purpose = 'prefilter_article' AND a.origin = 'live'
+        AND a.started_at >= to_timestamp(${hour * 3600}) AND a.started_at < to_timestamp(${(hour + 1) * 3600})`;
     peakHour = hour;
     peakDispatched = row?.n ?? 0;
   }
@@ -128,6 +143,11 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
   // moving instead of freezing until the window ends. An explicit re-evaluation (attemptTag) is a
   // human asking now, so it is never held back.
   if (step === "analyze" && !opts.attemptTag) {
+    // History does not spend the peak rate at all: it waits for the sweep in the half-price window.
+    if (r.historical && holdsHistoryForOffPeak()) {
+      await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
+      return null;
+    }
     const left = await peakSlotsLeft();
     if (left <= 0) {
       await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
@@ -280,18 +300,24 @@ export async function registerExtractionJobs(boss: PgBoss) {
  * would pick up is on its way to a paid call, and holding it costs nothing — those articles keep
  * `processing_state = 'new'`, so the off-peak sweep drains the whole backlog.
  */
-export async function sweepUnprocessed(): Promise<{ enqueued: number }> {
-  const left = await peakSlotsLeft();
+export async function sweepUnprocessed(now = Date.now()): Promise<{ enqueued: number }> {
+  const left = await peakSlotsLeft(now);
   if (left <= 0) return { enqueued: 0 };
   // During peak, ask for a couple of rows per free slot: queueProcessing re-checks the quota itself,
   // and the rest of the backlog is not worth a per-article route() read every five minutes.
   const take = Number.isFinite(left) ? Math.min(60, Math.max(2, Math.ceil(left) * 2)) : 500;
+  // History waits for the half-price window (see holdsHistoryForOffPeak), so it is not even read now;
+  // without this filter the newest-first order would fill every peak slot with backfilled rows.
+  const skipHistory = holdsHistoryForOffPeak(now);
   const rows = await sql<{ id: string }[]>`
-    SELECT id FROM articles
-    WHERE processing_state = 'new' AND created_at < now() - interval '3 minutes'
-      AND (processing_retry_at IS NULL OR processing_retry_at <= now())
-      AND (processing_queued_at IS NULL OR processing_queued_at < now() - ${QUEUED_STALE}::interval)
-    ORDER BY discovered_at DESC LIMIT ${take}`;
+    SELECT a.id FROM articles a
+    WHERE a.processing_state = 'new' AND a.created_at < now() - interval '3 minutes'
+      AND (a.processing_retry_at IS NULL OR a.processing_retry_at <= now())
+      AND (a.processing_queued_at IS NULL OR a.processing_queued_at < now() - ${QUEUED_STALE}::interval)
+      AND (NOT ${skipHistory}::boolean
+           OR NOT (a.backfill AND (a.published_at IS NULL
+                                   OR a.discovered_at - a.published_at > make_interval(secs => ${STALE_ON_DISCOVERY_MS / 1000}))))
+    ORDER BY a.discovered_at DESC LIMIT ${take}`;
   let enqueued = 0;
   for (const r of rows) if (await queueProcessing(r.id)) enqueued += 1;
   return { enqueued };

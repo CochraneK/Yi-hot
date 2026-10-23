@@ -6946,6 +6946,91 @@
       }
     },
     {
+      "id": "web-thepaper",
+      "name": "澎湃新闻·时事",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.thepaper.cn/channel_25950",
+        "render": "browser",
+        "renderTimeoutMs": 45,
+        "renderWaitSelector": "div.ant-card",
+        "itemSelector": "div.ant-card",
+        "titleSelector": "h2",
+        "allowUrlPrefixes": [
+          "https://www.thepaper.cn/newsDetail_"
+        ]
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "媒体",
+        "社会新闻"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-worldbank",
+      "name": "世界银行·儿童",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.worldbank.org/en/news/all?qterm=children&lang_exact=English",
+        "render": "browser",
+        "renderTimeoutMs": 45,
+        "renderWaitSelector": "li.search-item",
+        "itemSelector": "li.search-item",
+        "publishedAtRegex": "([A-Z][a-z]+ \\d{1,2}, \\d{4})",
+        "publishedAtUtcOffset": "-04:00",
+        "allowUrlPrefixes": [
+          "https://www.worldbank.org/en/news/"
+        ]
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "国际组织",
+        "儿童发展"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
+      "id": "web-caixin",
+      "name": "财新网",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.caixin.com/",
+        "itemSelector": "li:has(a[href*='caixin.com/20'])",
+        "publishedAtRegex": "(20\\d\\d-\\d{1,2}-\\d{1,2})",
+        "publishedAtUtcOffset": "+08:00",
+        "allowUrlPrefixes": [
+          "https://www.caixin.com/",
+          "https://china.caixin.com/",
+          "https://finance.caixin.com/",
+          "https://economy.caixin.com/",
+          "https://international.caixin.com/",
+          "https://photos.caixin.com/"
+        ]
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "媒体",
+        "财经社会"
+      ],
+      "publication_rule": {
+        "minScore": 40
+      }
+    },
+    {
       "id": "web-ndcpa",
       "name": "国家疾控局",
       "kind": "web_list",

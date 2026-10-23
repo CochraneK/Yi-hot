@@ -3694,6 +3694,286 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "search-elderly",
+      "name": "网页搜索·老年人权益（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "老年人 权益保障 政策 通知 民政部",
+          "养老服务 养老机构 普惠 政策",
+          "老年人 诈骗 防范 司法 案例",
+          "失能老人 长期护理 保险 政策",
+          "高龄津贴 老年人 补贴 发放",
+          "老年 志愿服务 社区 公益",
+          "阿尔茨海默 照护 公益 项目",
+          "银发经济 老年 服务 政策",
+          "老年人 无障碍 环境 建设",
+          "敬老月 助老 公益活动"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "老年人"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-disability",
+      "name": "网页搜索·残障融合（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "残疾人 权益保障 政策 通知",
+          "无障碍环境建设 残疾人 条例",
+          "残障 康复 救助 服务 政策",
+          "残疾人 就业 帮扶 政策",
+          "孤独症 自闭症 儿童 康复 救助",
+          "精神障碍 社区康复 政策",
+          "残疾预防 行动计划 政策",
+          "助残 社会组织 公益 项目",
+          "残疾人 托养 照护 服务",
+          "辅助器具 残疾人 适配 补贴"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "残障"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-gender",
+      "name": "网页搜索·性别平等（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "妇女权益保障 政策 通知 全国妇联",
+          "性别平等 反家暴 法律援助",
+          "农村妇女 土地权益 保障",
+          "女性 就业 平等 政策",
+          "女童 教育 公益 项目",
+          "母婴 安全 权益 保护",
+          "妇女 健康 两癌 筛查 公益",
+          "家庭暴力 庇护 救助 政策",
+          "女职工 劳动保护 权益",
+          "性别 偏见 消除 倡导 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "性别"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-environment",
+      "name": "网页搜索·生态环境（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "生态保护 公益 政策 生态环境部",
+          "气候变化 碳中和 公益 行动",
+          "污染防治 环境治理 政策 通知",
+          "生物多样性 保护 公益 项目",
+          "垃圾分类 循环利用 社区 倡导",
+          "环境 公益诉讼 检察 案例",
+          "绿色低碳 公众参与 公益",
+          "自然保护区 生态修复 政策",
+          "塑料污染 治理 公益 行动",
+          "环保 社会组织 公益 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "环境"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-rural",
+      "name": "网页搜索·乡村振兴（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "乡村振兴 帮扶 政策 通知",
+          "脱贫 巩固 监测 帮扶 政策",
+          "乡村 产业 帮扶 合作社 公益",
+          "农村 低收入 人口 救助 政策",
+          "易地扶贫搬迁 后续扶持 政策",
+          "驻村 第一书记 帮扶 公益",
+          "乡村 教育 助学 公益 项目",
+          "消费帮扶 农产品 助农 公益",
+          "农村 养老 服务 体系建设",
+          "乡村 治理 积分 公益 实践"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "乡村振兴"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

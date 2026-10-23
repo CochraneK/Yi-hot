@@ -1,10 +1,13 @@
 // 监管页：民政部行政处罚 + 社会组织活动异常名录 / 严重违法失信名单的列入、移出与送达公告。
 // 筛选用 URL 参数（type / kind / q / province / city / page），列表本身是服务端渲染的静态内容。
+// 手机上筛选收进一个折叠块（和主题行同一套写法），桌面才平铺：平铺时第一屏全是筛选项，
+// 读起来像缩小了的电脑版网页。搜索框留在折叠块外面——它是主操作，不该藏起来。
 import { Link, useNavigate, useSearchParams } from "react-router";
 import type { RegulatoryRecord, RegulatoryRecordsPage } from "@aihot/contracts/records";
 import { SearchField, hrefWith } from "../feed/Filters";
 import { Pagination } from "../feed/DayList";
 import { EmptyState } from "../../components/ui/Page";
+import { IconList } from "../../components/icons";
 import { ORG_KINDS, ORG_KIND_LABELS, RECORD_TYPE_LABELS, RECORD_TYPE_ORDER, RECORD_TYPE_TONES, headline, monthDay } from "./format";
 
 function TypeChip({ type, count, active }: { type: RegulatoryRecord["type"] | null; count: number; active: boolean }) {
@@ -93,10 +96,55 @@ function factsOf(r: RegulatoryRecord): string[] {
   return out;
 }
 
+/** 折叠块的标题行：左边报已选几项，右边是展开 / 收起。 */
+function FilterSummary({ count }: { count: number }) {
+  return (
+    <summary className="flex h-9 cursor-pointer list-none items-center justify-between rounded-lg bg-surface px-3 text-[13px] font-medium text-ink ring-1 ring-line-soft">
+      <span className="inline-flex items-center gap-1.5">
+        <IconList size={14} className="text-ink-3" />
+        筛选
+        {count > 0 && <span className="num rounded-full bg-accent-softer px-1.5 text-[11.5px] font-semibold text-accent-ink">{count}</span>}
+      </span>
+      <span className="text-[12px] font-normal text-ink-4 group-open/filter:hidden">展开</span>
+      <span className="hidden text-[12px] font-normal text-ink-4 group-open/filter:inline">收起</span>
+    </summary>
+  );
+}
+
+/** 折叠块里的三行筛选：记录类型、地区、组织类型。行间距比桌面平铺时紧。 */
+function FilterRows({ stats, activeType, activeKind, activeProvince, activeCity }: {
+  stats: RegulatoryRecordsPage["stats"];
+  activeType: string | null;
+  activeKind: string | null;
+  activeProvince: string | null;
+  activeCity: string | null;
+}) {
+  return (
+    <div className="space-y-2.5">
+      <nav aria-label="记录类型" className="flex flex-wrap gap-1.5">
+        <TypeChip type={null} count={stats.total} active={!activeType} />
+        {RECORD_TYPE_ORDER.map((t) => (
+          <TypeChip key={t} type={t} count={stats.byType[t]} active={activeType === t} />
+        ))}
+      </nav>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[12px] text-ink-4">地区</span>
+        <RegionFilter provinces={stats.provinces} cities={stats.cities} activeProvince={activeProvince} activeCity={activeCity} />
+      </div>
+      <nav aria-label="组织类型" className="flex flex-wrap gap-1.5">
+        <KindChip kind={null} active={!activeKind} />
+        {ORG_KINDS.map((k) => (
+          <KindChip key={k} kind={k} active={activeKind === k} />
+        ))}
+      </nav>
+    </div>
+  );
+}
+
 function RecordCard({ r }: { r: RegulatoryRecord }) {
   const regionLabel = [r.regionProvince, r.regionCity].filter(Boolean).join(" · ");
   return (
-    <article className="card px-4 py-3.5 lg:px-5">
+    <article className="card px-4 py-3 lg:px-5 lg:py-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -132,45 +180,68 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
 
   return (
     <div className="pb-10">
-      <header className="pb-2 pt-5 lg:pt-1">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">监管</h1>
-        <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-ink-3">
+      <header className="pb-2 pt-4 lg:pt-1">
+        <h1 className="text-[22px] font-semibold leading-[1.3] text-ink lg:text-[24px]">监管</h1>
+        {/* 手机上只留一句话，完整说明给桌面：那段解释数据来源与归一规则，手机上占掉小半屏。 */}
+        <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-ink-3 lg:hidden">
+          民政部对全国性社会组织的行政处罚，以及活动异常名录、严重违法失信名单的列入、移出与送达公告，每天同步一次。
+        </p>
+        <p className="mt-1.5 hidden max-w-[720px] text-[13px] leading-relaxed text-ink-3 lg:block">
           民政部对全国性社会组织的行政处罚，以及全国社会组织活动异常名录、严重违法失信名单的列入、移出与送达公告。数据来自中国社会组织政务服务平台公开接口，每天同步一次；组织类型由统一社会信用代码推导，地区由登记管理机关归一成省 / 市。
         </p>
       </header>
 
-      <nav aria-label="记录类型" className="mt-4 flex flex-wrap gap-1.5">
-        <TypeChip type={null} count={data.stats.total} active={!activeType} />
-        {RECORD_TYPE_ORDER.map((t) => (
-          <TypeChip key={t} type={t} count={data.stats.byType[t]} active={activeType === t} />
-        ))}
-      </nav>
+      {/* 手机：筛选收进折叠块。带着筛选条件进来时默认展开，免得看不出结果为什么被过滤。 */}
+      <details open={[activeType, activeKind, activeProvince, activeCity, q].some(Boolean) || undefined} className="group/filter mt-3 rounded-xl border border-line bg-bg-sunk/60 p-1.5 lg:hidden">
+        <FilterSummary count={[activeType, activeKind, activeProvince, activeCity, q].filter(Boolean).length} />
+        <div className="mt-2 px-1.5 pb-1">
+          <FilterRows stats={data.stats} activeType={activeType} activeKind={activeKind} activeProvince={activeProvince} activeCity={activeCity} />
+        </div>
+      </details>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-[12px] text-ink-4">地区</span>
-        <RegionFilter
-          provinces={data.stats.provinces}
-          cities={data.stats.cities}
-          activeProvince={activeProvince}
-          activeCity={activeCity}
-        />
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <nav aria-label="组织类型" className="flex flex-wrap gap-1.5">
-          <KindChip kind={null} active={!activeKind} />
-          {ORG_KINDS.map((k) => (
-            <KindChip key={k} kind={k} active={activeKind === k} />
+      <div className="hidden lg:block">
+        <nav aria-label="记录类型" className="mt-4 flex flex-wrap gap-1.5">
+          <TypeChip type={null} count={data.stats.total} active={!activeType} />
+          {RECORD_TYPE_ORDER.map((t) => (
+            <TypeChip key={t} type={t} count={data.stats.byType[t]} active={activeType === t} />
           ))}
         </nav>
-        <div className="w-full lg:ml-auto lg:w-60">
-          <SearchField
-            action="/records"
-            defaultValue={q ?? ""}
-            keep={{ type: activeType, kind: activeKind, province: activeProvince, city: activeCity }}
-            placeholder="搜索组织名称…"
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-ink-4">地区</span>
+          <RegionFilter
+            provinces={data.stats.provinces}
+            cities={data.stats.cities}
+            activeProvince={activeProvince}
+            activeCity={activeCity}
           />
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <nav aria-label="组织类型" className="flex flex-wrap gap-1.5">
+            <KindChip kind={null} active={!activeKind} />
+            {ORG_KINDS.map((k) => (
+              <KindChip key={k} kind={k} active={activeKind === k} />
+            ))}
+          </nav>
+          <div className="w-full lg:ml-auto lg:w-60">
+            <SearchField
+              action="/records"
+              defaultValue={q ?? ""}
+              keep={{ type: activeType, kind: activeKind, province: activeProvince, city: activeCity }}
+              placeholder="搜索组织名称…"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 lg:hidden">
+        <SearchField
+          action="/records"
+          defaultValue={q ?? ""}
+          keep={{ type: activeType, kind: activeKind, province: activeProvince, city: activeCity }}
+          placeholder="搜索组织名称…"
+        />
       </div>
 
       <p className="mt-3 text-[12px] text-ink-4">

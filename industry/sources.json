@@ -5618,6 +5618,1299 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "search-think-tass",
+      "name": "网页搜索·北师大中国公益研究院（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北师大 中国公益研究院 研究报告",
+          "公益慈善 研究 报告 北师大",
+          "第三部门 研究 论文",
+          "公益 蓝皮书 慈善 发展",
+          "社会组织 研究 报告 中国",
+          "乡村振兴 公益 研究"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-think-21edu",
+      "name": "网页搜索·21世纪教育研究院（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "21世纪教育研究院 报告 公益",
+          "农村教育 公益 研究",
+          "教育公平 报告 调研",
+          "乡村教育 公益 项目 研究",
+          "教育公益 组织 研究"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-think-cass",
+      "name": "网页搜索·社科院社会政策（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "社科院 社会政策 研究报告",
+          "社会保障 研究 报告 中国",
+          "基层治理 研究 社会治理",
+          "共同富裕 研究 报告",
+          "社会工作 发展 研究"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-think-tsinghua",
+      "name": "网页搜索·清华公益慈善研究院（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "清华 公益慈善 研究院 报告",
+          "慈善 信托 研究",
+          "公益 金融 研究 报告",
+          "家族慈善 研究",
+          "公益 创投 研究"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-think-pku",
+      "name": "网页搜索·北大社会研究中心（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "北大 社会政策 研究 报告",
+          "中国社会 调查 报告",
+          "公益 研究 北大",
+          "社会创新 研究 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-think-nandu",
+      "name": "网页搜索·南都观察/报告（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "南都观察 公益 评论",
+          "公益 行业 观察 报道",
+          "慈善 行业 观察 报告",
+          "公益 基金会 观察"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "智库"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-judicial-spc",
+      "name": "网页搜索·最高法典型案例（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "最高人民法院 指导性案例 典型案例",
+          "未成年人 司法保护 案例",
+          "公益诉讼 典型案例 环境",
+          "家事审判 典型案例",
+          "消费者权益 公益诉讼 案例"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "司法"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-judicial-spp",
+      "name": "网页搜索·最高检未检（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "最高检 未成年人检察 案例",
+          "未成年人 司法保护 检察",
+          "侵害未成年人 案例 通报",
+          "未成年人 法律援助 检察"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "司法"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-judicial-legalaid",
+      "name": "网页搜索·法律援助（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "法律援助 案例 司法部",
+          "公共法律 服务 公益 项目",
+          "弱势群体 维权 案例",
+          "法律援助 便民 服务"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "司法"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-data-stats",
+      "name": "网页搜索·国家统计局数据（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "国家统计局 数据 发布 民生",
+          "统计 公报 社会发展",
+          "人口普查 数据 报告",
+          "民生 数据 统计 发布"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "数据"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-data-charity",
+      "name": "网页搜索·慈善信息公开（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "慈善组织 信息公开 年报",
+          "慈善 捐赠 数据 报告",
+          "社会组织 信用信息 公示",
+          "基金会 透明度 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "数据"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-data-finance",
+      "name": "网页搜索·财政民生支出（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "财政部 预决算 民生 支出",
+          "转移支付 社会保障 资金",
+          "政府采购 公益 服务",
+          "民生支出 预算 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "数据"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-intl-who",
+      "name": "网页搜索·WHO 世界卫生组织（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "WHO 世界卫生组织 健康 报告 中文",
+          "公共卫生 政策 世界卫生组织",
+          "儿童 健康 报告 WHO"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "国际"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-intl-undp",
+      "name": "网页搜索·UNDP 开发计划署（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "UNDP 联合国开发计划署 中国 报告",
+          "减贫 发展 报告 UNDP",
+          "可持续 发展 目标 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "国际"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-intl-unwomen",
+      "name": "网页搜索·UN Women 妇女署（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "UN Women 联合国妇女署 性别平等 报告",
+          "妇女 权益 报告 联合国",
+          "性别 平等 政策 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "国际"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-intl-unhcr",
+      "name": "网页搜索·UNHCR 难民署（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "UNHCR 联合国难民署 人道主义 报告",
+          "难民 儿童 保护 报告",
+          "人道主义 援助 报告"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "国际"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-intl-worldbank",
+      "name": "网页搜索·世界银行（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "世界银行 中国 贫困 报告",
+          "社会发展 数据 世界银行",
+          "减贫 报告 世界银行"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "国际"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-media-gongyi",
+      "name": "网页搜索·公益时报（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "公益时报 行业 报道",
+          "慈善 行业 动态 公益时报",
+          "公益 组织 报道"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "媒体"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-media-chinasocial",
+      "name": "网页搜索·中国社会报（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "中国社会报 民政 报道",
+          "社会救助 新闻 中国社会报",
+          "基层治理 报道"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "媒体"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-media-charity",
+      "name": "网页搜索·慈善公益报（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "慈善公益报 报道",
+          "慈善 动态 慈善公益报",
+          "公益 新闻 报道"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "媒体"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-media-caixin",
+      "name": "网页搜索·财新公益（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "财新 公益 报道",
+          "慈善 基金会 调查 财新",
+          "公益 行业 调查 报道"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "媒体"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-found-han",
+      "name": "网页搜索·韩红基金会（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "韩红基金会 公益 项目 动态",
+          "医疗 公益 捐赠 韩红",
+          "乡村 医疗 援助 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "基金会"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-found-dream",
+      "name": "网页搜索·真爱梦想（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "真爱梦想 公益 教育 项目",
+          "素养教育 报告 真爱梦想",
+          "乡村 儿童 教育 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "基金会"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-found-free",
+      "name": "网页搜索·免费午餐（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "免费午餐 公益 项目 动态",
+          "乡村儿童 营养 公益",
+          "学校 营养 改善 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "基金会"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
+    },
+    {
+      "id": "search-found-smile",
+      "name": "网页搜索·嫣然天使（DeepSeek）",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "嫣然天使 公益 项目",
+          "唇腭裂 救助 公益",
+          "儿童 医疗 救助 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "股票",
+            "期货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "基金会"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": true
     }
   ]
 }

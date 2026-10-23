@@ -43,15 +43,20 @@ export async function collectFindings(now = Date.now()): Promise<Finding[]> {
     }
   }
   if (settled && collecting() && modelsOn()) {
-    const [p] = await sql<{ waiting: number; oldest: Date | null; failed: number }[]>`
-      SELECT count(*) FILTER (WHERE processing_state = 'new' AND discovered_at < now() - interval '2 hours')::int AS waiting,
-             min(discovered_at) FILTER (WHERE processing_state = 'new') AS oldest,
-             count(*) FILTER (WHERE processing_state = 'failed' AND discovered_at > now() - interval '3 hours')::int AS failed
+    // 回填稿（backfill）不算“新内容卡住”：首采补历史本来就排在当日新闻之后，撞上额度窗口时
+    // 会等几小时甚至一天，那是设计行为。把它们算进来会让这条告警天天响、每响一次就没人再看了
+    // —— 2026-10-24 那次 343 篇积压里 266 篇是回填稿，真正迟到的当日新闻只有 8 篇。
+    const [p] = await sql<{ waiting: number; oldest: Date | null; failed: number; backlog: number }[]>`
+      SELECT count(*) FILTER (WHERE processing_state = 'new' AND NOT coalesce(backfill, false) AND discovered_at < now() - interval '2 hours')::int AS waiting,
+             min(discovered_at) FILTER (WHERE processing_state = 'new' AND NOT coalesce(backfill, false)) AS oldest,
+             count(*) FILTER (WHERE processing_state = 'failed' AND NOT coalesce(backfill, false) AND discovered_at > now() - interval '3 hours')::int AS failed,
+             count(*) FILTER (WHERE processing_state = 'new' AND coalesce(backfill, false))::int AS backlog
       FROM articles WHERE processing_state IN ('new', 'failed') AND discovered_at > now() - interval '2 days'`;
     if (p!.waiting >= 10 || p!.failed >= 20) {
       const errors = await sql<{ error: string; n: number }[]>`
         SELECT left(coalesce(processing_error, '（无）'), 120) AS error, count(*)::int AS n FROM articles
-        WHERE processing_state IN ('new', 'failed') AND discovered_at > now() - interval '3 hours' AND processing_error IS NOT NULL
+        WHERE processing_state IN ('new', 'failed') AND discovered_at > now() - interval '3 hours'
+          AND NOT coalesce(backfill, false) AND processing_error IS NOT NULL
         GROUP BY 1 ORDER BY 2 DESC LIMIT 3`;
       out.push({
         key: "content.process",
@@ -62,8 +67,29 @@ export async function collectFindings(now = Date.now()): Promise<Finding[]> {
           .join("；") + "，精选和热点会缺内容",
         heals: p!.waiting >= 10 ? "服务恢复后会自动补处理" : "不会，需要修好后重新处理这些文章",
         action: "转给 AI 处理",
-        detail: errors.map((e) => `${e.error}（${e.n}）`).join("；") || "没有记录错误",
+        detail: [
+          errors.map((e) => `${e.error}（${e.n}）`).join("；") || "没有记录错误",
+          p!.backlog > 0 && `另有 ${p!.backlog} 篇回填稿在排队（让位于当日新闻，不计入本告警）`,
+        ].filter(Boolean).join("；"),
         since: p!.waiting >= 10 && p!.oldest ? p!.oldest : undefined,
+      });
+    }
+    // 调度停摆：worker 进程还在、cron 却不再产生 job，页面会静默停止更新，且没有任何报错。
+    // 2026-10-24 03:39–03:46 就是这样停的：日志只有一行 worker started，直到人工重启才恢复。
+    const [sweep] = await sql<{ last: Date | null }[]>`
+      SELECT max(created_on) AS last FROM pgboss.job
+      WHERE name = 'cron.content.sweep' AND created_on > now() - interval '2 hours'`;
+    const sweepIdle = sweep?.last ? now - new Date(sweep.last).getTime() : 25 * 60_000;
+    if (sweepIdle > 15 * 60_000) {
+      out.push({
+        key: "ops.scheduler",
+        level: "now",
+        title: "后台调度停了，网站不再更新",
+        impact: `${Math.round(sweepIdle / 60_000)} 分钟没有产生新的处理任务，抓到的稿不会进页面`,
+        heals: "不会。需要重启 worker 容器",
+        action: "重启 worker",
+        detail: "pgboss.job 里 cron.content.sweep 超过 15 分钟没有新实例（它应每 5 分钟一次）；先 docker restart aihot-worker-1，再看日志有没有 worker started",
+        since: sweep?.last ?? undefined,
       });
     }
     // The daily report is composed at 08:00 and caught up hourly.

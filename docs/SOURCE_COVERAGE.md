@@ -8,7 +8,7 @@
 ## 数据口径（先读这一节，否则数字会误读）
 
 - **`industry/sources.json`**：人工维护的 seed，**150 条**（`web_list` 52 / `json_list` 17 / `rss` 8 / `search` 73）。它**不是**线上全貌。
-- **线上数据库（2026-10-24 01:40 北京实时）**：共 **207 行**，其中 **182 个启用源**；**36 个 `web-probe-*` 探测源只在数据库、不在 `sources.json`**（运行态自动生成，改它们只能 `UPDATE sources`）。入池总量 **1326 条 selected**——分析在跑。
+- **线上数据库（2026-10-24 02:02 北京实时）**：共 **207 行**，其中 **186 个启用源**；**36 个 `web-probe-*` 探测源只在数据库、不在 `sources.json`**（运行态自动生成，改它们只能 `UPDATE sources`）。入池总量 **1456 条 selected**——分析在跑。
 - **`sel.tsv`**：一次真实采集的**入池样本（354 条 selected）**，用于反推"哪些源真的在出稿"。它是**快照，不是实时**；除注明"样本"外，本节数字均为 2026-10-23 深夜对 PostgreSQL 的实时查询。
 - **唯一口径**：看**入池率**（`publications.selected`），不看 found / created / 解析条数。技术接通 ≠ 内容对口。
 
@@ -305,8 +305,8 @@ DB `config::text`（URL/查询词）、域名模式（`.hk` / `.tw` / hongkong /
 - [ ] **零入池新名单复核**（观察一周再定去留）：`search-samr` 0/30、`search-data-stats` 0/30、`search-environment` 2/59、`search-gqt-bj` 1/30、`search-women-bj` 2/25
 - [ ] **证书错配两源定夺**：`web-probe-www-cepf-org-cn-*` / `web-probe-www-sclf-org-*` 已 paused，决定恢复还是永久关闭
 - [ ] **16 个 paused 的 wechat-rss 源查因**：`wechat-china-*` 等 `health='paused'` 且 `fail_count=0`、无错误信息，疑似建源时即停用；确认是历史决定还是遗漏
-- [x] **MECE 补充批次**（2026-10-24 深夜，见第六节）：按 5 个正交维度（层级 / 条线 / 议题 / 机构类型 / 形态）填格，新增 8 源——中央妇儿工委办公室 + 内蒙古 / 广西 / 辽宁残联（直连，已启用）+ 儿童心理、大病罕见病、关工委、中国澳门社会服务（搜索，待额度）；同时否决医保局 / 重庆残联 / 山西残联 / 关工委站点 / 中国澳门站点 / 社工中国网 6 项
-- [ ] **402 解除后补两步**：4 个搜索源 `collect` 首采并人工核标题 → 改三列启用；4 个直连源复核入池率（当前 0 是因余额，不是内容）
+- [x] **MECE 补充批次**（2026-10-24 深夜，见第六节）：按 5 个正交维度（层级 / 条线 / 议题 / 机构类型 / 形态）填格，新增 8 源——中央妇儿工委办公室 + 内蒙古 / 广西 / 辽宁残联（直连）+ 儿童心理、大病罕见病、关工委、中国澳门社会服务（搜索），全部完成首采并启用，合计抓 141 篇、入池 55 篇；同时否决医保局 / 重庆残联 / 山西残联 / 关工委站点 / 中国澳门站点 / 社工中国网 6 项
+- [ ] **观察一周再定去留**：`web-lncl-xwpd` 1/9（书画展、安全检查为主）、`search-guangongwei` 1/20（"五老"活动通稿）
 - [ ] 每加一批后跑 `scripts/collect.ts <id>` **单源验证** + 入池率复核（勿并发多源，易误报 `fetch failed`）
 
 ---
@@ -359,16 +359,20 @@ DB `config::text`（URL/查询词）、域名模式（`.hk` / `.tw` / hongkong /
 
 ### 6.3 本批新增 8 个
 
-| 源 id | 格子 | 形态 | 实测 |
-| :--- | :--- | :--- | :--- |
-| `web-nwccw-news` 国务院妇儿工委办公室·新闻 | 中央 × 妇儿工委 | 直连 | found 47 / created 13 / 库存 22 篇（20 有日期） |
-| `web-nmgcl-news` 内蒙古残联·要闻 | 省 × 残联 | 直连 | found 26 / created 10 / 10 有日期 |
-| `web-gxdpf-news` 广西残联·要闻 | 省 × 残联 | 直连 | found 43 / created 10 / 10 有日期 |
-| `web-lncl-xwpd` 辽宁残联·新闻频道 | 省 × 残联（兼补辽宁薄覆盖） | 直连 | found 43 / created 9 / 9 有日期 |
-| `search-child-mental` 儿童心理服务 | 议题 × 心理 | 搜索 | 配置就绪，**402 未首采** |
-| `search-child-medical` 大病与罕见病儿童救助 | 议题 × 医疗救助 | 搜索 | 同上 |
-| `search-guangongwei` 关心下一代工作 | 中央 × 关工委 | 搜索 | 同上 |
-| `search-macao-social` 中国澳门社会服务 | 港澳 × 社会服务 | 搜索 | 同上 |
+| 源 id | 格子 | 形态 | 抓取实测 | 入池（02:00） |
+| :--- | :--- | :--- | :--- | :--- |
+| `web-nwccw-news` 国务院妇儿工委办·新闻 | 中央 × 妇儿工委 | 直连 | found 47 / created 15 / 库存 20（18 有日期） | **7（35%）** |
+| `web-nmgcl-news` 内蒙古残联·要闻 | 省 × 残联 | 直连 | found 26 / created 10 / 全有日期 | **5（50%）** |
+| `web-gxdpf-news` 广西残联·要闻 | 省 × 残联 | 直连 | found 43 / created 10 / 全有日期 | 3（30%） |
+| `web-lncl-xwpd` 辽宁残联·新闻频道 | 省 × 残联（兼补辽宁薄覆盖） | 直连 | found 43 / created 9 / 全有日期 | 1（11%）⚠️ |
+| `search-child-medical` 大病与罕见病儿童救助 | 议题 × 医疗救助 | 搜索 | found 128 / created 29 | **18（62%）** |
+| `search-child-mental` 儿童心理服务 | 议题 × 心理 | 搜索 | found 128 / created 28 | 9（32%） |
+| `search-macao-social` 中国澳门社会服务 | 港澳 × 社会服务 | 搜索 | found 51 / created 20 | **11（55%）** |
+| `search-guangongwei` 关心下一代工作 | 中央 × 关工委 | 搜索 | found 102 / created 20 | 1（5%）⚠️ |
+
+> 8 源合计抓 **141 篇**、入池 **55 篇**（39%），与既有搜索源（44–100%）同量级。
+> ⚠️ 两个偏弱项按"留观察一周"处理：**辽宁残联**（命中 11 条但评分拒得多，内容是书画展/安全生产检查）、
+> **关工委**（命中多为"五老"活动通稿，缺政策与服务信息）。
 
 **部署前干跑**（`tools/dryrun-web-list.mjs`，重放真实解析器 + `requireMarkers` 模拟）：
 妇儿工委 26/54 命中、内蒙 12/26、广西 17/43、辽宁 11/43。抽样标题全部在题——
@@ -394,15 +398,27 @@ DB `config::text`（URL/查询词）、域名模式（`.hk` / `.tw` / hongkong /
 **未判定（不算否决）**：河北 / 吉林 / 上海 / 福建 / 湖南 / 贵州 / 云南 / 西藏 / 宁夏 残联 + 中国志愿服务网 + 腾讯基金会，本机 `fetch failed`（DNS/TLS）；江西残联 HTTP 422。
 本机不通 ≠ 服务器不通——应在宿主侧重探，别写进否决清单。
 
-### 6.5 ⚠️ 402 阻塞：本批入池尚未验证
+### 6.5 402 那次是真的欠费吗——不是，是瞬时窗口
 
-`01:37` 起 DeepSeek 账户余额耗尽，**LLM 与网页搜索同时 402**（近 30 分钟 261 次 LLM 调用全部失败，`Insufficient Balance`）。
+`01:05–01:37` 之间 LLM 与网页搜索同时返回 `Insufficient Balance`，站点停止出稿（最后一次入池停在 01:05）。
 
-- **4 个直连源**：抓取与日期解析已验证（51 篇入库，49 篇有日期，详见 6.3），**入池数要等余额恢复**由分析队列自动重试。
-- **4 个搜索源**：保持 `enabled=false`，不制造失败回执；余额恢复后 `collect` 首采、人工核入池标题、再改三列启用。
+**先查余额再下结论**：11 分钟后 `GET {LLM_BASE_URL%\/v1}/user/balance` 返回 **¥9.79 可用**，重试即成功
+（4 个搜索源全部重跑通过，`search-child-mental` found 128 / created 28）。所以这不是长期欠费。
 
-> 这与 2026-10-23 那次同因：当时 30 个新源采集完成、222 篇已分析、365 篇 402，充值后自动灌入 87 篇入池。
-> **判据**：`receipt_attempts` 里 `status='failed'` 且 error 含 `402` 占满近半小时 → 是余额，不是配置。
+**真正的坑在下游**：402 被归为 `ProviderRejectedError` 且 `retryable=false` → 文章直接进 `failed` **终态**，
+不会自动重试。所谓"充值后自动灌入"只对 `new` / `waiting` 成立。这次 **316 篇 `failed` 全是 402**
+（`select left(processing_error,60), count(*) … group by 1` 确认无一条是内容问题），手动改回 `new` 并清零
+`processing_attempts` 后恢复，两分钟内 analyzed 3402→3663、入池 1326→1456。
+
+```sql
+-- 同类故障的标准恢复动作
+update articles set processing_state='new', processing_attempts=0,
+       processing_retry_at=null, processing_queued_at=null, processing_error=null
+where processing_state='failed' and processing_error ilike '%402%';
+```
+
+排查顺序：① `receipt_attempts` 按 5 分钟分组看失败是否集中在一个时间窗 → ② 查 `/user/balance` →
+③ 只有余额真为 0 才谈充值；④ 恢复后先按 error 关键字**只重置 402 那批**，别把内容失败一起放回去。
 
 ### 6.6 MECE 上仍空着的格子（下一批按此推进）
 

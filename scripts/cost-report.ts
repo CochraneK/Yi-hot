@@ -96,4 +96,29 @@ console.log(`\n单篇均价：今天的新闻 ¥${liveUnit.toFixed(4)}（${perAr
 console.log(`调用额度：${budgets.map((b) => `${b.service} ${b.per_hour}/小时 ${b.per_day}/24小时`).join(" · ")}`);
 console.log("判据：新稿花费才代表日常成本；回填花费随每次加源一次性出现，可在半价时段（夜间/周末）跑。");
 
+// 闸门体检：首采应只收最近 12 个月内、列表最靠前的若干条。日期解析不出来的条目会放行
+//（它们按收录时间落位），归档型列表因此能混进几年前的稿——RSS 整份重读也走同一条路。
+// 下面这行只是报警，不做任何修正：有数字就去查 `articles.backfill` 那一批。
+const [leak] = await sql<{ total: number; selected: number; very_old: number; oldest: string | null; arts: number }[]>`
+  WITH leak AS (
+    SELECT a.id, a.published_at FROM articles a
+    WHERE a.created_at > now() - interval '30 days'
+      AND a.published_at < now() - interval '12 months'
+  )
+  SELECT (SELECT count(*) FROM leak)::int AS total,
+         (SELECT count(*) FROM leak l JOIN publications p ON p.article_id = l.id WHERE p.selected)::int AS selected,
+         (SELECT count(*) FROM leak WHERE published_at < now() - interval '24 months')::int AS very_old,
+         (SELECT min(published_at)::date::text FROM leak) AS oldest,
+         (SELECT count(*) FROM articles WHERE created_at > now() - interval '30 days')::int AS arts`;
+if (leak && leak.total > 0) {
+  const pct = leak.arts ? ((100 * leak.total) / leak.arts).toFixed(1) : "0";
+  console.log(
+    `\n闸门体检：近 30 天入库 ${leak.arts} 篇里，有 ${leak.total} 篇（${pct}%）原文日期早于 12 个月，` +
+      `其中 ${leak.selected} 篇已入池、${leak.very_old} 篇早于 24 个月，最老 ${leak.oldest}。`,
+  );
+  console.log("  这不是时间窗设置错了，是无日期条目放行的副作用；见 docs/COST.md 第三节。");
+} else {
+  console.log("\n闸门体检：近 30 天没有超窗入库的老稿。");
+}
+
 await closeDb();

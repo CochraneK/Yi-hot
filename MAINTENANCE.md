@@ -2624,3 +2624,13 @@ python3 repair_issue_links.py --apply    # 改 url + 清空 body + revision+1
 - 遇到「明明是旧闻却算今天」，先比对 `body_text` 长度分布，再 `curl -L` 看 url 的真实目标；
   两分钟内能定性，不要从模型或提示词上猜。
 
+## 三十二、2026-10-24 会话归档与最新信源图谱
+
+本轮 ChatGPT 长对话结束前，已把用户的 YiHot 信源扩容、五类目标、腾讯云实际与 GitHub 静态配置的差别、收费结构/币种和 DeepSeek Flash 切换意图、前后 PR、图像错误、剩余维护事项整理为 **[2026-10-24 会话归档](docs/HANDOFF-2026-10-24-CHAT-ARCHIVE.md)**。并提供可编辑的 [信源数据 SVG 总览](docs/assets/yihot-source-atlas-2026-10-23.svg)；**禁止将早先误画的 42 条种子、16/60 覆盖率当作最新数据**。
+
+- 10-23 22:00 北京运维快照：**线上 DB 190 条、启用 169 条、累计入选 1,270、近 3 天入选 1,005**。10-23 GitHub **seed 133 条**（`search` 61、`web_list` 47、`json_list` 17、`rss` 8）；它们是不同总体，**不能相加**；更多分组见 [SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md)。
+- 该覆盖报告有一处**待现场复核的统计矛盾**：“24 个省区市在出稿”标题对应的表格只列了 **23 个省区市**；另列 8 个空缺。不得为了画图猜测补齐，需现场按省编码查询 `publications.selected` 再修。
+- 费用/模型：此前确认 DeepSeek 官方账单累计 ¥11.50 为用户当时提供的**账户实际扣费**，不能与 10-18 按 token 粗估的 ¥22.3 直接等同；最新代码已加入缓存命中、高低峰及 `USD_CNY_RATE` 币种转换，**应以最新 `packages/backend/src/admin/usage.ts` 为准**。GitHub Flash 切换工具虽经 CI 检验，不代表腾讯云已应用；见 [切换手册](docs/DEEPSEEK_FLASH_SWITCH_2026-10-21.md)。
+- 有关 `EveryInfra per_day=0` 下的 14 个付费源、`deepseek-tools per_day=800` 上限约 ¥4/天和 8 个待补民政地区的事实，也仅限于 10-23 运行快照；再次接手要先查真实 DB、账单与队列。
+
+归档时**未**主动变更生产信源、付费预算、模型配置或触发历史任务重分析；交接文件是摘要与状态快照，不是运行命令。后续扩容/可视化分图任务见归档文档第 6–7 节。

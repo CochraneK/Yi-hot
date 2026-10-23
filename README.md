@@ -119,7 +119,7 @@ flowchart LR
 | :--- | :--- |
 | **只想了解产品** | [线上站点](https://49.233.72.222/yihot/) · [分类和标签](docs/topic-axis-migration.md) |
 | **第一次接手维护** | [完整维护手册](MAINTENANCE.md) · [交接总览](docs/PROJECT_CONTEXT.md) |
-| **新增公益信源** | [信源配置](docs/sources.md) · [候选治理与核查](docs/SOURCE_CANDIDATE_TRIAL.md) |
+| **新增公益信源** | [信源配置](docs/sources.md) · [候选治理与核查](docs/SOURCE_CANDIDATE_TRIAL.md) · [覆盖清单与失败复盘](docs/SOURCE_COVERAGE.md) |
 | **配置公众号和邮件** | [WeRSS](docs/WERSS_DEPLOY.md) · [邮件采集](docs/EMAIL_SOURCE_DEPLOY.md) · [邮件发送](docs/EMAIL_DELIVERY.md) |
 | **理解系统如何运作** | [技术架构](docs/architecture.md) · [评分与筛选](docs/selection.md) |
 | **同步和重新部署** | [同步工具](tools/README.md) · [运行维护](docs/memory/OPS.md) |

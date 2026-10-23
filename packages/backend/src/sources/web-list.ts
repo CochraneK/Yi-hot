@@ -5,6 +5,7 @@ import { collapseWhitespace, stripTags } from "../lib/text.ts";
 import { readable, type ExtractedBody } from "../content/extract.ts";
 import { sanitizeBody } from "../content/sanitize.ts";
 import { jinaRead } from "../providers/jina.ts";
+import { renderBrowser } from "../lib/browser-render.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 
 const JINA_PREFIX = "https://r.jina.ai/";
@@ -207,6 +208,18 @@ function absolute(href: string | undefined, base: string): string | null {
 async function fetchListingText(source: SourceRow): Promise<{ text: string; viaJina: boolean; base: string }> {
   const url = String(source.config.url ?? "");
   if (!url) throw new FetchError("url missing");
+  // SPA / client-rendered listings: the static HTML has no post links, so a headless browser mounts
+  // the page first and we parse the rendered DOM exactly as a static fetch would be parsed.
+  if (source.config.render === "browser") {
+    const page = await renderBrowser(url, {
+      // Heavy international sites (e.g. unesco.org) can take 30 s+ to reach network idle; per-source
+      // override via renderTimeoutMs. Bounded so a wedged page still fails the run, not the worker.
+      timeoutMs: typeof source.config.renderTimeoutMs === "number" ? Math.min(Math.max(source.config.renderTimeoutMs, 5_000), 120_000) : 30_000,
+      waitForSelector: typeof source.config.renderWaitSelector === "string" ? source.config.renderWaitSelector : undefined,
+      acceptLanguage: "zh-CN,zh;q=0.9,en;q=0.8",
+    });
+    return { text: page.html, viaJina: false, base: source.config.baseUrl ?? page.url };
+  }
   if (url.startsWith(JINA_PREFIX)) {
     const target = url.slice(JINA_PREFIX.length);
     const page = await jinaRead(target, { purpose: "source_listing", subject: `source:${source.id}`, cacheToleranceSeconds: source.config.cacheToleranceSeconds, perRead: true });

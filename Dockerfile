@@ -6,12 +6,13 @@ WORKDIR /app
 # the Debian archive is the slowest layer of this image when built from there. Empty = upstream.
 ARG APT_MIRROR=
 # pg_dump for the optional database backups (Debian's client matches the PostgreSQL 17 server in compose).
+# chromium: headless renderer for client-side (SPA) source listings — see packages/backend/src/lib/browser-render.ts.
 RUN if [ -n "$APT_MIRROR" ]; then \
       sed -i "s|deb.debian.org|$APT_MIRROR|g; s|security.debian.org|$APT_MIRROR|g" \
         /etc/apt/sources.list.d/debian.sources 2>/dev/null || true; \
     fi \
  && apt-get update \
- && apt-get install -y --no-install-recommends postgresql-client ca-certificates \
+ && apt-get install -y --no-install-recommends postgresql-client ca-certificates chromium \
  && rm -rf /var/lib/apt/lists/*
 
 FROM base AS build

@@ -7656,6 +7656,542 @@
         "minScore": 40
       },
       "enabled": true
+    },
+    {
+      "id": "web-nwccw-news",
+      "name": "国务院妇儿工委办·新闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.nwccw.gov.cn/news.shtml",
+        "itemSelector": "ul li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtRegex": "(\\d{4}\\/\\d{1,2}\\/\\d{1,2})\\/",
+        "allowUrlPrefixes": [
+          "https://www.nwccw.gov.cn/20"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "未成年",
+            "孤儿",
+            "困境",
+            "留守",
+            "家庭教育",
+            "女童",
+            "婴幼",
+            "托育",
+            "母婴",
+            "妇儿",
+            "妇女",
+            "家庭",
+            "学生",
+            "青少年",
+            "校园",
+            "救助",
+            "福利"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "政治局",
+            "巡视",
+            "长征",
+            "集体学习"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "妇儿工委",
+        "儿童政策"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-nmgcl-news",
+      "name": "内蒙古自治区残联·要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "https://nmgcl.org.cn/",
+        "itemSelector": "ul li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "https://nmgcl.org.cn/nmcl/w/view-"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "内蒙古"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-gxdpf-news",
+      "name": "广西壮族自治区残联·要闻",
+      "kind": "web_list",
+      "config": {
+        "url": "http://www.gxdpf.org.cn/",
+        "itemSelector": "ul li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "publishedAtSelector": "span",
+        "allowUrlPrefixes": [
+          "http://www.gxdpf.org.cn/contents/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        }
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "广西"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "web-lncl-xwpd",
+      "name": "辽宁省残联·新闻频道",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.lncl.org.cn/",
+        "itemSelector": "ul li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://www.lncl.org.cn/lncl/xwpd/"
+        ],
+        "detail": {
+          "maxFetches": 6
+        },
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "康复",
+            "救助",
+            "补贴",
+            "托养",
+            "孤独症",
+            "自闭症",
+            "辅助器具",
+            "辅具",
+            "无障碍",
+            "助残",
+            "就业",
+            "特教",
+            "特殊教育",
+            "儿童",
+            "家庭",
+            "帮扶",
+            "权益",
+            "保障",
+            "政策"
+          ],
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货",
+            "亚残运",
+            "残奥",
+            "健身周",
+            "书画",
+            "文艺",
+            "演出",
+            "合唱",
+            "体育"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 10
+        },
+        "publishedAtRegex": "(\\d{4}-\\d{1,2}-\\d{1,2})"
+      },
+      "tier": "T1",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "官方",
+        "残联",
+        "辽宁"
+      ],
+      "site_fulltext": true,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "search-child-mental",
+      "name": "网页搜索·儿童心理服务",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "儿童 心理健康 服务 政策 干预",
+          "中小学生 心理健康 筛查 危机干预",
+          "未成年人 心理 咨询 援助 服务",
+          "困境儿童 心理 关爱 帮扶",
+          "留守儿童 心理健康 关爱 服务",
+          "青少年 抑郁 焦虑 干预 研究",
+          "学校 心理健康 教师 配备 政策",
+          "儿童 心理 康复 公益 项目"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "儿童心理"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "search-child-medical",
+      "name": "网页搜索·大病与罕见病儿童救助",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "大病儿童 医疗救助 政策 报销",
+          "罕见病 儿童 用药 保障 目录",
+          "儿童 白血病 救助 公益 项目",
+          "先天性心脏病 儿童 筛查 救助",
+          "困境儿童 医疗救助 慈善 帮扶",
+          "儿童 重疾 保障 政策 保险",
+          "唇腭裂 先心病 救助 行动",
+          "儿童 康复 医疗 援助 基金"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 30
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "儿童医疗"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "search-guangongwei",
+      "name": "网页搜索·关心下一代工作",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "关心下一代工作委员会 五老 关爱 帮扶",
+          "关工委 青少年 思想道德 教育 活动",
+          "关工委 困境儿童 助学 帮扶",
+          "关工委 法治 教育 未成年人 保护",
+          "关工委 家庭教育 指导 服务",
+          "关工委 留守儿童 关爱 服务 阵地"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "关工委"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
+    },
+    {
+      "id": "search-macao-social",
+      "name": "网页搜索·澳门社会服务",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "澳門 社會工作局 兒童 家庭 服務",
+          "澳门 弱势家庭 援助 津贴",
+          "澳门 幼儿 托儿 服务 资助",
+          "澳門 特殊教育 融合教育 支援",
+          "澳门 长者 残疾 康复 服务",
+          "澳门 基金会 公益 资助 计划",
+          "澳门 青年 志愿服务 公益"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "招聘",
+            "彩票",
+            "开奖",
+            "双色球",
+            "讣告",
+            "优惠券",
+            "团购",
+            "广告",
+            "加盟",
+            "招商",
+            "直播",
+            "带货"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 20
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 720,
+      "tags": [
+        "搜索",
+        "澳门"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "publication_rule": {
+        "minScore": 40
+      },
+      "enabled": false
     }
   ]
 }

@@ -33,6 +33,14 @@ const SEARCH_INTERVAL_MINUTES = 360;
  * 可用 config._aihot.dateUpgradeMaxFetches 覆盖，0 关闭。
  */
 const DATE_UPGRADE_MAX_FETCHES = 6;
+/**
+ * 增量采集的年龄闸门（天）。首采有 initialBackfillMonths 那道窗，增量原先只卡条数——
+ * 而 RSS 的 etag 会在配置变更时被丢掉（rss.ts），feed 于是整份重读，归档页上几年前的条目
+ * 一次性灌进来：WHO 源一轮进了 73 条、最早 2020 年，每条都要过一遍模型，既稀释池子又烧钱。
+ * 只拦「明确印着很久以前日期」的条目；解析不出日期的照旧放行（它们按收录时间落位）。
+ * 档案型源可设 _aihot.ingestMaxAgeDays = 0 关闭。
+ */
+const DEFAULT_INGEST_MAX_AGE_DAYS = 365;
 
 export function noiseFiltered(c: Candidate, source: SourceRow): boolean {
   const f = source.config.ingestNoiseFilter;
@@ -110,6 +118,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
   let created = 0;
   let revised = 0;
   let found = 0;
+  let droppedOld = 0;
   try {
     // A config entry this kind does not implement fails the run, visibly, instead of being ignored.
     const unsupported = unsupportedConfig(source.kind, source.config);
@@ -154,6 +163,13 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       candidates = candidates.filter((c) => !c.publishedAt || c.publishedAt.getTime() >= cutoff).slice(0, backfillLimit);
     } else if (source.kind !== "x_search") {
       // X keeps every post it read: its watermark already covers them, so a cut here would lose them.
+      const maxAgeDays = Number(source.config._aihot?.ingestMaxAgeDays ?? DEFAULT_INGEST_MAX_AGE_DAYS);
+      if (maxAgeDays > 0) {
+        const cutoff = Date.now() - maxAgeDays * 86400000;
+        const before = candidates.length;
+        candidates = candidates.filter((c) => !c.publishedAt || c.publishedAt.getTime() >= cutoff);
+        droppedOld = before - candidates.length;
+      }
       candidates = candidates.slice(0, MAX_ITEMS_PER_RUN);
     }
 
@@ -300,6 +316,8 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         detailPages: detailUsed,
       };
     }
+    // 被年龄闸门拦掉的条数。单独写：整批都被拦时 candidates 为空，恰恰是最需要看见它的时候。
+    if (droppedOld > 0) detail = { ...(detail ?? {}), droppedOld };
 
     if (firstImport) nextCursor.initializedAt = new Date().toISOString();
     nextCursor.lastOkAt = new Date().toISOString();
@@ -314,6 +332,10 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
   } catch (error) {
     const message = String(error instanceof Error ? error.message : error).slice(0, 1000);
     const budget = error instanceof BudgetExceededError;
+    // 「服务整个停了」（运营把 per_day 调成 0）和「今天的额度用完了」不是一回事：前者 15 分钟后
+    // 不会自己好。停摆期间每 15 分钟回来撞一次，只是往 fetch_runs 里倒失败记录 —— 14 个停摆的
+    // 源两天就是 1906 条，真正的抓取失败被淹在里面。停摆的退到 6 小时后再看。
+    const stopped = budget && (error as BudgetExceededError).window === "stopped";
     // Provider 明确说了「什么时候可以再来」（如 EveryInfra 的 capacity_exhausted: retry_after=900），
     // 这不是本源的错：不计失败次数、不降级健康度，按它给的秒数回来重试就好。
     // 否则 60 分钟间隔的源会被普通退避一路推到 3~6 小时后，白白错过容量恢复的窗口。
@@ -326,6 +348,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
           WHEN fail_count + 1 >= 5 THEN 'failing' ELSE 'degraded' END,
         next_fetch_at = now() + make_interval(secs => CASE
           WHEN ${cooldown !== null} THEN GREATEST(${cooldown ?? 0}, 900)
+          WHEN ${stopped} THEN 21600
           WHEN ${budget} THEN 900
           ELSE LEAST(interval_minutes * (fail_count + 2), 360) * 60 END),
         updated_at = now()
@@ -389,13 +412,14 @@ export async function collectXShard(key: string, sourceIds: string[]): Promise<{
   } catch (error) {
     const message = String(error instanceof Error ? error.message : error).slice(0, 1000);
     const budget = error instanceof BudgetExceededError;
+    const stopped = budget && (error as BudgetExceededError).window === "stopped";
     for (const m of members) {
       await sql`
         UPDATE sources SET last_fetch_at = now(),
           fail_count = CASE WHEN ${budget} THEN fail_count ELSE fail_count + 1 END,
           last_error = ${message},
           health = CASE WHEN ${budget} THEN health WHEN fail_count + 1 >= 5 THEN 'failing' ELSE 'degraded' END,
-          next_fetch_at = now() + make_interval(mins => CASE WHEN ${budget} THEN 15 ELSE LEAST(${minutes} * (fail_count + 2), 360) END),
+          next_fetch_at = now() + make_interval(mins => CASE WHEN ${stopped} THEN 360 WHEN ${budget} THEN 15 ELSE LEAST(${minutes} * (fail_count + 2), 360) END),
           updated_at = now()
         WHERE id = ${m.id}`;
       await sql`UPDATE fetch_runs SET status = 'failed', finished_at = now(), error = ${message}, detail = ${sql.json({ shard: key, accounts: members.length })} WHERE id = ${runs.get(m.id)!}`;

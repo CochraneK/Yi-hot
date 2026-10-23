@@ -5,6 +5,7 @@ import type { z } from "zod";
 import { config, credential } from "../config.ts";
 import { sha256 } from "../lib/ids.ts";
 import { completeReceipt, paidRequest, ProviderRejectedError, rejectReceivedResponse } from "./receipts.ts";
+import { estimateCost } from "./pricing.ts";
 import { sql } from "../db.ts";
 
 export interface ModelSpec {
@@ -216,7 +217,10 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
         response: { ...json, _latencyMs: Date.now() - started },
         requestId: (json.id as string | undefined) ?? res.headers.get("x-request-id"),
         usage,
-        cost: null,
+        // 按调用当时的价格表把 token 折成钱写进回执。以前这里写死 null，于是模型调用（站点上
+        // 唯一真花钱的一项）在 receipt_attempts 上一分钱都没有，预算与 per-model 成本全看不见。
+        // 价格表缺这一行时存 null —— 那是「不知道多少钱」，不是 0 元。
+        cost: await estimateCost({ service: spec.service, model: spec.model, usage, at: new Date(started) }),
       };
     },
   );

@@ -67,5 +67,14 @@ export async function updateBudget(service: string, input: { perMinute: number; 
     ON CONFLICT (service) DO UPDATE SET per_minute = EXCLUDED.per_minute, per_hour = EXCLUDED.per_hour, per_day = EXCLUDED.per_day, note = EXCLUDED.note, updated_at = now()
     RETURNING service, per_minute, per_hour, per_day`;
   await audit(actor, "budget.update", `budget:${service}`, input.reason, before ?? null, after);
+  // 预算刚被放开（0 → 有额度）：那些因为「服务停摆」退到 6 小时后的源不该继续干等。
+  // 按 last_error 认人 —— 它就是采集侧写下的那句 "Budget for <service> exhausted (stopped)"。
+  if (input.perDay > 0 && input.perMinute > 0 && input.perHour > 0) {
+    const freed = await sql`
+      UPDATE sources SET next_fetch_at = now(), fail_count = 0, health = 'ok', last_error = NULL, updated_at = now()
+      WHERE enabled AND last_error LIKE ${`Budget for ${service}%`}
+      RETURNING id`;
+    if (freed.length > 0) await audit(actor, "budget.resume", `budget:${service}`, input.reason, null, { sources: freed.map((s) => String(s.id)) });
+  }
   return after;
 }

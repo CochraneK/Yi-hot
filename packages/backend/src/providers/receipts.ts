@@ -11,10 +11,13 @@ import { sha256, stableJson } from "../lib/ids.ts";
 
 export class BudgetExceededError extends Error {
   readonly service: string;
+  /** 撞的是哪个窗口：`stopped` 是运营把预算调成 0（整项服务停摆），其余是用完了当天的额度。 */
+  readonly window: string;
   readonly retryAfterSeconds: number;
   constructor(service: string, window: string, retryAfterSeconds: number) {
     super(`Budget for ${service} exhausted (${window})`);
     this.service = service;
+    this.window = window;
     this.retryAfterSeconds = retryAfterSeconds;
   }
 }

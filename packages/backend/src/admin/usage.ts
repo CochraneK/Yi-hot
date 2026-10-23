@@ -18,15 +18,11 @@
 // `cached_per_mtok` 计。命中率在站点上约六成，只按未命中价算会高估两倍以上。
 import { sql } from "../db.ts";
 import { MODELS } from "../providers/llm.ts";
+// 计价只有一份实现：调用当时写回执用的是同一套 priceFor/costOf，所以这里重算出来的钱
+// 与 receipt_attempts.cost 是同一个口径。改价格逻辑请改 providers/pricing.ts。
+import { costOf, priceFor, type PriceRow as UnitPrice, type TokenCost } from "../providers/pricing.ts";
 
-interface PriceRow {
-  service: string;
-  model: string;
-  currency: string;
-  input_per_mtok: string | null;
-  cached_per_mtok: string | null;
-  output_per_mtok: string | null;
-  per_request: string | null;
+interface PriceRow extends UnitPrice {
   source_url: string | null;
   verified_on: string | null;
   note: string | null;
@@ -85,39 +81,6 @@ const PEAK_SQL = sql`(extract(isodow from a.started_at + interval '8 hours') BET
 /** 该模型名是否仍在注册表里（只用于提示，不参与计价）。 */
 const stillRegistered = (model: string | null): boolean =>
   model === null ? false : Object.values(MODELS).some((m) => m.model === model || m.key === model);
-
-const priceFor = (service: string, model: string | null, peak: boolean, prices: PriceRow[]): PriceRow | null => {
-  const named = model ?? "";
-  const find = (m: string) => prices.find((p) => p.service === service && p.model === m) ?? null;
-  // 高峰价是同一 (service, model) 的另一行，靠 `@peak` 后缀区分；没有这一行说明该服务不分时段。
-  if (peak) {
-    const peakRow = find(`${named}@peak`);
-    if (peakRow) return peakRow;
-  }
-  return find(named) ?? find("");
-};
-
-interface TokenCost {
-  /** 缓存命中的输入 token。 */
-  hit: number;
-  /** 未命中的输入 token。 */
-  miss: number;
-  out: number;
-}
-
-/** A price row's money for one group. Hit and miss are priced apart: one blended rate misreports by 2×. */
-const costOf = (t: TokenCost, calls: number, p: PriceRow | null): { amount: number; currency: string } | null => {
-  if (!p) return null;
-  const perCall = p.per_request === null ? 0 : Number(p.per_request);
-  const hasTokenRates = p.input_per_mtok !== null || p.cached_per_mtok !== null || p.output_per_mtok !== null;
-  if (!hasTokenRates && perCall === 0) return null;
-  // A row without a cache-hit rate (older rows) prices hits at the miss rate — that is what was paid.
-  const hitRate = Number(p.cached_per_mtok ?? p.input_per_mtok ?? 0);
-  const missRate = Number(p.input_per_mtok ?? 0);
-  const outRate = Number(p.output_per_mtok ?? 0);
-  const amount = (t.hit / 1e6) * hitRate + (t.miss / 1e6) * missRate + (t.out / 1e6) * outRate + perCall * calls;
-  return { amount, currency: p.currency };
-};
 
 /** Token split of one aggregated row; a record without the cache fields counts as fully missed. */
 const tokensOf = (r: { tokens_in: string | null; cache_hit: string | null; cache_miss: string | null; tokens_out: string | null }): TokenCost => ({

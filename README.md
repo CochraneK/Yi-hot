@@ -123,7 +123,7 @@ flowchart LR
 | **配置公众号和邮件** | [WeRSS](docs/WERSS_DEPLOY.md) · [邮件采集](docs/EMAIL_SOURCE_DEPLOY.md) · [邮件发送](docs/EMAIL_DELIVERY.md) |
 | **理解系统如何运作** | [技术架构](docs/architecture.md) · [评分与筛选](docs/selection.md) |
 | **同步和重新部署** | [同步工具](tools/README.md) · [运行维护](docs/memory/OPS.md) |
-| **看钱花在哪 / 压成本** | [成本口径与护栏](docs/COST.md)（`scripts/cost-report.ts` 自查） |
+| **看钱花在哪 / 压成本** | [成本口径与护栏](docs/COST.md)（`scripts/cost-report.ts` 自查）· [队列可持续与容量缺口](docs/QUEUE_SUSTAINABILITY.md)（`scripts/queue-report.ts`） |
 | **跟踪 AIHOT 上游** | [升级与重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) |
 
 <!-- SOURCE-REGISTRY:START -->

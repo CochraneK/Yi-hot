@@ -106,13 +106,18 @@
 | 护栏 | 值 | 效果 |
 | :--- | :--- | :--- |
 | `budgets.llm.per_day` | 40000 → **6000**（滚动 24 小时） | 一天最多约 **¥9–11**（高峰口径），超出即暂停付费调用 |
-| `budgets.llm.per_hour` | 6000 → **1500** | 单小时上限约 ¥2.8，防止一次误操作把全天额度烧掉 |
-| `budgets.deepseek-tools.per_day` | 800 | 搜索一天最多 ¥4 |
+| `budgets.llm.per_hour` | 6000 → **1200**（2026-10-24 回落） | 单小时上限约 ¥2.2，防止一次误操作把全天额度烧掉 |
+| `budgets.deepseek-tools.per_day` | 800 → **500**（隔天跑后约 210 次/天） | 搜索一天最多 ¥2.5 |
 | 高峰限流 `ANALYZE_PEAK_PER_HOUR` | 8/小时 | 高峰时段只放行少量，批量自然落到半价窗口 |
 | `initialBackfillLimit` | search 12、其余 8（兜底也从 30 改成 8） | 新源首采成本降到原来的 1/3 左右 |
 | 历史回填只在半价时段 | 高峰 0 放行（当日新闻保留溢流） | 回填不再撞双倍价，见 5.3 |
+| **历史日上限** `HISTORY_DAILY_MAX` | 120 篇/天 | 超出即归档（不是排队），见 [QUEUE_SUSTAINABILITY.md](QUEUE_SUSTAINABILITY.md) |
+| **历史积压背压** `HISTORY_BACKLOG_MAX` | 600 篇 / 等待 96 小时 | 装不下就不再接收新的历史候选 |
+| **搜索隔天跑** `config.everyNDays` | 搜索源 2（零产出源 3） | 搜索 API 从 ¥2/天 降到约 ¥1/天，回看窗口不变 |
 
 被护栏挡住**不是失败**：`BudgetExceededError` 是可重试的，文章留在队列里，等窗口滚动后自动继续。
+被**容量闸门**挡下则是另一回事：历史稿会进 `archived`（保留原文，可一键放回），
+当日新闻永不被挡。两套机制的取舍与容量缺口计算见 [QUEUE_SUSTAINABILITY.md](QUEUE_SUSTAINABILITY.md)。
 
 ### 5.1 批量加源那天：开「加源窗口」而不是关护栏
 

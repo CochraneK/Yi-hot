@@ -32,8 +32,10 @@ const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
 config.allowPrivateNetworkFetch = true;
 after(async () => { await new Promise<void>(resolve => server.close(() => resolve())); await stopBoss(); await closeDb(); });
 async function source(id: string, path: string, initialized = true) {
+  // The first-backfill cap is set explicitly: this test is about the cap not freezing the ordinary
+  // window, not about what the fallback happens to be (it moved from 30 to 8 on 2026-10-24).
   await sql`INSERT INTO sources (id,name,kind,config,tier,participation_mode,cursor,next_fetch_at)
-    VALUES (${id},'RSS conditional test','rss',${sql.json({ feedUrl: base + path })},'T1','editorial',${initialized ? sql.json({ initializedAt: new Date().toISOString() }) : null},'2100-01-01')`;
+    VALUES (${id},'RSS conditional test','rss',${sql.json({ feedUrl: base + path, _aihot: { initialBackfillLimit: 30 } })},'T1','editorial',${initialized ? sql.json({ initializedAt: new Date().toISOString() }) : null},'2100-01-01')`;
 }
 const cursor = async (id: string) => (await sql`SELECT cursor FROM sources WHERE id=${id}`)[0]!.cursor;
 

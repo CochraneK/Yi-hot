@@ -7171,40 +7171,6 @@
       }
     },
     {
-      "id": "web-unicef-hk-news",
-      "name": "联合国儿童基金会中国香港委员会·最新消息",
-      "kind": "web_list",
-      "config": {
-        "url": "https://www.unicef.org.hk/zh-hant/news",
-        "baseUrl": "https://www.unicef.org.hk",
-        "itemSelector": "div.item",
-        "linkSelector": "a[href*='/zh-hant/news/latest_news/']",
-        "titleSelector": "span.name",
-        "publishedAtSelector": "span.date",
-        "publishedAtDayFirst": true,
-        "publishedAtUtcOffset": "+08:00",
-        "allowUrlPrefixes": [
-          "https://www.unicef.org.hk/zh-hant/news/latest_news/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "first_party": true,
-      "participation_mode": "editorial",
-      "interval_minutes": 360,
-      "tags": [
-        "中国香港",
-        "儿童权益",
-        "UNICEF",
-        "2026-10-24已启用观察"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true
-    },
-    {
       "id": "search-mca-hebei",
       "name": "网页搜索·河北民政（DeepSeek）",
       "kind": "search",
@@ -8151,59 +8117,6 @@
       "tags": [
         "搜索",
         "关工委"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "publication_rule": {
-        "minScore": 40
-      },
-      "enabled": false
-    },
-    {
-      "id": "search-macao-social",
-      "name": "网页搜索·澳门社会服务",
-      "kind": "search",
-      "config": {
-        "queries": [
-          "澳門 社會工作局 兒童 家庭 服務",
-          "澳门 弱势家庭 援助 津贴",
-          "澳门 幼儿 托儿 服务 资助",
-          "澳門 特殊教育 融合教育 支援",
-          "澳门 长者 残疾 康复 服务",
-          "澳门 基金会 公益 资助 计划",
-          "澳门 青年 志愿服务 公益"
-        ],
-        "count": 20,
-        "lookbackDays": 7,
-        "minAuthority": 2,
-        "ingestNoiseFilter": {
-          "dropMarkers": [
-            "招聘",
-            "彩票",
-            "开奖",
-            "双色球",
-            "讣告",
-            "优惠券",
-            "团购",
-            "广告",
-            "加盟",
-            "招商",
-            "直播",
-            "带货"
-          ]
-        },
-        "_aihot": {
-          "initialBackfillLimit": 12
-        }
-      },
-      "tier": "T2",
-      "first_party": false,
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 720,
-      "tags": [
-        "搜索",
-        "澳门"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,

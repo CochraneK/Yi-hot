@@ -44,6 +44,11 @@ export interface MaterialInput {
   xPost?: XPostData | null;
   raw?: unknown;
   via: "fetch" | "ingest" | "import";
+  /**
+   * 搜索型信源里首次捞到它的那条查询词。只用于归因（哪条 query 在花钱、带来多少入选），
+   * 不进任何展示路径；同一条 URL 被多条 query 命中时只记最先到达的那条。
+   */
+  query?: string | null;
   discoveredAt?: Date;
   /** Explicit backfill: first import of a new source, or a report flagged as backfill. */
   backfill?: string | null;
@@ -153,16 +158,16 @@ async function upsertIn(db: Db, m: MaterialInput): Promise<MaterialResult> {
   if (inserted) {
     await db`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${newId}, 1, ${hash}, ${title}, ${m.bodyText ?? null})`;
-    await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at)
-             VALUES (${newId}, ${m.sourceId}, ${m.via}, ${discoveredAt}) ON CONFLICT DO NOTHING`;
+    await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at, query)
+             VALUES (${newId}, ${m.sourceId}, ${m.via}, ${discoveredAt}, ${m.query ?? null}) ON CONFLICT DO NOTHING`;
     return { articleId: newId, created: true, revised: false, backfill: t.backfill };
   }
 
   const [existing] = await db<{ id: string; source_id: string; revision: number; content_hash: string | null; backfill: boolean; title: string; body_text: string | null; excerpt: string | null; discovered_at: Date; published_at: Date | null; published_at_precision: "date" | "datetime"; timeline_at: Date; backfill_reason: string | null }[]>`
     SELECT id, source_id, revision, content_hash, backfill, title, body_text, excerpt, discovered_at, published_at, published_at_precision, timeline_at, backfill_reason
     FROM articles WHERE identity_key = ${identityKey} FOR UPDATE`;
-  await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at)
-           VALUES (${existing!.id}, ${m.sourceId}, ${m.via}, ${discoveredAt}) ON CONFLICT DO NOTHING`;
+  await db`INSERT INTO article_discoveries (article_id, source_id, via, discovered_at, query)
+           VALUES (${existing!.id}, ${m.sourceId}, ${m.via}, ${discoveredAt}, ${m.query ?? null}) ON CONFLICT DO NOTHING`;
   const unchanged: MaterialResult = { articleId: existing!.id, created: false, revised: false, backfill: existing!.backfill };
   // Another source listing the same material (an aggregator, a translated mirror, a hot signal) is a
   // discovery only: its title and summary are its own rendering, and taking them made the article flip

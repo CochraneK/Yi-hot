@@ -41,7 +41,7 @@ function dayOf(date: string | null): Date | null {
   return Number.isFinite(t) ? new Date(t) : null;
 }
 
-function toCandidate(hit: SearchHit, receiptId: number): Candidate {
+function toCandidate(hit: SearchHit, receiptId: number, query: string): Candidate {
   const publishedAt = dayOf(hit.date);
   const excerpt = (hit.summary ?? hit.snippet ?? "").slice(0, 2000) || null;
   const body = hit.content ? hit.content.slice(0, 50_000) : null;
@@ -50,6 +50,7 @@ function toCandidate(hit: SearchHit, receiptId: number): Candidate {
     title: hit.title,
     author: hit.siteName,
     publishedAt,
+    query,
     ...(publishedAt ? { publishedAtPrecision: "date" as const } : {}),
     excerpt,
     bodyText: body,
@@ -66,9 +67,22 @@ function toCandidate(hit: SearchHit, receiptId: number): Candidate {
   };
 }
 
+/** 稳定的小哈希：只用来把一个源固定分到「隔 N 天里的第几天」，不参与任何内容判断。 */
+function hash32(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 /**
  * 每个查询一次请求。查询里未自带时间窗时自动追加 `after:`，避免把去年的旧闻当新闻抓回来；
  * 想让某个源长跨度回填，直接在 query 里写 after:/before:，这里就不再覆盖。
+ *
+ * `config.everyNDays`（默认 1）让源按天轮转：N=2 表示隔天跑。这是**唯一真正省搜索费**的旋钮——
+ * 幂等窗口是北京「当天」，把 interval_minutes 从 12h 改成 24h 并不会少付钱，但少跑一天就是少一天。
  */
 export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
   const queries = (Array.isArray(source.config.queries) ? source.config.queries : []).map((q: unknown) => String(q ?? "").trim()).filter(Boolean);
@@ -82,9 +96,22 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
 
   const window = bjDay();
   const since = minusDays(window, lookbackDays);
+  // 轮转：dayIndex 与源 id 的哈希对 N 取模，固定把源摊到不同日子，避免同一天全挤在一起。
+  const everyNDays = Math.max(1, Math.floor(Number(source.config.everyNDays ?? 1)));
+  if (everyNDays > 1) {
+    const dayIndex = Math.floor(Date.parse(`${window}T00:00:00Z`) / 86_400_000);
+    const slot = hash32(source.id) % everyNDays;
+    if (dayIndex % everyNDays !== slot) {
+      return { candidates: [], detail: { skippedRotation: true, everyNDays, slot, queries: queries.length } };
+    }
+  }
+
   const errors: string[] = [];
   const seen = new Set<string>();
   const candidates: Candidate[] = [];
+  // 逐条 query 的产出，用来回答「哪条词在花钱、带来多少入选」。历史（本次上线前）没有这个字段，
+  // 报告脚本对缺失的窗口一律标 unknown，不假设、不插值。
+  const perQuery: { q: string; hits: number; kept: number; fresh: number }[] = [];
   let rawHits = 0;
   let droppedByAuthority = 0;
   let droppedByRerank = 0;
@@ -92,9 +119,11 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
 
   for (const q of queries) {
     const query = /(^|\s)(after|before):/i.test(q) ? q : `${q} after:${since}`;
+    const stat = { q: q.slice(0, 200), hits: 0, kept: 0, fresh: 0 };
     try {
       const res = await deepseekSearch({ query, count, needContent, oriQuestion, window: `${window}:${since}`, subject: source.id });
       rawHits += res.hits.length;
+      stat.hits = res.hits.length;
       for (const hit of res.hits) {
         // authority / rerank 缺失或 -1（未知）时不据此丢弃：字段没给不等于结果不对口，
         // 对口与否交给后面的评分步骤判断。
@@ -108,16 +137,20 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
         }
         if (seen.has(hit.url)) continue;
         seen.add(hit.url);
-        candidates.push(toCandidate(hit, res.receiptId));
+        stat.kept += 1;
+        stat.fresh += 1;
+        candidates.push(toCandidate(hit, res.receiptId, stat.q));
       }
     } catch (error) {
       // 预算耗尽不是「这个源坏了」：已拿到的结果照样入库，剩下的查询等配额恢复。
       if (error instanceof BudgetExceededError) {
         budgetError = error;
+        perQuery.push(stat);
         break;
       }
       errors.push(`${q}: ${String(error instanceof Error ? error.message : error).slice(0, 200)}`);
     }
+    perQuery.push(stat);
   }
 
   // 一条都没拿到时把原因抛出去：整源失败要能在 fetch_runs 里看见（预算耗尽按预算处理，不计健康度）。
@@ -133,6 +166,7 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
       droppedByAuthority,
       droppedByRerank,
       budgetExhausted: budgetError !== null,
+      perQuery,
       ...(errors.length ? { errors: errors.slice(0, 5) } : {}),
     },
   };

@@ -12,6 +12,7 @@ import { publishArticle } from "../publication/publish.ts";
 import { BudgetExceededError, ProviderRejectedError, ReceiptBusyError, ReceiptUnknownError } from "../providers/receipts.ts";
 import { ModelOutputError } from "../providers/llm.ts";
 import { ensureQueue, enqueue, QUEUES, shutdownSignal } from "./queue.ts";
+import { admitHistory, archiveArticle, historyMaxWaitHours, worthHistory } from "./capacity.ts";
 
 /** Minutes to wait after the n-th failed attempt; one more failure after the last ends in "failed". */
 const RETRY_MINUTES = [5, 10, 20, 40, 60, 120, 240, 360];
@@ -96,6 +97,7 @@ interface Route {
   /** Not an editorial source: no analysis; the post goes straight to event grouping as discussion evidence. */
   signal: boolean;
   historical: boolean;
+  title: string;
 }
 
 /**
@@ -105,9 +107,9 @@ interface Route {
  * history adds no heat).
  */
 async function route(articleId: string, db: Db): Promise<Route | null> {
-  const [row] = await db<{ body_status: string; participation_mode: string; kind: string; config: Record<string, unknown>; url: string; bare: boolean; backfill: boolean; published_at: Date | null; discovered_at: Date }[]>`
+  const [row] = await db<{ body_status: string; participation_mode: string; kind: string; config: Record<string, unknown>; url: string; bare: boolean; backfill: boolean; published_at: Date | null; discovered_at: Date; title: string }[]>`
     SELECT a.body_status, s.participation_mode, s.kind, s.config, a.url, (coalesce(a.body_text, '') = '' AND a.x_post IS NULL) AS bare,
-           a.backfill, a.published_at, a.discovered_at
+           a.backfill, a.published_at, a.discovered_at, a.title
     FROM articles a JOIN sources s ON s.id = a.source_id WHERE a.id = ${articleId}`;
   if (!row) return null;
   const historical = isHistorical(row);
@@ -116,7 +118,7 @@ async function route(articleId: string, db: Db): Promise<Route | null> {
   const wantsBody = row.config.fetchPublicContent === true || !!row.config.detail || row.kind === "web_list";
   const needsPage = !signal && (wantsBody || (row.bare && pageFetchable(row.url, row.kind)));
   const needsXArticle = row.kind === "x_search" && (!signal || (row.participation_mode === "hot_signal" && !historical));
-  return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical };
+  return { step: pending && (needsPage || needsXArticle) ? "extract" : "analyze", signal, historical, title: row.title };
 }
 
 /**
@@ -147,6 +149,15 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
     if (r.historical && holdsHistoryForOffPeak()) {
       await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
       return null;
+    }
+    // Capacity gate: history beyond the daily quota or behind a full backlog is archived before any
+    // paid call, never queued. Policy/judicial/research titles always pass (see capacity.ts).
+    if (r.historical) {
+      const admission = await admitHistory(r.title);
+      if (!admission.admit) {
+        await archiveArticle(articleId, admission.reason);
+        return null;
+      }
     }
     const left = await peakSlotsLeft();
     if (left <= 0) {
@@ -293,6 +304,30 @@ export async function registerExtractionJobs(boss: PgBoss) {
 }
 
 /**
+ * Max-wait exit: history that has been waiting longer than HISTORY_MAX_WAIT_HOURS is archived (not
+ * deleted) unless its title says policy / judicial / research. Without this, a backlog that cannot
+ * be drained — a full budget window, a provider outage — just sits there and the queue never
+ * converges; the admission gate stops *new* history but does nothing about what is already waiting.
+ */
+export async function archiveExpiredHistory(now = Date.now(), limit = 40): Promise<{ archived: number }> {
+  const maxHours = historyMaxWaitHours();
+  const rows = await sql<{ id: string; title: string }[]>`
+    SELECT id, title FROM articles
+    WHERE processing_state = 'new' AND backfill
+      AND (published_at IS NULL OR discovered_at - published_at > interval '48 hours')
+      AND discovered_at < now() - make_interval(hours => ${maxHours})
+    ORDER BY discovered_at LIMIT ${limit * 5}`;
+  let archived = 0;
+  for (const r of rows) {
+    if (archived >= limit) break;
+    if (worthHistory(r.title)) continue;
+    await archiveArticle(r.id, "stale-wait");
+    archived += 1;
+  }
+  return { archived };
+}
+
+/**
  * Safety net: articles waiting for processing that no queue holds (crash between write and enqueue,
  * a lost job, a retry that came due). Articles already queued or running are left alone.
  *
@@ -300,9 +335,10 @@ export async function registerExtractionJobs(boss: PgBoss) {
  * would pick up is on its way to a paid call, and holding it costs nothing — those articles keep
  * `processing_state = 'new'`, so the off-peak sweep drains the whole backlog.
  */
-export async function sweepUnprocessed(now = Date.now()): Promise<{ enqueued: number }> {
+export async function sweepUnprocessed(now = Date.now()): Promise<{ enqueued: number; archived: number }> {
+  const expired = await archiveExpiredHistory(now);
   const left = await peakSlotsLeft(now);
-  if (left <= 0) return { enqueued: 0 };
+  if (left <= 0) return { enqueued: 0, archived: expired.archived };
   // During peak, ask for a couple of rows per free slot: queueProcessing re-checks the quota itself,
   // and the rest of the backlog is not worth a per-article route() read every five minutes.
   const take = Number.isFinite(left) ? Math.min(60, Math.max(2, Math.ceil(left) * 2)) : 500;
@@ -320,12 +356,31 @@ export async function sweepUnprocessed(now = Date.now()): Promise<{ enqueued: nu
     ORDER BY a.discovered_at DESC LIMIT ${take}`;
   let enqueued = 0;
   for (const r of rows) if (await queueProcessing(r.id)) enqueued += 1;
-  return { enqueued };
+  return { enqueued, archived: expired.archived };
 }
 
 /** How the runs page groups failures: the message with ids and numbers masked. */
 export const failureGroupSql = (column = "processing_error") =>
   sql.unsafe(`regexp_replace(left(coalesce(${column}, '(no message)'), 120), '[0-9a-f]{8,}|[0-9]{4,}', '…', 'g')`);
+
+/**
+ * Admin: put archived articles back into processing, all or one reason (quota / backlog / stale-wait).
+ * An explicit request from a human bypasses the capacity gate on purpose — the operator is saying
+ * "this one matters"; the daily quota still applies to everything the sweep picks up afterwards.
+ */
+export async function requeueArchived(reason: string | null, limit = 200): Promise<{ requeued: number }> {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM articles
+    WHERE processing_state = 'archived' AND (${reason}::text IS NULL OR archive_reason = ${reason})
+    ORDER BY discovered_at DESC LIMIT ${limit}`;
+  let requeued = 0;
+  for (const r of rows) {
+    await sql`UPDATE articles SET processing_state = 'new', archive_reason = NULL, archived_at = NULL,
+                processing_attempts = 0, processing_retry_at = NULL WHERE id = ${r.id}`;
+    if (await queueProcessing(r.id, { attemptTag: "from-archive" })) requeued += 1;
+  }
+  return { requeued };
+}
 
 /**
  * Admin: failed articles of the last 30 days back into processing, all or one failure group. The

@@ -18,6 +18,15 @@ process.env.INDEXNOW_SUBMIT_ENABLED = "false";
 // 09–12 / 14–18 the whole database shares a handful of analysis slots, and a test that expects an
 // article to be queued finds nothing queued instead. The throttle has its own tests; here it is off.
 process.env.ANALYZE_PEAK_PER_HOUR = "1000000";
+// Same reason, one layer down: the capacity gate archives history once the database-wide backlog or
+// the daily history allowance is reached. Files share a database, so a test that expects a backfilled
+// article to be analysed (and attached to a card) would instead find it archived as soon as an earlier
+// file left a large backlog behind. The gate has its own tests (tests/capacity.test.ts) with their own
+// limits; everywhere else it must not depend on how many rows another file happened to write.
+process.env.DAILY_ANALYZE_QUOTA = "1000000";
+process.env.HISTORY_DAILY_MAX = "1000000";
+process.env.HISTORY_BACKLOG_MAX = "1000000";
+process.env.HISTORY_MAX_WAIT_HOURS = "1000000";
 process.env.LOG_LEVEL ??= "error";
 // The tests were written against the named model presets AIHOT assigns to each step (each provider is
 // pointed at a local stub by the test that needs it). The open-source default is one model for every

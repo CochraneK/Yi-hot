@@ -53,7 +53,7 @@ test("policy and judicial titles always pass the capacity gate", () => {
 });
 
 test("history beyond the daily allowance is archived before any paid call", async () => {
-  // 每条断言前清空当日已完成计数：admitHistory 会缓存一分钟，这里换一天让它重算。
+  // 当日完成数从库里读，放行数在内存里累加；这里把这一天的历史放行额度用完。
   await sql`DELETE FROM analyses WHERE article_id LIKE ${`cap-${T}-%`}`;
   const ids = [`cap-${T}-1`, `cap-${T}-2`, `cap-${T}-3`];
   let admitted = 0;
@@ -65,6 +65,18 @@ test("history beyond the daily allowance is archived before any paid call", asyn
   }
   assert.equal(admitted, 2, "HISTORY_DAILY_MAX=2 lets exactly two through");
   assert.deepEqual(archived, ["quota"], "the third is stopped by the quota, not by anything else");
+});
+
+test("the daily allowance survives a snapshot refresh", async () => {
+  // 回归：放行数早先跟着一分钟一次的快照一起清零，等于把「每天 2 篇」放宽成「每分钟 2 篇」。
+  // 这里换一天先把计数归零，然后在同一个自然日里跨过多次快照刷新，上限必须一直成立。
+  const day0 = Date.now() + 24 * 3600_000;
+  const admits: boolean[] = [];
+  for (let i = 0; i < 4; i += 1) {
+    // 每次前进 90 秒，越过快照 60 秒的有效期，强制重算。
+    admits.push((await admitHistory(`某地公益组织开展志愿服务 refresh-${i}`, day0 + i * 90_000)).admit);
+  }
+  assert.deepEqual(admits, [true, true, false, false], "a refreshed snapshot must not hand out a new allowance");
 });
 
 test("archiving keeps the article and records why", async () => {

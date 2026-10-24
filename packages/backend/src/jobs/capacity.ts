@@ -62,10 +62,12 @@ export interface CapacitySnapshot {
   oldestHours: number;
 }
 
-// 一分钟一次的快照就够：队列决策是每秒几次的粒度，不需要每条都查库；本地记下本次快照之后的
-// 放行数，避免一分钟内放行远超配额（6 并发下最多几十条）。
+// 一分钟一次的快照就够：队列决策是每秒几次的粒度，不需要每条都查库。
 let snapshot: (CapacitySnapshot & { at: number; day: string }) | null = null;
-let admittedSinceSnapshot = 0;
+// 当天已经放行的历史稿条数。这里必须是**跨快照累加**的：早先按快照重置，等于把「每天 120 篇」
+// 变成「每分钟 120 篇」，一天下来上限形同虚设。只在跨自然日时归零，进程重启会重新计数。
+let admittedDay = "";
+let admittedToday = 0;
 
 function beijingDay(now: number): string {
   return new Date(now + 8 * 3600_000).toISOString().slice(0, 10);
@@ -85,7 +87,6 @@ export async function capacitySnapshot(now = Date.now()): Promise<CapacitySnapsh
         WHERE processing_state = 'new' AND backfill
           AND (published_at IS NULL OR discovered_at - published_at > interval '48 hours')) AS oldest`;
   snapshot = { at: now, day, analyzed: row?.analyzed ?? 0, backlog: row?.backlog ?? 0, oldestHours: row?.oldest ?? 0 };
-  admittedSinceSnapshot = 0;
   return snapshot;
 }
 
@@ -99,11 +100,18 @@ export async function admitHistory(title: string, now = Date.now()): Promise<Adm
   const snap = await capacitySnapshot(now);
   if (snap.backlog >= historyBacklogMax()) return { admit: false, reason: "backlog" };
   if (snap.oldestHours >= historyMaxWaitHours()) return { admit: false, reason: "backlog" };
-  const used = snap.analyzed + admittedSinceSnapshot;
+  const day = beijingDay(now);
+  if (day !== admittedDay) {
+    admittedDay = day;
+    admittedToday = 0;
+  }
   // 两个上限取小的：历史自己的日上限，以及全站参考线剩下的余量（当日新闻先吃）。
-  const allowance = Math.min(historyDailyMax(), Math.max(0, dailyQuota() - used));
-  if (admittedSinceSnapshot >= allowance) return { admit: false, reason: "quota" };
-  admittedSinceSnapshot += 1;
+  // 余量用库里的当日完成数，历史自己的用量用内存计数——两者不能相加，否则同一篇会被算两次
+  // （放进队列时记一次，分析完成后再在 analyzed 里记一次）。
+  const roomTotal = Math.max(0, dailyQuota() - snap.analyzed);
+  const roomHistory = Math.max(0, historyDailyMax() - admittedToday);
+  if (Math.min(roomTotal, roomHistory) <= 0) return { admit: false, reason: "quota" };
+  admittedToday += 1;
   return { admit: true };
 }
 

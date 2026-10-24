@@ -126,6 +126,16 @@ DB `config::text`（URL/查询词）、域名模式（`.hk` / `.tw` / hongkong /
 > 注意 `search-macao-social` 那 20 篇里只有 2 篇真讲澳门——搜索源只按词召回、不按地区归属，
 > 删它会连带带走内地新闻，这是一次**有意接受**的损失。下方建源与实测记录保留作历史依据。
 
+> **2026-10-25 变更：everyinfra（公众号 / 微博 / 小红书）14 个源停用。**
+> 该采集服务的预算在 10-21 被调成 0，之后这些源每次轮到都报
+> `Budget for everyinfra exhausted (stopped)`，持续产生无效失败记录、干扰监控判断。
+> 用户决定不再为该项服务付费，故正式置为 `enabled=false` / `health='paused'`。
+> **只改开关、不删数据**：历史文章与入池记录全部保留，全站启用数 189 → 175。
+> 将来若要恢复，必须同时改四处——`enabled=true`、`health='ok'`、`fail_count=0`，
+> 以及 `budgets` 表里 `everyinfra` 的额度（只改 enabled 不会调度）。
+> 覆盖上的代价：这些源的当天稿命中率高（微博 / 小红书按关键词实时检索），
+> 停用后"当天新闻偏少"的问题会更依赖 RSS 与直连源，见下一节。
+
 **执行（历史记录）**：`web-unicef-hk-news`（联合国儿童基金会中国香港委员会·最新消息，2026-10-24 建源）。
 技术实测：静态 HTML、`div.item` 命中 11 条、`span.name` 标题、`span.date` 日期 **dd/mm/yyyy**
 （为此新增 `publishedAtDayFirst` 配置键，见下）。内容实测：儿童权利 / 教育 / 大湾区 / 青年使者，

@@ -24,7 +24,9 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
     "adapter", "everyinfraPlatform", "everyinfraAction", "everyinfraParams", "everyinfraDetail",
   ],
   // 网页搜索：查询词决定覆盖面，不走某站点的栏目结构；结果里的 date 只到日，入库按日级精度。
-  search: [...COLLECTED, "queries", "count", "lookbackDays", "minAuthority", "minRerank", "needContent", "oriQuestion"],
+  // everyNDays：同一 query 同一天只真请求一次（按北京日期幂等），所以调 interval 不省钱，
+  // 唯一有效的减费旋钮是隔 N 天跑一次（见 sources/search.ts 的轮转分桶）。
+  search: [...COLLECTED, "queries", "count", "lookbackDays", "minAuthority", "minRerank", "needContent", "oriQuestion", "everyNDays"],
   // X accounts are mostly read in shards, which apply only these.
   x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType"],
   mp_account: ["wxid", "ghid", "nickname"],

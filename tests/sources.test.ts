@@ -142,6 +142,12 @@ test("config entries a source kind does not implement are named, not ignored", (
   );
   assert.deepEqual(unsupportedConfig("rss", { feedUrl: "https://example.org/feed", denyUrlPrefixes: ["https://example.org/business/"] }), []);
   assert.deepEqual(unsupportedConfig("x_search", { query: "from:a", allowUrlPrefixes: ["https://example.org/"] }), ["allowUrlPrefixes"], "X shards apply no URL rules");
+  // 搜索源的每一个配置键都必须在白名单里。漏一个的后果不是「被忽略」，而是整类源在改配置那一刻
+  // 开始报 unsupported config 而停摆——everyNDays 就这么漏过一次，70 个源当天全部失败。
+  assert.deepEqual(
+    unsupportedConfig("search", { queries: ["儿童 福利"], count: 12, lookbackDays: 7, minAuthority: 2, minRerank: 0, needContent: false, everyNDays: 2 }),
+    [],
+  );
 });
 
 test("a listing that links other articles in its teasers takes only the links that begin a line", () => {

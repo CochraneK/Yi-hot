@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""信源全名单生成器：完整名单写进 docs/SOURCE_REGISTRY.md，README 只留一张链接卡。
+"""信源全名单生成器：只生成 docs/SOURCE_REGISTRY.md，不碰 README。
 
 数据来源：线上 PostgreSQL 实时导出（TSV，`|` 分隔，11 列）：
   id, name, kind, enabled, health, fail_count, sel, pubs, imported_from, last_error, url
@@ -19,12 +19,11 @@
   EOF
   cat /tmp/q.sql | sudo docker exec -i aihot-db-1 psql -U aihot -d aihot -t -A > sources-export.tsv
 
-用法：python scripts/export-source-registry.py <sources-export.tsv> [README.md] [docs/SOURCE_REGISTRY.md]
+用法：python scripts/export-source-registry.py <sources-export.tsv> [docs/SOURCE_REGISTRY.md]
 
-设计意图：README 是项目门面，不摊 290 行信源表（2026-10-25 用户明确要求"放一个链接就行"）；
-完整名单连同失败复盘放 docs/SOURCE_REGISTRY.md，README 标记位之间只放概况 + 链接。
-注意：直接编辑 README 的标记区间或 docs/SOURCE_REGISTRY.md 都会被下次运行覆盖——
-要改文案就改本脚本里的模板。
+设计意图（2026-10-25 用户定）：README 是项目门面，信源只在「📖 文档导航」表格里占一行
+链接，不摊任何名单；完整名单连同失败复盘全部放 docs/SOURCE_REGISTRY.md，由本脚本生成。
+README 与该脚本完全解耦——改 README 不会被覆盖，跑脚本也不会改动 README。
 
 口径：只看入池数（publications.selected，LLM 评分 ≥40），不看 found / created。
 失败清单为人工维护的 curated 数据，依据 docs/SOURCE_COVERAGE.md §3、
@@ -47,8 +46,6 @@ def count_seed():
         doc = json.load(f)
     arr = doc if isinstance(doc, list) else doc.get("sources", [])
     return len(arr)
-MARK_START = "<!-- SOURCE-REGISTRY:START -->"
-MARK_END = "<!-- SOURCE-REGISTRY:END -->"
 REGISTRY_DOC = "docs/SOURCE_REGISTRY.md"
 
 KIND_ORDER = ["search", "web_list", "rss", "json_list", "external"]
@@ -131,30 +128,6 @@ def mark(r):
     if r["pubs"] > 0:
         return "△ 零入池"
     return "○ 未产出"
-
-
-def build_card(rows):
-    """README 标记位之间的内容：一段概况 + 一个链接，不摊表格。"""
-    total = len(rows)
-    enabled = sum(1 for r in rows if r["enabled"])
-    core5 = sum(1 for r in rows if r["enabled"] and r["sel"] >= 5)
-    total_sel = sum(r["sel"] for r in rows)
-    seed = count_seed()
-    probe = sum(1 for r in rows if r["id"].startswith("web-probe-"))
-    search_sel = sum(r["sel"] for r in rows if r["kind"] == "search")
-    L = []
-    L.append(MARK_START)
-    L.append("")
-    L.append("## 🗂️ 信源全名单")
-    L.append("")
-    L.append("完整名单已移至 **[%s](%s)**：每个源的入池 / 产出数、状态、名称链接（可点开核对原文），以及 %d 项「尝试过但失败 / 未接 / 否决」的复盘。" % (REGISTRY_DOC, REGISTRY_DOC, len(FAILED)))
-    L.append("")
-    L.append("一句话概况（由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成，可重复执行）：**%d 个源**（`sources.json` seed %d + 仅数据库 %d，含 %d 个只在库的 `web-probe-*` 探测源），启用 %d / 停用 %d，主力源（启用且入池 ≥5）**%d 个**，累计入池 **%d 篇**——其中搜索源贡献 %.0f%%。" % (
-        total, seed, total - seed, probe, enabled, total - enabled, core5, total_sel,
-        100.0 * search_sel / max(total_sel, 1)))
-    L.append("")
-    L.append(MARK_END)
-    return "\n".join(L) + "\n"
 
 
 def build_registry(rows):
@@ -243,22 +216,8 @@ def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     tsv = sys.argv[1]
-    readme = sys.argv[2] if len(sys.argv) > 2 else "README.md"
-    registry = sys.argv[3] if len(sys.argv) > 3 else REGISTRY_DOC
+    registry = sys.argv[2] if len(sys.argv) > 2 else REGISTRY_DOC
     rows = load_rows(tsv)
-
-    card = build_card(rows)
-    text = io.open(readme, encoding="utf-8").read()
-    if MARK_START in text:
-        text = re.sub(re.escape(MARK_START) + ".*?" + re.escape(MARK_END), card.rstrip("\n"),
-                      text, flags=re.S)
-    else:
-        anchor = "## 🛟 当前状态、反馈与贡献"
-        if anchor not in text:
-            sys.exit("README 里找不到插入点：%s" % anchor)
-        text = text.replace(anchor, card.rstrip("\n") + "\n\n" + anchor, 1)
-    with io.open(readme, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
 
     reg = build_registry(rows)
     reg_dir = os.path.dirname(os.path.abspath(registry))
@@ -266,7 +225,7 @@ def main():
         os.makedirs(reg_dir)
     with io.open(registry, "w", encoding="utf-8", newline="\n") as f:
         f.write(reg)
-    print("README card: %d sources; registry: %s (%d chars)" % (len(rows), registry, len(reg)))
+    print("registry: %s (%d sources, %d chars)" % (registry, len(rows), len(reg)))
 
 
 if __name__ == "__main__":

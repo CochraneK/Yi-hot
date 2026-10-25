@@ -127,16 +127,6 @@ flowchart LR
 | **看钱花在哪 / 压成本** | [成本口径与护栏](docs/COST.md) |
 | **跟踪 AIHOT 上游** | [升级与重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) |
 
-<!-- SOURCE-REGISTRY:START -->
-
-## 🗂️ 信源全名单
-
-完整名单已移至 **[docs/SOURCE_REGISTRY.md](docs/SOURCE_REGISTRY.md)**：每个源的入池 / 产出数、状态、名称链接（可点开核对原文），以及 17 项「尝试过但失败 / 未接 / 否决」的复盘。
-
-一句话概况（由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成，可重复执行）：**210 个源**（`sources.json` seed 153 + 仅数据库 57，含 36 个只在库的 `web-probe-*` 探测源），启用 175 / 停用 35，主力源（启用且入池 ≥5）**113 个**，累计入池 **1868 篇**——其中搜索源贡献 67%。
-
-<!-- SOURCE-REGISTRY:END -->
-
 ## 🛟 当前状态、反馈与贡献
 
 - **部署状态与代码状态需要分别核验。** GitHub 更新不代表腾讯云已自动部署；上线后须进行文件哈希比对和实际运行检查。

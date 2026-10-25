@@ -118,14 +118,24 @@ flowchart LR
 | 我要做什么 | 从这里开始 |
 | :--- | :--- |
 | **只想了解产品** | [线上站点](https://49.233.72.222/yihot/) |
-| **第一次接手维护** | [完整维护手册](MAINTENANCE.md) |
+| **第一次接手维护** | [完整维护手册](MAINTENANCE.md)（前三分之一是「接手人最常问的 14 个问题」人话版） |
+| **换机器 / 换 AI 冷启动** | [PROJECT_CONTEXT](docs/PROJECT_CONTEXT.md)（必读：拓扑、口径、凭据、接手清单） |
+| **看上一轮会话与决策沉淀** | [会话归档 2026-10-24](docs/HANDOFF-2026-10-24-CHAT-ARCHIVE.md) |
 | **新增公益信源** | [信源配置](docs/sources.md) |
 | **看信源现状与失败复盘** | [信源全名单](docs/SOURCE_REGISTRY.md) |
-| **配置邮件简报** | [邮件采集](docs/EMAIL_SOURCE_DEPLOY.md) |
+| **试用候选信源** | [候选信源试用版](docs/SOURCE_CANDIDATE_TRIAL.md) |
+| **配置邮件简报** | [邮件采集部署](docs/EMAIL_SOURCE_DEPLOY.md) |
+| **邮件订阅与投递** | [公益总报邮件投递](docs/EMAIL_DELIVERY.md) |
 | **理解系统如何运作** | [技术架构](docs/architecture.md) |
-| **同步和重新部署** | [同步工具](tools/README.md) |
+| **评分与筛选口径** | [精选与校准](docs/selection.md) |
 | **看钱花在哪 / 压成本** | [成本口径与护栏](docs/COST.md) |
+| **队列积压与容量缺口** | [队列可持续](docs/QUEUE_SUSTAINABILITY.md) |
+| **同步和重新部署** | [同步工具](tools/README.md) |
+| **域名、备案与海外主机** | [决策记录](docs/DOMAIN_AND_HOSTING.md) |
 | **跟踪 AIHOT 上游** | [升级与重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) |
+| **运维经验与踩坑索引** | [OPS 笔记](docs/memory/OPS.md) |
+
+> 完整索引（历代交接单、产品更新记录、专题设计文档共 40+ 篇）见 [MAINTENANCE.md 第二十一节·专题文档索引](MAINTENANCE.md)。
 
 ## 🛟 当前状态、反馈与贡献
 

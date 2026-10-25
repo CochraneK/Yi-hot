@@ -71,8 +71,7 @@ FAILED = [
     ("UNICEF China RSS（M1 探测）", "RSS", "探测被拒", "403（测试出口被拦）", "不由此判为来源失效，不建议绕过"),
     ("聚合热榜（tophub / NewsNow 等）", "热榜", "已证伪", "69% 链接被替换成搜索页，且拿不到发布时间", "不采用"),
     ("Jina Reader（r.jina.ai）", "渲染服务", "不可用", "生产网络 DNS 落到 Facebook 段后超时，与凭证无关", "弃用；改无头 chromium 渲染器（见下）"),
-    ("everyinfra 预算归零（14 源）", "采集预算", "停摆", "`budgets.everyinfra.per_day=0`：8 公众号 + 3 微博 + 3 小红书退避", "改回 150 即可复活（截至 2026-10-23 仍未恢复）"),
-    ("18 个 `wechat-*` rss 源", "公众号", "停用", "`fail_count=0` 且无 last_error，疑似建源时即关闭", "待查因：是漏接还是主动停用"),
+    ("everyinfra 付费通道停服（16 个公众号 / 微博 / 小红书源）", "采集预算", "停用", "第三方通道不再续费，`enabled=false, health=paused`；停用前每轮都报额度耗尽，失败记录把真故障淹没在噪声里", "恢复要改四处：`enabled` + `health` + `fail_count` + `budgets.everyinfra` 额度（只改 enabled 不会调度）"),
 ]
 
 

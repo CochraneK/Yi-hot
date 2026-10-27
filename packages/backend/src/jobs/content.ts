@@ -136,7 +136,7 @@ const RECENT_ARRIVAL_MS = 7 * 24 * 3600 * 1000;
  * (paid) request; the same tag reuses its receipt. With `db`, the job commits with the caller's write.
  * Posts of non-editorial sources skip the analysis queue: they only need recording and grouping.
  */
-export async function queueProcessing(articleId: string, opts: { step?: Step; attemptTag?: string; db?: Db } = {}): Promise<string | null> {
+export async function queueProcessing(articleId: string, opts: { step?: Step; attemptTag?: string; db?: Db; now?: number } = {}): Promise<string | null> {
   const db = opts.db ?? sql;
   const r = await route(articleId, db);
   if (!r) return null;
@@ -146,7 +146,7 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
   // human asking now, so it is never held back.
   if (step === "analyze" && !opts.attemptTag) {
     // History does not spend the peak rate at all: it waits for the sweep in the half-price window.
-    if (r.historical && holdsHistoryForOffPeak()) {
+    if (r.historical && holdsHistoryForOffPeak(opts.now)) {
       await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
       return null;
     }
@@ -159,7 +159,7 @@ export async function queueProcessing(articleId: string, opts: { step?: Step; at
         return null;
       }
     }
-    const left = await peakSlotsLeft();
+    const left = await peakSlotsLeft(opts.now);
     if (left <= 0) {
       await db`UPDATE articles SET processing_queued_at = NULL WHERE id = ${articleId}`;
       return null;
@@ -355,7 +355,9 @@ export async function sweepUnprocessed(now = Date.now()): Promise<{ enqueued: nu
                                    OR a.discovered_at - a.published_at > make_interval(secs => ${STALE_ON_DISCOVERY_MS / 1000}))))
     ORDER BY a.discovered_at DESC LIMIT ${take}`;
   let enqueued = 0;
-  for (const r of rows) if (await queueProcessing(r.id)) enqueued += 1;
+  // The sweep's own clock, not the wall clock: a caller that names an hour (tests, replays of a past
+  // window) must get that hour's rules all the way down, or a peak-hour sweep run off-peak bills it.
+  for (const r of rows) if (await queueProcessing(r.id, { now })) enqueued += 1;
   return { enqueued, archived: expired.archived };
 }
 

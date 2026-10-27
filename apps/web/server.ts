@@ -83,6 +83,33 @@ async function servePortal(res: import("node:http").ServerResponse): Promise<boo
   return true;
 }
 
+/**
+ * 对外交付的文档（交接说明、使用指南等）：不进任何导航，只凭链接访问。
+ * 抓取与索引一律谢绝——noindex 让搜索引擎不收录，no-referrer 让被转走的页面查不到来源。
+ * 文件名即链接，只接受小写字母/数字/连字符，杜绝路径穿越与大小写歧义。
+ */
+const DOCS_DIR = path.join(import.meta.dirname, "docs-public");
+
+async function serveDoc(internal: string, res: import("node:http").ServerResponse): Promise<boolean> {
+  if (!internal.startsWith("/doc/")) return false;
+  const name = internal.slice("/doc/".length);
+  if (!/^[a-z0-9][a-z0-9-]{0,63}\.html$/.test(name)) return false;
+  const file = path.join(DOCS_DIR, name);
+  if (!file.startsWith(DOCS_DIR + path.sep)) return false;
+  const info = await stat(file).catch(() => null);
+  if (!info?.isFile()) return false;
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": info.size,
+    "Cache-Control": "private, max-age=300",
+    "X-Robots-Tag": "noindex, nofollow, noarchive",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+  });
+  createReadStream(file).pipe(res);
+  return true;
+}
+
 // One bad request must never take the process down: answer it and keep serving.
 const server = createServer((req, res) => {
   handle(req, res).catch((error: unknown) => {
@@ -247,6 +274,9 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
     req.pipe(upstream);
     return;
   }
+
+  // 交付文档没有导航入口，也不属于旧布局：在重定向表之前拦下，避免被当成历史路径挪走。
+  if ((req.method === "GET" || req.method === "HEAD") && (await serveDoc(internal, res))) return;
 
   const decision = resolveRedirect(internal, search);
   if (decision) {

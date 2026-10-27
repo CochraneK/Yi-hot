@@ -28,9 +28,5 @@ secrets/*
 !secrets/credentials.env.enc
 !secrets/README.md
 
-# 交付文档的发布副本：线上按 /yihot/doc/<名字>.html 提供，不进公开仓库（正文源在 docs/）。
-# 缺了它服务照常跑，只是该链接 404；换机重建前记得把文件放回去。
-apps/web/docs-public/
-
 # 临时导出：scripts/export-source-registry.py 的输入，每次现从库里导出，不入库
 sources-export.tsv

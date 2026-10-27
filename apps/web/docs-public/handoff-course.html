@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一小时看懂 Yi-Hot · 给接手的人</title>
+<style>
+  :root{
+    --bg:#f6f7f4; --surface:#ffffff; --surface-2:#fdfdfb; --sidebar:#fdfdfb;
+    --ink:#202a30; --ink-2:#303c42; --ink-3:#59656b; --ink-4:#657176;
+    --line:#dfe4e1; --line-soft:#e9ede9;
+    --accent:#176b75; --accent-ink:#145f68; --accent-soft:rgba(23,107,117,.08);
+    --hot:#b3402a; --hot-soft:rgba(179,64,42,.07);
+    --amber:#b8873a; --amber-soft:rgba(184,135,58,.1);
+    --ok:#2f7d5c; --ok-soft:rgba(47,125,92,.09);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:24px}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-size:16.5px; line-height:1.95; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{display:flex; align-items:flex-start}
+
+  /* ── 侧边目录 ── */
+  aside{
+    width:258px; flex:0 0 258px; position:sticky; top:0; height:100vh; overflow-y:auto;
+    background:var(--sidebar); border-right:1px solid var(--line); padding:26px 16px 40px;
+  }
+  aside .brand{font-size:13px; color:var(--ink-4); letter-spacing:.08em; margin-bottom:4px}
+  aside .t{font-size:17px; font-weight:700; letter-spacing:-.01em; margin:0 0 18px; line-height:1.4}
+  aside .grp{font-size:11px; color:var(--ink-4); margin:16px 0 6px; padding-left:8px}
+  aside a{
+    display:block; font-size:13.5px; color:var(--ink-3); text-decoration:none;
+    padding:5px 8px; border-radius:6px; line-height:1.5;
+  }
+  aside a:hover{background:var(--accent-soft); color:var(--accent-ink)}
+  aside a b{color:var(--ink); font-weight:600}
+
+  /* ── 正文 ── */
+  main{flex:1; min-width:0; max-width:860px; margin:0 auto; padding:56px 44px 140px}
+  .hero{border-bottom:1px solid var(--line); padding-bottom:34px; margin-bottom:12px}
+  .kicker{font-size:12px; letter-spacing:.14em; color:var(--accent); font-weight:600; margin-bottom:14px}
+  h1{font-size:38px; line-height:1.28; letter-spacing:-.02em; margin:0 0 14px; font-weight:700}
+  h1 small{display:block; font-size:18px; font-weight:400; color:var(--ink-3); margin-top:12px; letter-spacing:0; line-height:1.7}
+  .meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px}
+  .meta span{font-size:12px; color:var(--ink-4); border:1px solid var(--line); background:var(--surface); padding:3px 10px; border-radius:20px}
+
+  section{padding-top:52px}
+  h2{font-size:26px; line-height:1.4; margin:0 0 6px; letter-spacing:-.01em; font-weight:700; display:flex; gap:14px; align-items:baseline}
+  h2 .n{font-size:13px; color:var(--accent); font-weight:700; letter-spacing:.1em; flex:0 0 auto; padding-top:4px}
+  .lede{font-size:15px; color:var(--ink-3); margin:0 0 26px; padding-left:38px; border-left:2px solid var(--line); padding-top:2px; padding-bottom:2px}
+  h3{font-size:18px; margin:34px 0 10px; font-weight:600}
+  p{margin:0 0 16px}
+  strong{font-weight:600; color:var(--ink)}
+  em{font-style:normal; background:linear-gradient(transparent 62%, rgba(23,107,117,.16) 62%); padding:0 1px}
+  a{color:var(--accent-ink); text-decoration-color:rgba(23,107,117,.35); text-underline-offset:3px}
+
+  .fig{margin:26px 0 30px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 20px 16px}
+  .fig svg{width:100%; height:auto; display:block}
+  .fig figcaption{font-size:12.5px; color:var(--ink-4); margin-top:14px; line-height:1.7; padding-top:12px; border-top:1px dashed var(--line-soft)}
+
+  .say{margin:26px 0; padding:16px 20px; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:0 8px 8px 0}
+  .say .lb{font-size:11px; letter-spacing:.12em; color:var(--accent-ink); font-weight:700; margin-bottom:4px}
+  .say p{margin:0; font-size:16px}
+
+  .warn{margin:24px 0; padding:14px 18px; background:var(--hot-soft); border-left:3px solid var(--hot); border-radius:0 8px 8px 0; font-size:15.5px}
+  .warn .lb{font-size:11px; letter-spacing:.12em; color:var(--hot); font-weight:700; margin-bottom:4px}
+  .warn p:last-child{margin-bottom:0}
+
+  .qa{border-top:1px solid var(--line-soft); margin:22px 0; padding-top:18px}
+  .qa .q{font-weight:600; margin-bottom:6px}
+  .qa .q::before{content:"问 · "; color:var(--accent); font-size:12px; letter-spacing:.08em}
+  .qa .a{color:var(--ink-2); font-size:15.5px}
+  .qa .a::before{content:"答 · "; color:var(--ink-4); font-size:12px; letter-spacing:.08em}
+
+  table{width:100%; border-collapse:collapse; margin:22px 0; font-size:14.5px; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; line-height:1.7}
+  th{background:var(--surface-2); font-weight:600; font-size:13px; color:var(--ink-2)}
+  tr:last-child td{border-bottom:none}
+  td:first-child{color:var(--ink-2); font-weight:500; white-space:nowrap}
+
+  ul,ol{margin:0 0 18px; padding-left:22px}
+  li{margin-bottom:8px}
+  li::marker{color:var(--ink-4)}
+
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px}
+  .card .h{font-weight:600; font-size:15px; margin-bottom:4px}
+  .card .d{font-size:13.5px; color:var(--ink-3); line-height:1.7}
+
+  .chk{list-style:none; padding:0; margin:22px 0}
+  .chk li{position:relative; padding:10px 14px 10px 42px; background:var(--surface); border:1px solid var(--line); border-radius:8px; margin-bottom:8px; font-size:15px}
+  .chk li::before{content:""; position:absolute; left:16px; top:15px; width:14px; height:14px; border:1.5px solid var(--line-strong,#d1d9d5); border-radius:3px}
+
+  .foot{margin-top:70px; padding-top:22px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-4); line-height:1.9}
+
+  @media (max-width:900px){
+    aside{display:none}
+    main{padding:36px 22px 100px}
+    h1{font-size:30px}
+    .cards{grid-template-columns:1fr}
+  }
+  @media (max-width:600px){
+    table{font-size:13px}
+    td:first-child{white-space:normal}
+    th,td{padding:8px 10px}
+    h2{font-size:22px; gap:10px}
+    .fig{padding:14px 12px 12px}
+  }
+  @media print{
+    aside{display:none}
+    body{background:#fff; font-size:11.5pt}
+    main{max-width:none; padding:0}
+    section{page-break-inside:avoid; padding-top:26px}
+    .fig,.warn,.say,table{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<aside>
+  <div class="brand">YI-HOT · 讲解稿</div>
+  <div class="t">一小时看懂<br>这个网站是怎么转起来的</div>
+  <div class="grp">开场</div>
+  <a href="#s0"><b>0</b>　它其实是一条流水线</a>
+  <div class="grp">读者看到的部分</div>
+  <a href="#s1"><b>1</b>　打开网站，五个入口</a>
+  <a href="#s2"><b>2</b>　一条新闻的旅程</a>
+  <a href="#s3"><b>3</b>　为什么长这样</a>
+  <div class="grp">维护者要懂的部分</div>
+  <a href="#s4"><b>4</b>　后台：驾驶舱</a>
+  <a href="#s5"><b>5</b>　钱是怎么烧的</a>
+  <a href="#s6"><b>6</b>　内容从哪来</a>
+  <a href="#s7"><b>7</b>　出事怎么判断</a>
+  <a href="#s8"><b>8</b>　你只需要记住三件事</a>
+  <div class="grp">附录</div>
+  <a href="#s9"><b>9</b>　十二个词，说人话</a>
+</aside>
+
+<main>
+
+<div class="hero">
+  <div class="kicker">给长期接手的人 · 不需要任何技术背景</div>
+  <h1>一小时看懂 Yi-Hot
+    <small>这不是一份说明书，是一次带你从头走到尾的讲解：网站给读者看的是什么，一条新闻怎么进来，钱花在哪儿，坏了怎么判断。</small>
+  </h1>
+  <div class="meta">
+    <span>全文约 1 小时读完</span>
+    <span>七张图</span>
+    <span>无一行业务代码</span>
+    <span>数据快照 2026-10-27</span>
+  </div>
+</div>
+
+<!-- ============ 0 ============ -->
+<section id="s0">
+  <h2><span class="n">开场</span>它其实是一条流水线</h2>
+  <p class="lede">先把最容易搞错的一件事说清楚：这不是「一个网站」，是一条流水线加三个出口。网站只是最显眼的那个出口。</p>
+
+  <p>大部分人第一次听说这个项目，脑子里想的是「一个公益新闻网站」。这个理解会让你在后面所有判断上都偏一点。更准确的说法是：</p>
+
+  <p><strong>有一支不收工资的通讯员队伍，每天把稿子送进来；有一个从不疲倦的编辑，替你把九成的稿子扔掉；剩下的一点点，被装订成三种东西发出去——一个网站、一份邮件、一组给别的软件读的数据。</strong></p>
+
+  <p>网站之所以看起来像「新闻站」，只是因为它是最容易被人看见的那一层。真正花力气的地方，全在它背后：谁在送稿、谁在筛稿、筛的标准是什么。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 330" role="img" aria-label="流水线全景图">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9fb0b0"/>
+        </marker>
+      </defs>
+      <!-- 列标题 -->
+      <text x="20" y="16" font-size="11" fill="#657176" letter-spacing="1">① 通讯员</text>
+      <text x="232" y="16" font-size="11" fill="#657176" letter-spacing="1">② 编辑（AI）</text>
+      <text x="470" y="16" font-size="11" fill="#657176" letter-spacing="1">③ 成稿</text>
+      <text x="600" y="16" font-size="11" fill="#657176" letter-spacing="1">④ 出口</text>
+
+      <!-- 信源箱 -->
+      <rect x="20" y="30" width="170" height="196" rx="8" fill="#fdfdfb" stroke="#dfe4e1"/>
+      <text x="34" y="54" font-size="13" font-weight="700" fill="#202a30">210 个信源</text>
+      <text x="34" y="72" font-size="10.5" fill="#657176">其中 175 个在跑</text>
+      <line x1="34" y1="82" x2="176" y2="82" stroke="#e9ede9"/>
+      <text x="34" y="102" font-size="11.5" fill="#303c42">政府部委 与 事业单位</text>
+      <text x="34" y="126" font-size="11.5" fill="#303c42">国际组织（UNICEF 等）</text>
+      <text x="34" y="150" font-size="11.5" fill="#303c42">基金会 与 行业机构</text>
+      <text x="34" y="174" font-size="11.5" fill="#303c42">媒体 与 公众号</text>
+      <text x="34" y="198" font-size="11.5" fill="#303c42">专用邮箱（2 个订阅）</text>
+      <text x="34" y="216" font-size="10" fill="#657176">每天送来约 900 条线索</text>
+
+      <line x1="194" y1="128" x2="226" y2="128" stroke="#9fb0b0" stroke-width="1.4" marker-end="url(#ar)"/>
+
+      <!-- 编辑三步 -->
+      <rect x="232" y="30" width="212" height="56" rx="6" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="248" y="52" font-size="12" font-weight="600" fill="#202a30">第一步　去噪</text>
+      <text x="248" y="70" font-size="10.5" fill="#657176">标题一看就不相关，直接扔，不花钱</text>
+
+      <rect x="232" y="96" width="212" height="56" rx="6" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="248" y="118" font-size="12" font-weight="600" fill="#202a30">第二步　读一遍，打分</text>
+      <text x="248" y="136" font-size="10.5" fill="#657176">是不是这行业的事？有没有实际信息？</text>
+
+      <rect x="232" y="162" width="212" height="64" rx="6" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="248" y="184" font-size="12" font-weight="600" fill="#202a30">第三步　写标题、摘要、归组</text>
+      <text x="248" y="202" font-size="10.5" fill="#657176">同一件事的多篇报道，合成一个事件</text>
+      <text x="248" y="218" font-size="10.5" fill="#657176">机构名必须在原文里出现过（防张冠李戴）</text>
+
+      <line x1="448" y1="128" x2="476" y2="128" stroke="#9fb0b0" stroke-width="1.4" marker-end="url(#ar)"/>
+
+      <!-- 成稿 -->
+      <rect x="482" y="60" width="96" height="136" rx="6" fill="#176b75" stroke="none" opacity="0.08"/>
+      <rect x="482" y="60" width="96" height="136" rx="6" fill="none" stroke="#176b75" stroke-dasharray="3 3"/>
+      <text x="530" y="112" font-size="12" font-weight="700" fill="#145f68" text-anchor="middle">约 120 条</text>
+      <text x="530" y="130" font-size="10.5" fill="#145f68" text-anchor="middle">入池</text>
+      <text x="530" y="154" font-size="9.5" fill="#59656b" text-anchor="middle">每篇 5 次</text>
+      <text x="530" y="168" font-size="9.5" fill="#59656b" text-anchor="middle">模型调用</text>
+
+      <line x1="582" y1="128" x2="608" y2="128" stroke="#9fb0b0" stroke-width="1.4" marker-end="url(#ar)"/>
+
+      <!-- 出口 -->
+      <rect x="614" y="30" width="86" height="196" rx="8" fill="#fdfdfb" stroke="#dfe4e1"/>
+      <text x="657" y="56" font-size="11.5" font-weight="600" fill="#202a30" text-anchor="middle">网站</text>
+      <text x="657" y="88" font-size="11.5" font-weight="600" fill="#202a30" text-anchor="middle">周 / 月报</text>
+      <text x="657" y="120" font-size="11.5" font-weight="600" fill="#202a30" text-anchor="middle">RSS</text>
+      <text x="657" y="152" font-size="11.5" font-weight="600" fill="#202a30" text-anchor="middle">公开接口</text>
+      <text x="657" y="184" font-size="11.5" font-weight="600" fill="#202a30" text-anchor="middle">邮件订阅</text>
+
+      <!-- 底部说明 -->
+      <line x1="20" y1="252" x2="700" y2="252" stroke="#e9ede9"/>
+      <text x="20" y="276" font-size="11.5" fill="#59656b">同一份数据，五个出口。改了信源或标准，五处一起变——这是它最省事的地方，也是最容易出错的地方。</text>
+      <text x="20" y="300" font-size="11.5" fill="#b3402a">唯一花钱的是中间那一格：AI 编辑按字数收费。其余全部免费，只耗电和网费。</text>
+    </svg>
+    <figcaption>图 1　整套系统只有一个花钱的地方，就是中间那个「编辑」。理解这一点，后面关于成本和故障的判断都会简单很多。</figcaption>
+  </figure>
+
+  <h3>为什么值得做成一个网站</h3>
+  <p>这事本来可以更简单——找人每天读一遍，挑几条发到群里。做成系统，是因为四件事只有网站能做：</p>
+  <ul>
+    <li><strong>可搜索。</strong>半年前儿童营养餐的政策，现在要引用，能搜出来。微信群翻三个月就废了。</li>
+    <li><strong>可订阅。</strong>关心的人自己订阅邮件，你不用一个个转发。</li>
+    <li><strong>可追溯。</strong>每条都挂着原文链接，谁说的、什么时候说的，一目了然。</li>
+    <li><strong>可被机器读。</strong>别的机构想把你们的内容接到自己系统里，有现成接口，不用再爬一遍。</li>
+  </ul>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>它不是一个「发新闻的网站」，是一个<strong>把每天九百条噪音变成一百条可用信息，再从里面挑出十几条装订成册</strong>的机器。网站是最后那一步的样子。</p>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+  <h2><span class="n">第一章</span>打开网站，其实只有五个入口</h2>
+  <p class="lede">读者最容易迷路的地方，是不知道「总报」和「动态」有什么区别。这一节把左边那排菜单逐个讲清楚。</p>
+
+  <p>网站地址是 <strong>http://49.233.72.222/yihot/</strong>。打开之后，电脑上左边会有一竖排菜单，手机上会变成底部四个图标。别被「五个入口」吓到——它们其实是三种看法：<em>已经被挑过的</em>、<em>全部流水</em>、<em>别人正在议论的</em>。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 430" role="img" aria-label="网站界面结构示意">
+      <!-- 浏览器外框 -->
+      <rect x="12" y="10" width="696" height="404" rx="10" fill="#ffffff" stroke="#dfe4e1"/>
+      <path d="M12,20 a10,10 0 0 1 10,-10 h676 a10,10 0 0 1 10,10 v24 h-696 z" fill="#f6f7f4" stroke="none"/>
+      <line x1="12" y1="44" x2="708" y2="44" stroke="#dfe4e1"/>
+      <circle cx="30" cy="27" r="4" fill="#dfe4e1"/><circle cx="44" cy="27" r="4" fill="#dfe4e1"/><circle cx="58" cy="27" r="4" fill="#dfe4e1"/>
+      <rect x="76" y="19" width="240" height="16" rx="8" fill="#ffffff" stroke="#e9ede9"/>
+      <text x="88" y="31" font-size="9.5" fill="#657176">49.233.72.222/yihot/all</text>
+
+      <!-- 侧栏 -->
+      <rect x="12" y="44" width="150" height="370" fill="#fdfdfb"/>
+      <line x1="162" y1="44" x2="162" y2="414" stroke="#dfe4e1"/>
+      <rect x="26" y="60" width="86" height="18" rx="4" fill="#ffffff" stroke="#e9ede9"/>
+      <text x="34" y="73" font-size="8" fill="#59656b">救助儿童会</text>
+      <text x="26" y="98" font-size="11" font-weight="700" fill="#202a30">Yi-Hot</text>
+
+      <text x="26" y="122" font-size="8.5" fill="#9aa5a5">内容</text>
+      <circle cx="30" cy="140" r="3" fill="#176b75"/><text x="40" y="144" font-size="10.5" fill="#202a30">总报</text>
+      <circle cx="30" cy="162" r="3" fill="#176b75"/><text x="40" y="166" font-size="10.5" font-weight="700" fill="#145f68">动态</text>
+      <circle cx="30" cy="184" r="3" fill="#c9d4d2"/><text x="40" y="188" font-size="10.5" fill="#303c42">热点</text>
+      <circle cx="30" cy="206" r="3" fill="#c9d4d2"/><text x="40" y="210" font-size="10.5" fill="#303c42">主题</text>
+
+      <text x="26" y="236" font-size="8.5" fill="#9aa5a5">更多</text>
+      <circle cx="30" cy="254" r="3" fill="#c9d4d2"/><text x="40" y="258" font-size="10.5" fill="#59656b">Agent</text>
+      <circle cx="30" cy="276" r="3" fill="#c9d4d2"/><text x="40" y="280" font-size="10.5" fill="#59656b">关于</text>
+      <circle cx="30" cy="298" r="3" fill="#c9d4d2"/><text x="40" y="302" font-size="10.5" fill="#59656b">更新</text>
+      <circle cx="30" cy="320" r="3" fill="#c9d4d2"/><text x="40" y="324" font-size="10.5" fill="#59656b">反馈</text>
+      <circle cx="30" cy="342" r="3" fill="#c9d4d2"/><text x="40" y="346" font-size="10.5" fill="#59656b">收藏</text>
+
+      <rect x="26" y="368" width="118" height="22" rx="5" fill="#176b75"/>
+      <text x="85" y="383" font-size="10" fill="#ffffff" text-anchor="middle">订阅更新</text>
+
+      <!-- 内容区 -->
+      <text x="178" y="72" font-size="13" font-weight="700" fill="#202a30">动态</text>
+      <rect x="290" y="58" width="150" height="18" rx="9" fill="#eef1ed"/>
+      <text x="302" y="71" font-size="8.5" fill="#9aa5a5">搜索关键词…</text>
+
+      <!-- 频道 + 类别 -->
+      <rect x="178" y="90" width="34" height="16" rx="8" fill="#176b75"/><text x="195" y="101" font-size="8" fill="#fff" text-anchor="middle">全部</text>
+      <rect x="216" y="90" width="34" height="16" rx="8" fill="#ffffff" stroke="#dfe4e1"/><text x="233" y="101" font-size="8" fill="#59656b" text-anchor="middle">资讯</text>
+      <rect x="254" y="90" width="34" height="16" rx="8" fill="#ffffff" stroke="#dfe4e1"/><text x="271" y="101" font-size="8" fill="#59656b" text-anchor="middle">一手</text>
+
+      <text x="178" y="128" font-size="8" fill="#303c42">政策</text><text x="206" y="128" font-size="8" fill="#657176">政策分析</text>
+      <text x="256" y="128" font-size="8" fill="#657176">机构</text><text x="284" y="128" font-size="8" fill="#657176">项目</text>
+      <text x="310" y="128" font-size="8" fill="#657176">募集</text><text x="338" y="128" font-size="8" fill="#657176">研究</text>
+      <text x="366" y="128" font-size="8" fill="#657176">一线</text><text x="392" y="128" font-size="8" fill="#657176">观点</text>
+
+      <!-- 日期分隔 -->
+      <rect x="178" y="140" width="482" height="16" fill="#f0f2ee"/>
+      <text x="186" y="151" font-size="8.5" fill="#59656b">10 月 27 日 星期二 · 14 条</text>
+
+      <!-- 卡片 1 -->
+      <rect x="178" y="164" width="482" height="60" rx="5" fill="#ffffff" stroke="#e9ede9"/>
+      <text x="190" y="181" font-size="10" font-weight="600" fill="#202a30">民政部发布《未成年人救助保护机构工作规范》</text>
+      <text x="190" y="196" font-size="8" fill="#657176">民政部 · 政策 · 09:12</text>
+      <text x="190" y="212" font-size="8.5" fill="#59656b">明确了机构设置、人员配备与个案管理的具体要求，自下月起施行。</text>
+      <circle cx="642" cy="176" r="4" fill="none" stroke="#dfe4e1"/>
+
+      <!-- 卡片 2 -->
+      <rect x="178" y="232" width="482" height="60" rx="5" fill="#ffffff" stroke="#e9ede9"/>
+      <text x="190" y="249" font-size="10" font-weight="600" fill="#202a30">壹基金发布 2025 年度报告：项目支出 3.2 亿元</text>
+      <text x="190" y="264" font-size="8" fill="#657176">壹基金 · 机构 · 08:40</text>
+      <text x="190" y="280" font-size="8.5" fill="#59656b">年报披露全年收入与支出结构，儿童关怀类项目占比过半。</text>
+      <circle cx="642" cy="244" r="4" fill="none" stroke="#dfe4e1"/>
+
+      <!-- 卡片 3 -->
+      <rect x="178" y="300" width="482" height="60" rx="5" fill="#ffffff" stroke="#e9ede9"/>
+      <text x="190" y="317" font-size="10" font-weight="600" fill="#202a30">多篇报道：乡村学校营养餐补助标准调整</text>
+      <text x="190" y="332" font-size="8" fill="#657176">3 个来源 · 项目 · 已归为同一件事</text>
+      <text x="190" y="348" font-size="8.5" fill="#59656b">同一事件下的不同报道合并展示，点开可以看到全部来源。</text>
+      <circle cx="642" cy="312" r="4" fill="none" stroke="#dfe4e1"/>
+
+      <!-- 标注 -->
+      <circle cx="126" cy="122" r="8" fill="#b3402a"/><text x="126" y="125.5" font-size="9" fill="#fff" text-anchor="middle">1</text>
+      <circle cx="316" cy="98" r="8" fill="#b3402a"/><text x="316" y="101.5" font-size="9" fill="#fff" text-anchor="middle">2</text>
+      <circle cx="684" cy="176" r="8" fill="#b3402a"/><text x="684" y="179.5" font-size="9" fill="#fff" text-anchor="middle">3</text>
+      <circle cx="684" cy="312" r="8" fill="#b3402a"/><text x="684" y="315.5" font-size="9" fill="#fff" text-anchor="middle">4</text>
+    </svg>
+    <figcaption>图 2　读者看到的一屏。① 左边五个主入口 ② 频道（全部 / 资讯 / 一手）和八个类别 ③ 每条都可以标记「已读」（只在你自己浏览器里）④ 同一件事的多篇报道会合并成一张卡片。</figcaption>
+  </figure>
+
+  <h3>1　总报：一周里值得知道的几件事</h3>
+  <p>这是<strong>唯一带判断的栏目</strong>。周报每周一出，月报每月 1 日出。它不做「本周新闻列表」，而是挑出几件真正值得知道的事，每件写清楚发生了什么、为什么重要。</p>
+  <p>如果读者只有五分钟，让他看这里。如果他想知道「这周公益圈有没有大事」，也看这里。</p>
+
+  <h3>2　动态：完整的流水，按天分组</h3>
+  <p>这是<strong>量最大</strong>的一页，也是日常最该看的一页。它按日期分组，倒序排。上面有三排筛选：</p>
+  <ul>
+    <li><strong>频道</strong>：全部 / 资讯 / 一手。「一手」指机构自己发的原文（比如民政部官网、基金会官网），不是别人转述的。</li>
+    <li><strong>类别</strong>：政策、政策分析、机构、项目、募集、研究、一线、观点。这八个是这个行业的分法，不是随便定的（第三章会讲为什么）。</li>
+    <li><strong>搜索</strong>：关键词直接搜标题和摘要。</li>
+  </ul>
+  <p>每条右边有个小圆圈，点了会变灰——这是「我读过了」，只存在你自己的浏览器里，不会上传，换台电脑就没了。</p>
+
+  <h3>3　热点：过去 48 小时，大家在议论什么</h3>
+  <p>取的是最近两天的报道里，<strong>讨论最多的十件事</strong>，按一个「热度指数」排。每条下面会列出是谁在说、说了几篇，还有一条小小的趋势线。</p>
+  <p>这一页不是给「追热点」用的，是给<strong>判断一件事是不是正在变大</strong>用的。同一件事从 2 家媒体变成 12 家媒体，曲线会立刻翘起来。</p>
+
+  <h3>4　主题：换个角度看同一批内容</h3>
+  <p>动态页是按「时间」看，主题页是按「关心的事」看。分成三组：</p>
+  <div class="cards">
+    <div class="card"><div class="h">机构与平台</div><div class="d">腾讯公益、支付宝公益、壹基金、中国乡村发展基金会、救助儿童会、民政部……点进去就是这家机构的全部动态。</div></div>
+    <div class="card"><div class="h">公益领域</div><div class="d">儿童保护、儿童教育、营养健康、乡村教育、养老服务、残障融合、应急救援、透明慈善……</div></div>
+    <div class="card"><div class="h">内容形态</div><div class="d">政策、研究、一线故事、观点——按「这是什么类型的消息」分。</div></div>
+  </div>
+  <p>还有一层更细的：点开任意一条新闻，如果它属于一个「<strong>事件</strong>」，会看到一个事件页——同一件事的所有报道都在那儿，带一条热度曲线和后续进展。这是整套系统里最花心思的设计（第三章讲）。</p>
+
+  <h3>5　更多：五个不常用但重要的入口</h3>
+  <table>
+    <tr><th>入口</th><th>是干什么的</th><th>谁会用</th></tr>
+    <tr><td>Agent</td><td>给「别的软件」用的接口说明。别的机构想把内容接到自己系统，从这里拿说明书。</td><td>对方的技术人员</td></tr>
+    <tr><td>关于</td><td>这个站是谁做的、为什么做、数据怎么来的。末尾是救助儿童会的机构介绍。</td><td>第一次来的人、合作方</td></tr>
+    <tr><td>更新</td><td>网站改了什么，一条条写着。有更新时菜单上会有一个小红点。</td><td>老读者</td></tr>
+    <tr><td>反馈</td><td>读者说「这条不对」「能不能加这个源」的地方。你在后台能看到全部反馈。</td><td>所有读者</td></tr>
+    <tr><td>收藏</td><td>读者自己点星标存下来的条目。只存在他的浏览器里。</td><td>重度使用者</td></tr>
+  </table>
+
+  <h3>顺带说三件小事</h3>
+  <p><strong>手机上是不一样的。</strong>底部只有四个图标：总报、动态、热点、主题，第五个是「更多」，把剩下五个收进去。这是刻意的——手机屏小，不让人做选择。</p>
+  <p><strong>有深色模式。</strong>菜单最下面有个开关，夜里看眼睛舒服些。这个设置也只记在读者自己电脑上。</p>
+  <p><strong>不用注册。</strong>整站没有任何登录，除了后台。所有内容匿名可见，你作为管理员看到的和访客一模一样——这是刻意的设计，不是没做完。</p>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>总报是<strong>挑过的</strong>，动态是<strong>全的</strong>，热点是<strong>别人正在看的</strong>，主题是<strong>按关心的事重排的</strong>。四个入口看同一批内容，只是切法不同。</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+  <h2><span class="n">第二章</span>一条新闻的旅程</h2>
+  <p class="lede">从「某个政府网站深夜更新了一篇公告」到「它出现在你的网站上」，中间发生了六件事。这一节是全文最技术的一段，但一个公式都不用记。</p>
+
+  <p>先看一个数字，它决定了整套系统的性格：</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 366" role="img" aria-label="从线索到入池的漏斗">
+      <text x="20" y="16" font-size="11" fill="#657176">以 10 月 25 日一天为例</text>
+
+      <rect x="20" y="32" width="470" height="42" rx="4" fill="#eef1ed"/>
+      <text x="36" y="59" font-size="12" fill="#303c42">当天抓到、读到的线索　930 条</text>
+
+      <rect x="20" y="90" width="340" height="42" rx="4" fill="#e4eae6"/>
+      <text x="36" y="117" font-size="12" fill="#303c42">去噪：标题一看就不相关的，直接扔</text>
+
+      <rect x="20" y="148" width="240" height="42" rx="4" fill="#cfe0dd"/>
+      <text x="36" y="175" font-size="12" fill="#303c42">判断属不属于本行业</text>
+
+      <rect x="20" y="206" width="155" height="42" rx="4" fill="#9dc4c1"/>
+      <text x="36" y="233" font-size="11.5" fill="#202a30">评分达标才算入池</text>
+
+      <rect x="20" y="264" width="105" height="42" rx="4" fill="#176b75"/>
+      <text x="34" y="282" font-size="11" fill="#ffffff">留下 121 条</text>
+      <text x="34" y="297" font-size="8.5" fill="#cfe0dd">进网站与总报</text>
+
+      <text x="504" y="52" font-size="10" fill="#59656b">一个普通工作日</text>
+      <text x="504" y="67" font-size="10" fill="#59656b">的真实量级</text>
+
+      <line x1="366" y1="111" x2="498" y2="111" stroke="#dfe4e1" stroke-dasharray="3 3"/>
+      <text x="504" y="108" font-size="10" fill="#59656b">这一步不花钱</text>
+      <text x="504" y="123" font-size="10" fill="#59656b">纯靠规则挡掉</text>
+
+      <line x1="266" y1="169" x2="498" y2="169" stroke="#dfe4e1" stroke-dasharray="3 3"/>
+      <text x="504" y="166" font-size="10" fill="#59656b">模型第一次读全文</text>
+
+      <line x1="181" y1="227" x2="498" y2="227" stroke="#dfe4e1" stroke-dasharray="3 3"/>
+      <text x="504" y="224" font-size="10" fill="#59656b">五个轴加权算分</text>
+      <text x="504" y="239" font-size="10" fill="#59656b">门槛 35–40 分</text>
+
+      <line x1="131" y1="285" x2="498" y2="285" stroke="#dfe4e1" stroke-dasharray="3 3"/>
+      <text x="504" y="282" font-size="10" fill="#b3402a" font-weight="600">约 13%</text>
+      <text x="504" y="297" font-size="10" fill="#59656b">剩下 87% 被扔掉</text>
+
+      <line x1="20" y1="330" x2="700" y2="330" stroke="#e9ede9"/>
+      <text x="20" y="350" font-size="10.5" fill="#59656b">中间三段的具体数字是示意，不是精确计数；首尾两个数字是当天实测。</text>
+    </svg>
+    <figcaption>图 3　一整天下来，进来的九百多条里只有一百来条能留下。这个比例（行话叫「入池率」）是判断一切好坏的唯一标准。</figcaption>
+  </figure>
+
+  <p>为什么扔掉九成？因为<strong>读者的时间比信息贵</strong>。公益行业的信息特点是：真正有信息量的不多，但分散在两百个网站上，靠人一个个翻是不可能的。这机器的全部价值，就在这个「扔掉」上。</p>
+
+  <h3>第一步：发现（三种性格完全不同的通讯员）</h3>
+  <p>信源虽然有两百个，但抓的方式只有三种，性格差别很大：</p>
+  <ul>
+    <li><strong>守在门口的</strong>（RSS）。对方网站提供一份「更新清单」，我们照着拿。速度快，通常文章发出后一小时内就能拿到。缺点是只有一部分网站提供。</li>
+    <li><strong>按时翻页的</strong>（网页列表）。每隔一段时间去把对方的「新闻列表」第一页、第二页翻一遍。稳，但对方改版就失效。</li>
+    <li><strong>主动出去找的</strong>（搜索）。不是等，而是拿关键词去搜索引擎里搜。出量最大，但它有个天生的毛病——<strong>搜索引擎要过两三天才收录新文章</strong>，所以这类源拿到的东西，往往比实际发布时间晚两三天。</li>
+  </ul>
+  <p>最后还有一种最笨也最可靠的：<strong>邮件</strong>。有两个机构不往网上发，只发邮件简报，所以专门开了一个邮箱去收。</p>
+
+  <h3>第二步：去噪（不花钱的那一道闸）</h3>
+  <p>在花钱请 AI 读之前，先用关键词做一道很粗的筛。比如标题里出现「招聘」「讣告」「彩票开奖」，直接扔掉。</p>
+  <p>这一步的意义只有一个：<strong>省下不必要的模型调用</strong>。它挡不住聪明的内容，只挡明显的噪音。所以它宁松不严——宁可多放进来几条，也不能把真新闻挡在门外。</p>
+
+  <h3>第三步：读一遍，打分</h3>
+  <p>这是唯一花钱的一步。模型拿到标题、摘要和正文开头，被要求回答两个问题然后打分：</p>
+  <ol>
+    <li><strong>这是不是这个行业的事？</strong>——不是就零分，到此为止。</li>
+    <li><strong>有没有实际信息？</strong>——「某某基金会开展了一次党建活动」这种，形式上相关，但对你没用，分会很低。</li>
+  </ol>
+  <p>分数是五个轴加权算出来的：<strong>重要性、新颖度、可信度、共鸣、可行动性</strong>。不同内容类型权重不同——政策文件看重要性，一线故事看共鸣，这是刻意的。</p>
+  <p>到门槛才「入池」，而门槛按来源可信度分档：<strong>官方一手信源 35 分，媒体和个人 40 分</strong>。这个数不是拍脑袋定的，是拿一批人工标过的样本反复校准出来的。它也不能随手改——门槛偏高，首页会悄悄停更（真发生过，停了半个多月）；偏低，地市琐事就会涌进来。</p>
+
+  <h3>第四步：写中文标题和摘要</h3>
+  <p>入池之后，模型做三件事：把外文标题翻成中文、写一段两三句的摘要、生成一句「为什么值得看」。</p>
+  <p>这里有一条<strong>很硬的规矩</strong>：摘要里提到的机构名，必须在原文里真的出现过。没出现，就退回原标题、丢掉摘要。为什么这么严？因为模型会「顺手」把不认识的主体安到它熟悉的机构头上——「某基金会」被写成「壹基金」这种错误，一旦发生在公益领域，是可以引发投诉的。</p>
+
+  <h3>第五步：归组（同一件事，不该占十张卡）</h3>
+  <p>一个政策出来，十家媒体都会写。如果每条都单独成卡，读者会以为发生了十件事，而且他会烦。</p>
+  <p>所以系统会把「同一件事」的报道<strong>合并成一个事件</strong>：卡片上显示标题和三篇里的最强一篇，点进去能看到全部来源、各家说法、热度曲线。</p>
+  <p>注意这里的分寸：合并<strong>只对正在发生的事件做</strong>。历史内容不会事后被重新归组——今天的事不能突然跟前年的事绑在一起。</p>
+
+  <h3>第六步：决定它排在哪一天</h3>
+  <p>这一条踩过很多坑，值得单独说。</p>
+  <p>大部分新闻页面上只写日期，不写几点几分。如果一个源整页都是「10 月 20 日」，那它排在哪一天？规矩是：</p>
+  <ul>
+    <li>有精确时间的，按<strong>原文发布时间</strong>排；</li>
+    <li>只有日期没有钟点的，按<strong>我们收录它的时间</strong>排。</li>
+  </ul>
+  <p>为什么？因为把一堆没有钟点的稿子堆在某一天的零点，会让那天看起来「半夜集中爆发」。按收录时间排，它就会老老实实落在流水线上。</p>
+  <p>这条规矩有个副作用你要知道：<strong>「今天」这一栏里，偶尔会出现原文是几天前的稿子。</strong>那不是 bug，那是「它今天才被发现」。</p>
+
+  <div class="warn">
+    <div class="lb">一个容易误判的现象</div>
+    <p>某天早上打开，发现一晚上进了几百条，账单也翻倍了。看上去像「出故障了」。绝大多数情况是：<strong>搜索型源那批延迟两三天才被搜索引擎收录的稿子，在今早集中成熟了。</strong>不是重复采集，也没有浪费——只是它们到得晚。别急着重启，也先别删源。</p>
+  </div>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>这条流水线的每一环都在回答同一个问题：<strong>「这条值不值得占用读者三秒钟？」</strong>凡是让人困惑的设计，几乎都是在这个问题上做了取舍。</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+  <h2><span class="n">第三章</span>为什么长成这样</h2>
+  <p class="lede">设计不是审美问题，是一连串取舍。这一节讲七条规则，每一条都对应一个你可能想「改掉」的地方——先知道为什么，再决定要不要改。</p>
+
+  <h3>规则一　每条都挂原文链接，正文只给摘要</h3>
+  <p>两个原因。第一是<strong>版权</strong>：全文是别人的，转载要授权，摘要加链接是安全的边界。第二是<strong>信任</strong>：读者点一下就能看到原文，就不会怀疑你在编。</p>
+  <p>所以如果有人要求「把正文搬过来，读者就不用点出去了」——别做。这既越了法律线，也毁掉了这个站最值钱的东西：可核查。</p>
+
+  <h3>规则二　同一件事只占一张卡</h3>
+  <p>前面说过归组。这里补一句为什么值得花这么大力气：<strong>卡片数量会骗人。</strong>同一件事被十二家媒体报道，如果排十二张卡，读者会得到一个错误印象——「这件事很严重，到处都是」。实际上只是一件事被反复讲。</p>
+  <p>合并之后，卡片数量就接近「事件数量」，那个数字才有意义。</p>
+
+  <h3>规则三　按消息的性质分类，不按机构分类</h3>
+  <p>八个类别是：政策、政策分析、机构、项目、募集、研究、一线、观点。</p>
+  <p>为什么不按「民政部 / 基金会 / 国际组织」分？因为读者的真实问题是「<strong>今天有没有需要我处理的事</strong>」。「政策」意味着可能有合规动作，「募集」意味着有钱在动，「研究」意味着有新数据——机构是谁是第二层信息。</p>
+  <p>机构这一层没有丢，它变成了「主题页」：想看某一家，点进主题去看。</p>
+
+  <h3>规则四　把「精选」藏起来，只用徽标</h3>
+  <p>网站原先有一个独立的「精选」栏目，和「动态」并列。后来关掉了，只在卡片上留一个小徽标。</p>
+  <p>原因是实测出来的：<strong>两个入口放同一批内容，读者会反复怀疑「我是不是漏了什么」</strong>。他们会在两个页面之间来回切，最后还是不确定看全了没有。关掉之后，路径变简单了：要么看流水（动态），要么看结论（总报）。</p>
+
+  <h3>规则五　一屏只有一个强调色，留白很多</h3>
+  <p>整站只有一个强调色（深青），没有渐变，没有阴影堆叠，边框细到几乎看不见。这不是没做设计，是刻意压住视觉噪音。</p>
+  <p>理由很实际：公益内容本身是严肃的，页面一花，读者注意力就从内容跑到了装饰上。而且这个站的核心动作是「扫读」——一屏能扫过多少条，比每条多好看重要得多。</p>
+
+  <h3>规则六　手机优先，而不是「顺便适配」</h3>
+  <p>公益从业者看信息的时间，大多在通勤路上、会议间隙、活动现场。所以手机上的底部四个图标是<strong>主设计</strong>，电脑上的侧栏反而是它的放大版。</p>
+  <p>这条会影响你以后提需求的方式：如果新功能在手机上放不下，那它多半也不该做。</p>
+
+  <h3>规则七　不登录、不追踪、不推送</h3>
+  <p>没有注册，没有「猜你喜欢」，没有站内弹窗。读者的「已读」和「收藏」只存在他自己的浏览器里，我们看不见。</p>
+  <p>这不是技术做不到，是不想做：一旦开始追踪，就要处理隐私声明、数据留存、泄露风险——这些成本会远远超过「个性化推荐」带来的那点收益。而这个站的内容量，还没大到需要推荐算法。</p>
+
+  <table>
+    <tr><th>你可能想改</th><th>先想清楚</th></tr>
+    <tr><td>「加个评论功能吧」</td><td>评论要审核、要处理举报、要防广告。一个人维护的站，不建议。</td></tr>
+    <tr><td>「首页做个大banner轮播」</td><td>轮播的实际点击率极低，而且会挤掉第一屏的条目数量。</td></tr>
+    <tr><td>「每条显示阅读量」</td><td>需要统计埋点，涉及隐私声明，且阅读量低的内容会被读者主动跳过——反而降低长尾内容的曝光。</td></tr>
+    <tr><td>「加个会员 / 登录」</td><td>内容本来就是公开的，加了登录只会减少读者。</td></tr>
+  </table>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>这套界面的每一个「少」，都是为了让读者更快看到「多」。改设计之前先问一句：<strong>这个改动是让读者更快找到东西，还是让我们看起来更完整？</strong></p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+  <h2><span class="n">第四章</span>后台：你的驾驶舱</h2>
+  <p class="lede">后台地址是网站地址后面加 <strong>/admin</strong>。它长得不像网站，像仪表盘——因为它的用途不是「给读者看」，是「让你判断现在正不正常」。</p>
+
+  <p>先说一条纪律：<strong>后台只给管理员</strong>。读者能看到的内容，和你看到的一模一样，没有任何「管理员特权视图」。这是刻意的：公开内容必须匿名，否则「管理员看到的」和「访客看到的」会慢慢分叉，最后没人知道读者到底看到了什么。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 300" role="img" aria-label="后台六个页面">
+      <text x="20" y="16" font-size="11" fill="#657176">后台一共六块，按你多久看一次排序</text>
+
+      <!-- 卡片 -->
+      <g>
+        <rect x="20" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="34" y="52" font-size="12" font-weight="700" fill="#202a30">用量与成本</text>
+        <text x="34" y="68" font-size="9" fill="#176b75">每周看</text>
+        <text x="34" y="88" font-size="10.5" fill="#59656b">这周花了多少，按天拆开。</text>
+        <text x="34" y="104" font-size="10.5" fill="#59656b">能在线改单价（一般不用动）。</text>
+        <text x="34" y="126" font-size="9.5" fill="#b3402a">钱是不是快没了，看这里。</text>
+      </g>
+      <g>
+        <rect x="252" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="266" y="52" font-size="12" font-weight="700" fill="#202a30">信源</text>
+        <text x="266" y="68" font-size="9" fill="#176b75">加源时看</text>
+        <text x="266" y="88" font-size="10.5" fill="#59656b">全部 210 个源的名单、健康状态、</text>
+        <text x="266" y="104" font-size="10.5" fill="#59656b">各自产出了几条。可以新建。</text>
+        <text x="266" y="126" font-size="9.5" fill="#59656b">还有个「候选」页，推荐可以加的源。</text>
+      </g>
+      <g>
+        <rect x="484" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="498" y="52" font-size="12" font-weight="700" fill="#202a30">内容诊断</text>
+        <text x="498" y="68" font-size="9" fill="#176b75">「这条为什么不发」时看</text>
+        <text x="498" y="88" font-size="10.5" fill="#59656b">每篇稿子的完整判定过程：</text>
+        <text x="498" y="104" font-size="10.5" fill="#59656b">几分、为什么、卡在哪一步。</text>
+        <text x="498" y="126" font-size="9.5" fill="#59656b">这是唯一能回答「凭什么不要它」的地方。</text>
+      </g>
+
+      <g>
+        <rect x="20" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="34" y="176" font-size="12" font-weight="700" fill="#202a30">运行</text>
+        <text x="34" y="192" font-size="9" fill="#176b75">「今天没更新」时看</text>
+        <text x="34" y="212" font-size="10.5" fill="#59656b">每次抓取的记录：几点跑的、</text>
+        <text x="34" y="228" font-size="10.5" fill="#59656b">抓到几条、报什么错。</text>
+        <text x="34" y="250" font-size="9.5" fill="#59656b">判断「是没跑」还是「跑了没结果」。</text>
+      </g>
+      <g>
+        <rect x="252" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="266" y="176" font-size="12" font-weight="700" fill="#202a30">模型与评测</text>
+        <text x="266" y="192" font-size="9" fill="#176b75">想换模型时看</text>
+        <text x="266" y="212" font-size="10.5" fill="#59656b">每一步现在用的哪个模型、</text>
+        <text x="266" y="228" font-size="10.5" fill="#59656b">成功率、平均耗时、单篇成本。</text>
+        <text x="266" y="250" font-size="9.5" fill="#59656b">换模型只影响之后的新稿，不溯及既往。</text>
+      </g>
+      <g>
+        <rect x="484" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
+        <text x="498" y="176" font-size="12" font-weight="700" fill="#202a30">设置 · 审计 · 反馈</text>
+        <text x="498" y="192" font-size="9" fill="#176b75">改文案、查「谁改的」时看</text>
+        <text x="498" y="212" font-size="10.5" fill="#59656b">站点信息、二维码、开关在设置；</text>
+        <text x="498" y="228" font-size="10.5" fill="#59656b">每次改动都留一条记录在审计；</text>
+        <text x="498" y="250" font-size="10.5" fill="#59656b">读者写来的意见在反馈。</text>
+      </g>
+    </svg>
+    <figcaption>图 4　后台的六个页面。你不需要会用全部，但必须知道「遇到哪类问题，去哪个页面找答案」。</figcaption>
+  </figure>
+
+  <h3>四个最常用的动作</h3>
+
+  <p><strong>动作一：看今天正不正常。</strong>打开「用量」，看今天的数字。如果跟平时差不多（几块钱），说明采集和处理都在正常跑。如果连续几天是 0，说明停了——这时候才需要往下一页查。</p>
+
+  <p><strong>动作二：搞清「这条为什么不发」。</strong>读者说「这么重要的新闻你们怎么没有」，你去「内容诊断」里搜那篇的标题。三种结果：根本没抓到（信源问题）、抓到了但分数低（标准问题）、抓到了但处理失败（技术问题）。这三种的处置完全不同，所以<strong>永远先查这一步再动手</strong>。</p>
+
+  <p><strong>动作三：加一个源。</strong>「信源」页可以新建，填机构发布内容的那个栏目网址。复杂的源（要翻页、要登录、是公众号）后台加不了，得请人。</p>
+
+  <p><strong>动作四：看谁改了什么。</strong>「审计」页记着每一次后台改动。如果某天内容突然变了样，先来这里看前一天有没有人动过设置——八成能直接找到原因。</p>
+
+  <div class="warn">
+    <div class="lb">进来第一件事</div>
+    <p>登录后台，把六个页面<strong>各点一遍</strong>，什么都不改。目的只有一个：让「这里长什么样」成为你的常识。等真出事那天，你才分辨得出「和平常不一样」。</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+  <h2><span class="n">第五章</span>钱是怎么烧的</h2>
+  <p class="lede">这一章只有一个目的：让你能自己判断「这个月的账单正不正常」，而不用问人。</p>
+
+  <h3>计价方式：像寄快递，按重量和距离</h3>
+  <p>AI 的收费单位叫 <strong>token</strong>，你可以粗略理解成「字」。给它读的字算一笔，它写出来的字算另一笔，写出来的更贵。此外还有两个规则，直接决定你的账单：</p>
+  <ul>
+    <li><strong>重复的内容打折。</strong>同一段提示词每次都要重新读一遍，服务方会把这段「记住」，第二次读只收原价的 <strong>2%</strong>——差了五十倍。所以整套系统的提示词都是固定的、放在最前面的，就是为了让这部分永远走折扣价。</li>
+    <li><strong>忙时双倍。</strong>工作日白天（上午九点到十二点、下午两点到六点）价格翻倍。所以补历史、批量重跑这类活，安排在夜里或周末，同样的钱能做近两倍的事。</li>
+  </ul>
+
+  <h3>一篇文章 = 五次调用</h3>
+  <p>这不是浪费，是分工：先粗筛一次、再独立打分两次（两次取平均，防止一次判偏）、再写摘要、再整理结构。每一次都只做一件小事，比让它一次干完更准，也更便宜——前面任何一步把它淘汰掉，后面的钱就省了。</p>
+  <p>结果是：<strong>一篇入池的文章，成本大约三分到七厘钱</strong>。是的，不到一分钱。</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 320" role="img" aria-label="按天成本与缓存对比">
+      <text x="20" y="16" font-size="11" fill="#657176">一周的模型开销（元）</text>
+
+      <!-- 柱状 -->
+      <line x1="40" y1="46" x2="40" y2="176" stroke="#dfe4e1"/>
+      <line x1="40" y1="176" x2="380" y2="176" stroke="#dfe4e1"/>
+      <text x="26" y="50" font-size="8.5" fill="#9aa5a5">8</text>
+      <text x="26" y="114" font-size="8.5" fill="#9aa5a5">4</text>
+      <text x="26" y="180" font-size="8.5" fill="#9aa5a5">0</text>
+
+      <rect x="58" y="96" width="30" height="80" rx="2" fill="#9dc4c1"/>
+      <rect x="104" y="86" width="30" height="90" rx="2" fill="#9dc4c1"/>
+      <rect x="150" y="102" width="30" height="74" rx="2" fill="#9dc4c1"/>
+      <rect x="196" y="66" width="30" height="110" rx="2" fill="#b3402a"/>
+      <rect x="242" y="92" width="30" height="84" rx="2" fill="#9dc4c1"/>
+      <rect x="288" y="100" width="30" height="76" rx="2" fill="#9dc4c1"/>
+      <rect x="334" y="94" width="30" height="82" rx="2" fill="#9dc4c1"/>
+
+      <text x="73" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">21</text>
+      <text x="119" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">22</text>
+      <text x="165" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">23</text>
+      <text x="211" y="190" font-size="8.5" fill="#b3402a" text-anchor="middle" font-weight="600">24</text>
+      <text x="257" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">25</text>
+      <text x="303" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">26</text>
+      <text x="349" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">27</text>
+
+      <text x="211" y="58" font-size="9" fill="#b3402a" text-anchor="middle" font-weight="600">加了一批源</text>
+      <text x="40" y="212" font-size="10" fill="#59656b">平时三块多，那天七块——因为那天加了新源，把人家一年的旧稿都读了一遍。</text>
+
+      <!-- 分隔 -->
+      <line x1="400" y1="30" x2="400" y2="230" stroke="#e9ede9"/>
+
+      <text x="420" y="16" font-size="11" fill="#657176">为什么重复的提示词便宜五十倍</text>
+      <text x="420" y="56" font-size="10.5" fill="#303c42">同样一段说明文字，读第二次：</text>
+      <rect x="420" y="70" width="250" height="18" rx="3" fill="#b3402a" opacity="0.75"/>
+      <text x="430" y="83" font-size="9" fill="#ffffff">第一次读：100%</text>
+      <rect x="420" y="96" width="5" height="18" rx="2" fill="#2f7d5c"/>
+      <text x="432" y="109" font-size="9" fill="#2f7d5c">第二次读：2%</text>
+      <text x="420" y="140" font-size="10" fill="#59656b">所以「把提示词写得更长更细」几乎不增加成本，</text>
+      <text x="420" y="156" font-size="10" fill="#59656b">而「让它多读一遍文章」很贵。这个不对称决定了</text>
+      <text x="420" y="172" font-size="10" fill="#59656b">整套系统的设计：说明可以长，正文只读必要的。</text>
+
+      <line x1="20" y1="248" x2="700" y2="248" stroke="#e9ede9"/>
+      <text x="20" y="270" font-size="11" fill="#202a30" font-weight="600">一个月：模型约 100 元上下 + 服务器固定开销。一年千元量级。</text>
+      <text x="20" y="292" font-size="10.5" fill="#59656b">对公益项目不算负担，但它不会自己续命——余额用完当天就停。</text>
+    </svg>
+    <figcaption>图 5　左：一周的真实形状，尖峰那天是因为加源。右：为什么固定提示词便宜——这是理解成本的关键。</figcaption>
+  </figure>
+
+  <h3>三笔钱，分开看</h3>
+  <table>
+    <tr><th>名目</th><th>是什么</th><th>正常范围</th></tr>
+    <tr><td>今天的新闻</td><td>日常出稿：抓、判、写、发</td><td>每天几块钱。<strong>只有这一项是「日常成本」</strong></td></tr>
+    <tr><td>补历史</td><td>新加的源，把它过去一年的稿子读一遍</td><td>只在加源那天出现，一次性</td></tr>
+    <tr><td>搜索</td><td>主动去搜索引擎找内容的调用费</td><td>每天一两块，按次计</td></tr>
+  </table>
+  <p>看账单时<strong>先分成这三堆</strong>。「这个月贵了」如果贵在第二堆，那是加源的代价，不是失控；如果贵在第一堆，才值得查。</p>
+
+  <h3>余额用完是什么样</h3>
+  <p>会看到一条明确的报错，大意是「余额不足」。要命的是它带来一个状态：那些稿子会被标成<strong>失败</strong>，而失败是<strong>终态</strong>——系统不会自己重试，也不会排队等。</p>
+  <p>所以处理顺序是三件事，缺一不可：</p>
+  <ol>
+    <li><strong>充钱</strong>（确认充到同一个账号，充完刷新看余额数字变没变）；</li>
+    <li><strong>等 24 小时</strong>看是否自然恢复（新稿会正常进来）；</li>
+    <li>如果旧稿还是缺，<strong>找人把失败的那批「放回队列」</strong>。这句话你可以原样转告，不用懂原理。</li>
+  </ol>
+  <p>第三件最容易被漏掉。很多人充完钱看新内容进来了，就以为好了，结果那一周的稿子永远缺一块。</p>
+
+  <h3>护栏：为什么有时候看起来「被卡住了」</h3>
+  <p>系统里设了每日和每小时的消费上限。被拦住不等于失败——它会排队，等窗口滚过去自己恢复。这是好事，是防止某天出错烧掉一个月预算的保险丝。</p>
+  <p>你要能区分这两种「不动」：</p>
+  <ul>
+    <li><strong>被护栏拦</strong>：钱还有，只是在等。通常几小时内自己好，不用管。</li>
+    <li><strong>余额耗尽</strong>：钱没了，必须人工充值 + 放回队列。</li>
+  </ul>
+  <p>现象很像，处置完全相反。分辨方法很简单：<strong>去平台看余额数字。</strong>有钱就是前者，没钱就是后者。</p>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>这套系统的成本是<strong>可预测的</strong>：日常几块钱一天，加源那天贵一次，余额用完当天停。凡是「莫名其妙涨了十倍」的情况，都能在后台按天拆开找到那一天的单一原因。</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+  <h2><span class="n">第六章</span>内容从哪来，怎么加</h2>
+  <p class="lede">两百个信源不是一次性铺好的，是两年里一个个试出来的。这一节讲清它们的分工，以及你自己动手加源时会发生什么。</p>
+
+  <h3>四个兵种，性格完全不同</h3>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 340" role="img" aria-label="信源构成与产出">
+      <text x="20" y="16" font-size="11" fill="#657176">谁在供货：按「最后能用的条数」占比（2026-10-25 快照，共 1868 条）</text>
+
+      <!-- 堆叠条 -->
+      <rect x="20" y="30" width="408" height="46" rx="4" fill="#176b75"/>
+      <rect x="428" y="30" width="152" height="46" rx="4" fill="#4a939b"/>
+      <rect x="580" y="30" width="26" height="46" rx="2" fill="#8ab8bb"/>
+      <rect x="606" y="30" width="20" height="46" rx="2" fill="#b3cdcd"/>
+      <rect x="626" y="30" width="74" height="46" rx="4" fill="#d6e3e2"/>
+
+      <text x="224" y="50" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">搜索型 67%</text>
+      <text x="224" y="66" font-size="9.5" fill="#cfe0dd" text-anchor="middle">1256 条</text>
+      <text x="504" y="50" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">网页列表 25%</text>
+      <text x="504" y="66" font-size="9" fill="#e6f0ee" text-anchor="middle">465 条</text>
+
+      <!-- 图例 -->
+      <rect x="20" y="96" width="10" height="10" fill="#176b75"/>
+      <text x="38" y="105" font-size="10.5" fill="#303c42">搜索型　72 个源 · 出量最大 · <tspan fill="#b3402a">最花钱 · 晚 2–3 天</tspan></text>
+      <rect x="20" y="120" width="10" height="10" fill="#4a939b"/>
+      <text x="38" y="129" font-size="10.5" fill="#303c42">网页列表　93 个源 · 稳，靠翻页 · 对方改版就失效</text>
+      <rect x="20" y="144" width="10" height="10" fill="#8ab8bb"/>
+      <text x="38" y="153" font-size="10.5" fill="#303c42">RSS　26 个源 · 最快，常常一小时内到手 · 但只有一部分站提供</text>
+      <rect x="20" y="168" width="10" height="10" fill="#b3cdcd"/>
+      <text x="38" y="177" font-size="10.5" fill="#303c42">接口 / 外部系统　19 个源 · 直接对接数据，不需要解析网页</text>
+
+      <line x1="20" y1="198" x2="700" y2="198" stroke="#e9ede9"/>
+
+      <!-- 三个数 -->
+      <text x="20" y="224" font-size="22" font-weight="700" fill="#202a30">210</text>
+      <text x="20" y="242" font-size="9.5" fill="#59656b">信源总数</text>
+
+      <text x="140" y="224" font-size="22" font-weight="700" fill="#202a30">175</text>
+      <text x="140" y="242" font-size="9.5" fill="#59656b">正在运行</text>
+
+      <text x="260" y="224" font-size="22" font-weight="700" fill="#176b75">113</text>
+      <text x="260" y="242" font-size="9.5" fill="#59656b">真正能出货的（入池 ≥5 条）</text>
+
+      <text x="470" y="224" font-size="22" font-weight="700" fill="#b3402a">1868</text>
+      <text x="470" y="242" font-size="9.5" fill="#59656b">累计入池条数</text>
+
+      <line x1="20" y1="262" x2="700" y2="262" stroke="#e9ede9"/>
+      <text x="20" y="284" font-size="10.5" fill="#202a30" font-weight="600">能跑的 175 个里，只有 113 个真正出货。剩下的是「装上了但打不中」。</text>
+      <text x="20" y="302" font-size="10" fill="#59656b">所以判断一个源好不好，不看它「能不能打开」，只看它「有没有用」。这个差别是全部信源管理的核心。</text>
+      <text x="20" y="324" font-size="10" fill="#b3402a">搜索型最出量，也最贵、最慢。它是「补漏和深挖」的兵种，不是「抢首发」的。</text>
+    </svg>
+    <figcaption>图 6　四个兵种的分工。理解了这张图，你就不会问「为什么不多加几个搜索源」——因为它是用钱和时效换覆盖率。</figcaption>
+  </figure>
+
+  <p>这张图里有个数字值得单独看一眼：<strong>210 个源，只有 113 个真正在出货。</strong>也就是说，铺源的努力有一半是「试错」。这是正常的，不是失败——但它的含义是：<strong>不要用「我们接了多少家」当成绩，要用「有多少条真的被读者看到了」当成绩。</strong></p>
+
+  <h3>怎么判断一个源值不值得留</h3>
+  <p>只有一个标准：<strong>它贡献了几条入池的内容。</strong></p>
+  <p>不是「它能打开」，不是「它每天更新」，也不是「它是部委网站所以应该留着」。后者听起来有道理，实际上会让名单越来越长、越来越难判断——而每多一个源，就多一份维护。</p>
+  <p>具体的处置节奏：</p>
+  <ul>
+    <li>新加的源，<strong>观察一周</strong>。有些机构一个月才发两篇，太早判死会误杀。</li>
+    <li>两周仍然零产出，可以停用。停用不等于删除，随时能恢复。</li>
+    <li>有些源产出很低但你<strong>必须</strong>留着（比如某省级主管部门，一年就发几条，但那几条很重要）。这类要人工记下来，别让它被「低产就停」的规则误伤。</li>
+  </ul>
+
+  <h3>你自己加一个源，会发生什么</h3>
+  <p>后台能加简单的源。加完之后，接下来 24 小时会发生三件事，提前知道就不会慌：</p>
+  <ol>
+    <li><strong>当天账单会涨一截。</strong>因为系统会把它过去一年的文章翻一遍。这是一次性的。</li>
+    <li><strong>网站上会突然多出一批「旧闻」。</strong>它们按原文时间落位，所以会出现在过去几周里，不是今天。这是对的。</li>
+    <li><strong>第二天开始，它就变成正常的一个源了。</strong>每天跟别人一样增量抓。</li>
+  </ol>
+  <p>如果三天后一条都没有，可能有两个原因：网址填错了（填成了首页而不是新闻栏目页），或者那个站需要翻页/需要登录，后台那套简单表单处理不了。这两种都要请人看。</p>
+
+  <div class="warn">
+    <div class="lb">加源最容易踩的两个坑</div>
+    <p>第一，<strong>别一次加十几个</strong>。那天的账单会吓到你，而且你分不清哪个源好——因为它们同时进来，数据混在一起。一次加一两个，观察一周，再加。</p>
+    <p>第二，<strong>别按「应该很重要」来加</strong>。有些机构名气很大但网上几乎不发东西；有些省级单位一年只有三条内容。加源前先自己去那个网站翻一遍，看看最近一个月有没有五篇以上，比什么都准。</p>
+  </div>
+
+  <div class="say">
+    <div class="lb">记住这一句</div>
+    <p>信源管理的全部工作，就是<strong>把「能打开」的筛成「有用」的</strong>。判断只看一个数字：它贡献了几条入池。</p>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+  <h2><span class="n">第七章</span>出事的时候，按这个顺序判断</h2>
+  <p class="lede">你不需要会修，但你需要能在三分钟内判断「这是哪一类问题」。判断对了，找人时一句话就能说清楚；判断错了，会浪费好几天。</p>
+
+  <p>先给你一个总原则，它比下面所有的分支都重要：</p>
+
+  <div class="say">
+    <div class="lb">总原则</div>
+    <p><strong>先看钱，再看机器，再看队列，最后才看内容。</strong>因为前三个排查起来只要几分钟，而且占了绝大多数真实故障。</p>
+  </div>
+
+  <figure class="fig">
+    <svg viewBox="0 0 720 470" role="img" aria-label="排障决策树">
+      <text x="20" y="16" font-size="11" fill="#657176">从「有人告诉你出问题了」开始</text>
+
+      <!-- 根 -->
+      <rect x="196" y="30" width="328" height="40" rx="6" fill="#176b75"/>
+      <text x="360" y="55" font-size="11.5" fill="#ffffff" text-anchor="middle">症状是什么？</text>
+
+      <!-- 三分支 -->
+      <path d="M300,70 L300,86 L128,86 L128,100" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <path d="M360,70 L360,100" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <path d="M420,70 L420,86 L588,86 L588,100" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#9fb0b0"/>
+        </marker>
+      </defs>
+
+      <rect x="20" y="100" width="216" height="40" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="128" y="118" font-size="10.5" fill="#202a30" text-anchor="middle">整个网站打不开</text>
+      <text x="128" y="133" font-size="9" fill="#657176" text-anchor="middle">连首页都进不去</text>
+
+      <rect x="252" y="100" width="216" height="40" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="360" y="118" font-size="10.5" fill="#202a30" text-anchor="middle">能打开，内容停在几天前</text>
+      <text x="360" y="133" font-size="9" fill="#657176" text-anchor="middle">最常见的一类</text>
+
+      <rect x="484" y="100" width="216" height="40" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="592" y="118" font-size="10.5" fill="#202a30" text-anchor="middle">内容有，但明显不对味</text>
+      <text x="592" y="133" font-size="9" fill="#657176" text-anchor="middle">发了不该发的 / 漏了该发的</text>
+
+      <!-- 左分支结果 -->
+      <path d="M128,140 L128,160" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <rect x="20" y="164" width="216" height="86" rx="5" fill="#f7f4ef" stroke="#e3ddd2"/>
+      <text x="32" y="182" font-size="10" font-weight="700" fill="#202a30">① 登录腾讯云看这两件事</text>
+      <text x="32" y="200" font-size="9.5" fill="#59656b">· 实例是否已到期 / 欠费停机</text>
+      <text x="32" y="216" font-size="9.5" fill="#59656b">· 实例状态是不是「运行中」</text>
+      <text x="32" y="236" font-size="9" fill="#b3402a">续费日历没设？现在就去设。</text>
+
+      <!-- 中分支三查 -->
+      <path d="M360,140 L360,160" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <rect x="252" y="164" width="216" height="38" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="264" y="180" font-size="9.5" fill="#202a30">第 1 查　平台余额还有吗？</text>
+      <text x="264" y="194" font-size="8.5" fill="#b3402a">余额 0 = 就是这个原因，别再往下查</text>
+
+      <rect x="252" y="208" width="216" height="38" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="264" y="224" font-size="9.5" fill="#202a30">第 2 查　今早「运行」页跑了吗？</text>
+      <text x="264" y="238" font-size="8.5" fill="#59656b">没跑 = 调度问题；跑了没结果 = 看第 3 查</text>
+
+      <rect x="252" y="252" width="216" height="38" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
+      <text x="264" y="268" font-size="9.5" fill="#202a30">第 3 查　「诊断」里抓到了吗？</text>
+      <text x="264" y="282" font-size="8.5" fill="#59656b">抓到了没发 = 标准问题；没抓到 = 源问题</text>
+
+      <!-- 右分支结果 -->
+      <path d="M592,140 L592,160" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
+      <rect x="484" y="164" width="216" height="86" rx="5" fill="#f8f2f0" stroke="#e8d5d0"/>
+      <text x="496" y="182" font-size="10" font-weight="700" fill="#202a30">不是故障，是「标准」的问题</text>
+      <text x="496" y="200" font-size="9.5" fill="#59656b">记下 3 条「不该发」的例子、</text>
+      <text x="496" y="216" font-size="9.5" fill="#59656b">3 条「该发没发」的例子。</text>
+      <text x="496" y="236" font-size="9" fill="#b3402a">别自己改门槛数字，交给人调。</text>
+
+      <!-- 底部结论 -->
+      <line x1="20" y1="306" x2="700" y2="306" stroke="#e9ede9"/>
+      <text x="20" y="326" font-size="11" fill="#202a30" font-weight="600">如果只是「某一家机构的内容一直没有」——</text>
+      <text x="20" y="344" font-size="10" fill="#59656b">那不是上面的任何一类。去「信源」页找到它，看它是「从未成功」还是「以前有、现在停了」。</text>
+      <text x="20" y="360" font-size="10" fill="#59656b">前者多半是网址填错或需要登录；后者多半是对方改版了。</text>
+
+      <line x1="20" y1="378" x2="700" y2="378" stroke="#e9ede9"/>
+      <text x="20" y="400" font-size="11" fill="#b3402a" font-weight="600">三件不要做的事</text>
+      <text x="20" y="420" font-size="10" fill="#303c42">① 不要一上来就重启——重启不解决钱的问题，还会让现场证据消失。</text>
+      <text x="20" y="438" font-size="10" fill="#303c42">② 不要盲目调高预算上限——那是保险丝，调高只会让异常烧更多钱。</text>
+      <text x="20" y="456" font-size="10" fill="#303c42">③ 不要自己改筛选门槛——改动会立刻影响之后所有稿子，且很难回滚判断。</text>
+    </svg>
+    <figcaption>图 7　把这张图存在手机里。它覆盖了实际遇到的九成情况。</figcaption>
+  </figure>
+
+  <h3>几个真实发生过的例子</h3>
+
+  <div class="qa">
+    <div class="q">充了钱，但内容还是不动</div>
+    <div class="a">先确认余额数字真的变了（有充错账号的先例）。如果变了还不动，就是那批稿子停在「失败」状态，需要人放回队列——这一步自己做不到，必须请人。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">某天内容突然少了很多，是不是坏了</div>
+    <div class="a">先看那天是不是周末或节假日——那几天本来就没多少机构发稿。再看「运行」页有没有跑。两个都正常，就是正常的淡日。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">半夜进来几百条，账单翻倍</div>
+    <div class="a">八成是搜索型源那批「延迟两三天才被收录」的稿子集中成熟了。看它们的原文日期是不是前几天，是就正常。这个现象会周期性出现，不是故障。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">读者说收到两封一样的周报</div>
+    <div class="a">先问是不是订阅了两次（用了两个邮箱、或点了两次订阅）。如果确实是重复发送，那要请人查投递记录。这个不常见，但发生过一次就要查清，因为会让读者退订。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">网站上出现了明显不该发的内容（比如广告、无关文章）</div>
+    <div class="a">先记下 3 条链接。这属于「标准被穿过」，处置是加规则，不是删一条了事——删掉一条，第二天还会有类似的。把例子交给懂的人，让他改规则。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">有人在反馈里说「你们抄了我的文章」</div>
+    <div class="a">这类要当天回。处理方式一般是：确认对方是原文来源 → 加原文链接已经在做 → 如果对方要求下架，在后台把它撤下来（不是屏蔽整个源）。关于页底部本来就写了「希望更正、下架请联系」的话，可以引用给对方。</div>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+  <h2><span class="n">第八章</span>你只需要记住三件事</h2>
+  <p class="lede">如果这份讲解你只记住一页，就记这一页。前面七章是理解，这一章是活下去的最低配置。</p>
+
+  <h3>第一件　口令：整个项目的唯一命门</h3>
+  <p>所有账号的密码被装进一个加密文件里，放在代码仓库。打开它需要<strong>一句口令</strong>。这句口令不在任何文件里，只存在人的记忆或密码管理器里。</p>
+  <p><strong>口令丢了，那个文件就是一堆乱码。</strong>只能跑去服务器上一项项重新抄回来，非常麻烦，而且有些凭据抄不回来。</p>
+  <p>所以：</p>
+  <ul>
+    <li>交接时<strong>当面或电话口述</strong>，不要写在微信、邮件、共享文档里；</li>
+    <li>至少<strong>两个人</strong>知道，存在两个不同的地方；</li>
+    <li>如果你改了任何一个密码，要让保管口令的人<strong>重新加密一次</strong>，否则下次还原出来的是旧的。</li>
+  </ul>
+
+  <h3>第二件　续费日：唯一「忘了就彻底没了」的日期</h3>
+  <p>服务器是租的，到期不续费会直接停机，全站下线。<strong>没有任何自动续费。</strong></p>
+  <p>接手第一件事：登录腾讯云，找到那台机器，看清楚到期日，设三个提醒（提前一个月、提前一周、当天）。这个动作花五分钟，能避免一次彻底的停站。</p>
+
+  <h3>第三件　谁在维护：不要让「只有一个人会」</h3>
+  <p>这套系统最脆的地方不是代码，是<strong>只有一个人知道怎么弄</strong>。那个人休假两周，出了事就没人管。</p>
+  <p>最低限度的安排：<strong>一个懂技术的，加一个懂业务的（你）</strong>。你不改代码，但你知道去哪看、该找谁、怎么说清楚问题。这份文档就是为了让你成为那个人。</p>
+
+  <h3>交接清单：把这张纸打出来，一项项划掉</h3>
+  <ul class="chk">
+    <li>保险箱口令（当面口述，自己抄下来）</li>
+    <li>代码仓库的协作者权限（能登录看到内容）</li>
+    <li>腾讯云控制台（能看到那台机器，并记下到期日）</li>
+    <li>DeepSeek 平台账号（能看到余额和充值记录）</li>
+    <li>专用 QQ 邮箱 + 它的「授权码」（不是登录密码）</li>
+    <li>网站后台的管理员密码（在保险箱里，能取出来）</li>
+    <li>一张写给自己的纸：出问题先找谁、电话多少</li>
+  </ul>
+
+  <h3>每周十分钟</h3>
+  <table>
+    <tr><th>动作</th><th>看什么</th><th>正常的样子</th></tr>
+    <tr><td>打开首页</td><td>最新一条的日期</td><td>是今天或昨天</td></tr>
+    <tr><td>看后台用量</td><td>这周花的钱</td><td>跟上周差不多（差一两倍正常）</td></tr>
+    <tr><td>看邮箱</td><td>有没有大量退信</td><td>没有，或零星一两个</td></tr>
+    <tr><td>记一行字</td><td>日期 / 有没有停更 / 花了多少</td><td>攒三个月，你就有判断力了</td></tr>
+  </table>
+
+  <h3>一年两次</h3>
+  <ul>
+    <li><strong>续费前</strong>：确认服务器和域名都在有效期。顺手看一下云账单有没有异常项。</li>
+    <li><strong>年底</strong>：确认口令还有人知道，并把这一年的「记一行字」翻一遍——哪几个月最贵、为什么，你自己就总结出来了。</li>
+  </ul>
+
+  <h3>一页速查卡</h3>
+  <div class="card" style="background:#fdfdfb;font-size:14px;line-height:2.1">
+    <div><strong>网站</strong>　http://49.233.72.222/yihot/　　<strong>后台</strong>　末尾加 /admin　　<strong>订阅</strong>　末尾加 /subscribe</div>
+    <div style="border-top:1px solid #e9ede9;margin:10px 0;padding-top:10px">
+      <strong>出问题顺序</strong>　① 是不是没钱了　② 是不是服务器到期了　③ 才想别的
+    </div>
+    <div style="border-top:1px solid #e9ede9;margin:10px 0;padding-top:10px">
+      <strong>充钱</strong>　platform.deepseek.com → 充 100~200 元 → 等 24 小时 → 还不动请人「把失败的放回队列」
+    </div>
+    <div style="border-top:1px solid #e9ede9;margin:10px 0;padding-top:10px">
+      <strong>钥匙六样</strong>　口令 / 仓库权限 / 腾讯云 / DeepSeek / 邮箱授权码 / 后台密码
+    </div>
+    <div style="border-top:1px solid #e9ede9;margin:10px 0;padding-top:10px">
+      <strong>最不该做</strong>　删仓库 · 密码发微信 · 一上来就重启 · 随便搬家 · 自己调门槛
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+  <h2><span class="n">附录</span>十三个词，说人话</h2>
+  <p class="lede">开会时你会听到这些词。不需要会用，但需要知道它们在说什么，否则插不上话。</p>
+
+  <table>
+    <tr><th>词</th><th>说人话</th></tr>
+    <tr><td>信源</td><td>一个「供货的网站」。一个机构的一个栏目算一个源，不是一家机构算一个。</td></tr>
+    <tr><td>入池</td><td>「通过了考试」。评分过了门槛（35～40 分，按来源可信度分档）的稿子才进池子，池子里的才会出现在网站上。</td></tr>
+    <tr><td>入池率</td><td>一百条里能过几条。<strong>这是判断一切好坏的唯一指标</strong>，比「抓了多少条」有意义得多。</td></tr>
+    <tr><td>token</td><td>AI 的计价单位，约等于「字」。读进去的字、写出来的字分别计价。</td></tr>
+    <tr><td>提示词</td><td>给 AI 的「工作说明书」。写得好不好，直接决定筛选准不准。它藏在项目里，改它 = 改标准。</td></tr>
+    <tr><td>调用</td><td>「问一次 AI」。一篇文章固定问五次，五次都计费。</td></tr>
+    <tr><td>队列</td><td>「待办事项」。稿子不是立刻处理的，是排队等的。所以有时会看到延迟。</td></tr>
+    <tr><td>回执</td><td>「收费小票」。每次花钱都记一条，账单能查到明细就是靠它。</td></tr>
+    <tr><td>护栏</td><td>「保险丝」。每天每小时的花钱上限。被它拦住不是故障，等一会儿自己恢复。</td></tr>
+    <tr><td>容器 / 镜像</td><td>「把程序装进标准集装箱」。好处是换台机器也能一模一样跑起来；坏处是改了东西要重新打包才生效。</td></tr>
+    <tr><td>部署</td><td>「把改好的东西搬到线上」。改代码不部署，等于没改——网站还是老的。</td></tr>
+    <tr><td>RSS</td><td>「网站提供的更新清单」。订阅它就能第一时间知道对方发了什么，不用去翻网页。</td></tr>
+    <tr><td>接口 / API</td><td>「给别的软件用的取数窗口」。别人想把内容接到自己系统，走这个窗口，不用爬网页。</td></tr>
+  </table>
+
+  <div class="qa">
+    <div class="q">「部署」和「改文件」到底差在哪？</div>
+    <div class="a">打个比方：改文件是把新菜谱写进本子；部署是把新菜谱真的做成菜端出去。<strong>只改本子，客人吃的还是昨天的菜。</strong>所以每次「改完了怎么没变化」，第一个要问的就是「部署了吗」。</div>
+  </div>
+
+  <div class="qa">
+    <div class="q">为什么老听到「三个地方要一致」？</div>
+    <div class="a">因为同一份东西存在三个地方：你手上的电脑、网上的代码仓库、真正跑网站的服务器。改了其中一个，另外两个还是旧的。这三处不一致，是这套系统最常见的坑——下次谁接手，会看到两个不一样的版本，然后在错误的基础上改。</div>
+  </div>
+</section>
+
+<div class="foot">
+  <p><strong>这份文件的定位</strong>：给长期接手、但不写代码的人看。<br>
+  它回答「它靠什么活着、钱在哪、坏了怎么判断、想变好找谁」。<br>
+  真正动手改代码、改配置、上线部署时，看同目录的技术版手册，或交给懂技术的人。</p>
+  <p>文中所有数字为 2026 年 10 月 27 日快照；信源数为 10 月 25 日统计。看账以真实账单为准，看内容以网站实际表现为准。<br>
+  发现问题请直接改这份文件——它比任何人的记忆都可靠。</p>
+</div>
+</main>
+</div>
+</body>
+</html>

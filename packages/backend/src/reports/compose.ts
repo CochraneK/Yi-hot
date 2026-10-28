@@ -313,6 +313,18 @@ export async function composeMonthly(label: string, reason = "scheduled") {
 }
 
 /**
+ * Rebuild a period issue that already exists, so the tail of its window catches up with what the
+ * search sources indexed after the issue was composed. An issue that is missing belongs to
+ * `catchUpReports` instead: refreshing must never bring an empty month or week into the archive.
+ * The previous content is kept in report_revisions, so the refresh can be rolled back.
+ */
+export async function refillPeriod(kind: "weekly" | "monthly", key: string) {
+  const [exists] = await sql`SELECT 1 FROM reports WHERE kind = ${kind} AND key = ${key}`;
+  if (!exists) return null;
+  return kind === "weekly" ? composeWeekly(key, "period-refill") : composeMonthly(key, "period-refill");
+}
+
+/**
  * Catch-up: generates any missing daily report for the last `days` days (never the future and never
  * before the first report in the database), the last complete week and the last complete month.
  */

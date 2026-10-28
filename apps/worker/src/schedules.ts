@@ -11,7 +11,7 @@ import { refreshSourceIcons } from "@aihot/backend/sources/icons";
 import { computeHotRanking, snapshotHeat } from "@aihot/backend/events/hot";
 import { refreshStoryStatuses } from "@aihot/backend/events/digest";
 import { linkRelatedStories } from "@aihot/backend/events/group";
-import { catchUpReports, composeDaily, composeMonthly, composeWeekly } from "@aihot/backend/reports/compose";
+import { catchUpReports, composeDaily, composeMonthly, composeWeekly, refillPeriod } from "@aihot/backend/reports/compose";
 import { addDays, beijingDate, isoWeekLabel } from "@aihot/contracts/time";
 import { runLeaderboardRound } from "@aihot/backend/leaderboard/method/run";
 import { refreshLeaderboard } from "@aihot/backend/leaderboard/fetch/refresh";
@@ -47,11 +47,21 @@ export const SCHEDULES: Scheduled[] = [
   ...(FEATURES.dailyReports || FEATURES.dailyNewsletter ? [{ name: "reports.daily", cron: "0 8 * * *", missed: "once" as const, run: () => composeDaily(beijingDate(Date.now())) }] : []),
   // Weekly and monthly reports run before the 09:00 peak opens: the same model calls at half price,
   // and the report is still on the site before the working day starts.
-  // Monday, just before the new issue: refresh the issue that went out last Monday. Search sources
-  // index a page two or three days after publication, so the issue composed on the Monday after its
-  // week was missing the weekend backlog (W43: 1408 of 1709 candidates, 82%). A week of extra arrival
-  // time closes that gap; the composer keeps the old content in report_revisions.
-  { name: "reports.weekly-refill", cron: "50 5 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -14))) },
+  // Monday and the 1st, just before the new issue: refresh the issue that went out on the previous
+  // cycle. Search sources index a page two or three days after publication, so an issue composed at
+  // the window's edge misses its tail (W43: 1408 of 1709 candidates, no story from the Sunday). A
+  // cycle of extra arrival time closes that gap; the old content stays in report_revisions.
+  { name: "reports.weekly-refill", cron: "50 5 * * 1", missed: "once", run: () => refillPeriod("weekly", isoWeekLabel(addDays(beijingDate(Date.now()), -14))) },
+  {
+    name: "reports.monthly-refill",
+    cron: "20 6 1 * *",
+    missed: "once",
+    run: () => {
+      // Two months back: January refreshes the previous November, February the previous December.
+      const [y, m] = beijingDate(Date.now()).split("-").map(Number) as [number, number];
+      return refillPeriod("monthly", m <= 2 ? `${y - 1}-${String(m + 10).padStart(2, "0")}` : `${y}-${String(m - 2).padStart(2, "0")}`);
+    },
+  },
   { name: "reports.weekly", cron: "0 6 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -7))) },
   {
     name: "reports.monthly",

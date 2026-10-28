@@ -37,6 +37,7 @@
 | `deploy/sshexec.js` | `deploy/sshexec.js` | 远程执行（`SSH_PASS=… node sshexec.js '<cmd>'`；密码只从环境变量读） |
 | `deploy/sftp-upload.js` | 同名 | 单文件上传 |
 | `deploy/sftp-upload-many.js` | 同名 | 按清单批量上传（单连接） |
+| `deploy/sftp-download.js` | 新增 | 单文件下载（取 `/tmp/_upload_manifest.txt`、日志、生产 `.env` 用） |
 | `legacy/push_full.py` | `_push_yihot.py` | 历史：全量首推 |
 | `legacy/finish_push.py` | `_finish_yihot.py` | 历史：补完一次中断的推送 |
 | `legacy/repair_tree.py` | `_repair_yihot.py` | 历史：「误把 `apps/` 子树提到仓库根」事故的修复 |

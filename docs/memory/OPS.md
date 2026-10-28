@@ -40,5 +40,36 @@
 - **上下文资产分布（换机/换 AI 的盲区）**：凭据自 **2026-10-09 起加密入库**——密文 `secrets/credentials.env.enc`（已进仓库）、加解密 `tools/secrets.sh`（一把口令），明文只在本地 `secrets/credentials.env` 与服务器 `/opt/yihot/.env`（**均未入库**）；`deploy/sshexec.js` 不含密码、只读 `SSH_PASS` 环境变量。技能在 `~/.workbuddy/skills/`（本机）；GitHub token 亦可从 `Novel2game/.git/config` 取。**仓库内** `docs/PROJECT_CONTEXT.md`＝脱敏交接总览（clone 即可接手），`docs/memory/`＝本目录**全量**（5 个常青分册 + 每日日志）的脱敏镜像，`tools/`＝同步/部署脚本。
 - **记忆镜像的脱敏闸门**（`tools/sync_memory.py`）：先替换→再全量扫→**全过才落盘**（一处命中则一个字节不写）。脱敏正则的「值」必须限定**凭据字符集**（`[A-Za-z0-9_\-.!@#%^&*+/~?]`），不能只写「非空白非引号」：否则 `startswith('ADMIN_PASSWORD=')` 这类**代码里比对键名**的写法会被误当成赋值，把后文整串吃掉（10-28 实测改坏 10-09 日志 L735）。
 
+## 凭据恢复（丢了 `.env` / 忘了口令）
+
+`.env` **不是密钥源头**，是最容易重建的东西。按这个顺序找，越前面越省事：
+
+| 顺序 | 来源 | 命令 / 位置 | 覆盖 |
+|---|---|---|---|
+| 1 | **服务器真值** | `sudo -n cat /opt/yihot/.env`（`root:root 600`，必须 sudo；29 键） | 全部生产值 |
+| 2 | **加密归档** | `bash tools/secrets.sh decrypt`（35 键，口令交互输入） | 全部 + SSH/GitHub |
+| 3 | 服务方重发 | 见下「外部凭据」 | 只有那几把 |
+| 4 | 自生成 | `node scripts/init-env.ts`（只填空键，不动已有值） | 4 个随机值 |
+| 5 | 可推导 | 见下「不用记的键」 | — |
+
+**外部凭据（丢了只能找对方）**：`LLM_API_KEY`（内网澄思 `172.16.25.104`，找管理员重发）｜`FEISHU_APP_SECRET`（飞书开放平台后台可查看/重置，`app_id` 不变）｜`GITHUB_TOKEN`（`settings/tokens` 重新生成，PAT 只显示一次）｜`EVERYINFRA_API_KEY`（其控制台）。
+
+**SSH 密码丢了** → 腾讯云控制台「轻量应用服务器 → 实例 → 重置密码」（需账号能登录：微信/QQ/邮箱 + 短信）。这是「去腾讯云找密码」的正解——不是找回，是**重设**。
+
+**不用记的键（可推导/固定）**：`DATABASE_URL` 根本不用写进 `.env`——`docker-compose.yml:12` 用 `postgres://aihot:${POSTGRES_PASSWORD}@db:5432/aihot` 拼；`API_BASE_URL=http://api:3001`；`PORT`/`SITE_URL` 是固定部署参数。
+
+**自生成 4 个随机值的代价**（`scripts/init-env.ts:10-17`）：
+
+| 键 | 重新生成后 |
+|---|---|
+| `SESSION_SECRET` | 所有后台登录态失效 → 重新登录（无数据影响） |
+| `IMG_PROXY_SIGN_SECRET` | 已签名的图片代理 URL 全失效 → 页面刷新会重签；**已发出去的邮件/外链里的图会 403** |
+| `ADMIN_PASSWORD` | 自己设，改完必须 `up -d`（`env_file` 在容器创建时固化） |
+| `POSTGRES_PASSWORD` | ⚠️ **不能只改 `.env`**：库密码在 DB 里，只改 env = 应用连不上库。正解是先改库再同步 env：`sudo -n docker exec aihot-db-1 psql -U aihot -c "ALTER USER aihot PASSWORD '…'"`（本地 socket **免密**，已实测 `psql -U aihot` 可直接连） |
+
+**真正不可恢复的两样**：① 加密归档的**口令**（设计上不落任何文件，丢了只能回服务器重取）；② 数据库**数据**——但它在 volume `postgres-data` 里，跟 `.env` 无关，换 env 不动数据。
+
+**2026-10-28 补齐**：归档原 27 键 < 生产 29 键，缺 `AIHOT_RELEASE` / `ANALYZE_OFFPEAK_ONLY` / `APT_MIRROR` / `EVERYINFRA_API_KEY` / `INGEST_TOKEN` / `JINA_BODY_FALLBACK` / `NPM_REGISTRY` / `USD_CNY_RATE`（其中两个是凭据）→ 已从服务器取回并入 `secrets/credentials.env`，**须重跑一次 `secrets\encrypt-secrets.bat` 才会进 `.enc`**。
+
 ## 验收清单
 `/` `/yihot/` `/yihot/about` `/yihot/all` `/yihot/daily` `/feed.xml` `/futureme/` `/futureme/api/status` 全 **200**；`/futureme/admin/` **401**；管理页未登录 **302**。

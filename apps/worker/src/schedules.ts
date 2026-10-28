@@ -47,6 +47,11 @@ export const SCHEDULES: Scheduled[] = [
   ...(FEATURES.dailyReports || FEATURES.dailyNewsletter ? [{ name: "reports.daily", cron: "0 8 * * *", missed: "once" as const, run: () => composeDaily(beijingDate(Date.now())) }] : []),
   // Weekly and monthly reports run before the 09:00 peak opens: the same model calls at half price,
   // and the report is still on the site before the working day starts.
+  // Monday, just before the new issue: refresh the issue that went out last Monday. Search sources
+  // index a page two or three days after publication, so the issue composed on the Monday after its
+  // week was missing the weekend backlog (W43: 1408 of 1709 candidates, 82%). A week of extra arrival
+  // time closes that gap; the composer keeps the old content in report_revisions.
+  { name: "reports.weekly-refill", cron: "50 5 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -14))) },
   { name: "reports.weekly", cron: "0 6 * * 1", missed: "once", run: () => composeWeekly(isoWeekLabel(addDays(beijingDate(Date.now()), -7))) },
   {
     name: "reports.monthly",

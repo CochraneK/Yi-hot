@@ -18,7 +18,7 @@
 - ⚠️ **信源增删后必重生成离线审计快照**（`scripts/source-registry-audit.mjs --write` ＋ 改 `tests/source-registry-audit.test.mjs` 基线），否则 CI 第 5 步 `Source registry audit` 直接挂、后面全跳过（10-09 真事故：源 16→20 未重生成）。详见 `OPS.md`。
 - 工具在 `D:\Software\DSH\`：`_sync_yihot.py`（增改，**无删**）｜`_delete_yihot.py`（删）｜`_pull_yihot.py`｜`_verify_yihot_threeway.py`。commit 日期＝本地墙钟+真实时区偏移（禁 `gmtime()+08:00`，会快 8h）。
   - ⚠️ **10-09 起唯一真值已搬进仓库 `tools/`**（`sync.py`/`delete.py`/`pull.py`/`compare.py`/`verify_threeway.py`/`ci_status.py`/`deploy/*.js`，共享配置 `tools/yihot_common.py`，env：`YIHOT_ROOT`/`YIHOT_WORK`/`GITHUB_TOKEN`）。**改同步逻辑改 `tools/`，别再改开发机那份**（免得漂移）。
-- **记忆镜像**：本目录 5 个常青分册脱敏后进仓库 `docs/memory/`（由 `tools/sync_memory.py` 单向生成）。**改了这 5 个分册要重跑** `python tools/sync_memory.py`，否则仓库镜像会过期。凭据走 `secrets/credentials.env.enc` + `tools/secrets.sh`。
+- **记忆镜像**：本目录**全量**（5 个常青分册 + 所有 `YYYY-MM-DD.md` 日志）脱敏后进仓库 `docs/memory/`（由 `tools/sync_memory.py` 单向生成）。**改了这里任何文件都要重跑** `python tools/sync_memory.py`，否则仓库镜像会过期。凭据走 `secrets/credentials.env.enc` + `tools/secrets.sh`。
 - 另一台电脑也推同仓，**其内容不会自动部署**；拉远端前先确认本地无独有改动。
 
 ## 内容口径（最易出错）

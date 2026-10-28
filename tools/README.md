@@ -24,7 +24,7 @@
 | 脚本 | 来自 | 作用 |
 | --- | --- | --- |
 | `yihot_common.py` | 新增 | 共享：仓库根 / token / 中间产物目录 / blob sha |
-| `sync.py` | `_sync_yihot.py` | **增改文件并推送到 GitHub 分支**（默认 main；`--branch codex/名称 --expect-head <SHA>` 可指定已存在分支并检查基线；**无删除能力**） |
+| `sync.py` | `_sync_yihot.py` | **增改文件并推送到 GitHub main**（`python tools/sync.py -m "…" <路径…>`；**无删除能力**） |
 | `delete.py` | `_delete_yihot.py` | 从 GitHub main 删除指定路径（`python tools/delete.py -m "…" <路径…>`；自带「删除前后全量 path→blob-sha 对照」安全闸门） |
 | `pull.py` | `_pull_yihot.py` | 从 GitHub main 拉回本地（只覆盖有差异/缺失的路径，逐个校验 blob sha） |
 | `compare.py` | `_cmp_yihot.py` | **只读**比对：GitHub main vs 本地（远端独有 / 本地独有 / 内容不同） |
@@ -33,7 +33,7 @@
 | `verify_fm_threeway.py` | `_verify_fm_threeway.py` | FutureMe（姊妹站）三方核查 |
 | `ci_status.py` | `deploy/_ci_status.py` | 查 GitHub Actions：默认列 check-runs，`--steps` 逐 job 逐 step，`--log` 拉失败 job 日志，`--annots` 查注解 |
 | `secrets.sh` | 新增 | 凭据归档的加解密（见 `../secrets/README.md`） |
-| `sync_memory.py` | 新增 | 把 `.workbuddy/memory/` 的 5 个常青分册脱敏镜像到 `docs/memory/`（`--check` 只扫描） |
+| `sync_memory.py` | 新增 | 把 `.workbuddy/memory/` 的常青分册 + 每日日志脱敏镜像到 `docs/memory/`（`--check` 只扫描） |
 | `deploy/sshexec.js` | `deploy/sshexec.js` | 远程执行（`SSH_PASS=… node sshexec.js '<cmd>'`；密码只从环境变量读） |
 | `deploy/sftp-upload.js` | 同名 | 单文件上传 |
 | `deploy/sftp-upload-many.js` | 同名 | 按清单批量上传（单连接） |
@@ -49,10 +49,6 @@
 > `package.json` 声明了 `"type": "module"`，Node 又取「最近的那个 package.json」，
 > 所以少了它这几个用 `require` 的部署脚本会被当 ESM 跑、直接报
 > `require is not defined in ES module scope`。**不要删。**
-
-## 生产 DeepSeek 默认模型安全切换
-
-当前 `.env.example` 已是 `deepseek-flash`（非思考），历史生产 `.env` 的 `LLM_MODEL=deepseek-chat` 不会被自动覆盖。在**服务器**（不是 CI 或开发机）将仓库更新后，先执行 `python3 tools/switch_deepseek_flash.py` 预检，再执行 `python3 tools/switch_deepseek_flash.py --apply`。脚本只变更已有的 `.env` 中模型名与思考参数、备份密钥文件，并重建/核验 api 和 worker 容器；不变更后台逐能力覆盖。操作与回滚见 [切换指引](../docs/DEEPSEEK_FLASH_SWITCH_2026-10-21.md)。
 
 ## 常用工作流
 

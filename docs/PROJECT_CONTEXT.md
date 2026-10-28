@@ -1,22 +1,16 @@
 # PROJECT_CONTEXT — 冷启动交接（换机器 / 换 AI 必读）
 
-> **2026-10-24 对话归档与接手优先读 [`HANDOFF-2026-10-24-CHAT-ARCHIVE.md`](HANDOFF-2026-10-24-CHAT-ARCHIVE.md)。** 本文提供长期架构、
-> 口径和换机说明。
-
 > **这份文件为什么存在**：项目的日常记忆（踩坑、口径、SOP）原本只存在于开发机的 `.workbuddy/memory/`，而该目录在 `.gitignore` 里——它**从不进仓库**。结果是：换一台电脑、或换一个 AI 来接手时，只有代码，没有经验，会重复踩坑。
 > 现在仓库里把接手需要的东西配齐了：
 >
 > | 读什么 | 是什么 |
 > | --- | --- |
-> | **本文** | 长期交接总览：站点拓扑 / 部署 / 内容口径 / **新设备上手（§8）** / **接手清单（§9）** |
-> | [`HANDOFF-2026-10-24-CHAT-ARCHIVE.md`](HANDOFF-2026-10-24-CHAT-ARCHIVE.md) | 最新 ChatGPT 对话归档：信源、价格/币种、模型迁移、可视化与可执行待办；所有运行数据注明核查时间 |
-> | [`SOURCE_COVERAGE.md`](SOURCE_COVERAGE.md) | 2026-10-23 晚的信源核查快照，含生产 190/169 与 seed 133 的口径差异；另须核对省级民政 24/23 的数字不一致 |
-> | `docs/memory/` | 项目经验的**脱敏镜像**（`.workbuddy/memory/` 的 5 个常青分册；先看索引 `MEMORY.md`） |
+> | **本文** | 交接总览：站点拓扑 / 部署 / 内容口径 / **新设备上手（§8）** / **接手清单（§9）** |
+> | `docs/memory/` | 项目经验的**脱敏镜像**（`.workbuddy/memory/` 的常青分册 + 每日日志；先看索引 `MEMORY.md`） |
 > | `tools/` | 同步 / 部署 / 核查脚本（`tools/README.md` 有清单与用法） |
-> | `docs/RELATED_PROJECTS.md` | 同类项目调研：哪些做法已采纳、哪些明确不采纳及原因 |
 > | `secrets/` | 凭据**加密归档**（`credentials.env.enc` + `tools/secrets.sh`，一把口令；见 `secrets/README.md`） |
 >
-> 更新时间：2026-10-16。独立「精选」栏目暂时隐藏，首页统一进入「全部动态」；精选判定、标签、总报、RSS 与 API 继续保留，见 [PRODUCT_UPDATE_2026-10-16.md](PRODUCT_UPDATE_2026-10-16.md)。六项修复已部署腾讯云并通过线上 smoke；GitHub [PR #6](https://github.com/CochraneK/Yi-hot/pull/6) 已通过检查并合并 main。三个网站来源已试抓 58 条历史样本；免费 WeRSS 已通过微信读书扫码实采公益时报 43 篇，YiHot 首抓入库 30 篇。用户已明确授权四个新来源全部启用，运行时均为 `enabled=true`、`participation_mode=editorial`，全文仍关闭；原有 88 条样本已进入正常处理，首轮已观察到 17 篇精选。WeRSS 现已改为 web 模式，需每 3 天在管理端扫码并逐号点「刷新」（2026-10-20 修正：原先描述的「每两小时刷新」实为一直失败的微信读书定时器，见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)）。AmCham 已另用认证公众号启用接入；公益总报、原文日期排序、卡片标签以及无斜杠的精简分类名称已完成。爱德传一《慈善纪事简报》已登记为待真实邮件样本验证的候选来源。既有产品改动见 [PRODUCT_UPDATE_2026-10-13.md](PRODUCT_UPDATE_2026-10-13.md)，生产状态见 [DEPLOYMENT_2026-10-12.md](DEPLOYMENT_2026-10-12.md)，信息源实测见 [SOURCE_EXPANSION_2026-10-12.md](SOURCE_EXPANSION_2026-10-12.md)，后续部署见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
+> 更新时间：2026-10-09（本次按「换机交接」重构）。深度内容配合 `docs/architecture.md`、`docs/deploy.md`、`docs/sources.md`、`docs/selection.md` 阅读。
 
 
 ---
@@ -93,33 +87,32 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 | 位置 | 排序字段 | 代码 |
 | --- | --- | --- |
 | 首页精选时间线 | **`sort_at`**（按"组"取 `max(sort_at)` 作锚点） | `publication/timeline.ts` |
-| `/all` 全部动态 | **`coalesce(published_at, timeline_at) DESC`**（原文日期优先） | `publication/pool.ts` |
+| `/all` 全部动态 | **`timeline_at DESC`** | `publication/pool.ts` |
 | 公开 API v1 | **可切换**：`?by=published` → `coalesce(published_at, discovered_at)`；`mode=selected` → `sort_at`；否则 `timeline_at` | `publication/v1.ts` |
 
-**⚠️ 两个日期边界：**
+**⚠️ 两个已知陷阱：**
 
-1. **原文日期缺失不能伪装成发布时间**：全部动态卡片优先显示 `publishedAt`；缺失时明确标注「收录」。详情页也区分原文发布时间与本站收录时间。v1 保持既有字段和游标契约，消费者仍应核实原文日期可用性。
+1. **`published_at` 缺失时会回退成收录时间，并照样标成"发布时间"**——`publication/detail.ts` 与 `v1.ts` 都是 `coalesce(p.published_at, p.discovered_at)`。也就是说：**看到"发布时间"是某天，不代表原文那天真的发了**，可能原文压根没给日期，显示的是我们抓到的时刻。
 2. **`publications.sort_at` 不能直接改**：精选条目的 `sort_at` 是**读取组的锚点**（`min`/`max` of 组内成员的 `timeline_at`）。要让某个已精选条目换时间位置，得入队 `publication.republish-source` 让它重算，直接 UPDATE 会被下一次发布覆盖。
 
-**所以"今天怎么没有新内容 / 列表怎么停在昨天"的正确诊断顺序是**：先看 `eligible`（判定口径，见 3.2），再看原文 `published_at`（全部动态）或 `sort_at`（精选组时间线）——**不要用采集时间（`discovered_at`）去解释列表顺序**，它对列表完全不起作用。
+**所以"今天怎么没有新内容 / 列表怎么停在昨天"的正确诊断顺序是**：先看 `eligible`（判定口径，见 3.2），再看 `timeline_at`（排序口径）——**不要用采集时间（`discovered_at`）去解释列表顺序**，它对列表完全不起作用。
 
 ### 3.2 列表与判定
 
-- 首页 `/` = **精选**；`/all` = **全部动态**。两者都强制 `listedCondition(now) AND p.eligible`。
+- 首页 `/` = **精选**；`/all` = **全部公益动态**。两者都强制 `listedCondition(now) AND p.eligible`。
   - `listedCondition(now)` = `visibility='public' AND (NOT selected OR visible_after <= now)`
-  - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，再叠加该源的 `publication_rule`（`minScore` / `scoreByCategory` / `requireMarkers` / `dropCategories`，默认无），缺一即 false。
+  - **`eligible` = `isPoolEligible()`**（`packages/backend/src/publication/rules.ts`）：`participation_mode='editorial'` + **`relevance='pass'`** + 有标题 + 有摘要，缺一即 false。
   - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。
-- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），2026-10-19 的 seed 快照为 **24 条**；生产运行时另含公众号、邮件及后台接入的来源。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 的种子数量从该 JSON 动态读取，加源后仍须重生成信源审计产物。
-- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。实际轮询间隔以运行时数据库为准；新增网站、公众号初期配置 120 分钟，worker 可能自动调整。
+- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），当前 **20 条（19 启用 + 1 停用）**。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 断言 `select count(*) from sources` = 20，加源必须同步。
+- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。当前启用源统一 30 分钟。
 
 ## 4. 数据模型要点（写 SQL 前先看这段）
 
 - `publications` **没有 `created_at`**。可见性五字段：`eligible` / `visibility` / `visible_after` / `selected` / `backfill`。
 - `articles`：`identity_key = url:<url>`。
 - `analyses`：摘要列叫 **`summary_zh`**（还有 `title_zh` / `reason_zh`，**不叫 `summary`**）。一篇文章可以有多条 analyses → JOIN 会让 publication 行重复。
-- 机构主题来自 `analyses.subjects`，发布时转成内部 `entity:<id>` 标签。模型候选还必须通过 `editorial/analyze.ts` 的主体证据校验：来源 `owner_entity_id` 匹配，或原始标题明确点名机构；正文顺带提及和多事件简报不会进入机构主题。`owner_entity_id` 只给每条内容都属于该机构动态的专属栏目，官网综合转载栏目不能设置（`web-mee-zcwj` 是现有反例及已处理例）。历史修复用 `node scripts/repair-entity-subjects.ts`（默认 dry-run，`--apply` 才写入并重发布）。
 - `receipt_attempts`：**每次线上模型调用记一条**，`usage` (jsonb) 里有 `prompt_tokens` / `completion_tokens`，另有 `model` / `cost` / `cost_basis` / `currency` / `latency_ms` / `started_at`。`origin='live'` 才是在线调用。
 - `service_prices`：**单价表，人工维护**（`service` + `model` 为主键，`model=''` 是该服务的兜底价）。后台的费用列与「用量与成本」页全靠它——**表空着时金额一律显示"未定价"**。价格按 `service` 匹配，而 `service` 由 `packages/backend/src/providers/llm.ts` 的 `MODELS` 注册表反查得到：**模型名与注册表对不上就永远没有价格**（页面「实际在用」区会直接标出这种情况）。**改单价不用写 SQL**：在 `/admin/usage` 的「计价方式」卡里新增/编辑/删除（后端 `packages/backend/src/admin/models.ts` 的 `savePrice` / `deletePrice`，接口 `POST|DELETE /api/admin/usage/prices`，改动写审计）。
 - 手动入队 pgboss 写 `pgboss.job` 表（没有 `createjob` 之类的家表）。
@@ -200,7 +193,7 @@ cd apps/web && node ../../node_modules/@react-router/dev/bin.cjs typegen
    - ⚠️ 其余 `tests/*.test.ts` 需要 `DATABASE_URL` 指向 `*_test` / `*_ci` 库（`tests/setup.ts` 硬要求）——本机没有 Postgres 时跑不了，**这是环境限制，不是回归**。
 5. **改完要上线** → 按第 2 节的 `scp` + `ssh` + `docker compose build/up -d`，或用 `tools/deploy/` 里现成的脚本。
 6. **同步回 GitHub** → 用 `python tools/sync.py`（**不要 `git push`**，见下）。
-7. **若改了 `.workbuddy/memory/` 的 5 个常青分册** → 重跑 `python tools/sync_memory.py`，否则仓库里的 `docs/memory/` 镜像会过期。
+7. **若改了 `.workbuddy/memory/` 的任何文件**（常青分册或每日日志）→ 重跑 `python tools/sync_memory.py`，否则仓库里的 `docs/memory/` 镜像会过期。
 
 > ⚠️ **新设备上两个反直觉点**
 > 1. **`git push` / `git fetch` 在本机网络环境下会失败**（出口代理只放行 `api.github.com`，`github.com` 的 git smart-HTTP 被拦，报 502）。推送必须走 REST / Git Data API —— 就是 `tools/sync.py` / `tools/delete.py` 那一套。
@@ -240,6 +233,6 @@ cd apps/web && node ../../node_modules/@react-router/dev/bin.cjs typegen
 
 **第五步：交接时别忘了。**
 - 任何**凭据变更**都要回写 `secrets/credentials.env` 并重新 `tools/secrets.sh encrypt`（否则换机还原的是过期值）。
-- 任何**记忆更新**（`.workbuddy/memory/` 的 5 个常青分册）都要重跑 `python tools/sync_memory.py`。
+- 任何**记忆更新**（`.workbuddy/memory/` 下的常青分册 / 每日日志）都要重跑 `python tools/sync_memory.py`。
 
 

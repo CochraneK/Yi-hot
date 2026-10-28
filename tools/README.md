@@ -67,6 +67,10 @@ python tools/compare.py
 python tools/verify_threeway.py                       # 本机：GitHub + 本地
 #   把 _local_map.json / server_diff.py 传到服务器，在服务器上跑 server_diff.py
 #   再取回 /tmp/_upload_manifest.txt 交给 deploy/sftp-upload-many.js
+#
+#   ⚠️ 本地可能**落后**于远端（另一台机器在推进）：这时全树比对会把远端新功能
+#   判成「服务器该换成本地旧版」= 倒退覆盖。只改了几个文件就用定向模式：
+#   YIHOT_ONLY=docs/memory/README.md,tools/sync_memory.py python3 tools/server_diff.py
 
 # 4) 补齐服务器（文档/工具这类非运行时文件不用 rebuild）
 cd tools/deploy && SSH_PASS=… node sftp-upload-many.js <manifest>

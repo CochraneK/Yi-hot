@@ -16,7 +16,9 @@ const NAMEPLATES = {
 export function Nameplate({ which, className = "" }: { which: keyof typeof NAMEPLATES; className?: string }) {
   const n = NAMEPLATES[which];
   return (
-    <svg viewBox={n.viewBox} className={className} aria-hidden="true" focusable="false">
+    // The logotype is set left-aligned when the box is narrower than the artwork (a narrow page), so a
+    // squeezed nameplate shrinks rather than spilling over whatever sits beside it.
+    <svg viewBox={n.viewBox} preserveAspectRatio="xMinYMid meet" className={className} aria-hidden="true" focusable="false">
       <use href={`${n.url}#accent`} className="fill-accent" />
       <use href={`${n.url}#ink`} className="fill-ink" />
     </svg>

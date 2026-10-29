@@ -35,20 +35,24 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
         <span>{EDITION[report.kind]}</span>
       </div>
 
-      <div className="flex items-stretch justify-between gap-5 py-6 @[880px]:gap-10 @[880px]:py-8">
+      {/* Narrow paper stacks the 报眼 under the nameplate instead of beside it: the logotype then uses the
+          whole measure and grows with the page. From 470px the two sit side by side again; the nameplate's
+          max-w-full covers the widths in between, where its stepped height would otherwise run into the box. */}
+      <div className="flex flex-col gap-4 py-6 @[470px]:flex-row @[470px]:items-stretch @[470px]:justify-between @[470px]:gap-5 @[880px]:gap-10 @[880px]:py-8">
         <div className="flex min-w-0 flex-col justify-center">
           <h1 id="report-start">
             <span className="sr-only">
               总报 · {KIND_LABEL[report.kind]} · {dateLine(report.kind, report.key)}
             </span>
-            <Nameplate which={report.kind} className="block h-[54px] w-auto @[520px]:h-[74px] @[880px]:h-[98px] @[1040px]:h-[112px]" />
+            <Nameplate which={report.kind} className="block h-auto w-full max-w-full @[470px]:h-[54px] @[470px]:w-auto @[520px]:h-[74px] @[880px]:h-[98px] @[1040px]:h-[112px]" />
           </h1>
           <p className="mt-3 text-[11.5px] tracking-[0.36em] text-ink-4 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
         </div>
         {/* 报眼: the box beside the nameplate, as a Chinese daily sets it: the issue and the date in the
-            nameplate's dots, and on wider paper the issue calendar beside them. */}
-        <div className="flex shrink-0 items-stretch well rounded-panel">
-          <div className="flex w-[112px] flex-col items-center justify-center px-2 py-3 text-center @[880px]:w-[150px] @[880px]:py-4">
+            nameplate's dots, and on wider paper the issue calendar beside them. Below the nameplate it
+            keeps the same shape and only moves down a line, set to the right margin as a paper would. */}
+        <div className="flex w-[116px] shrink-0 items-stretch self-end well rounded-panel @[470px]:w-auto @[470px]:self-auto">
+          <div className="flex w-full flex-col items-center justify-center px-2 py-3 text-center @[470px]:w-[112px] @[880px]:w-[150px] @[880px]:py-4">
             {issue && <span className="text-[11px] tracking-[0.2em] text-ink-4">第 {issue} 期</span>}
             <Halftone seed={`${report.kind}-${report.key}-date`} className="num mt-2 whitespace-nowrap text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[880px]:text-[64px]">
               {mark.figure}

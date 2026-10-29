@@ -27,17 +27,19 @@ function gap(a: string, b: string): number {
 }
 
 const S = SITE.subject;
+/** 周报/月报的名牌写「儿童公益」，日报仍用站点主体词（日报只作历史存档）。 */
+const PERIODICAL = "儿童公益";
 const NAMEPLATES: Record<string, Array<{ text: string; accent: boolean }>> = {
   daily: [
     { text: S, accent: true },
     { text: "日报", accent: false },
   ],
   weekly: [
-    { text: S, accent: true },
+    { text: PERIODICAL, accent: true },
     { text: "周报", accent: false },
   ],
   monthly: [
-    { text: S, accent: true },
+    { text: PERIODICAL, accent: true },
     { text: "月报", accent: false },
   ],
   archive: [

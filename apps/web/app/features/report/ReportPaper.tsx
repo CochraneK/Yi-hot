@@ -27,8 +27,6 @@ const LINK = "inline-flex min-h-7 items-center gap-0.5 font-medium transition-co
 function Masthead({ report, index }: { report: ReportDetail; index: ReportNavigationEntry[] }) {
   const issue = issueNumber(index, report.key);
   const mark = dateMark(report.kind, report.key);
-  // The period's own plate, when the masthead is set over two lines on a narrow page.
-  const kindPlate = report.kind === "weekly" ? ("weekly-kind" as const) : report.kind === "monthly" ? ("monthly-kind" as const) : null;
   return (
     <header className="pt-5 lg:pt-0">
       <div className="flex items-center justify-between gap-4 text-[12px] text-ink-4">
@@ -37,51 +35,39 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
         <span>{EDITION[report.kind]}</span>
       </div>
 
-      {/* A narrow page sets the masthead over two lines: 儿童公益 on its own, then 周报 beside the 报眼.
-          The period's plate is sized in cqw so its glyphs stand exactly as tall as the four above — the
-          two lines still read as one logotype. From 470px the one-line nameplate returns, the box at its
-          right; max-w-full covers the widths in between, where the stepped height would hit the box. */}
-      {/* The two-line block is measured to 儿童公益 itself: its plate is cut 933.8:244, so a 22cqw
-          glyph height is 3.827 times that across, and the block set to that width puts the 报眼's right
-          edge on the margin the four characters end on instead of hanging a hand's width past it. 周报
-          takes the right end of the line beside it, so the white space between plate and box is the
-          line's own and the two plates centre on nothing — they read down the right margin. The
-          column gap is whatever the arithmetic leaves (4px at 390, 1.7px at 320): a floor, not a
-          measure. Both start at the top of the second line, so 周报 sits directly under the logotype
-          rather than being held down to the bottom of the taller box. */}
-      <div
-        className={`grid ${
-          kindPlate ? "w-[calc(22cqw*3.827)]" : "w-full"
-        } grid-cols-[minmax(0,1fr)_auto] items-start gap-x-1 gap-y-2 py-6 @[470px]:w-full @[470px]:items-stretch @[470px]:gap-5 @[470px]:gap-y-0 @[880px]:gap-10 @[880px]:py-8`}
-      >
-        <h1 id="report-start" className="col-span-2 row-start-1 min-w-0 @[470px]:col-span-1">
+      {/* One line at every width: the whole logotype beside the 报眼. On a narrow sheet the plate takes
+          whatever the box leaves (w-full), so its height follows the artwork's own ratio — 5.71:1 for
+          the weekly, 5.65:1 for the monthly — and the type simply gets smaller with the page instead of
+          being cut in two. From 470px the plate holds a fixed height and the box keeps its own column;
+          max-w-full covers the widths in between, where the stepped height would hit the box. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-stretch gap-x-2 py-6 @[470px]:gap-5 @[880px]:gap-10 @[880px]:py-8">
+        <h1 id="report-start" className="col-start-1 row-start-1 min-w-0">
           <span className="sr-only">
             总报 · {KIND_LABEL[report.kind]} · {dateLine(report.kind, report.key)}
           </span>
-          {kindPlate && <Nameplate which="periodical" className="block h-[22cqw] w-auto @[470px]:hidden" />}
           <Nameplate
             which={report.kind}
-            className={`${kindPlate ? "hidden @[470px]:block" : "block"} h-auto w-auto max-w-full @[470px]:h-[54px] @[520px]:h-[74px] @[880px]:h-[98px] @[1040px]:h-[112px]`}
+            className="block h-auto w-full max-w-full @[470px]:h-[54px] @[470px]:w-auto @[520px]:h-[74px] @[880px]:h-[98px] @[1040px]:h-[112px]"
           />
         </h1>
-        {/* Both plates are sized in cqw — just over just over a fifth of the measure — so the two lines stand at one glyph
-            height and scale with the page instead of stepping at breakpoints. */}
-        {kindPlate && <Nameplate which={kindPlate} className="col-start-1 row-start-2 block h-[22cqw] w-auto justify-self-end @[470px]:hidden" />}
         {/* 报眼: the box beside the nameplate, as a Chinese daily sets it: the issue and the date in the
-            nameplate's dots, and on wider paper the issue calendar beside them. Below the nameplate it
-            keeps the same shape and only moves down a line, set to the right margin as a paper would. */}
-        <div className={`col-start-2 flex w-[116px] shrink-0 items-stretch well rounded-panel @[470px]:row-span-2 @[470px]:row-start-1 @[470px]:w-auto @[470px]:self-auto ${kindPlate ? "row-start-2 self-start" : "row-span-2 row-start-1"}`}>
+            nameplate's dots, and on wider paper the issue calendar beside them. It spans both rows, so
+            the box stands as tall as the logotype and the line under it. */}
+        <div className="col-start-2 row-span-2 row-start-1 flex w-[116px] shrink-0 items-stretch well rounded-panel @[470px]:w-auto">
           <div className="flex w-full flex-col items-center justify-center px-2 py-3 text-center @[470px]:w-[112px] @[880px]:w-[150px] @[880px]:py-4">
-            {issue && <span className="text-[11px] tracking-[0.2em] text-ink-4">第 {issue} 期</span>}
-            <Halftone seed={`${report.kind}-${report.key}-date`} className="num mt-2 whitespace-nowrap text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[880px]:text-[64px]">
+            {issue && <span className="hidden text-[11px] tracking-[0.2em] text-ink-4 @[470px]:inline">第 {issue} 期</span>}
+            <Halftone seed={`${report.kind}-${report.key}-date`} className="num mt-0 whitespace-nowrap text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[470px]:mt-2 @[880px]:text-[64px]">
               {mark.figure}
             </Halftone>
-            <span className="mt-2 text-[11.5px] text-ink-2">{mark.top}</span>
-            <span className="text-[11.5px] text-ink-4">{mark.bottom}</span>
+            {/* On a narrow sheet the dates repeat the line above the masthead, and the issue number is a
+                desktop nicety: the box keeps the figure and one line naming it, so it stands near the
+                logotype's own height instead of three times it. */}
+            <span className="mt-1.5 text-[10px] text-ink-2 @[470px]:mt-2 @[470px]:text-[11.5px]">{mark.top}</span>
+            <span className="hidden text-[11.5px] text-ink-4 @[470px]:block">{mark.bottom}</span>
           </div>
           <IssueDots kind={report.kind} reportKey={report.key} index={index} className="hidden w-[176px] border-l border-line px-4 py-4 @[760px]:block @[880px]:w-[196px]" />
         </div>
-        <p className="col-span-2 row-start-3 text-[11.5px] tracking-[0.36em] text-ink-4 @[470px]:col-span-1 @[470px]:row-start-2 @[470px]:mt-3 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
+        <p className="col-start-1 row-start-2 self-end text-[11.5px] tracking-[0.36em] text-ink-4 @[470px]:mt-3 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
       </div>
 
       <div className="flex flex-wrap items-baseline gap-x-8 gap-y-1.5 border-y border-line-strong py-3">

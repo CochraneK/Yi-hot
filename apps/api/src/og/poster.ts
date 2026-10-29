@@ -10,7 +10,7 @@ import { SITE } from "@aihot/industry/site";
 import { config } from "@aihot/backend/config";
 import { fonts, h, nameMark, OG_PNG, SITE_HOST, type Node } from "./render.ts";
 
-export const POSTER_TEMPLATE_VERSION = "poster-2026-09-29.1";
+export const POSTER_TEMPLATE_VERSION = "poster-2026-10-29.1";
 const WIDTH = 1080;
 const HEIGHT = 1440;
 const CACHE_DIR = path.join(config.dataDir, "ogcache");

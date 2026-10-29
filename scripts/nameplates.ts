@@ -46,6 +46,11 @@ const NAMEPLATES: Record<string, Array<{ text: string; accent: boolean }>> = {
     { text: "日报", accent: false },
     { text: "合订本", accent: true },
   ],
+  // A narrow page sets the masthead over two lines: the subject word alone, then the period beside the
+  // 报眼. These are the same glyphs as the one-line logotype, cut apart so each line can size itself.
+  periodical: [{ text: PERIODICAL, accent: true }],
+  "weekly-kind": [{ text: "周报", accent: false }],
+  "monthly-kind": [{ text: "月报", accent: false }],
 };
 
 // Which woff slice of the 900 weight holds each character.

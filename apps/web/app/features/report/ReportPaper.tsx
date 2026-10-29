@@ -17,7 +17,7 @@ import { SourceAvatar } from "../../components/ui/SourceAvatar";
 import { Halftone } from "./Halftone";
 import { Nameplate } from "./Nameplate";
 import { IssueDots } from "./IssueDots";
-import { EDITION, KIND_LABEL, MOTTO, dateLine, dateMark, headline, issueNumber, metricItems, neighbourLabel, reportPath, shortDay } from "./format";
+import { EDITION, KIND_LABEL, MARK_UNIT, MOTTO, dateLine, dateMark, headline, issueNumber, metricItems, neighbourLabel, reportPath, shortDay } from "./format";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const keyOf = (c: ReportCitation) => c.itemId ?? c.title;
@@ -51,23 +51,30 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
           />
         </h1>
         {/* 报眼: the box beside the nameplate, as a Chinese daily sets it: the issue and the date in the
-            nameplate's dots, and on wider paper the issue calendar beside them. It spans both rows, so
-            the box stands as tall as the logotype and the line under it. */}
-        <div className="col-start-2 row-span-2 row-start-1 flex w-[116px] shrink-0 items-stretch well rounded-panel @[470px]:w-auto">
-          <div className="flex w-full flex-col items-center justify-center px-2 py-3 text-center @[470px]:w-[112px] @[880px]:w-[150px] @[880px]:py-4">
+            nameplate's dots, and on wider paper the issue calendar beside them. A narrow sheet sets it
+            level with the logotype — the row is the logotype's height and the box stretches to it — so
+            the figure and its unit take one line and everything else is left to the date line above the
+            masthead. From 470px it spans both rows and carries the full block again. */}
+        <div className="col-start-2 row-start-1 flex w-[84px] shrink-0 items-stretch well rounded-panel @[470px]:row-span-2 @[470px]:w-auto">
+          <div className="flex w-full flex-col items-center justify-center px-1 @[470px]:w-[112px] @[470px]:px-2 @[470px]:py-3 @[880px]:w-[150px] @[880px]:py-4">
             {issue && <span className="hidden text-[11px] tracking-[0.2em] text-ink-4 @[470px]:inline">第 {issue} 期</span>}
-            <Halftone seed={`${report.kind}-${report.key}-date`} className="num mt-0 whitespace-nowrap text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[470px]:mt-2 @[880px]:text-[64px]">
-              {mark.figure}
-            </Halftone>
-            {/* On a narrow sheet the dates repeat the line above the masthead, and the issue number is a
-                desktop nicety: the box keeps the figure and one line naming it, so it stands near the
-                logotype's own height instead of three times it. */}
-            <span className="mt-1.5 text-[10px] text-ink-2 @[470px]:mt-2 @[470px]:text-[11.5px]">{mark.top}</span>
+            <span className="flex items-baseline justify-center gap-0.5 whitespace-nowrap @[470px]:mt-2">
+              {/* The halftone screen is cut for display type: at a fifth of that size its dots swallow the
+                  glyph, so a narrow sheet prints the figure solid and keeps the screen for 470px up. */}
+              <span className="num text-[9cqw] font-black leading-none tracking-[-0.04em] text-ink @[470px]:hidden">{mark.figure}</span>
+              <span className="hidden @[470px]:block">
+                <Halftone seed={`${report.kind}-${report.key}-date`} className="num text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[880px]:text-[64px]">
+                  {mark.figure}
+                </Halftone>
+              </span>
+              <span className="text-[3.2cqw] font-bold text-ink-4 @[470px]:hidden">{MARK_UNIT[report.kind]}</span>
+            </span>
+            <span className="mt-1.5 hidden text-[10px] text-ink-2 @[470px]:mt-2 @[470px]:block @[470px]:text-[11.5px]">{mark.top}</span>
             <span className="hidden text-[11.5px] text-ink-4 @[470px]:block">{mark.bottom}</span>
           </div>
           <IssueDots kind={report.kind} reportKey={report.key} index={index} className="hidden w-[176px] border-l border-line px-4 py-4 @[760px]:block @[880px]:w-[196px]" />
         </div>
-        <p className="col-start-1 row-start-2 self-end text-[11.5px] tracking-[0.36em] text-ink-4 @[470px]:mt-3 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
+        <p className="col-start-1 row-start-2 mt-1.5 text-[11.5px] tracking-[0.36em] text-ink-4 @[470px]:mt-3 @[880px]:mt-4 @[880px]:text-[12.5px]">总报 · {SITE.name.toUpperCase()}</p>
       </div>
 
       <div className="flex flex-wrap items-baseline gap-x-8 gap-y-1.5 border-y border-line-strong py-3">

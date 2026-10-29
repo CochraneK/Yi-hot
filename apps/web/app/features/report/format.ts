@@ -125,6 +125,9 @@ export function dateMark(kind: ReportKind, key: string): { figure: string; top: 
   return { figure: key.slice(5, 7), top: `${key.slice(0, 4)} 年`, bottom: `${Number(key.slice(5, 7))} 月` };
 }
 
+/** What the figure in the 报眼 counts: 28 日, 43 周, 09 月. A narrow page prints it beside the number. */
+export const MARK_UNIT: Record<ReportKind, string> = { daily: "日", weekly: "周", monthly: "月" };
+
 /** When each kind comes out (F10), for the masthead. */
 export const EDITION: Record<ReportKind, string> = { daily: "每天 08:00 出刊", weekly: "每周一出刊", monthly: "每月 1 日出刊" };
 

@@ -9,8 +9,8 @@
     --bg:#f6f7f4; --surface:#ffffff; --surface-2:#fdfdfb; --sidebar:#fdfdfb;
     --ink:#202a30; --ink-2:#303c42; --ink-3:#59656b; --ink-4:#657176;
     --line:#dfe4e1; --line-soft:#e9ede9;
-    --accent:#176b75; --accent-ink:#145f68; --accent-soft:rgba(23,107,117,.08);
-    --hot:#b3402a; --hot-soft:rgba(179,64,42,.07);
+    --accent:#da291c; --accent-ink:#a81f14; --accent-soft:rgba(218,41,28,.08);
+    --hot:#9a3324; --hot-soft:rgba(179,64,42,.07);
     --amber:#b8873a; --amber-soft:rgba(184,135,58,.1);
     --ok:#2f7d5c; --ok-soft:rgba(47,125,92,.09);
   }
@@ -54,8 +54,8 @@
   h3{font-size:18px; margin:34px 0 10px; font-weight:600}
   p{margin:0 0 16px}
   strong{font-weight:600; color:var(--ink)}
-  em{font-style:normal; background:linear-gradient(transparent 62%, rgba(23,107,117,.16) 62%); padding:0 1px}
-  a{color:var(--accent-ink); text-decoration-color:rgba(23,107,117,.35); text-underline-offset:3px}
+  em{font-style:normal; background:linear-gradient(transparent 62%, rgba(218,41,28,.16) 62%); padding:0 1px}
+  a{color:var(--accent-ink); text-decoration-color:rgba(218,41,28,.35); text-underline-offset:3px}
 
   .fig{margin:26px 0 30px; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 20px 16px}
   .fig svg{width:100%; height:auto; display:block}
@@ -210,10 +210,10 @@
       <line x1="448" y1="128" x2="476" y2="128" stroke="#9fb0b0" stroke-width="1.4" marker-end="url(#ar)"/>
 
       <!-- 成稿 -->
-      <rect x="482" y="60" width="96" height="136" rx="6" fill="#176b75" stroke="none" opacity="0.08"/>
-      <rect x="482" y="60" width="96" height="136" rx="6" fill="none" stroke="#176b75" stroke-dasharray="3 3"/>
-      <text x="530" y="112" font-size="12" font-weight="700" fill="#145f68" text-anchor="middle">约 120 条</text>
-      <text x="530" y="130" font-size="10.5" fill="#145f68" text-anchor="middle">入池</text>
+      <rect x="482" y="60" width="96" height="136" rx="6" fill="#da291c" stroke="none" opacity="0.08"/>
+      <rect x="482" y="60" width="96" height="136" rx="6" fill="none" stroke="#da291c" stroke-dasharray="3 3"/>
+      <text x="530" y="112" font-size="12" font-weight="700" fill="#a81f14" text-anchor="middle">约 120 条</text>
+      <text x="530" y="130" font-size="10.5" fill="#a81f14" text-anchor="middle">入池</text>
       <text x="530" y="154" font-size="9.5" fill="#59656b" text-anchor="middle">每篇 5 次</text>
       <text x="530" y="168" font-size="9.5" fill="#59656b" text-anchor="middle">模型调用</text>
 
@@ -230,7 +230,7 @@
       <!-- 底部说明 -->
       <line x1="20" y1="252" x2="700" y2="252" stroke="#e9ede9"/>
       <text x="20" y="276" font-size="11.5" fill="#59656b">同一份数据，五个出口。改了信源或标准，五处一起变——这是它最省事的地方，也是最容易出错的地方。</text>
-      <text x="20" y="300" font-size="11.5" fill="#b3402a">唯一花钱的是中间那一格：AI 编辑按字数收费。其余全部免费，只耗电和网费。</text>
+      <text x="20" y="300" font-size="11.5" fill="#9a3324">唯一花钱的是中间那一格：AI 编辑按字数收费。其余全部免费，只耗电和网费。</text>
     </svg>
     <figcaption>图 1　整套系统只有一个花钱的地方，就是中间那个「编辑」。理解这一点，后面关于成本和故障的判断都会简单很多。</figcaption>
   </figure>
@@ -275,8 +275,8 @@
       <text x="26" y="98" font-size="11" font-weight="700" fill="#202a30">Yi-Hot</text>
 
       <text x="26" y="122" font-size="8.5" fill="#9aa5a5">内容</text>
-      <circle cx="30" cy="140" r="3" fill="#176b75"/><text x="40" y="144" font-size="10.5" fill="#202a30">总报</text>
-      <circle cx="30" cy="162" r="3" fill="#176b75"/><text x="40" y="166" font-size="10.5" font-weight="700" fill="#145f68">动态</text>
+      <circle cx="30" cy="140" r="3" fill="#da291c"/><text x="40" y="144" font-size="10.5" fill="#202a30">总报</text>
+      <circle cx="30" cy="162" r="3" fill="#da291c"/><text x="40" y="166" font-size="10.5" font-weight="700" fill="#a81f14">动态</text>
       <circle cx="30" cy="184" r="3" fill="#c9d4d2"/><text x="40" y="188" font-size="10.5" fill="#303c42">热点</text>
       <circle cx="30" cy="206" r="3" fill="#c9d4d2"/><text x="40" y="210" font-size="10.5" fill="#303c42">主题</text>
 
@@ -287,16 +287,16 @@
       <circle cx="30" cy="320" r="3" fill="#c9d4d2"/><text x="40" y="324" font-size="10.5" fill="#59656b">反馈</text>
       <circle cx="30" cy="342" r="3" fill="#c9d4d2"/><text x="40" y="346" font-size="10.5" fill="#59656b">收藏</text>
 
-      <rect x="26" y="368" width="118" height="22" rx="5" fill="#176b75"/>
+      <rect x="26" y="368" width="118" height="22" rx="5" fill="#da291c"/>
       <text x="85" y="383" font-size="10" fill="#ffffff" text-anchor="middle">订阅更新</text>
 
       <!-- 内容区 -->
       <text x="178" y="72" font-size="13" font-weight="700" fill="#202a30">动态</text>
-      <rect x="290" y="58" width="150" height="18" rx="9" fill="#eef1ed"/>
+      <rect x="290" y="58" width="150" height="18" rx="9" fill="#f7ece9"/>
       <text x="302" y="71" font-size="8.5" fill="#9aa5a5">搜索关键词…</text>
 
       <!-- 频道 + 类别 -->
-      <rect x="178" y="90" width="34" height="16" rx="8" fill="#176b75"/><text x="195" y="101" font-size="8" fill="#fff" text-anchor="middle">全部</text>
+      <rect x="178" y="90" width="34" height="16" rx="8" fill="#da291c"/><text x="195" y="101" font-size="8" fill="#fff" text-anchor="middle">全部</text>
       <rect x="216" y="90" width="34" height="16" rx="8" fill="#ffffff" stroke="#dfe4e1"/><text x="233" y="101" font-size="8" fill="#59656b" text-anchor="middle">资讯</text>
       <rect x="254" y="90" width="34" height="16" rx="8" fill="#ffffff" stroke="#dfe4e1"/><text x="271" y="101" font-size="8" fill="#59656b" text-anchor="middle">一手</text>
 
@@ -331,10 +331,10 @@
       <circle cx="642" cy="312" r="4" fill="none" stroke="#dfe4e1"/>
 
       <!-- 标注 -->
-      <circle cx="126" cy="122" r="8" fill="#b3402a"/><text x="126" y="125.5" font-size="9" fill="#fff" text-anchor="middle">1</text>
-      <circle cx="316" cy="98" r="8" fill="#b3402a"/><text x="316" y="101.5" font-size="9" fill="#fff" text-anchor="middle">2</text>
-      <circle cx="684" cy="176" r="8" fill="#b3402a"/><text x="684" y="179.5" font-size="9" fill="#fff" text-anchor="middle">3</text>
-      <circle cx="684" cy="312" r="8" fill="#b3402a"/><text x="684" y="315.5" font-size="9" fill="#fff" text-anchor="middle">4</text>
+      <circle cx="126" cy="122" r="8" fill="#9a3324"/><text x="126" y="125.5" font-size="9" fill="#fff" text-anchor="middle">1</text>
+      <circle cx="316" cy="98" r="8" fill="#9a3324"/><text x="316" y="101.5" font-size="9" fill="#fff" text-anchor="middle">2</text>
+      <circle cx="684" cy="176" r="8" fill="#9a3324"/><text x="684" y="179.5" font-size="9" fill="#fff" text-anchor="middle">3</text>
+      <circle cx="684" cy="312" r="8" fill="#9a3324"/><text x="684" y="315.5" font-size="9" fill="#fff" text-anchor="middle">4</text>
     </svg>
     <figcaption>图 2　读者看到的一屏。① 左边五个主入口 ② 频道（全部 / 资讯 / 一手）和八个类别 ③ 每条都可以标记「已读」（只在你自己浏览器里）④ 同一件事的多篇报道会合并成一张卡片。</figcaption>
   </figure>
@@ -397,21 +397,21 @@
     <svg viewBox="0 0 720 366" role="img" aria-label="从线索到入池的漏斗">
       <text x="20" y="16" font-size="11" fill="#657176">以 10 月 25 日一天为例</text>
 
-      <rect x="20" y="32" width="470" height="42" rx="4" fill="#eef1ed"/>
+      <rect x="20" y="32" width="470" height="42" rx="4" fill="#f7ece9"/>
       <text x="36" y="59" font-size="12" fill="#303c42">当天抓到、读到的线索　930 条</text>
 
-      <rect x="20" y="90" width="340" height="42" rx="4" fill="#e4eae6"/>
+      <rect x="20" y="90" width="340" height="42" rx="4" fill="#f2dad5"/>
       <text x="36" y="117" font-size="12" fill="#303c42">去噪：标题一看就不相关的，直接扔</text>
 
-      <rect x="20" y="148" width="240" height="42" rx="4" fill="#cfe0dd"/>
+      <rect x="20" y="148" width="240" height="42" rx="4" fill="#eec2bb"/>
       <text x="36" y="175" font-size="12" fill="#303c42">判断属不属于本行业</text>
 
-      <rect x="20" y="206" width="155" height="42" rx="4" fill="#9dc4c1"/>
+      <rect x="20" y="206" width="155" height="42" rx="4" fill="#e0938a"/>
       <text x="36" y="233" font-size="11.5" fill="#202a30">评分达标才算入池</text>
 
-      <rect x="20" y="264" width="105" height="42" rx="4" fill="#176b75"/>
+      <rect x="20" y="264" width="105" height="42" rx="4" fill="#da291c"/>
       <text x="34" y="282" font-size="11" fill="#ffffff">留下 121 条</text>
-      <text x="34" y="297" font-size="8.5" fill="#cfe0dd">进网站与总报</text>
+      <text x="34" y="297" font-size="8.5" fill="#eec2bb">进网站与总报</text>
 
       <text x="504" y="52" font-size="10" fill="#59656b">一个普通工作日</text>
       <text x="504" y="67" font-size="10" fill="#59656b">的真实量级</text>
@@ -428,7 +428,7 @@
       <text x="504" y="239" font-size="10" fill="#59656b">门槛 35–40 分</text>
 
       <line x1="131" y1="285" x2="498" y2="285" stroke="#dfe4e1" stroke-dasharray="3 3"/>
-      <text x="504" y="282" font-size="10" fill="#b3402a" font-weight="600">约 13%</text>
+      <text x="504" y="282" font-size="10" fill="#9a3324" font-weight="600">约 13%</text>
       <text x="504" y="297" font-size="10" fill="#59656b">剩下 87% 被扔掉</text>
 
       <line x1="20" y1="330" x2="700" y2="330" stroke="#e9ede9"/>
@@ -554,15 +554,15 @@
       <g>
         <rect x="20" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="34" y="52" font-size="12" font-weight="700" fill="#202a30">用量与成本</text>
-        <text x="34" y="68" font-size="9" fill="#176b75">每周看</text>
+        <text x="34" y="68" font-size="9" fill="#da291c">每周看</text>
         <text x="34" y="88" font-size="10.5" fill="#59656b">这周花了多少，按天拆开。</text>
         <text x="34" y="104" font-size="10.5" fill="#59656b">能在线改单价（一般不用动）。</text>
-        <text x="34" y="126" font-size="9.5" fill="#b3402a">钱是不是快没了，看这里。</text>
+        <text x="34" y="126" font-size="9.5" fill="#9a3324">钱是不是快没了，看这里。</text>
       </g>
       <g>
         <rect x="252" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="266" y="52" font-size="12" font-weight="700" fill="#202a30">信源</text>
-        <text x="266" y="68" font-size="9" fill="#176b75">加源时看</text>
+        <text x="266" y="68" font-size="9" fill="#da291c">加源时看</text>
         <text x="266" y="88" font-size="10.5" fill="#59656b">全部 210 个源的名单、健康状态、</text>
         <text x="266" y="104" font-size="10.5" fill="#59656b">各自产出了几条。可以新建。</text>
         <text x="266" y="126" font-size="9.5" fill="#59656b">还有个「候选」页，推荐可以加的源。</text>
@@ -570,7 +570,7 @@
       <g>
         <rect x="484" y="30" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="498" y="52" font-size="12" font-weight="700" fill="#202a30">内容诊断</text>
-        <text x="498" y="68" font-size="9" fill="#176b75">「这条为什么不发」时看</text>
+        <text x="498" y="68" font-size="9" fill="#da291c">「这条为什么不发」时看</text>
         <text x="498" y="88" font-size="10.5" fill="#59656b">每篇稿子的完整判定过程：</text>
         <text x="498" y="104" font-size="10.5" fill="#59656b">几分、为什么、卡在哪一步。</text>
         <text x="498" y="126" font-size="9.5" fill="#59656b">这是唯一能回答「凭什么不要它」的地方。</text>
@@ -579,7 +579,7 @@
       <g>
         <rect x="20" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="34" y="176" font-size="12" font-weight="700" fill="#202a30">运行</text>
-        <text x="34" y="192" font-size="9" fill="#176b75">「今天没更新」时看</text>
+        <text x="34" y="192" font-size="9" fill="#da291c">「今天没更新」时看</text>
         <text x="34" y="212" font-size="10.5" fill="#59656b">每次抓取的记录：几点跑的、</text>
         <text x="34" y="228" font-size="10.5" fill="#59656b">抓到几条、报什么错。</text>
         <text x="34" y="250" font-size="9.5" fill="#59656b">判断「是没跑」还是「跑了没结果」。</text>
@@ -587,7 +587,7 @@
       <g>
         <rect x="252" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="266" y="176" font-size="12" font-weight="700" fill="#202a30">模型与评测</text>
-        <text x="266" y="192" font-size="9" fill="#176b75">想换模型时看</text>
+        <text x="266" y="192" font-size="9" fill="#da291c">想换模型时看</text>
         <text x="266" y="212" font-size="10.5" fill="#59656b">每一步现在用的哪个模型、</text>
         <text x="266" y="228" font-size="10.5" fill="#59656b">成功率、平均耗时、单篇成本。</text>
         <text x="266" y="250" font-size="9.5" fill="#59656b">换模型只影响之后的新稿，不溯及既往。</text>
@@ -595,7 +595,7 @@
       <g>
         <rect x="484" y="154" width="216" height="112" rx="8" fill="#ffffff" stroke="#dfe4e1"/>
         <text x="498" y="176" font-size="12" font-weight="700" fill="#202a30">设置 · 审计 · 反馈</text>
-        <text x="498" y="192" font-size="9" fill="#176b75">改文案、查「谁改的」时看</text>
+        <text x="498" y="192" font-size="9" fill="#da291c">改文案、查「谁改的」时看</text>
         <text x="498" y="212" font-size="10.5" fill="#59656b">站点信息、二维码、开关在设置；</text>
         <text x="498" y="228" font-size="10.5" fill="#59656b">每次改动都留一条记录在审计；</text>
         <text x="498" y="250" font-size="10.5" fill="#59656b">读者写来的意见在反馈。</text>
@@ -647,23 +647,23 @@
       <text x="26" y="114" font-size="8.5" fill="#9aa5a5">4</text>
       <text x="26" y="180" font-size="8.5" fill="#9aa5a5">0</text>
 
-      <rect x="58" y="96" width="30" height="80" rx="2" fill="#9dc4c1"/>
-      <rect x="104" y="86" width="30" height="90" rx="2" fill="#9dc4c1"/>
-      <rect x="150" y="102" width="30" height="74" rx="2" fill="#9dc4c1"/>
-      <rect x="196" y="66" width="30" height="110" rx="2" fill="#b3402a"/>
-      <rect x="242" y="92" width="30" height="84" rx="2" fill="#9dc4c1"/>
-      <rect x="288" y="100" width="30" height="76" rx="2" fill="#9dc4c1"/>
-      <rect x="334" y="94" width="30" height="82" rx="2" fill="#9dc4c1"/>
+      <rect x="58" y="96" width="30" height="80" rx="2" fill="#e0938a"/>
+      <rect x="104" y="86" width="30" height="90" rx="2" fill="#e0938a"/>
+      <rect x="150" y="102" width="30" height="74" rx="2" fill="#e0938a"/>
+      <rect x="196" y="66" width="30" height="110" rx="2" fill="#9a3324"/>
+      <rect x="242" y="92" width="30" height="84" rx="2" fill="#e0938a"/>
+      <rect x="288" y="100" width="30" height="76" rx="2" fill="#e0938a"/>
+      <rect x="334" y="94" width="30" height="82" rx="2" fill="#e0938a"/>
 
       <text x="73" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">21</text>
       <text x="119" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">22</text>
       <text x="165" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">23</text>
-      <text x="211" y="190" font-size="8.5" fill="#b3402a" text-anchor="middle" font-weight="600">24</text>
+      <text x="211" y="190" font-size="8.5" fill="#9a3324" text-anchor="middle" font-weight="600">24</text>
       <text x="257" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">25</text>
       <text x="303" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">26</text>
       <text x="349" y="190" font-size="8.5" fill="#59656b" text-anchor="middle">27</text>
 
-      <text x="211" y="58" font-size="9" fill="#b3402a" text-anchor="middle" font-weight="600">加了一批源</text>
+      <text x="211" y="58" font-size="9" fill="#9a3324" text-anchor="middle" font-weight="600">加了一批源</text>
       <text x="40" y="212" font-size="10" fill="#59656b">平时三块多，那天七块——因为那天加了新源，把人家一年的旧稿都读了一遍。</text>
 
       <!-- 分隔 -->
@@ -671,7 +671,7 @@
 
       <text x="420" y="16" font-size="11" fill="#657176">为什么重复的提示词便宜五十倍</text>
       <text x="420" y="56" font-size="10.5" fill="#303c42">同样一段说明文字，读第二次：</text>
-      <rect x="420" y="70" width="250" height="18" rx="3" fill="#b3402a" opacity="0.75"/>
+      <rect x="420" y="70" width="250" height="18" rx="3" fill="#9a3324" opacity="0.75"/>
       <text x="430" y="83" font-size="9" fill="#ffffff">第一次读：100%</text>
       <rect x="420" y="96" width="5" height="18" rx="2" fill="#2f7d5c"/>
       <text x="432" y="109" font-size="9" fill="#2f7d5c">第二次读：2%</text>
@@ -732,20 +732,20 @@
       <text x="20" y="16" font-size="11" fill="#657176">谁在供货：按「最后能用的条数」占比（2026-10-25 快照，共 1868 条）</text>
 
       <!-- 堆叠条 -->
-      <rect x="20" y="30" width="408" height="46" rx="4" fill="#176b75"/>
+      <rect x="20" y="30" width="408" height="46" rx="4" fill="#da291c"/>
       <rect x="428" y="30" width="152" height="46" rx="4" fill="#4a939b"/>
       <rect x="580" y="30" width="26" height="46" rx="2" fill="#8ab8bb"/>
       <rect x="606" y="30" width="20" height="46" rx="2" fill="#b3cdcd"/>
       <rect x="626" y="30" width="74" height="46" rx="4" fill="#d6e3e2"/>
 
       <text x="224" y="50" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">搜索型 67%</text>
-      <text x="224" y="66" font-size="9.5" fill="#cfe0dd" text-anchor="middle">1256 条</text>
+      <text x="224" y="66" font-size="9.5" fill="#eec2bb" text-anchor="middle">1256 条</text>
       <text x="504" y="50" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle">网页列表 25%</text>
       <text x="504" y="66" font-size="9" fill="#e6f0ee" text-anchor="middle">465 条</text>
 
       <!-- 图例 -->
-      <rect x="20" y="96" width="10" height="10" fill="#176b75"/>
-      <text x="38" y="105" font-size="10.5" fill="#303c42">搜索型　72 个源 · 出量最大 · <tspan fill="#b3402a">最花钱 · 晚 2–3 天</tspan></text>
+      <rect x="20" y="96" width="10" height="10" fill="#da291c"/>
+      <text x="38" y="105" font-size="10.5" fill="#303c42">搜索型　72 个源 · 出量最大 · <tspan fill="#9a3324">最花钱 · 晚 2–3 天</tspan></text>
       <rect x="20" y="120" width="10" height="10" fill="#4a939b"/>
       <text x="38" y="129" font-size="10.5" fill="#303c42">网页列表　93 个源 · 稳，靠翻页 · 对方改版就失效</text>
       <rect x="20" y="144" width="10" height="10" fill="#8ab8bb"/>
@@ -762,16 +762,16 @@
       <text x="140" y="224" font-size="22" font-weight="700" fill="#202a30">175</text>
       <text x="140" y="242" font-size="9.5" fill="#59656b">正在运行</text>
 
-      <text x="260" y="224" font-size="22" font-weight="700" fill="#176b75">113</text>
+      <text x="260" y="224" font-size="22" font-weight="700" fill="#da291c">113</text>
       <text x="260" y="242" font-size="9.5" fill="#59656b">真正能出货的（入池 ≥5 条）</text>
 
-      <text x="470" y="224" font-size="22" font-weight="700" fill="#b3402a">1868</text>
+      <text x="470" y="224" font-size="22" font-weight="700" fill="#9a3324">1868</text>
       <text x="470" y="242" font-size="9.5" fill="#59656b">累计入池条数</text>
 
       <line x1="20" y1="262" x2="700" y2="262" stroke="#e9ede9"/>
       <text x="20" y="284" font-size="10.5" fill="#202a30" font-weight="600">能跑的 175 个里，只有 113 个真正出货。剩下的是「装上了但打不中」。</text>
       <text x="20" y="302" font-size="10" fill="#59656b">所以判断一个源好不好，不看它「能不能打开」，只看它「有没有用」。这个差别是全部信源管理的核心。</text>
-      <text x="20" y="324" font-size="10" fill="#b3402a">搜索型最出量，也最贵、最慢。它是「补漏和深挖」的兵种，不是「抢首发」的。</text>
+      <text x="20" y="324" font-size="10" fill="#9a3324">搜索型最出量，也最贵、最慢。它是「补漏和深挖」的兵种，不是「抢首发」的。</text>
     </svg>
     <figcaption>图 6　四个兵种的分工。理解了这张图，你就不会问「为什么不多加几个搜索源」——因为它是用钱和时效换覆盖率。</figcaption>
   </figure>
@@ -826,7 +826,7 @@
       <text x="20" y="16" font-size="11" fill="#657176">从「有人告诉你出问题了」开始</text>
 
       <!-- 根 -->
-      <rect x="196" y="30" width="328" height="40" rx="6" fill="#176b75"/>
+      <rect x="196" y="30" width="328" height="40" rx="6" fill="#da291c"/>
       <text x="360" y="55" font-size="11.5" fill="#ffffff" text-anchor="middle">症状是什么？</text>
 
       <!-- 三分支 -->
@@ -857,13 +857,13 @@
       <text x="32" y="182" font-size="10" font-weight="700" fill="#202a30">① 登录腾讯云看这两件事</text>
       <text x="32" y="200" font-size="9.5" fill="#59656b">· 实例是否已到期 / 欠费停机</text>
       <text x="32" y="216" font-size="9.5" fill="#59656b">· 实例状态是不是「运行中」</text>
-      <text x="32" y="236" font-size="9" fill="#b3402a">续费日历没设？现在就去设。</text>
+      <text x="32" y="236" font-size="9" fill="#9a3324">续费日历没设？现在就去设。</text>
 
       <!-- 中分支三查 -->
       <path d="M360,140 L360,160" stroke="#9fb0b0" fill="none" marker-end="url(#ar2)"/>
       <rect x="252" y="164" width="216" height="38" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
       <text x="264" y="180" font-size="9.5" fill="#202a30">第 1 查　平台余额还有吗？</text>
-      <text x="264" y="194" font-size="8.5" fill="#b3402a">余额 0 = 就是这个原因，别再往下查</text>
+      <text x="264" y="194" font-size="8.5" fill="#9a3324">余额 0 = 就是这个原因，别再往下查</text>
 
       <rect x="252" y="208" width="216" height="38" rx="5" fill="#ffffff" stroke="#dfe4e1"/>
       <text x="264" y="224" font-size="9.5" fill="#202a30">第 2 查　今早「运行」页跑了吗？</text>
@@ -879,7 +879,7 @@
       <text x="496" y="182" font-size="10" font-weight="700" fill="#202a30">不是故障，是「标准」的问题</text>
       <text x="496" y="200" font-size="9.5" fill="#59656b">记下 3 条「不该发」的例子、</text>
       <text x="496" y="216" font-size="9.5" fill="#59656b">3 条「该发没发」的例子。</text>
-      <text x="496" y="236" font-size="9" fill="#b3402a">别自己改门槛数字，交给人调。</text>
+      <text x="496" y="236" font-size="9" fill="#9a3324">别自己改门槛数字，交给人调。</text>
 
       <!-- 底部结论 -->
       <line x1="20" y1="306" x2="700" y2="306" stroke="#e9ede9"/>
@@ -888,7 +888,7 @@
       <text x="20" y="360" font-size="10" fill="#59656b">前者多半是网址填错或需要登录；后者多半是对方改版了。</text>
 
       <line x1="20" y1="378" x2="700" y2="378" stroke="#e9ede9"/>
-      <text x="20" y="400" font-size="11" fill="#b3402a" font-weight="600">三件不要做的事</text>
+      <text x="20" y="400" font-size="11" fill="#9a3324" font-weight="600">三件不要做的事</text>
       <text x="20" y="420" font-size="10" fill="#303c42">① 不要一上来就重启——重启不解决钱的问题，还会让现场证据消失。</text>
       <text x="20" y="438" font-size="10" fill="#303c42">② 不要盲目调高预算上限——那是保险丝，调高只会让异常烧更多钱。</text>
       <text x="20" y="456" font-size="10" fill="#303c42">③ 不要自己改筛选门槛——改动会立刻影响之后所有稿子，且很难回滚判断。</text>

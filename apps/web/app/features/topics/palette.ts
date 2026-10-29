@@ -49,7 +49,7 @@ export const TOPIC_COLORS: Record<string, string> = {
 };
 
 /** Save the Children itself always wears the brand red, wherever it shows up. */
-export const BRAND_RED = "#E4002B";
+export const BRAND_RED = "#DA291C";
 const COMPANY_GROUPS = [
   { color: BRAND_RED, names: ["救助儿童会"] },
   { color: "#D97706", names: ["壹基金", "中国慈善联合会", "中国乡村发展基金会", "希望工程", "南都公益基金会"] },

@@ -41,7 +41,19 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
           The period's plate is sized in cqw so its glyphs stand exactly as tall as the four above — the
           two lines still read as one logotype. From 470px the one-line nameplate returns, the box at its
           right; max-w-full covers the widths in between, where the stepped height would hit the box. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-2.5 py-6 @[470px]:items-stretch @[470px]:gap-5 @[470px]:gap-y-0 @[880px]:gap-10 @[880px]:py-8">
+      {/* The two-line block is measured to 儿童公益 itself: its plate is cut 933.8:244, so a 22cqw
+          glyph height is 3.827 times that across, and the block set to that width puts the 报眼's right
+          edge on the margin the four characters end on instead of hanging a hand's width past it. 周报
+          takes the right end of the line beside it, so the white space between plate and box is the
+          line's own and the two plates centre on nothing — they read down the right margin. The
+          column gap is whatever the arithmetic leaves (4px at 390, 1.7px at 320): a floor, not a
+          measure. Both start at the top of the second line, so 周报 sits directly under the logotype
+          rather than being held down to the bottom of the taller box. */}
+      <div
+        className={`grid ${
+          kindPlate ? "w-[calc(22cqw*3.827)]" : "w-full"
+        } grid-cols-[minmax(0,1fr)_auto] items-start gap-x-1 gap-y-2 py-6 @[470px]:w-full @[470px]:items-stretch @[470px]:gap-5 @[470px]:gap-y-0 @[880px]:gap-10 @[880px]:py-8`}
+      >
         <h1 id="report-start" className="col-span-2 row-start-1 min-w-0 @[470px]:col-span-1">
           <span className="sr-only">
             总报 · {KIND_LABEL[report.kind]} · {dateLine(report.kind, report.key)}
@@ -54,11 +66,11 @@ function Masthead({ report, index }: { report: ReportDetail; index: ReportNaviga
         </h1>
         {/* Both plates are sized in cqw — just over just over a fifth of the measure — so the two lines stand at one glyph
             height and scale with the page instead of stepping at breakpoints. */}
-        {kindPlate && <Nameplate which={kindPlate} className="col-start-1 row-start-2 block h-[22cqw] w-auto @[470px]:hidden" />}
+        {kindPlate && <Nameplate which={kindPlate} className="col-start-1 row-start-2 block h-[22cqw] w-auto justify-self-end @[470px]:hidden" />}
         {/* 报眼: the box beside the nameplate, as a Chinese daily sets it: the issue and the date in the
             nameplate's dots, and on wider paper the issue calendar beside them. Below the nameplate it
             keeps the same shape and only moves down a line, set to the right margin as a paper would. */}
-        <div className={`col-start-2 flex w-[116px] shrink-0 items-stretch well rounded-panel @[470px]:row-span-2 @[470px]:row-start-1 @[470px]:w-auto @[470px]:self-auto ${kindPlate ? "row-start-2 self-end" : "row-span-2 row-start-1"}`}>
+        <div className={`col-start-2 flex w-[116px] shrink-0 items-stretch well rounded-panel @[470px]:row-span-2 @[470px]:row-start-1 @[470px]:w-auto @[470px]:self-auto ${kindPlate ? "row-start-2 self-start" : "row-span-2 row-start-1"}`}>
           <div className="flex w-full flex-col items-center justify-center px-2 py-3 text-center @[470px]:w-[112px] @[880px]:w-[150px] @[880px]:py-4">
             {issue && <span className="text-[11px] tracking-[0.2em] text-ink-4">第 {issue} 期</span>}
             <Halftone seed={`${report.kind}-${report.key}-date`} className="num mt-2 whitespace-nowrap text-[44px] font-black leading-[0.95] tracking-[-0.04em] text-ink @[880px]:text-[64px]">

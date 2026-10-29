@@ -29,6 +29,12 @@ export interface AnalyzeInputArticle {
     ownerEntityId?: string | null;
     /** The source asks for the article page (fetchPublicContent, detail pages, web listings). */
     fetchesBody?: boolean;
+    /**
+     * The prefilter is skipped for this source. Measured, not assumed: a source earns it by never
+     * blocking. Its queries are already the filter (a named charity, a province's civil affairs
+     * site), and the search engine only returns what the query named.
+     */
+    skipsPrefilter?: boolean;
   };
   /** Stored Chinese translation of the body (e.g. a full post whose original was truncated). */
   translationZh?: string | null;
@@ -64,6 +70,7 @@ export async function loadAnalyzeInput(articleId: string): Promise<AnalyzeInputA
     source: {
       name: row.source_name, kind: row.source_kind, tier: row.tier, firstParty: row.first_party, tags: row.source_tags, ownerEntityId: row.owner_entity_id,
       fetchesBody: row.config?.fetchPublicContent === true || !!row.config?.detail || row.source_kind === "web_list",
+      skipsPrefilter: row.config?.skipPrefilter === true,
     },
     translationZh: row.translation_zh,
   };

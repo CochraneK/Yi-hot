@@ -168,7 +168,8 @@ const STRUCTURE_SYSTEM = promptText("structure", {
 });
 
 export interface AnalysisRun {
-  prefilter: { label: "PASS" | "BLOCK" | "UNKNOWN"; reason: string; model: string; receiptId: number; reused: boolean };
+  /** `receiptId` (and `model`) are null when the step was skipped for a source that never blocks. */
+  prefilter: { label: "PASS" | "BLOCK" | "UNKNOWN"; reason: string; model: string | null; receiptId: number | null; reused: boolean };
   /**
    * The independent score calls and the tier threshold they are held against; absent when the material
    * is not scored. `refused`: the model's content filter declined it, so it is not selected.
@@ -241,6 +242,12 @@ export function tagsForVerifiedSubjects(tags: readonly string[], subjects: reado
 }
 
 async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<AnalysisRun["prefilter"]> {
+  // A call that can only answer PASS is a call not made. A source earns the skip by never blocking
+  // across hundreds of items — its queries are the filter — so the money goes to the steps that
+  // actually judge. The reason is stored, so the analysis record still says why there is no receipt.
+  if (a.source.skipsPrefilter) {
+    return { label: "PASS", reason: "信源的查询词已自带筛选，跳过预筛", model: null, receiptId: null, reused: true };
+  }
   const model = await modelFor("prefilter");
   checkAnalysisRunning();
   const res = await chatJson({
@@ -493,7 +500,7 @@ export async function analyzeArticle(articleId: string, opts: StepOpts = {}): Pr
   const out = normalizeAnalysis(run);
   const receiptIds = [
     run.prefilter.receiptId, ...(run.scores?.receiptIds ?? []), ...(run.writing?.receiptIds ?? []), ...(run.structure ? [run.structure.receiptId] : []),
-  ];
+  ].filter((id): id is number => id !== null);
   const w = run.writing;
   const detail = {
     prefilter: { label: run.prefilter.label, reason: run.prefilter.reason },

@@ -13,20 +13,23 @@ import { upsertMaterial } from "@aihot/backend/content/materials";
 import { analyzeArticle, SCORE_SYSTEM, tagsForVerifiedSubjects, tierThreshold, verifiedEntitySubjects } from "@aihot/backend/editorial/analyze";
 import { queueProcessing } from "@aihot/backend/jobs/content";
 import { QUEUES, stopBoss } from "@aihot/backend/jobs/queue";
-import { compactAnswerFirstSummary, enforceIdentity, parseTranslateOutput, PREFILTER_SYSTEM } from "@aihot/backend/editorial/writing";
+import {
+  clampEnds, compactAnswerFirstSummary, enforceIdentity, parseTranslateOutput, PREFILTER_HEAD_CHARS, PREFILTER_SYSTEM, PREFILTER_TAIL_CHARS, prefilterUser,
+} from "@aihot/backend/editorial/writing";
 import { promptText } from "@aihot/backend/editorial/prompts";
 import { SITE } from "@aihot/industry/site";
 
 const T = tag();
 const SOURCE = `test-analyze-${T}`;
 const X_SOURCE = `test-analyze-x-${T}`;
+const SKIP_SOURCE = `test-analyze-skip-${T}`;
 
 type Step = "prefilter" | "score" | "understand" | "summarize" | "structure";
 interface Req { step: Step; marker: string; system: string; user: string; body: Record<string, any> }
 const requests: Req[] = [];
-const MARKERS = ["CLEAR", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "推文"];
+const MARKERS = ["CLEAR", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "SKIP", "DIRECT", "推文"];
 // Fixture scores are picked to land on the intended side of 2 × the T1 threshold (2 × 35 = 70).
-const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
+const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], SKIP: [78, 72], DIRECT: [78, 72], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
 
 const stepOf = (system: string, user: string): Step =>
   system.includes("宽召回的公益相关性预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
@@ -58,9 +61,10 @@ for (const env of ["DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "DEEPSEEK_API_KEY"]) pr
 Object.assign(process.env, { PREFILTER_MODEL: "qwen3.7-flash", SCORE_MODEL: "glm-5.3-flash-selection", UNDERSTAND_MODEL: "glm-5.3-flash", SUMMARIZE_MODEL: "deepseek-flash", STRUCTURE_MODEL: "qwen3.8-flash" });
 
 before(async () => {
-  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at, owner_entity_id) VALUES
-    (${SOURCE}, 'Test analyze source', 'rss', 'T1', 'editorial', '2100-01-01', 'ministry-of-civil-affairs'),
-    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01', NULL)`;
+  await sql`INSERT INTO sources (id, name, kind, tier, participation_mode, next_fetch_at, owner_entity_id, config) VALUES
+    (${SOURCE}, 'Test analyze source', 'rss', 'T1', 'editorial', '2100-01-01', 'ministry-of-civil-affairs', '{}'::jsonb),
+    (${X_SOURCE}, 'Test X account', 'x_search', 'T1', 'editorial', '2100-01-01', NULL, '{}'::jsonb),
+    (${SKIP_SOURCE}, 'Test skip-prefilter source', 'search', 'T1', 'editorial', '2100-01-01', NULL, ${sql.json({ skipPrefilter: true } as never)})`;
 });
 after(async () => {
   await provider.close();
@@ -74,6 +78,11 @@ const article = async (marker: string, extra: Record<string, unknown> = {}) =>
   (await upsertMaterial({
     sourceId: SOURCE, url: `https://example.com/${marker}-${T}`, title: `${marker} project update ${T}`, bodyText: `${marker}: ${LONG} (${T})`,
     bodyStatus: "ok", via: "fetch", publishedAt: new Date("2026-09-28T01:02:03Z"), ...extra,
+  } as never)).articleId;
+const skipArticle = async (marker: string) =>
+  (await upsertMaterial({
+    sourceId: SKIP_SOURCE, url: `https://example.com/${marker}-skip-${T}`, title: `${marker} project update ${T}`, bodyText: `${marker}: ${LONG} (${T})`,
+    bodyStatus: "ok", via: "fetch", publishedAt: new Date("2026-09-28T01:02:03Z"),
   } as never)).articleId;
 const calls = (marker: string) => requests.filter((r) => r.marker === marker).map((r) => r.step);
 const row = async (id: string) =>
@@ -136,6 +145,35 @@ test("a first score far under the threshold: no second reading, no structure ste
   assert.deepEqual(calls("FAINT").sort(), ["prefilter", "score", "summarize"]);
   const r = await row(id);
   assert.deepEqual([r.category, r.output.fact, r.receipt_ids.length], [null, null, 3], "no structure receipt, no fact frame");
+});
+
+test("a source whose queries already filter skips the prefilter and pays for no receipt", async () => {
+  const id = await skipArticle("SKIP");
+  const res = await analyzeArticle(id);
+  // The step is not called at all, not called and ignored: the prefilter would have answered PASS.
+  assert.deepEqual(calls("SKIP").sort(), ["score", "score", "structure", "understand"]);
+  const r = await row(id);
+  assert.deepEqual([res!.output!.selected, res!.output!.score], [true, 75], "78 + 72 = 150 ≥ 2 × 35");
+  assert.deepEqual([r.output.prefilter.label, r.receipt_ids.length], ["PASS", 4], "one receipt fewer, and the record still says it passed");
+  assert.match(r.output.prefilter.reason, /跳过预筛/, "the reason says why there is no receipt");
+  // A source without the key still asks.
+  const asked = await article("DIRECT", { url: `https://example.com/DIRECT-${T}`, title: `DIRECT project update ${T}` });
+  await analyzeArticle(asked);
+  assert.deepEqual(calls("DIRECT").sort(), ["prefilter", "score", "score", "structure", "understand"]);
+});
+
+test("the prefilter reads the opening and the closing of a long body, not a long opening", () => {
+  const whole = "甲".repeat(3000);
+  assert.equal(clampEnds(whole, 400, 400).length, 400 + 3 + 400, "the cut is marked, so the model sees it is not the whole body");
+  assert.equal(clampEnds("乙".repeat(700), 400, 400), "乙".repeat(700), "a body that fits is sent whole");
+  const a = {
+    id: "x", revision: 1, title: "标题", url: "https://example.com/x", author: null, publishedAt: null, discoveredAt: new Date(),
+    bodyText: whole, excerpt: null, bodyStatus: "ok", xPost: null, media: [],
+    source: { name: "s", kind: "rss", tier: "T1", firstParty: false },
+  } as never;
+  const user = prefilterUser(a);
+  assert.equal(user.split("甲".repeat(PREFILTER_HEAD_CHARS)).length - 1, 2, `the opening and the closing each appear (${PREFILTER_HEAD_CHARS}+${PREFILTER_TAIL_CHARS})`);
+  assert.ok(!user.includes("甲".repeat(900)), "the middle, where the philanthropic wording sits, is not sent twice over");
 });
 
 test("the prefilter's BLOCK stops everything; UNKNOWN goes on like PASS", async () => {

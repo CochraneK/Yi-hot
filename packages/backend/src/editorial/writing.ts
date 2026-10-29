@@ -21,16 +21,29 @@ const capBody = (s: string) => (s.length > MAX_BODY_CHARS ? s.slice(0, MAX_BODY_
 
 /**
  * The prefilter only answers "does this belong to the industry at all", a wide-recall call that the
- * headline and the opening already settle; the tail of a long body adds input tokens but no answer.
+ * headline and the two ends of the body already settle. The tail is not filler: a 68-article
+ * regression (2026-10-29) read an 800-char head against the full body and 3 verdicts flipped, while
+ * a 400+400 split — the same input size, to the token — got all 68 right. What the tail carries is
+ * the tell the opening never shows: a law firm's card ends with its practice licence number, a
+ * portal's with "相关推荐 / 热点推荐". A longer head is worse, not better: the opening is where the
+ * philanthropic wording is densest, and it pulls the verdict with it.
  * The steps that judge the item itself (score, understand) still read the whole body.
  */
-export const PREFILTER_BODY_CHARS = 800;
+export const PREFILTER_HEAD_CHARS = 400;
+export const PREFILTER_TAIL_CHARS = 400;
 
 // ── Text helpers ─────────────────────────────────────────────────────────────────────────────
 
 export function clampText(s: string, maxChars: number): string {
   const codepoints = Array.from(s);
   return codepoints.length <= maxChars ? s : codepoints.slice(0, maxChars).join("") + "…";
+}
+
+/** The opening and the closing of a body, with the cut marked; short bodies are kept whole. */
+export function clampEnds(s: string, headChars: number, tailChars: number): string {
+  const codepoints = Array.from(s);
+  if (codepoints.length <= headChars + tailChars) return s;
+  return `${codepoints.slice(0, headChars).join("")}\n…\n${codepoints.slice(-tailChars).join("")}`;
 }
 
 export function looksZh(s: string): boolean {
@@ -97,7 +110,10 @@ function materialQuality(a: AnalyzeInputArticle): string {
 }
 
 /** The material as the prefilter and the content understanding read it. */
-export function renderContext(a: AnalyzeInputArticle, opts: { annotateQuoted?: boolean; bodyChars?: number } = {}): string {
+export function renderContext(
+  a: AnalyzeInputArticle,
+  opts: { annotateQuoted?: boolean; bodyChars?: number; bodyEnds?: [number, number] } = {},
+): string {
   const lines: string[] = [];
   lines.push(`【来源】${a.source.name}（${a.source.kind}，tier=${a.source.tier || "未分级"}）`);
   if (a.source.tags?.length) lines.push(`【来源标签】${a.source.tags.join(", ")}`);
@@ -125,14 +141,16 @@ export function renderContext(a: AnalyzeInputArticle, opts: { annotateQuoted?: b
   lines.push("");
   lines.push(opts.annotateQuoted && quoted ? "【正文（作者自己的内容）】" : "【正文】");
   const body = a.xPost ? String(a.xPost.text ?? a.title) : (a.bodyText ?? a.excerpt ?? "(无正文)");
-  lines.push(opts.bodyChars ? clampText(body, opts.bodyChars) : capBody(body));
+  if (opts.bodyEnds) lines.push(clampEnds(body, opts.bodyEnds[0], opts.bodyEnds[1]));
+  else lines.push(opts.bodyChars ? clampText(body, opts.bodyChars) : capBody(body));
   lines.push("");
   lines.push(`【材料质量】${materialQuality(a)}`);
   return lines.join("\n");
 }
 
 /** The prefilter's user message: the context as a JSON string (the prompt was tuned on this form). */
-export const prefilterUser = (a: AnalyzeInputArticle) => JSON.stringify(renderContext(a, { bodyChars: PREFILTER_BODY_CHARS }));
+export const prefilterUser = (a: AnalyzeInputArticle) =>
+  JSON.stringify(renderContext(a, { bodyEnds: [PREFILTER_HEAD_CHARS, PREFILTER_TAIL_CHARS] }));
 
 /** Nothing to judge beyond the title: the prefilter's BLOCK then means "wait for material". */
 export function missingEvidence(a: AnalyzeInputArticle): boolean {

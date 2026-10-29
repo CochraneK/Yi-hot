@@ -19,9 +19,11 @@ import { apiGet } from "./lib/api.server";
 import { useHydratedFlag } from "./lib/hydration";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "icon", href: "/favicon.ico?v=star-20261017", sizes: "any" },
-  { rel: "icon", type: "image/png", href: "/icon.png?v=star-20261017" },
-  { rel: "apple-touch-icon", href: "/apple-icon.png?v=star-20261017" },
+  // The vector first: browsers that take it draw the mark at any dpi, and it carries its own dark-mode red.
+  { rel: "icon", type: "image/svg+xml", href: "/logo.svg?v=stc-20261029" },
+  { rel: "icon", href: "/favicon.ico?v=stc-20261029", sizes: "any" },
+  { rel: "icon", type: "image/png", href: "/icon.png?v=stc-20261029", sizes: "512x512" },
+  { rel: "apple-touch-icon", href: "/apple-icon.png?v=stc-20261029" },
   { rel: "manifest", href: "/manifest.webmanifest" },
   { rel: "alternate", type: "application/rss+xml", title: `${SITE.name} — 精选`, href: "/feed.xml" },
 ];

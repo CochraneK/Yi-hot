@@ -24,9 +24,9 @@ const X_SOURCE = `test-analyze-x-${T}`;
 type Step = "prefilter" | "score" | "understand" | "summarize" | "structure";
 interface Req { step: Step; marker: string; system: string; user: string; body: Record<string, any> }
 const requests: Req[] = [];
-const MARKERS = ["CLEAR", "RESCUE", "LOW", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "推文"];
+const MARKERS = ["CLEAR", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "推文"];
 // Fixture scores are picked to land on the intended side of 2 × the T1 threshold (2 × 35 = 70).
-const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [30, 30], THIN: [70, 70], SENSITIVE: [80, 80], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
+const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
 
 const stepOf = (system: string, user: string): Step =>
   system.includes("宽召回的公益相关性预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
@@ -125,6 +125,17 @@ test("an item that reaches the threshold is written like a selected one; below i
   assert.equal(summarize.body.messages.length, 1, "the title/summary prompt is one user message");
   assert.equal(summarize.body.response_format, undefined, "answered in its own text format");
   assert.deepEqual((await row(lowId)).tags, ["政策", "养老服务", "其他领域", "民政部"], "structure tags include the fallback mission topic");
+});
+
+test("a first score far under the threshold: no second reading, no structure step", async () => {
+  const id = await article("FAINT");
+  const res = await analyzeArticle(id);
+  // 12 sits 23 under the T1 threshold: the second opinion cannot lift it, and nothing that far down
+  // is selected or listed, so only the cheap title/summary copy is still written.
+  assert.deepEqual([res!.output!.selected, res!.output!.score, res!.output!.titleZh], [false, 12, "翻译标题 FAINT"]);
+  assert.deepEqual(calls("FAINT").sort(), ["prefilter", "score", "summarize"]);
+  const r = await row(id);
+  assert.deepEqual([r.category, r.output.fact, r.receipt_ids.length], [null, null, 3], "no structure receipt, no fact frame");
 });
 
 test("the prefilter's BLOCK stops everything; UNKNOWN goes on like PASS", async () => {

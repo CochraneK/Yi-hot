@@ -19,6 +19,13 @@ export const UNDERSTAND_SYSTEM = promptText("understand", {
 export const MAX_BODY_CHARS = 60_000;
 const capBody = (s: string) => (s.length > MAX_BODY_CHARS ? s.slice(0, MAX_BODY_CHARS) : s);
 
+/**
+ * The prefilter only answers "does this belong to the industry at all", a wide-recall call that the
+ * headline and the opening already settle; the tail of a long body adds input tokens but no answer.
+ * The steps that judge the item itself (score, understand) still read the whole body.
+ */
+export const PREFILTER_BODY_CHARS = 800;
+
 // ── Text helpers ─────────────────────────────────────────────────────────────────────────────
 
 export function clampText(s: string, maxChars: number): string {
@@ -90,7 +97,7 @@ function materialQuality(a: AnalyzeInputArticle): string {
 }
 
 /** The material as the prefilter and the content understanding read it. */
-export function renderContext(a: AnalyzeInputArticle, opts: { annotateQuoted?: boolean } = {}): string {
+export function renderContext(a: AnalyzeInputArticle, opts: { annotateQuoted?: boolean; bodyChars?: number } = {}): string {
   const lines: string[] = [];
   lines.push(`【来源】${a.source.name}（${a.source.kind}，tier=${a.source.tier || "未分级"}）`);
   if (a.source.tags?.length) lines.push(`【来源标签】${a.source.tags.join(", ")}`);
@@ -117,14 +124,15 @@ export function renderContext(a: AnalyzeInputArticle, opts: { annotateQuoted?: b
   }
   lines.push("");
   lines.push(opts.annotateQuoted && quoted ? "【正文（作者自己的内容）】" : "【正文】");
-  lines.push(capBody(a.xPost ? String(a.xPost.text ?? a.title) : (a.bodyText ?? a.excerpt ?? "(无正文)")));
+  const body = a.xPost ? String(a.xPost.text ?? a.title) : (a.bodyText ?? a.excerpt ?? "(无正文)");
+  lines.push(opts.bodyChars ? clampText(body, opts.bodyChars) : capBody(body));
   lines.push("");
   lines.push(`【材料质量】${materialQuality(a)}`);
   return lines.join("\n");
 }
 
 /** The prefilter's user message: the context as a JSON string (the prompt was tuned on this form). */
-export const prefilterUser = (a: AnalyzeInputArticle) => JSON.stringify(renderContext(a));
+export const prefilterUser = (a: AnalyzeInputArticle) => JSON.stringify(renderContext(a, { bodyChars: PREFILTER_BODY_CHARS }));
 
 /** Nothing to judge beyond the title: the prefilter's BLOCK then means "wait for material". */
 export function missingEvidence(a: AnalyzeInputArticle): boolean {

@@ -44,8 +44,23 @@ export const ANALYZE_PROMPT_VERSION = Object.values(PROMPT_VERSIONS).join("+");
 
 // ── Scoring ───────────────────────────────────────────────────────────────────────────────
 
-/** Independent score calls per article; their sum decides, their mean (floored) is shown. */
+/** Independent score calls per article; their mean decides and is shown (floored). */
 export const SCORE_CALLS = 2;
+
+/**
+ * A first score this far under the tier threshold is not worth a second opinion: measured on 6,617
+ * items (10-22~10-29), 48% landed under 30 and 6 of them were selected, so the second paid call is
+ * skipped there and the mean rests on the one reading. Raising this narrows the safety margin the
+ * two-call average exists for; it must stay well under the lowest threshold (35).
+ */
+export const SECOND_SCORE_MARGIN = 10;
+
+/**
+ * Material this far under the threshold is neither selected nor listed, and the grouping step only
+ * reads the fact frame of items that pass — so its structure step (category, tags, subjects, fact)
+ * is not paid for. The 5-point margin keeps it for near misses, which editors still see.
+ */
+export const STRUCTURE_MARGIN = 5;
 
 /**
  * The thresholds on the mean score, per source tier (industry/selection.ts): selected when
@@ -245,7 +260,7 @@ async function runPrefilter(a: AnalyzeInputArticle, opts: StepOpts): Promise<Ana
   return { label, reason: res.data.reason, model: res.model, receiptId: res.receiptId, reused: res.reused };
 }
 
-async function runScores(a: AnalyzeInputArticle, threshold: number, opts: StepOpts): Promise<NonNullable<AnalysisRun["scores"]>> {
+async function runScores(a: AnalyzeInputArticle, threshold: number, opts: StepOpts, onFirst?: (first: number) => void): Promise<NonNullable<AnalysisRun["scores"]>> {
   const model = opts.scoreModel ?? (await modelFor("score"));
   const call = scoreCall(model);
   const input = buildScoreInput(a);
@@ -270,8 +285,19 @@ async function runScores(a: AnalyzeInputArticle, threshold: number, opts: StepOp
       if (isContentFilter(error)) return { model, threshold, values, receiptIds, reused: false, refused: true };
       throw error;
     }
+    if (i === 0) {
+      onFirst?.(values[0]!);
+      // A reading this far under the threshold cannot be lifted by a second opinion.
+      if (values[0]! < threshold - SECOND_SCORE_MARGIN) break;
+    }
   }
   return { model, threshold, values, receiptIds, reused };
+}
+
+/** The mean of the score readings that were actually made; null when there are none (or a refusal). */
+function meanScore(scores: AnalysisRun["scores"]): number | null {
+  if (!scores || scores.refused || !scores.values.length) return null;
+  return scores.values.reduce((total, value) => total + value, 0) / scores.values.length;
 }
 
 async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<NonNullable<AnalysisRun["structure"]>> {
@@ -380,20 +406,32 @@ export async function runAnalysis(a: AnalyzeInputArticle, opts: StepOpts & { sta
     const scores = threshold === null ? null : await runScores(a, threshold, opts);
     return { prefilter, scores, writing: null, structure: null };
   }
-  // The structure step needs nothing from the scores: it runs beside them.
-  const structure = runStructure(a, opts).then((value) => ({ value }), (error: unknown) => ({ error }));
+  // The structure step is only paid for material that can still be selected, and it starts beside the
+  // scoring (after the first reading, before the second) so the gate costs no wall-clock time.
+  type StructureOutcome = { value: NonNullable<AnalysisRun["structure"]> } | { error: unknown };
+  const started: { pending: Promise<StructureOutcome> | null } = { pending: null };
+  const startStructure = () => {
+    started.pending ??= runStructure(a, opts).then((value) => ({ value }), (error: unknown) => ({ error }));
+  };
   try {
-    const scores = threshold === null ? null : await runScores(a, threshold, opts);
-    const sum = scores && !scores.refused && scores.values.length === SCORE_CALLS ? scores.values.reduce((total, v) => total + v, 0) : null;
-    const near = sum !== null && (sum >= scores!.threshold * SCORE_CALLS || sum > UNDERSTAND_FLOOR * SCORE_CALLS);
+    const scores = threshold === null
+      ? null
+      : await runScores(a, threshold, opts, (first) => {
+          if (first >= threshold - STRUCTURE_MARGIN) startStructure();
+        });
+    const mean = meanScore(scores);
+    // A tier without a threshold is never selected but is always listed: its structure always runs.
+    if (threshold === null || (mean !== null && mean >= threshold - STRUCTURE_MARGIN)) startStructure();
+    const near = mean !== null && (mean >= (threshold ?? Infinity) || mean > UNDERSTAND_FLOOR);
     const writing = (near ? await runUnderstand(a, opts) : null) ?? (await runSummarize(a, opts));
-    const s = await structure;
+    if (!started.pending) return { prefilter, scores, writing, structure: null };
+    const s = await started.pending;
     if ("error" in s) throw s.error;
     return { prefilter, scores, writing, structure: s.value };
   } finally {
     // A score/writing error or deploy must not let the job finish while a paid structure request
     // still owns a response. It settles and stores its receipt before shutdown can close the DB.
-    await structure;
+    if (started.pending) await started.pending;
   }
 }
 
@@ -405,13 +443,13 @@ export function normalizeAnalysis(run: AnalysisRun) {
   // Past the prefilter (PASS or UNKNOWN) an item is relevant, but without a usable Chinese title and
   // summary it cannot be published: it waits.
   const relevance = label === "BLOCK" ? "block" : run.writing && (!titleZh || !summaryZh) ? "unknown" : "pass";
-  // Selected when the two scores add up to twice the tier threshold; the mean, floored,
-  // is the score shown (it never decides a half point on its own).
+  // Selected when the mean of the score readings made reaches the tier threshold; the mean, floored,
+  // is the score shown. A single reading counts on its own when the second call was skipped.
   const values = run.scores && !run.scores.refused ? run.scores.values : null;
-  const sum = values?.length === SCORE_CALLS ? values.reduce((total, v) => total + v, 0) : null;
-  const score = sum === null ? null : Math.floor(sum / SCORE_CALLS);
+  const mean = meanScore(run.scores);
+  const score = mean === null ? null : Math.floor(mean);
   const threshold = run.scores?.threshold ?? null;
-  const selected = relevance === "pass" && sum !== null && threshold !== null && sum >= threshold * SCORE_CALLS;
+  const selected = relevance === "pass" && mean !== null && threshold !== null && mean >= threshold;
   const subjects = run.structure?.subjects ?? [];
   const tags = tagsForVerifiedSubjects(run.writing?.tags ?? run.structure?.tags ?? [], subjects);
   return {

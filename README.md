@@ -1,252 +1,60 @@
 <p align="center">
-  <img src="docs/assets/yihot-showcase-hero.svg" alt="Yi-Hot 公益信息雷达：多信源聚合、AI 内容分析与主题总报（产品示意图）" width="100%" />
+  <img src="docs/assets/yihot-showcase-hero.svg" alt="Yi-Hot 公益信息雷达：多信源、内容整理与公益总报（产品示意图）" width="100%" />
 </p>
 
 <h1 align="center">Yi-Hot · 公益动态</h1>
 
 <p align="center">
-  <img src="industry/brand/save-the-children.svg" alt="救助儿童会（儿童公益主题适配涉及的机构标识）" width="210" />
-</p>
-<p align="center"><sub>救助儿童会方向的儿童公益主题适配 · 机构标识归原权利人所有；本站独立维护，展示不代表官方合作或背书。</sub></p>
-
-<p align="center">
-  <strong>让值得关注的公益信息，更容易被发现、理解与追踪。</strong><br/>
-  面向公益从业者、研究者与关注公共议题的读者的公益资讯聚合与 AI 辅助整理平台。
+  <strong>让值得关注的公益信息，更容易被发现、理解与追踪。</strong><br>
+  面向公益从业者、研究者及公共议题读者的独立信息聚合工具。
 </p>
 
 <p align="center">
-  <a href="https://49.233.72.222/yihot/"><strong>🌐 浏览线上站点</strong></a> ·
-  <a href="#-快速开始"><strong>🚀 自行部署</strong></a> ·
-  <a href="MAINTENANCE.md"><strong>📖 完整维护手册</strong></a> ·
-  <a href="docs/PROJECT_CONTEXT.md"><strong>🧭 项目交接</strong></a>
+  <a href="https://49.233.72.222/yihot/"><strong>浏览站点</strong></a> ·
+  <a href="https://49.233.72.222/yihot/records">监管记录</a> ·
+  <a href="https://49.233.72.222/yihot/subscribe">邮件订阅</a> ·
+  <a href="docs/USER-GUIDE.md">使用指南</a>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-2479b4?style=flat-square" alt="MIT License" />
-  <img src="https://img.shields.io/badge/TypeScript-Node.js%2024-305caf?style=flat-square" alt="TypeScript and Node.js 24" />
-  <img src="https://img.shields.io/badge/PostgreSQL-17-336791?style=flat-square" alt="PostgreSQL 17" />
-  <img src="https://img.shields.io/badge/Self--hosted-Docker%20Compose-1884c7?style=flat-square" alt="Self-hosted with Docker Compose" />
-</p>
+> 基于 [AIHOT](https://github.com/KKKKhazix/AIHOT) 的 MIT 开源引擎，独立改造成公益领域版本；**不是 AIHOT 或救助儿童会的官方产品**。上图为产品示意，不是实时截图。
 
-> [!NOTE]
-> 本项目是以 [AIHOT](https://github.com/KKKKhazix/AIHOT) 为技术基础的**独立公益领域定制版本**，不是 AIHOT 或救助儿童会的官方发行版或代表其立场的产品。本文的可视化为功能与架构**示意图**，并非真实线上页面截图。原始新闻版权归发布方所有。
+## 为什么做
 
-## ✨ 为什么做 Yi-Hot？
+公益资讯分散在政府公告、社会组织、行业媒体和不同订阅渠道中，重复阅读耗时且容易遗漏。Yi-Hot 把**公开信源发现 → 去重与 AI 整理 → 事件归并 → 主题阅读与总报**连接起来，让读者更快找到值得核实的原始信息。
 
-公益信息散落在政府公告、社会组织网站、行业媒体、微信公众号和邮件简报里。逐个阅读费时间，直接订阅又容易被重复信息淹没。
+## 它能做什么
 
-**Yi-Hot 想减少信息搜寻和整理的重复劳动**：持续发现公开信息，区分原始发布日期与抓取时间，通过可追溯的内容分析形成动态、主题和周期性总报，帮助读者更快回到可靠的一手来源。
+| 阅读 | 理解 | 追踪与订阅 |
+| --- | --- | --- |
+| **[动态](https://49.233.72.222/yihot/all)**、[热点](https://49.233.72.222/yihot/hot)：从不同来源看同一事件，保留原文链接 | **[主题](https://49.233.72.222/yihot/topics)**：儿童权益等公益议题分类；AI 辅助筛选、摘要、归并 | **[周报](https://49.233.72.222/yihot/weekly)**、[月报](https://49.233.72.222/yihot/monthly)、[邮件订阅](https://49.233.72.222/yihot/subscribe)：定期回顾 |
+| **[监管记录](https://49.233.72.222/yihot/records)**：民政部相关处罚、活动异常及失信公告独立查询 | **[公众号历史分析](https://49.233.72.222/about/dashboard)**：专题可视化，非实时新闻 | **[Agent 接入](https://49.233.72.222/yihot/agent)**：RSS、开放 API、MCP 与 Skill |
 
-## 🧩 核心能力
+**具体的信源、13 类使命主题、处理流程和数据边界**，见 [完整产品说明](docs/PRODUCT_OVERVIEW.md)。
 
-| 发现 | 理解 | 阅读 | 持续使用 |
-| :--- | :--- | :--- | :--- |
-| **多渠道信源**：网站、RSS、邮件简报，以及**网页搜索 API**（按主题词主动发现公益事件）；公众号与微博通道已暂停 | **内容处理**：去重、相关性判断、摘要、翻译与结构化标签 | **动态与热点**：按原文日期查看，保留原始来源链接；动态页支持「只看未读 / 只看精选」筛选 | **周报与月报**：按自然周期汇总行业信息 |
-| **信源治理**：候选发现、预览、隔离启用、健康检查 | **公益语境适配**：政策、项目、机构、儿童与其他公益领域 | **主题与机构页**：按议题交叉阅读，不只依靠关键词；另有**监管记录**，民政部的处罚与异常名录每日同步 | **邮件订阅**：双重确认、按期投递、可退订 |
-| **历史资产留存**：NewsMail 与 charity-intelligence 信源线索 | **人工可复核**：留存判断链、来源和模型用量 | **分享海报**：每条都能生成带二维码的图，发群里或存下来 | **后台运维**：异常诊断、费用管理、反馈与审计；对外另有 **RSS / API / MCP / Agent Skill** 四种读取入口 |
+## Yi-Hot 与 AIHOT：同一个底座，不同的重点
 
-<p align="center">
-  <img src="docs/assets/yihot-showcase-flow.svg" alt="Yi-Hot 五阶段信息处理流程：信源、采集、AI 编辑、内容发布、报告投递" width="100%" />
-</p>
+- **继承**：采集与去重、AI 内容加工、事件与热点、报告、站点及后台框架。
+- **公益定制**：儿童与社会组织议题、信源治理、领域规则、周期性公益总报。
+- **新增扩展**：监管公告、邮件简报与订阅、候选信源和成本管理等；部分 AI 行业功能代码保留但已关闭。
 
-**按需要选入口：** [动态](https://49.233.72.222/yihot/all) 看最新信息（顶部可切「只看未读 / 只看精选」）；[主题](https://49.233.72.222/yihot/topics) 按领域阅读；[热点](https://49.233.72.222/yihot/hot) 看近期最受关注的事件；[周报 / 月报](https://49.233.72.222/yihot/weekly) 回顾周期内的重要进展。
+源码级证据与上游版本差异见 [AIHOT × Yi-Hot 功能对照](docs/AIHOT_FEATURE_COMPARISON.md)。**fork 能追踪上游，不代表功能已自动对齐或腾讯云已部署最新代码。**
 
-**手机与电脑内容一致**：手机端底部固定「总报 / 动态 / 热点 / 主题 / 更多」，电脑端是左侧常驻目录栏；收藏、Agent、更新这些在手机上要进「更多」，在电脑上直接摆在侧栏。订阅入口两端都常驻。监管页目前只有手机入口和直链，电脑侧栏还没接上，见下文「接下来想做的」。
+## 使用与部署
 
-> 热点榜的「关注度」同时参考正规信源（政府、机构、媒体、邮件）与网页搜索信号：同一事件被越多**独立来源**提及、且越近发生，热度越高；只有网页搜索信号、没有权威来源背书的事件不会单独上榜。
+**读者**可以直接 [打开网站](https://49.233.72.222/yihot/)；**维护者**可访问 [后台](https://49.233.72.222/yihot/admin)（需要登录）。更多直达入口、监管专题和机器接口见 [站点地图](docs/SITE_MAP.md)。
 
-## 🧒 救助儿童会方向：13 个使命主题
+**开发者**可克隆本仓库，按 [本地部署说明](docs/deploy.md) 配置 Node.js、Docker、数据库与测试凭据；生产部署与新机器交接见 [维护手册](MAINTENANCE.md)。不应把真实密钥、用户邮箱和数据库备份提交到公开仓库。
 
-Yi-Hot 针对儿童公益议题进行了领域定制：主题词表、别名映射、前台主题筛选，以及存量内容的标签回填机制。项目维护者另开展过救助儿童会微信公众号历史文章的采集与数据分析：**原始语料（公众号全文）不入库、不公开**，而由它汇总出的《公众号内容分析》已作为只读页面发布在 [关于 → 看看这十二年写过什么](https://49.233.72.222/yihot/about/dashboard)，覆盖 2014–2026 年 1,992 篇推文，主题分布、年度特征词与共现关系都可逐项查看。它的入口在[关于](https://49.233.72.222/yihot/about)页最下方「关于我们」那一屏。
+## 继续了解
 
-<p align="center">
-  <img src="docs/assets/yihot-showcase-topics.svg" alt="救助儿童会方向的十三个公益领域主题示意图" width="100%" />
-</p>
-
-- 主题既用于发现信息，也用于前端导航、标签与历史文章回填；具体规则见 [主题轴说明](docs/topic-axis-migration.md)。
-- **内容形式**（政策、研究、项目等）与**公益主题**（儿童保护、营养健康等）是不同维度，可以同时出现。
-- “其他领域”是兜底标签，不应与明确的使命领域同时出现。标签不是科学测量结论，实际质量需要持续抽样复核。
-
-## 🧭 Yi-Hot 与 AIHOT：继承、定制与独立扩展
-
-**Yi-Hot 基于 [AIHOT](https://github.com/KKKKhazix/AIHOT) 的开源引擎，不是 AIHOT 官方站点。** 相同底座负责发现、筛选、归并和发布，Yi-Hot 负责定义公益行业什么值得关注，以及怎样为读者和运营者提供服务。2026-10-30 已按两端 `main` 的**真实源码、路由和功能开关**逐项核对：
-
-| 能力 | 来源与 Yi-Hot 的选择 |
-| :--- | :--- |
-| **采集、去重、事件聚合、热点** | **继承并改写 AIHOT 底座**；保留 RSS、网站、JSON、外部推送等渠道与事件合并逻辑，按公益场景调整来源、权重与内容表达 |
-| **AI 预筛、评分、写作与报告** | **继承并深度定制**；公益相关性和主题判定独立配置。现在以周报/月报为主，旧日报代码不等于持续出版 |
-| **儿童公益与行业主题** | **Yi-Hot 领域定制**；政策、机构、儿童议题和公益项目分层，内容形式与公益主题分开标注 |
-| **公众号、搜索、邮件信源** | **Yi-Hot 的运营扩展**；增加按主题主动网页搜索、邮件简报采集及公众号自建/付费通道的治理；当前公众号与微博通道暂停，不能仅凭配置称仍在采集 |
-| **监管记录** | **Yi-Hot 专有扩展**；民政部处罚、社会组织活动异常与严重违法失信公告，独立检索，不塞进普通新闻时间线 |
-| **邮件订阅与开放访问** | **继承 RSS/API/MCP/Agent 阅读底座，新增邮件订阅、确认/退订与投递**；保留原文链接、API 和 Agent Skill |
-| **管理员与运维** | **继承后台，增加候选信源、用量成本、运行与预算护栏**；历史稿有可恢复归档机制，不以无限追加待处理任务换覆盖率 |
-| **AIHOT 上游的新功能** | **尚未全部对齐**；当前上游路由支持新的模块式扩展，Yi-Hot 现用 `main` 仍采用自己的组织方式。模型榜/Codex 监控虽留有代码，但当前关闭 |
-
-**更详细的源码证据和差异矩阵：**[Yi-Hot × AIHOT 完整能力对照](docs/AIHOT_FEATURE_COMPARISON.md) · [上游迁移历史与升级边界](docs/AIHOT_UPSTREAM_REBUILD.md) · [第三方归属与版权](THIRD_PARTY_NOTICES.md)。
-
-> **同步边界**：Yi-Hot 现在是 AIHOT 的正式 GitHub fork，历史可追溯；但 `vendor/aihot-main` 与上游同步，**不等于**本项目 `main` 会自动合并全部上游功能，也不等于腾讯云已部署最新提交。NewsMail 和 charity-intelligence 的**资产整合是分阶段进行的**，不能把它们描述为历史数据库已经全量合并。
-
-## 🚀 快速开始
-
-**前置条件：** Node.js 24.11+、Docker / Docker Compose、npm，以及可供测试的 PostgreSQL 环境。默认配置用于本机体验；真实采集、模型、公众号和邮件功能需要分别配置对应凭据与开关。
-
-```bash
-git clone https://github.com/CochraneK/Yi-hot.git
-cd Yi-hot
-npm ci
-cp .env.example .env
-node scripts/init-env.ts
-docker compose up -d --build
-```
-
-本地通常访问 **http://localhost:3000**；后台通常为 **http://localhost:3000/admin**。不要将生产密钥复制到测试环境。详见 [完整维护手册](MAINTENANCE.md#十二本地开发测试同步和部署) 与 [部署说明](docs/deploy.md)。
-
-> [!IMPORTANT]
-> 仓库已公开，可直接克隆。第三方代码、机构标识与新闻内容的授权边界见 [NOTICE](NOTICE) 与 [第三方归属说明](THIRD_PARTY_NOTICES.md)——机构标识的使用不代表合作或背书。
-
-## 🔬 架构与数据边界
-
-```mermaid
-flowchart LR
-  A["政府网站 / 公益机构 / RSS / 公众号 / 邮件"] --> B["采集与来源治理"]
-  B --> C["规范化、发布时间、去重"]
-  C --> D["AI 相关性判定、摘要与标签"]
-  D --> E["统一发布层"]
-  E --> F["动态 / 热点 / 主题"]
-  E --> G["周报 / 月报"]
-  G --> H["订阅确认、邮件投递与退订"]
-  B -. "候选需人工审核" .-> I["历史信源线索库"]
-```
-
-**守住三条边界：** 只在允许的范围内采集；默认仅显示摘要和原文链接，不擅自转载全文；`industry/sources.json` 是 seed，**生产信源以 PostgreSQL 中的运行时配置为准**。项目不保证所有来源全天候可访问，也不保证 AI 摘要永远准确，重要事实请以原文为准。
-
-## 🔎 站点入口：公开阅读、监管与管理后台
-
-不需要记复杂的路径：日常看信息用「动态 / 主题 / 热点 / 总报」，找不太显眼的功能可以直接从下面打开。
-
-| 公开入口 | 作用 |
-| :--- | :--- |
-| [动态](https://49.233.72.222/yihot/all) · [热点](https://49.233.72.222/yihot/hot) · [主题](https://49.233.72.222/yihot/topics) | 最新文章、事件热度、按议题/机构阅读 |
-| [周报](https://49.233.72.222/yihot/weekly) · [月报](https://49.233.72.222/yihot/monthly) · [订阅](https://49.233.72.222/yihot/subscribe) | 公益总报与邮件订阅 |
-| **[监管记录](https://49.233.72.222/yihot/records)** | 社会组织行政处罚、活动异常和失信公告；手机端可从「更多」进入 |
-| [公众号内容分析](https://49.233.72.222/about/dashboard) | 2014–2026 公众号历史语料的专题可视化，**静态研究报告，非实时新闻** |
-| [Agent 接入](https://49.233.72.222/yihot/agent) · [意见反馈](https://49.233.72.222/yihot/feedback) | AI 查询接入与内容反馈 |
-
-| 管理员入口（**需登录**） | 常用操作 |
-| :--- | :--- |
-| **[后台首页](https://49.233.72.222/yihot/admin)** · [信源管理](https://49.233.72.222/yihot/admin/sources) | 管理员登录后进入信源；后台页不是公开数据页面 |
-| [候选信源](https://49.233.72.222/yihot/admin/sources/candidates) · [内容诊断](https://49.233.72.222/yihot/admin/content) | 预览候选和排查文章质量 |
-| [用量与成本](https://49.233.72.222/yihot/admin/usage) · [运行记录](https://49.233.72.222/yihot/admin/runs) · [模型配置](https://49.233.72.222/yihot/admin/models) | 查看运行、费用和模型设置 |
-| [SelectBench](https://49.233.72.222/yihot/admin/selectbench) · [设置](https://49.233.72.222/yihot/admin/settings) · [审计日志](https://49.233.72.222/yihot/admin/audit) | 精选校准、参数管理和操作记录 |
-
-**[完整站点地图](docs/SITE_MAP.md)** 还整理了公告、收藏、更新日志、RSS、MCP、REST API、订阅源及全部后台入口，并标注哪些功能已关闭。以上是**源码确认的地址**，不是实时线上 HTTP 验收；若链接打不开，需进一步核对腾讯云部署、HTTPS 或功能开关。
-
-## 🧭 接下来想做的
-
-想法不缺，缺的是顺序。下面按**还要补什么**分三档：第一档只差一个开关，第二档要先补一个具体的东西，第三档要等外部条件。写出来不是为了许愿——知道**卡在哪**，比知道"有这个计划"更有用。
-
-完整的想法台账（含已经落地的、以及讨论过决定不做的）在 [想法台账](docs/IDEAS.md)，那份文档同时充当"别再重复提这些"的清单。
-
-### 一、改几处就成立
-
-| 想做的 | 会多出什么 | 要动的地方 |
-| :--- | :--- | :--- |
-| **电脑端的监管入口** | 手机上从「更多」进得到监管页，电脑侧栏没有这一项 | 导航表里少一行（[`nav.ts`](apps/web/app/components/shell/nav.ts)），改动最小 |
-| **扫码到期提醒** | 公众号通道快失效时，把二维码直接推到维护者的飞书，而不是等三天没更新才发觉 | 飞书通道已经通（`notify/feishu.ts`），缺的是「会话失效检测 + 推送」这一小段 |
-| **精选栏目的独立入口** | 精选判定一直在跑，但目前只能在动态页勾「只看精选」 | 开关就在 `industry/features.ts` 的 `selectedFeed`，问题是要先确认门槛值不值得公开 |
-
-### 二、得先补一个前提
-
-| 想做的 | 会多出什么 | 现在卡在哪 |
-| :--- | :--- | :--- |
-| **公众号的替代通道** | 自建的 17 个公众号通道里只有 2 个能抓到内容，暂由 RSS 和机构网站补位 | 免费通道要长期维护扫码会话，目前会话已失效（所有号停在 10-12），恢复扩量前先修这个 |
-| **站内问答** | 直接问「最近有没有关于困境儿童的省级政策」，拿到几条带原文链接的结果 | 问答比检索更容易编造。要先做到只答库里有的、每条可回溯、答不了就说答不了 |
-| **把总报读出来（TTS）** | 通勤、做家务，或者看字吃力的读者，可以把一期周报听一遍 | 中文的数字、多音字、机构简称要专门处理；音频得预生成进缓存，否则每听一次都重新花钱 |
-| **只看当地** | 按访问者所在城市，只看本地相关的儿童政策与项目 | 省级政策和转载稿没有城市字段，得先补这一层归属，才谈得上筛选 |
-| **分主题订阅** | 13 个主题各订各的，只收自己关心的那一路 | 现在只有日/周/月三档；每加一档就多一套发送去重与退订口径 |
-| **人工标注检验选稿** | 抽一批文章人工标「该不该选」，再和模型判定对照，把改判理由写回标准 | 要有人坐下来标几百条。没有这一步，门槛只能靠入池率反推 |
-| **年报** | 现在只有日、周、月三种报告，十二年积累的站缺一份年度回顾 | 不是把 12 个月拼起来，得重新取舍哪些变化值得写 |
-
-### 三、等外部条件或一次决心
-
-| 想做的 | 会多出什么 | 现在卡在哪 |
-| :--- | :--- | :--- |
-| **域名与备案** | 一个能印在纸上的地址，而不是一串 IP | 三条路径已比较过（[域名与主机](docs/DOMAIN_AND_HOSTING.md)），卡在备案主体与新闻类资质的现实约束 |
-| **生态页** | 首页之外，能看到同一套框架长出的其他站最近在写什么（8 个站的 RSS 实测全部可用） | 三个方案未决，推荐用定时任务写一份静态文档，而不是让 2C2G 的机器再多一份抓取与缓存 |
-| **突发事件的快速通道** | 地震、重大事故这类不会被「每三天一轮」漏掉 | 临时加密与常规定时抢同一份预算和队列；触发条件写松了天天报警，写紧了等于没有 |
-| **反爬与防白嫖** | 防止整站被别的站和 AI 爬虫搬走 | 现在只有页面级 `meta robots`；得先决定是开放还是限量，别把 RSS 和 Agent 一起挡在门外 |
-| **历史数据保留策略** | 文章只会越来越多，得有一份「多少年之后怎么办」的说法 | 直接删会破坏旧报告里的引用链接，冷归档 + 旧链接仍可打开才是正解 |
-
-## 🌱 同一套框架长出的其他站
-
-AIHOT 是开源的，社区里有人把它换成自己的信源和判断标准，长成了各自的行业站。下面这些在 **2026-10-30 逐个打开确认在线**；**都不是本站运营**，列出来不构成推荐或背书。之所以列，是因为它们说明了一件事：同一套引擎换掉领域和标准，就能长成完全不同的样子——这也是公益版敢这么做的前提。
-
-| 站点 | 方向 | 与本项目的关系 |
-| :--- | :--- | :--- |
-| [AIHOT](https://aihot.news) | AI 行业热点 | 上游原站 |
-| [PsyHOT](https://psyhot.cn) | 心理学与精神医学，学界与业界双视角 | **姊妹项目**，本站的 Agent Skill 通道与付费采集写法来自它 |
-| [大厂观察](https://innews.site/) | 互联网大厂动态与职场信息 | 同框架，接在自己已有的网站上 |
-| [RoboHot](https://robohot.news) | 机器人产业，面向研发者与准备入行的人 | 同框架 |
-| [MediaStack](https://mediastack.work/) | 音视频技术情报 | 同框架 |
-| [FilmTechNews](https://filmtech.lumenghe.com) | 影视技术日报 | 同框架 |
-| [青砚](https://qingyannews.cn) | 环保与双碳，另附一套公众号免费采集方案 | 同框架 |
-| [拾玖跨境资讯](https://news.blues19.com) | 跨境电商，按平台政策与运营重建了主题体系 | 同框架 |
-| [品牌AI外刊](https://news.sevenailab.com) | 海外品牌营销与 AI 变化，先写准入规则再筛候选 | 同框架 |
-| [营销通鉴 · 平台动态](https://yingxiaoclub.com/news) | 营销平台的规则变化与新功能早报 | 同框架 |
-| [AI4Math Radar](https://charlie-wang-03.github.io/ai4math-radar/) | AI for Mathematics 研究动态 | 同框架 |
-| [聚身之家 AIMAN.World](https://www.aiman.world/) | 机器人产业数据库与图谱，另做 Agent 接入 | 形态相近，独立实现 |
-| [VulnHOT](https://vulnhot.com) | 漏洞情报 | 形态相近，独立实现 |
-| [URHOT](https://huangzhenhao90.github.io/ai-ux-research-hot/) | AI 与用户研究，零服务器的静态方案 | 形态相近，用 Python 重写了同一条管线 |
-| [AI 快讯](https://hot.foxnan.com/) | AI 新闻与日报 | 形态相近，独立实现 |
-| [NewsIQ](https://newsiq.xyz) | 新闻事件聚合 | 形态相近，独立实现 |
-| [xabcnews](https://xabcnews.com) | AI 新闻 | 形态相近，独立实现 |
-
-各自的做法、成本对比和我们采纳/不采纳的理由，见 [同类项目调研](docs/RELATED_PROJECTS.md)。上面有站点打不开了，欢迎提 Issue 告知。
-
-**共养与共创。** 这些站共用一套引擎，但重复的劳动和每月的账单，目前都还由各自的作者独自承担：上游有 2,125 个 fork，至少 5 个站把同一条管线独立重写了一遍；每个站也都在各自解决「这个政府站没有 RSS」「这个日期写法没见过」。这件事有解，而且不需要谁先捐钱——先登记谁在做什么，再把适配器作为数据回贡而不是代码 fork，最后才是每人每月一元的订阅式共养（定性是订阅，不是募捐）。完整推演、成本量级、以及「跨站汇总为什么只能做索引不能混池」，见 [共创与共养](docs/COMMUNITY_MODEL.md)。
-
-## 📖 文档导航
-
-| 我要做什么 | 从这里开始 |
-| :--- | :--- |
-| **只想了解产品** | [线上站点](https://49.233.72.222/yihot/) |
-| **第一次接手维护** | [完整维护手册](MAINTENANCE.md)（前三分之一是「接手人最常问的 14 个问题」人话版） |
-| **换机器 / 换 AI 冷启动** | [PROJECT_CONTEXT](docs/PROJECT_CONTEXT.md)（必读：拓扑、口径、凭据、接手清单） |
-| **看上一轮会话与决策沉淀** | [会话归档 2026-10-24](docs/HANDOFF-2026-10-24-CHAT-ARCHIVE.md) |
-| **核对 AIHOT 继承、定制、差异** | [源码级功能对照](docs/AIHOT_FEATURE_COMPARISON.md) |
-| **找监管页、后台与 API 的全部入口** | [站点地图](docs/SITE_MAP.md) |
-| **核查监管记录口径与更新方式** | [监管记录](docs/REGULATORY_RECORDS.md) |
-| **下一阶段做什么 / 哪些别再提** | [想法台账](docs/IDEAS.md) |
-| **参与共创 / 共养，或评估这套模型** | [共创与共养](docs/COMMUNITY_MODEL.md) |
-| **新增公益信源** | [信源配置](docs/sources.md) |
-| **看信源现状与失败复盘** | [信源全名单](docs/SOURCE_REGISTRY.md) |
-| **试用候选信源** | [候选信源试用版](docs/SOURCE_CANDIDATE_TRIAL.md) |
-| **配置邮件简报** | [邮件采集部署](docs/EMAIL_SOURCE_DEPLOY.md) |
-| **邮件订阅与投递** | [公益总报邮件投递](docs/EMAIL_DELIVERY.md) |
-| **理解系统如何运作** | [技术架构](docs/architecture.md) |
-| **评分与筛选口径** | [精选与校准](docs/selection.md) |
-| **看钱花在哪 / 压成本** | [成本口径与护栏](docs/COST.md) |
-| **队列积压与容量缺口** | [队列可持续](docs/QUEUE_SUSTAINABILITY.md) |
-| **同步和重新部署** | [同步工具](tools/README.md) |
-| **域名、备案与海外主机** | [决策记录](docs/DOMAIN_AND_HOSTING.md) |
-| **跟踪 AIHOT 上游** | [升级与重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) |
-| **运维经验与踩坑索引** | [OPS 笔记](docs/memory/OPS.md) |
-
-> 完整索引（历代交接单、产品更新记录、专题设计文档共 40+ 篇）见 [MAINTENANCE.md 第二十一节·专题文档索引](MAINTENANCE.md)。
-
-## 🛟 当前状态、反馈与贡献
-
-- **部署状态与代码状态需要分别核验。** GitHub 更新不代表腾讯云已自动部署；上线后须进行文件哈希比对和实际运行检查。
-- **`main` 的 Check 已全绿**（截至 2026-10-29 的一次运行，[查看运行记录](https://github.com/CochraneK/Yi-hot/actions)）。注意：涉及数据库的后端测试须在服务器容器内的 `aihot_ci` 库运行，与本地和 CI 环境都不同；改完后端请按 `.github/workflows/check.yml` 逐步复现，别只看绿勾。
-- 邮件订阅与反馈涉及个人信息。公开隐私页面的运营主体与联系信息等模板字段**尚待实际维护者完善**；在正式对外推广前需要核实。
-- 欢迎通过 [Issues](https://github.com/CochraneK/Yi-hot/issues) 反馈失效信源、误判、来源归属、界面可用性与安全问题（需有仓库访问权限）。不要在公开 Issue 提交密码、个人隐私或未获授权的全文数据。
-
-## 📜 许可与致谢
-
-本项目基于 **[KKKKhazix/AIHOT](https://github.com/KKKKhazix/AIHOT)** 的 MIT 许可代码定制。感谢 AIHOT 的原始作者和开源贡献者。本仓库保留原始 [LICENSE](LICENSE)、[NOTICE](NOTICE) 和 [第三方归属说明](THIRD_PARTY_NOTICES.md)。AIHOT 的商标、名称及 Logo 不因代码许可而自动获得授权；救助儿童会及新闻来源的名称、标识和内容亦各有权利归属。
-
-Agent 接入（`/api/v1/agent` 的 Markdown 回答、外部资料围栏）的**骨架来自 AIHOT**；同框架的姊妹项目 **[PsyHOT](https://github.com/zhangheqing11/PsyHOT)**（MIT，心理学方向）在这层骨架上做了减法（去掉 MCP 层），并加了站内可分发的 Agent Skill 包；付费采集通道（EveryInfra）的适配写法也是 PsyHOT 的。后两项 AIHOT 从未有过，已按公益场景重写。逐文件清单（含核对日期与行数）见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，同类项目的写法取舍见 [docs/RELATED_PROJECTS.md](docs/RELATED_PROJECTS.md)。
+| 想了解 | 从这里开始 |
+| --- | --- |
+| 如何使用、全部公开与后台入口 | [使用指南](docs/USER-GUIDE.md) · [站点地图](docs/SITE_MAP.md) |
+| 功能、13 类主题、架构与数据治理 | [产品说明](docs/PRODUCT_OVERVIEW.md) · [技术架构](docs/architecture.md) |
+| 信源质量、成本和运行 | [信源台账](docs/SOURCE_REGISTRY.md) · [成本分析](docs/COST.md) |
+| 后续想法和真实取舍 | **[想法台账](docs/IDEAS.md)**（未做 / 已落地 / 不做） |
+| 第一次接手、AIHOT 升级、其他行业站 | [冷启动交接](docs/PROJECT_CONTEXT.md) · [上游对照](docs/AIHOT_FEATURE_COMPARISON.md) · [同类项目](docs/RELATED_PROJECTS.md) |
 
 ---
 
-<p align="center"><sub>Yi-Hot · 少一些重复检索，多一些真正有用的信息。 | <a href="MAINTENANCE.md">完整维护手册</a></sub></p>
+**许可与归属：**[MIT LICENSE](LICENSE) · [NOTICE](NOTICE) · [第三方归属](THIRD_PARTY_NOTICES.md)。机构标识及来源内容各有权利人；本站呈现不代表获得机构背书。AI 摘要可能有误，重要事实应以原文和主管部门公告为准。更多问题可通过 [Issues](https://github.com/CochraneK/Yi-hot/issues) 反馈。

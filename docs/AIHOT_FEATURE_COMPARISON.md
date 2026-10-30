@@ -9,7 +9,7 @@
 | 比较层 | AIHOT 上游框架 | Yi-Hot 当前 `main` | 归类与证据 |
 | --- | --- | --- | --- |
 | **采集与规范化** | RSS、网页列表、JSON、X、公众号、外部推送；去重、重试、监测 | 保留相同类别的引擎与信源数据模型，集中在公益来源；另加主动网页搜索和邮件简报；原公众号/微博通道现阶段暂停 | **底座继承 + 公益扩展**；[上游来源](https://github.com/KKKKhazix/AIHOT/tree/main/packages/backend/src/sources) · [本地来源](../packages/backend/src/sources/collect.ts) · [搜索服务](../packages/backend/src/providers/deepseek-tools.ts) |
-| **内容审核与精选** | 预筛、独立评分、摘要、结构抽取及各级入选标准 | 以公益/儿童权益的词表和提示词为准；2026-10-29 实施惰性结构抽取、灰区第二次评分及首尾预筛 | **继承后大幅改写**；[提示词](../industry/prompts/) · [精选口径](selection.md) · [实测成本](COST.md) |
+| **内容审核与精选** | 预筛、独立评分、摘要、结构抽取及各级入选标准 | 以公益/儿童权益的词表和提示词为准；2026-10-29 实施惰性结构抽取、灰区第二次评分及首尾预筛 | **继承后大幅改写**；[评分提示词](../industry/prompts/selection-score.md) · [精选口径](selection.md) · [实测成本](COST.md) |
 | **事件聚合与热点** | 同事件跨来源归组，热点按独立参与方而非转载篇数计算 | 保留事件/热点逻辑，公益来源含搜索信号；搜索信号本身不能代替可核验的一手来源 | **继承 + 领域规则**；[事件归并](../packages/backend/src/events/group.ts) · [热点](../packages/backend/src/events/hot.ts) |
 | **报告出版** | 日报、周报、月报 | 现用公益产品以**周报、月报**为主要定期报告；日报开关为 `false`，保留历史路由但不能宣称每天仍出版 | **出版策略定制**；[功能开关](../industry/features.ts) · [报告](../packages/backend/src/publication/reports.ts) |
 | **主题与语言** | AI 行业公司/方向/形式主题及一般框架 | 儿童保护、营养健康、教育、社会组织等公益领域主题，另区分内容形式与公益议题；支持历史标签回填 | **领域定制**；[主题与迁移](topic-axis-migration.md) · [主题种子](../industry/topics.json) |

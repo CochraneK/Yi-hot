@@ -94,7 +94,10 @@ GitHub 没有「把已有仓库转成 fork」的接口，所以做法是**新建
   结果：374 个自有提交重写，458 个提交连成一条线，`merge-base upstream/main HEAD = 07d4c77`，
   GitHub 侧 `compare` 从 No common ancestor 变成 **ahead 374 / behind 82 / diverged**。
   `git diff 旧tip 新tip` 为空，内容零变化。之后 `git replace -d 1ade945` 删掉临时 graft。
-- **旧仓不删，改名 `CochraneK/yi-hot-old` 保留**（5 个分支、15 个 PR、创建时间 2026-08-24 全在）。
+- **旧仓不删，改名 `CochraneK/yi-hot-old` 保留**（5 个分支、15 个 PR、创建时间 2026-08-24 全在），
+  **2026-10-30 已归档（`archived: true`）**——归档仓库只读，GitHub 会停掉其定时工作流，
+  避免与新仓 CI 重复跑。注意 `GET /actions/workflows` 里 `state` 仍返回 `active`，
+  这是归档不改该字段的正常现象，不代表还会调度；如需确证，看次日是否还有新的 run。
   15 条 PR 已另在新仓库重建为 issue #1–#15（fork 默认禁用 Issues，需先 `PATCH has_issues=true`）；
   另存一份 `docs/LEGACY_PR_ARCHIVE.md`。
 - fork 默认关 Issues，Actions 却会自动跑起来：推完 3 分钟 bot 就提交了

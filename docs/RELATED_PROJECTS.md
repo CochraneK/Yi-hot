@@ -11,7 +11,7 @@
 | 项目 | 定位 | 与本项目的关系 |
 | :--- | :--- | :--- |
 | [KKKKhazix/AIHOT](https://github.com/KKKKhazix/AIHOT) | AI 行业热点站（MIT） | 代码来源。本站全部基础设施（采集、归并、发布、报告、后台）基于它 |
-| [zhangheqing11/PsyHOT](https://github.com/zhangheqing11/PsyHOT) | 心理学 / 精神医学方向（MIT） | 姊妹项目。Agent Skill 包与付费通道写法来自它 |
+| [zhangheqing11/PsyHOT](https://github.com/zhangheqing11/PsyHOT) | 心理学 / 精神医学方向（MIT），在线站点 [psyhot.cn](https://psyhot.cn) | 姊妹项目。Agent Skill 包与付费通道写法来自它 |
 
 **已从 PsyHOT 采纳**（`6a3dde1` 及之后，均为其相对 AIHOT 的新增部分）：
 

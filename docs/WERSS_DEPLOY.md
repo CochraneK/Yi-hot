@@ -233,7 +233,7 @@ sudo docker logs --since 5m yihot-werss-werss-1 2>&1 | grep -E '采集模式|尝
 
 ### 自动重试：`yihot-werss-refresh.timer`
 
-WeRSS 自己没有定时任务（`message_tasks` 三表 0 行，启动日志「没有任务」），所以订阅号列表不会自己动。补了一个 systemd 定时器，每天 **09:07 / 21:07** 各跑一次 `scan_push.py --refresh`：
+WeRSS 自己没有定时任务（`message_tasks` 三表 0 行，启动日志「没有任务」），所以订阅号列表不会自己动。补了一个 systemd 定时器，`OnCalendar=*-*-* 00,04,08,12,16,20:07:00 UTC`（**CST 08/12/16/20/00/04，一天 6 次**；定时器按 UTC 解释时刻，写单元时别忘换算）跑 `scan_push.py --refresh --max 3`：
 
 ```sh
 systemctl list-timers yihot-werss-refresh.timer   # 下次时间
@@ -242,6 +242,22 @@ journalctl -u yihot-werss-refresh.service -n 30   # 明细
 ```
 
 退出码：0 有新增且已通知飞书；3 跑完但 0 新增（可能是真没更新，也可能是频控）；4 会话已过期需要扫码。**只有 exit 0 才代表链路真的通了**。
+
+**exit 4 不会推送任何人**——它只写 systemd 日志，所以过期这件事一直只有主动查日志才知道（2026-10-30 事故：会话 10-25 前后过期，refresh 每 4 小时 exit 4 连跑 5 天，无人知晓）。到期提醒由下面这个守卫负责。
+
+### 到期前提醒扫码：`yihot-werss-guard.timer`（2026-10-30 新增）
+
+跑**不带参数**的 `scan_push.py`：会话剩余 ≤ `PUSH_BELOW_HOURS`（30 小时）时才动作，把登录二维码发到飞书群（`FEISHU_ALERT_CHAT_ID`），扫完自动刷一遍各号；`MIN_GAP_HOURS`（18 小时）防止一天反复打扰。剩余 > 30 小时则直接退出、什么都不做。会话**已过期时同样会推**（剩余为负，一样 ≤ 30）。
+
+`OnCalendar=*-*-* 02,14:07:00 UTC`（**CST 10:07 / 22:07**），与 refresh 错开 2 小时——WeRSS 同一时刻只允许一个扫码会话，两个任务不能撞车。
+
+```sh
+systemctl list-timers yihot-werss-guard.timer
+journalctl -u yihot-werss-guard.service -n 30
+sudo python3 /opt/yihot/tools/werss/scan_push.py --force   # 立刻推一张码（不看剩余时长）
+```
+
+手动 `--force` 会刷新 `last-push.json`，此后 18 小时内守卫不再重复推；推了没人扫就白等一次，所以人不在手机旁时别用。
 
 ## 故障定位
 

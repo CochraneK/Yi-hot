@@ -85,6 +85,56 @@
   正对上我们 everyinfra 停服后 8 个公众号源停摆的缺口。另修了 4 个上游 bug，其中
   **web_list 的 detail 默认 `maxFetches=0` 导致详情页永不抓取**这条我们大概率也踩着，待查证。
 
+### 2.5 讨论区 21 条全量索引（2026-10-30 抓取）
+
+上游的 Discussions 是「谁做了什么」密度最高的地方，但 21 条要一条条点开才能拼出全貌。以下是全量索引，
+按分类排；**「可复用的东西」一列才是重点**——大部分站只贴一个链接，真正能搬走的是少数几条。
+
+**Show and tell（11 条，10 个项目）**
+
+| 讨论 | 作者 | 说了什么 | 可复用的东西 |
+| :--- | :--- | :--- | :--- |
+| [#272](https://github.com/KKKKhazix/AIHOT/discussions/272) / [#244](https://github.com/KKKKhazix/AIHOT/discussions/244) | skynet2000 | [大厂观察](https://innews.site/)：互联网职场（裁员招聘/组织/经营/政策四栏），两小时一采，热点榜 + 日报，中英切换，Google/GitHub 登录同步收藏。[仓库](https://github.com/skynet2000/dachang-observer) | 同一项目发了两次（早期版 + 建成后），说明**展示帖要等站能看再发**；登录同步收藏是社区里少见的「有账号体系」的改法 |
+| [#253](https://github.com/KKKKhazix/AIHOT/discussions/253) | evildj1221 | [青砚](https://qingyannews.cn)：环保与双碳，130+ 源（部委 + 31 省厅 + 79 地市局 + 行业媒体），两次评分，早 8:10 日报。[仓库](https://github.com/evildj1221/qingyan) | **最有价值的一条**：`integrations/wemprss-bridge/`（已核实存在）是 we-mp-rss + 微信读书通道的免费公众号管道，130+ 号零 API 费；另有邮件订阅双确认、运维告警 + 每日心跳邮件 |
+| [#65](https://github.com/KKKKhazix/AIHOT/discussions/65) | Charlie-Wang-03 | [AI4Math Radar](https://charlie-wang-03.github.io/ai4math-radar/)：AI for Mathematics，[仓库](https://github.com/Charlie-Wang-03/ai4math-radar) | 把「一条消息值不值得记」拆成可判断的问题链：模型自称解决 vs 作者复核 vs 是否有 Lean/Coq 机器验证 vs 形式化命题是否就是原问题。**证据分级**的写法比分数门槛更可解释 |
+| [#174](https://github.com/KKKKhazix/AIHOT/discussions/174) | Azhu9701 | [AIMAN.World 聚身之家](https://www.aiman.world/)：机器人产业数据库 + 图谱 + MCP 接入，公开查询免 API Key。[仓库](https://github.com/Azhu9701/AIMAN-World-Hub) | 把**厂商声明 / 待核验 / 已审核**三态分开存，缺失参数一律留「未知」，公开贡献先进待审收件箱；图谱里的资料连线与已确认关系分开画。可信度做法里最完整的一套 |
+| [#132](https://github.com/KKKKhazix/AIHOT/discussions/132) | jtmovie | [营销通鉴 · 平台动态](https://yingxiaoclub.com/news)：营销平台规则变化。[仓库](https://github.com/jtmovie/yingxiao-hot) | **不开前台的部署形态**：AIHOT 只在内网跑采集/打分/归组，主站每 30 分钟按游标同步精选、按自己版式展示，SEO 权重留在原站。适合「已有站点想加一个栏目」 |
+| [#192](https://github.com/KKKKhazix/AIHOT/discussions/192) | jasonsunai | [RoboHot](https://robohot.news)：机器人产业，面向研发者与入行者 | 明说改行业真正花时间的地方是**把筛选标准改成面向某类读者**，不是换信源；并划了收录边界（泛 AI 消息必须有明确的机器人研发/应用联系） |
+| [#206](https://github.com/KKKKhazix/AIHOT/discussions/206) | kaysono0 | [MediaStack](https://mediastack.work/)：音视频技术情报，日报 + 精选 | 自述动机是「信息茧房」；坦承「比较耗费 Token」——成本是这类个人站的共同压力 |
+| [#217](https://github.com/KKKKhazix/AIHOT/discussions/217) | albertwang168 | [NewsIQ](https://newsiq.xyz)：新闻事件聚合 | 没讲做法，问的是一个更值得讨论的问题：多个用 vibe coding 做出来的站，为什么表结构和产品形态会高度相似——是 Agent、Skill 还是模型先验决定的 |
+| [#254](https://github.com/KKKKhazix/AIHOT/discussions/254) | foxanran | [hot.foxnan.com](https://hot.foxnan.com/)：AI 新闻 | 只贴了链接，无做法 |
+| [#98](https://github.com/KKKKhazix/AIHOT/discussions/98) | ywgx | [xabcnews.com](https://xabcnews.com)：AI 新闻 | 只贴了链接，无做法 |
+
+**Ideas（5 条，不含本项目的 #283）**
+
+| 讨论 | 作者 | 提了什么 | 状态 |
+| :--- | :--- | :--- | :--- |
+| [#82](https://github.com/KKKKhazix/AIHOT/discussions/82) | xiaojian94xiaojian | CI 是否该覆盖 Windows，附两个只在 Windows 暴露的可复现缺陷（`path.relative` 拿反斜杠串去匹配 posix 规则，导致架构守卫把 53 条合规写入报成违规） | 缺陷本身已由 PR #79 修；**CI 至今仍只有 `ubuntu-latest`**（已核实 `check.yml`），等于这些守卫在 Windows 上仍然失效 |
+| [#143](https://github.com/KKKKhazix/AIHOT/discussions/143) | ChuHanModel | 按自定义「缓存输入 : 普通输入 : 输出」比例重算模型成本与性价比边界，[原型与源码](https://github.com/ChuHanModel/model-cost-lens)（MIT） | 未接入。与我们的结论一致：成本必须拆 hit/miss/out 三段，否则高估两倍以上 |
+| [#37](https://github.com/KKKKhazix/AIHOT/discussions/37) | 1204kay | 同一站点输出多语言（马来西亚中/英/马来三语），[fork](https://github.com/1204kay/myfnbguide)。列了三条卡点：`title_zh/summary_zh/reason_zh` 单语言成稿、提示词按中文写、界面文案与 4 处「北京时间」写死 | 方向未定。这是「语言」维度，比「行业」维度的改动更深 |
+| [#212](https://github.com/KKKKhazix/AIHOT/discussions/212) | wangduo404-eng | 部署到腾讯云后某新闻源触发 AWS WAF Challenge，本地 docker 无此问题 | 未解。**同一个容器本地能跑、上云被拦**，这类差异只会在部署后才暴露 |
+| [#178](https://github.com/KKKKhazix/AIHOT/discussions/178) | gjj-star | 模型榜评分维度会不会加、要不要雷达图 | 正文只有占位符（`zsbd`），信息全在标题里，无法判断诉求 |
+
+**Q&A（4 条）——这四条比 Ideas 更有信息量，因为它们是被真实卡住的人问的**
+
+| 讨论 | 问题 | 暴露的文档缺口 |
+| :--- | :--- | :--- |
+| [#201](https://github.com/KKKKhazix/AIHOT/discussions/201) | 改了 `topics` 文件，网页还是 AI 的内容 | 「换领域要改哪几处、改完怎么确认生效」缺一份清单。`industry/` 目录的约定散在 `customize.md` 里，新人第一反应是改 `topics` |
+| [#200](https://github.com/KKKKhazix/AIHOT/discussions/200) | 线上有 Agent Skill 接入，开源版里没有，是对的么 | 需要明说哪些能力只属于线上站点、不在开源范围内，否则每个人都要问一遍 |
+| [#191](https://github.com/KKKKhazix/AIHOT/discussions/191) | 本地跑国际新闻站，每天约 90 美元，怎么省 | 成本的「怎么算 → 怎么降」缺一段可直接照做的路径（预筛、缓存命中、off-peak、按天幂等）。`docs/COST.md` 是本站写的，不是上游的 |
+| [#69](https://github.com/KKKKhazix/AIHOT/discussions/69) | 「重置」是不是要订阅 X 的 API | `x_search` 采集器的凭据要求没写清 |
+
+### 2.6 从 21 条讨论里读出来的三件事
+
+1. **被重复解决最多的不是功能，是「适配」**：政府站没有 RSS、日期写法没见过、Node 握手协商不上、公众号通道太贵。
+   这些解法都能直接搬，但没有地方搬——所以青砚的公众号管道、URHOT 的金标工具链，都只有作者自己知道。
+2. **成本是个人站的共同天花板**，而且问法高度一致：「一天几刀怎么办」。回答却散在各处，没有一份能照做的。
+3. **「独立实现」比 fork 更常见的原因，是 fork 之后不知道怎么跟上游**。2.4 的扫描里，落后上游 100+ 提交的有 55 个。
+   改得越深越不敢跟，最后变成自己维护一条死分支。
+
+这份索引和由它推出的三个协作提议（领域注册表、适配器以数据回贡、跨站索引只做索引不做混池）已同步到上游
+[Discussion #284](https://github.com/KKKKhazix/AIHOT/discussions/284)。
+
 ## 三、框架外的同类站
 
 | 项目 | 形态 | 值得学的点 |

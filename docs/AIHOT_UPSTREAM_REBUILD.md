@@ -71,6 +71,37 @@ For unattended future fast-forward updates, add a repository-scoped token as the
 
 Never commit `.env`, credentials, or production databases.
 
+## 2026-10-30 决策变更：改为真正的 fork
+
+用户决定要 GitHub 上的 fork 归属标识，本节覆盖上文「keep `CochraneK/Yi-hot` private …
+Do not reset, rebase, or force-push `main`」的那一条决策（其余分支约定仍然有效）。
+
+GitHub 没有「把已有仓库转成 fork」的接口，所以做法是**新建 fork 再迁历史**：
+
+1. `POST /repos/KKKKhazix/AIHOT/forks` → 得到 `CochraneK/AIHOT`（`fork=true`，parent 指向上游）。
+2. 本地 `git replace --graft 1ade945 07d4c77` 把部署快照接到上游历史（仅本地视图）。
+3. `git push --force` 到 `CochraneK/AIHOT`，连同 `rebuild/aihot-aligned`、`vendor/aihot-main`
+   和两个 `docs/*` 分支一起迁移。
+
+### 已核对的事实
+
+- **`git push` 不会发送 replace 视图**：推完之后 GitHub 的
+  `compare KKKKhazix:main...CochraneK:main` 仍返回 **No common ancestor**。
+  要让 GitHub 上的图真正连起来，必须**固化**（`git filter-branch` 的 parent-filter，
+  或 `git filter-repo --replace-refs update-no-add`），代价是本仓 369 个提交的 SHA 全部改变。
+- **不固化也能正常用**：本地有 graft 就能看上游 diff、cherry-pick；
+  `vendor/aihot-main` + `aihot-upstream-sync.yml` 照旧每日快进跟踪上游。
+  固化换来的只是 GitHub 网页上的 ahead/behind 数字与网络图归属。
+- 删除旧仓前已导出 15 个 PR 的存档 → `docs/LEGACY_PR_ARCHIVE.md`
+  （旧仓是 15 个 PR / 0 个 issue，不是「1 个 issue」）。
+
+### 迁移后需要重做的事
+
+- **3 个 Actions secrets 必须重填**（API 读不到旧值）：`AIHOT_SYNC_TOKEN`、
+  `YIHOT_TRANSLATE_API_KEY`、`YIHOT_TRANSLATE_BASE_URL`。缺 `AIHOT_SYNC_TOKEN` 时
+  同步工作流降级为「只检查并告警」，不推送。
+- fork 的 Actions 首次需要手动启用；旧的 Actions 运行记录不随 fork 迁移。
+
 ## Provenance
 
 Upstream: https://github.com/KKKKhazix/AIHOT (MIT; retain LICENSE/NOTICE and third-party attribution; AIHOT names and logos are not YiHot branding).

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Validates the reader-facing release notes in industry/changelog.json.
 //
+// This script only guards format and order. Which changes deserve a note at all — and which ones
+// fold into a neighbour instead of standing alone — is decided by the four-axis score in
+// docs/CHANGELOG_RUBRIC.md.
 // Why this exists: `latestVersion` drives the unread dot in the sidebar
 // (Sidebar.useChangelogDot compares it against what the reader last opened), and the page groups
 // entries in array order rather than sorting them. So the two easiest mistakes — adding an entry

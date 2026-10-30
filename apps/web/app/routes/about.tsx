@@ -180,7 +180,8 @@ function Maker({ maker, contact }: { maker: NonNullable<typeof ABOUT.maker>; con
 
 /**
  * 关于页结尾那一屏（ABOUT.account）：讲这个机构是谁、做什么，而不是解释数据分析过程。
- * 左边是机构介绍 + 几个事实数字 + 一条数据报告的次级入口，右边是公众号二维码。
+ * 左边是机构介绍 + 几个事实数字 + 一条数据报告的入口，右边是公众号二维码。
+ * 那条入口是这一屏唯一的动作，所以穿主色（实心红）；它进的是独立页面，用 reloadDocument，别让路由接管。
  * 二维码来自后台「设置」的 contact.wechatQr；没配就只渲染文字，不留空卡片。
  */
 function Account({ account, qr }: { account: NonNullable<typeof ABOUT.account>; qr: string | null }) {
@@ -207,7 +208,7 @@ function Account({ account, qr }: { account: NonNullable<typeof ABOUT.account>; 
               </div>
             ))}
           </dl>
-          <Link to={account.report.href} reloadDocument className={`${buttonClass("secondary", "lg")} mt-8`}>
+          <Link to={account.report.href} reloadDocument className={`${buttonClass("primary", "lg")} mt-8`}>
             {account.report.label} <IconArrowRight size={15} />
           </Link>
           {account.site && (

@@ -9,7 +9,7 @@ import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
 import { chatJson, ModelOutputError } from "@aihot/backend/providers/llm";
 import { embeddingsAvailable } from "@aihot/backend/providers/embeddings";
-import { BudgetExceededError, paidRequest, ReceiptUnknownError } from "@aihot/backend/providers/receipts";
+import { BudgetExceededError, paidRequest, ProviderRejectedError, ReceiptUnknownError } from "@aihot/backend/providers/receipts";
 import { autoReleaseUnknownReceipts } from "@aihot/backend/admin/runs";
 
 const usage = { prompt_tokens: 80, completion_tokens: 20, total_tokens: 100 };
@@ -118,4 +118,50 @@ test("an unknown outcome is released automatically once, so a lost answer costs 
   assert.equal(await status(), "unknown", "a second loss waits for the admin");
   await assert.rejects(paidRequest(req, lost), ReceiptUnknownError);
   assert.equal(sent, 2);
+});
+
+test("a spending refusal stops that model for a cooldown instead of failing every article", async () => {
+  // A service without a budget row, so only the stop can hold calls back.
+  const service = "invariant-spend";
+  const model = "invariant-model";
+  const key = `provider.stop.${service}:${encodeURIComponent(model)}`;
+  const req = () => ({ service, model, purpose: "invariant_test", subject: `spend-${tag()}`, identity: { at: tag() } });
+  const calls: string[] = [];
+  const refuse = () => {
+    calls.push("refused");
+    return Promise.reject(new ProviderRejectedError('HTTP 402: {"error":{"message":"Insufficient Balance"}}', 402, false));
+  };
+  const accept = () => {
+    calls.push("accepted");
+    return Promise.resolve({ response: { ok: true } });
+  };
+
+  await assert.rejects(paidRequest(req(), refuse), ProviderRejectedError);
+  const [stop] = await sql<{ value: { until: string } }[]>`SELECT value FROM settings WHERE key = ${key}`;
+  assert.ok(stop, "the refusal leaves a stop");
+  assert.ok(Date.parse(stop!.value.until) > Date.now(), "the stop runs into the future");
+
+  // Inside the cooldown the next article waits as a budget window, not as a terminal failure.
+  await assert.rejects(paidRequest(req(), accept), (error: unknown) =>
+    error instanceof BudgetExceededError && error.window === "provider" && error.retryAfterSeconds > 0);
+  assert.deepEqual(calls, ["refused"], "nothing else was sent during the cooldown");
+
+  // The cooldown runs out on its own: an expired stop holds nothing back.
+  await sql`UPDATE settings SET value = ${JSON.stringify({ until: new Date(Date.now() - 1_000).toISOString() })}::jsonb WHERE key = ${key}`;
+  await paidRequest(req(), accept);
+  assert.deepEqual(calls, ["refused", "accepted"], "the expired stop let the call through");
+  const remaining = await sql`SELECT key FROM settings WHERE key = ${key}`;
+  assert.equal(remaining.length, 0, "a received answer clears the stop");
+});
+
+test("a plain rate limit is not a spending refusal, so it stops nothing", async () => {
+  const service = "invariant-throttle";
+  const model = "invariant-model";
+  const key = `provider.stop.${service}:${encodeURIComponent(model)}`;
+  const req = { service, model, purpose: "invariant_test", subject: `throttle-${tag()}`, identity: { at: tag() } };
+  const throttled = () => Promise.reject(new ProviderRejectedError('HTTP 429: {"error":{"code":"rate_limit_exceeded"}}', 429, true));
+
+  await assert.rejects(paidRequest(req, throttled), ProviderRejectedError);
+  const rows = await sql`SELECT key FROM settings WHERE key = ${key}`;
+  assert.equal(rows.length, 0, "a throttle holds no stop");
 });

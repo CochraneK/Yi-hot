@@ -521,9 +521,29 @@ LLM_EXTRA_JSON={"enable_thinking":false}
 HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
 ```
 
-**这不是代码问题，是账户没钱了**，全站分析会一起停（不只是新源）。充值后调 `requeueFailed(null)` 把近 30 天的失败文章全部重新排队即可，不用改配置、不用重采。判断依据很简单：`receipts` 里 `service='llm'` 的失败记录会密集出现同一个 402。
+**这不是代码问题，是账户没钱了**，全站分析会一起停（不只是新源）。判断依据很简单：`receipts` 里 `service='llm'` 的失败记录会密集出现同一个 402。
 
-**恢复三步（2026-10-21 实测走通，可直接照抄）**：
+**402 之后不会再"每篇都撞一次"**（2026-10-30 起，移植上游 `5c2f081`）：第一次 402 会写一条冷却记录
+
+```sql
+SELECT key, value FROM settings WHERE key LIKE 'provider.stop.%';
+-- provider.stop.llm:deepseek-flash | {"until":"2026-10-30T06:30:00.000Z","refusedAt":"..."}
+```
+
+冷却 15 分钟内，后续文章在发出请求前就被 `checkBudget()` 挡下，抛 `BudgetExceededError(window='provider')`，`jobs/content.ts` 把它当成"预算窗口满了"处理——**文章回到 `new` + `processing_retry_at`，不消耗 `processing_attempts`、不进 `failed` 终态**。所以现在余额耗尽时表现为"一批文章在排队等"，而不是"一批文章彻底失败"；充值后不必再 `requeueFailed` 清 402，等冷却到期自动恢复，或者任意一次成功调用会立刻清掉这条记录。
+
+排查时看这两处就能区分：
+
+```sql
+-- 还在等（健康）：processing_error 里是 Budget for llm exhausted (provider)
+SELECT processing_state, count(*) FROM articles WHERE processing_error LIKE '%(provider)%' GROUP BY 1;
+-- 真失败：402 只会在冷却里的第一篇上出现
+SELECT count(*) FROM articles WHERE processing_error LIKE 'HTTP 402%' AND processing_state = 'failed';
+```
+
+注意两点：停止键**按模型记**（`provider.stop.<service>:<model>`），一个模型的额度耗掉不影响同服务别的模型；**429 里的纯限流不算**（只认 402 与账务类 429），所以 TPM/RPM 触顶不会误触发冷却。
+
+**恢复三步（2026-10-21 实测走通，可直接照抄；2026-10-30 之后新产生的 402 不必再走第 2 步——它们停在 `new` 等冷却，不在 `failed` 里。这里保留是为了清理改动前就已 failed 的存量）**：
 
 1. 先验余额到账，别盲跑。余额接口有小延迟，刚充完第一次查可能还是旧值，隔几分钟再查一次才是真值：
    ```
@@ -549,7 +569,7 @@ HTTP 402: {"error":{"message":"Insufficient Balance (request_id: …)"}}
 - 实测基准：165 次调用 / 未命中 183K / 命中 355K / 输出 10K，扣费 **¥0.57**；按价目表回算 ¥0.46，对得上。**可以记成 ≈ ¥0.0035/次调用**。
 - 平静日（约 300 次调用）≈ **¥1/天**；回填或批量重排的日子（1500+ 次）≈ **¥5/天**。
 - 成本八成来自**未命中输入**（命中便宜 50 倍）。24 小时实测命中率约 63%，`score_article` 命中最好（5.1M 命中 / 1.3M 未命中），`prefilter_article` 最差（0.53M / 1.4M）——想省钱先从这里下手，而不是砍信源。
-- **`budgets` 表管不住这件事**：`llm` 的 `per_day` 是 40000 次，远高于实际用量，熔断基本不会触发；真正托底的是账户余额。余额见底时仍是 402 全站停摆，所以**定期查余额**才是唯一有效的兜底，不能指望熔断。
+- **`budgets` 表管不住这件事**：`llm` 的 `per_day` 是 40000 次，远高于实际用量，熔断基本不会触发；真正托底的是账户余额。余额见底时仍是 402 全站停摆（现在会挂 15 分钟冷却而非逐篇失败），所以**定期查余额**才是唯一有效的兜底，不能指望熔断。
 
 ### 高峰让路：`ANALYZE_OFFPEAK_ONLY`（2026-10-21 起开启）
 

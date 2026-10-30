@@ -180,11 +180,14 @@ export async function guardedFetch(input: string, opts: GuardedFetchOptions = {}
     });
     const res = await send(dispatcherFor(viaProxy, privateHost)).catch(async (error: unknown) => {
       // Only a direct connection has a curve of its own to change, and only while the budget lasts:
-      // a retry on an aborted signal fails the same way and hides the original error.
-      const pinned = viaProxy || privateHost || signal.aborted || !brokenHandshake(error) ? undefined : pinnedCurveAgent();
+      // a retry on an aborted signal fails the same way and hides the original error. EPROTO can also
+      // come after the request went out, so only GET and HEAD are replayed: a paid POST would be billed twice.
+      const replayable = method === "GET" || method === "HEAD";
+      const pinned = viaProxy || privateHost || !replayable || signal.aborted || !brokenHandshake(error) ? undefined : pinnedCurveAgent();
       if (!pinned) throw error;
       return send(pinned);
-    });    if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.get("location")) {
+    });
+    if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.get("location")) {
       // Release the connection even when the next URL is refused or the redirect limit is reached.
       await res.body?.cancel();
       if (hop >= maxRedirects) throw new Error("Too many redirects");

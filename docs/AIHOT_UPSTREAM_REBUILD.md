@@ -83,17 +83,22 @@ GitHub 没有「把已有仓库转成 fork」的接口，所以做法是**新建
 3. `git push --force` 到 `CochraneK/AIHOT`，连同 `rebuild/aihot-aligned`、`vendor/aihot-main`
    和两个 `docs/*` 分支一起迁移。
 
-### 已核对的事实
+### 已核对的事实（2026-10-30 全部做完）
 
-- **`git push` 不会发送 replace 视图**：推完之后 GitHub 的
+- **`git push` 不会发送 replace 视图**：graft 后直接推，GitHub 的
   `compare KKKKhazix:main...CochraneK:main` 仍返回 **No common ancestor**。
-  要让 GitHub 上的图真正连起来，必须**固化**（`git filter-branch` 的 parent-filter，
-  或 `git filter-repo --replace-refs update-no-add`），代价是本仓 369 个提交的 SHA 全部改变。
-- **不固化也能正常用**：本地有 graft 就能看上游 diff、cherry-pick；
-  `vendor/aihot-main` + `aihot-upstream-sync.yml` 照旧每日快进跟踪上游。
-  固化换来的只是 GitHub 网页上的 ahead/behind 数字与网络图归属。
-- 删除旧仓前已导出 15 个 PR 的存档 → `docs/LEGACY_PR_ARCHIVE.md`
-  （旧仓是 15 个 PR / 0 个 issue，不是「1 个 issue」）。
+- **固化已完成**：用 `git commit-tree` 逐个重建提交链（不用 `filter-branch`——它会把上游那 84 个
+  提交也一起重写，且默认把 committer date 刷成当天）。做法：对每个自有提交读原对象，
+  tree 不变、parent 换成已映射的新 SHA、root 的 parent 改为 `07d4c77`，并显式导出
+  `GIT_AUTHOR_*` / `GIT_COMMITTER_*` 环境变量——**这一步不能省，否则 GitHub 上的提交时间会全变成重写当天**。
+  结果：374 个自有提交重写，458 个提交连成一条线，`merge-base upstream/main HEAD = 07d4c77`，
+  GitHub 侧 `compare` 从 No common ancestor 变成 **ahead 374 / behind 82 / diverged**。
+  `git diff 旧tip 新tip` 为空，内容零变化。之后 `git replace -d 1ade945` 删掉临时 graft。
+- **旧仓不删，改名 `CochraneK/yi-hot-old` 保留**（5 个分支、15 个 PR、创建时间 2026-08-24 全在）。
+  15 条 PR 已另在新仓库重建为 issue #1–#15（fork 默认禁用 Issues，需先 `PATCH has_issues=true`）；
+  另存一份 `docs/LEGACY_PR_ARCHIVE.md`。
+- fork 默认关 Issues，Actions 却会自动跑起来：推完 3 分钟 bot 就提交了
+  `docs(pdf): refresh rendered YiHot manuals`。
 
 ### 迁移后需要重做的事
 

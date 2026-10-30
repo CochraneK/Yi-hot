@@ -100,12 +100,21 @@ GitHub 没有「把已有仓库转成 fork」的接口，所以做法是**新建
 - fork 默认关 Issues，Actions 却会自动跑起来：推完 3 分钟 bot 就提交了
   `docs(pdf): refresh rendered YiHot manuals`。
 
-### 迁移后需要重做的事
+### 迁移后的 secrets（2026-10-30 已处理）
 
-- **3 个 Actions secrets 必须重填**（API 读不到旧值）：`AIHOT_SYNC_TOKEN`、
-  `YIHOT_TRANSLATE_API_KEY`、`YIHOT_TRANSLATE_BASE_URL`。缺 `AIHOT_SYNC_TOKEN` 时
-  同步工作流降级为「只检查并告警」，不推送。
-- fork 的 Actions 首次需要手动启用；旧的 Actions 运行记录不随 fork 迁移。
+**GitHub 不允许读回已存的 secret 值**（API 只给名字与创建时间），三个密钥只能重建不能取回。
+逐个核对后的结论：
+
+- `AIHOT_SYNC_TOKEN`：**必需，已用本机 `gh auth token`（scope `repo`+`workflow`）重填**。
+  手动触发 `aihot-upstream-sync.yml` 实测 `completed/success`、无告警注释，
+  `vendor/aihot-main` 与上游 main 同为 `c535666`。缺它时同步降级为「只检查并告警」，不推送。
+  注意：该 token 是本机登录用的 classic PAT，日后本机轮换需同步重填。
+- `YIHOT_TRANSLATE_API_KEY` / `YIHOT_TRANSLATE_BASE_URL`：**已废弃，不必重填**。
+  它们只服务 v0 的 `/api/translate`（默认转发本地网关 `127.0.0.1:8797/v1`、模型 `moonshot-v1-8k`，
+  见 `docs/legacy/README-v0.md`）。现翻译走统一 LLM 通道
+  （`packages/backend/src/editorial/translate.ts` 里 `modelFor("translate")`），
+  后端代码与部署 compose 都不再读这两个变量，服务器上也没有翻译容器。
+- fork 的 Actions 会自动跑（无需手动启用）；旧的 Actions 运行记录不随 fork 迁移。
 
 ## Provenance
 

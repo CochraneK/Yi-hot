@@ -77,7 +77,7 @@ Yi-Hot 针对儿童公益议题进行了领域定制：主题词表、别名映�
 | **跨项目资产** | NewsMail 与 charity-intelligence 的历史线索以候选形式保留；**不等于**已批准或全部接入采集 |
 | **上游更新** | `main` 是现用版本；`vendor/aihot-main` 与 `rebuild/aihot-aligned` 用于隔离追踪、验证更新，**不会自动替换生产** |
 
-详情：[上游升级和重构方案](docs/AIHOT_UPSTREAM_REBUILD.md) · [信息源治理原则](docs/SOURCE_GOVERNANCE_DESIGN.md)。
+详情：[源码级功能对照](docs/AIHOT_FEATURE_COMPARISON.md) · [上游升级](docs/AIHOT_UPSTREAM_REBUILD.md) · [信息源治理](docs/SOURCE_GOVERNANCE_DESIGN.md)。
 
 ## 🚀 快速开始
 
@@ -157,6 +157,8 @@ AIHOT 是开源的，社区里有人把它换成自己的信源和判断标准�
 - **「独立实现」比 fork 多，是因为 fork 之后不知道怎么跟上游**——2,164 个 fork 里只有 130 个有自有提交，其中 55 个落后上游 100 多个提交。改得越深越不敢跟，最后自己维护一条死分支。
 
 **共养与共创。** 这些站共用一套引擎，但重复的劳动和每月的账单，目前都还由各自的作者独自承担：上游有 2,125 个 fork，至少 5 个站把同一条管线独立重写了一遍；每个站也都在各自解决「这个政府站没有 RSS」「这个日期写法没见过」。这件事有解，而且不需要谁先捐钱——先登记谁在做什么，再把适配器作为数据回贡而不是代码 fork，最后才是每人每月一元的订阅式共养（定性是订阅，不是募捐）。完整推演、成本量级、以及「跨站汇总为什么只能做索引不能混池」，见 [共创与共养](docs/COMMUNITY_MODEL.md)。整理出的社区索引与三个协作提议（领域注册表、适配器以数据回贡、跨站索引）已发到上游 [Discussion #284](https://github.com/KKKKhazix/AIHOT/discussions/284)。
+
+**[全部页面、监管专题、管理后台和 API 入口](docs/SITE_MAP.md)**（后台需登录；按源码核对，非实时可用性承诺）。
 
 ## 📖 文档导航
 

@@ -115,7 +115,14 @@ flowchart LR
 
 ## 🧭 接下来想做的
 
-**[查看完整 TODO](docs/IDEAS.md)** · [NewsMail、charity-intelligence 与公益信息专家团整合](docs/INTEGRATION_ROADMAP.md)
+| 方向 | 重点 |
+| :--- | :--- |
+| **跨项目整合** | NewsMail · charity-intelligence · 公益信息专家团 |
+| **信息质量** | 公众号信源 · 人工校准 |
+| **使用体验** | 监管入口 · 问答与朗读探索 |
+| **持续维护** | AIHOT 上游同步 · 数据保全 |
+
+[完整 TODO](docs/IDEAS.md) · [跨项目整合路线](docs/INTEGRATION_ROADMAP.md)
 
 ## 🌱 同一套框架长出的其他站
 

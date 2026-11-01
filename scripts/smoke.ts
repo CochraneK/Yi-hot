@@ -24,7 +24,9 @@ const MACHINE: Array<[path: string, type: RegExp]> = [
   ["/openapi-v1.json", /json/],
   ["/og/site.png", /image\/png/],
   ["/icon.png", /image\/png/],
-  ["/favicon.ico", /icon/],
+  // 根 /favicon.ico 现在回 204（那属于「项目入口」，不属于本站，见 server.ts），
+  // 本站的图标只在子路径上，所以这里必须带前缀。
+  ["/yihot/favicon.ico", /icon/],
 ];
 // The leaderboard pages answer 503 until the first round is published (a fresh site computes it when
 // the worker starts; with collection off there is nothing to compute).

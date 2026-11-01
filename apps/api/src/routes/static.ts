@@ -111,9 +111,11 @@ function manifest() {
     display: "standalone",
     background_color: "#13191c",
     theme_color: "#13191c",
+    // 图标必须带 `/yihot/` 前缀，理由同 web 端 root.tsx 的 links：manifest 里的相对地址
+    // 是按站点根解析的，写 `/icon.png` 会让安装到桌面的应用去根路径取图——那里不属于本站。
     icons: [
-      { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { src: "/icon.png", sizes: "512x512", type: "image/png" },
+      { src: "/yihot/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/yihot/icon.png", sizes: "512x512", type: "image/png" },
     ],
   };
 }

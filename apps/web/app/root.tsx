@@ -18,14 +18,24 @@ import { THEME_BOOT_SCRIPT } from "./lib/local-state";
 import { apiGet } from "./lib/api.server";
 import { useHydratedFlag } from "./lib/hydration";
 
+/**
+ * 下面这些是原生 `<link href>`，React Router 的 basename 不会替它们加前缀。
+ * 写成 `/logo.svg` 就是请求**站点根路径**，而这台机器上根路径是「项目入口」门户页的
+ * 地盘（Caddy 的兜底 handle 才轮到本服务）。后果：`/`、`/futureme/`、`/anydoor/`
+ * 这些没有声明图标的页面，浏览器回退 `/favicon.ico` 时会拿到本站的徽章。
+ * 所以必须显式带子路径，与 vite.config.ts 的 base、react-router.config.ts 的
+ * basename 保持同一口径。
+ */
+const BASE = "/yihot";
+
 export const links: Route.LinksFunction = () => [
   // The vector first: browsers that take it draw the mark at any dpi, and it carries its own dark-mode red.
-  { rel: "icon", type: "image/svg+xml", href: "/logo.svg?v=stc-20261029" },
-  { rel: "icon", href: "/favicon.ico?v=stc-20261029", sizes: "any" },
-  { rel: "icon", type: "image/png", href: "/icon.png?v=stc-20261029", sizes: "512x512" },
-  { rel: "apple-touch-icon", href: "/apple-icon.png?v=stc-20261029" },
-  { rel: "manifest", href: "/manifest.webmanifest" },
-  { rel: "alternate", type: "application/rss+xml", title: `${SITE.name} — 精选`, href: "/feed.xml" },
+  { rel: "icon", type: "image/svg+xml", href: `${BASE}/logo.svg?v=stc-20261029` },
+  { rel: "icon", href: `${BASE}/favicon.ico?v=stc-20261029`, sizes: "any" },
+  { rel: "icon", type: "image/png", href: `${BASE}/icon.png?v=stc-20261029`, sizes: "512x512" },
+  { rel: "apple-touch-icon", href: `${BASE}/apple-icon.png?v=stc-20261029` },
+  { rel: "manifest", href: `${BASE}/manifest.webmanifest` },
+  { rel: "alternate", type: "application/rss+xml", title: `${SITE.name} — 精选`, href: `${BASE}/feed.xml` },
 ];
 
 interface SiteMeta {

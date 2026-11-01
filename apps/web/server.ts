@@ -70,6 +70,16 @@ async function serveStatic(pathname: string, res: import("node:http").ServerResp
 /** The root path is a multi-project portal page, shipped in the source tree next to this server. */
 const PORTAL_FILE = path.join(import.meta.dirname, "portal.html");
 
+/**
+ * 门户页的图标：深绿底 + 白色拱门（「入口」的图形化）。内联而不是单独放文件，
+ * 是为了让 80（本服务）与 443（Caddy 兜底反代到这里）共用同一份字节，
+ * 不会再出现「改了容器里的文件、忘了宿主那份」这种分叉。
+ */
+const PORTAL_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+  '<rect width="64" height="64" rx="14" fill="#2f6f4f"/>' +
+  '<path d="M18 46V30a14 14 0 0 1 28 0v16h-9V30a5 5 0 0 0-10 0v16z" fill="#fff"/></svg>';
+
 async function servePortal(res: import("node:http").ServerResponse): Promise<boolean> {
   const info = await stat(PORTAL_FILE).catch(() => null);
   if (!info?.isFile()) return false;
@@ -211,6 +221,23 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   // them there — so they are matched before anything below is moved under the prefix.
   const prefixed = pathname === PREFIX || pathname.startsWith(PREFIX + "/");
   const internal = prefixed ? (pathname.slice(PREFIX.length) || "/") : pathname;
+
+  // 「项目入口」的图标。门户页（portal.html）声明它，443 上的 Caddy 不单独接管，
+  // 让这条路径落到兜底反代——80 与 443 于是共用这一份，不会出现两边不一致。
+  if (pathname === "/portal-icon.svg") {
+    res.writeHead(200, { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" });
+    return res.end(PORTAL_ICON);
+  }
+
+  // 根路径的 tab 图标不属于任何子站。这台机器的根是「项目入口」门户，而 /futureme/
+  // 也由本服务反代（80 直连、443 经 Caddy 兜底转进来，规则只此一份）。浏览器给
+  // 「页面没声明图标」的情况自动请求根 /favicon.ico —— 此前它返回本项目的徽章，
+  // 于是门户和 FutureMe 的标签页都挂上了 Yi-Hot 的标。回 204 让它们用浏览器默认图标。
+  // 本项目自己的图标已改走 /yihot/ 前缀（见 root.tsx），不受影响。
+  if (pathname === "/favicon.ico" || pathname === "/apple-touch-icon.png" || pathname === "/apple-touch-icon-precomposed.png") {
+    res.writeHead(204, { "Cache-Control": "public, max-age=3600" });
+    return res.end();
+  }
 
   if (pathname === "/") {
     // The bare root is the multi-project portal page; fall back to the old redirect if it is gone.

@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>项目入口</title>
-  <meta name="description" content="YiHot 公益信息聚合与 FutureMe 未来自我体验的独立项目入口。" />
+  <meta name="description" content="YiHot 公益信息聚合、FutureMe 未来自我体验与 AnyDoor API 中转的独立项目入口。" />
+  <!-- 根路径是这台机器的项目入口，不是任何一个子站。声明自己的图标，免得浏览器
+       回退到 /favicon.ico 时拿到子站的徽章。图形由 Caddy 直接提供（见 Caddyfile）。 -->
+  <link rel="icon" type="image/svg+xml" href="/portal-icon.svg" />
   <style>
     :root {
       --bg: #f7f6f2;
@@ -59,6 +62,13 @@
       <h2>FutureMe<span class="tag">未来自我</span></h2>
       <p>从当下出发，与一种可能的未来自己对话。文字、语音与未来形象，慢慢探索。</p>
       <div class="path">/futureme/</div>
+    </a>
+    <!-- AnyDoor lives on HTTPS only (its own path behind the IP certificate), so
+         the link is absolute: a relative "/anydoor/" would 404 on the HTTP portal. -->
+    <a class="card" href="https://49.233.72.222/anydoor/">
+      <h2>AnyDoor<span class="tag">API</span></h2>
+      <p>自建的 OpenAI 兼容 API 中转：注册账号、领取令牌，把各家模型接进自己的工具。</p>
+      <div class="path">https://49.233.72.222/anydoor/</div>
     </a>
     <div class="card soon">
       <h2>更多项目</h2>

@@ -126,6 +126,15 @@
   --ok: #2f7d5c;
   --ok-soft: rgba(47, 125, 92, 0.1);
   --ok-ink: #2a6e51;
+  /* 监管记录六类的固定色：行政处罚与列入失信同属红系（失信更深一档），
+     列入异常用琥珀，送达公告用中性灰，两类「移出」用深浅不同的绿——读一眼就能分出
+     「变糟」「程序性」「恢复」三种性质。堆叠条、图例、胶囊、卡片左缘共用这一套。 */
+  --rec-penalty: #b23c2a;
+  --rec-dishonesty: #8c2f28;
+  --rec-abnormal: #b8873a;
+  --rec-delivery: #8b9599;
+  --rec-remove-dishonesty: #2f7d5c;
+  --rec-remove-abnormal: #6aa989;
   /* Reset monitor: days mixed from the landed (green) and announced (amber) tones over the surface. */
   --cal-plain: rgba(28, 39, 51, 0.024);
   --cal-confirmed: color-mix(in srgb, var(--ok-ink) 12%, var(--surface));
@@ -181,6 +190,13 @@
   --ok: #5fc79a;
   --ok-soft: rgba(95, 199, 154, 0.12);
   --ok-ink: #7fd1ad;
+  /* 深色下重排明度：红系两支拉开（处罚偏橙、失信偏粉），灰抬高到能和暗底分开。 */
+  --rec-penalty: #e07a62;
+  --rec-dishonesty: #f09a86;
+  --rec-abnormal: #d3b26a;
+  --rec-delivery: #7f8d92;
+  --rec-remove-dishonesty: #57b98f;
+  --rec-remove-abnormal: #85c4a9;
   --cal-plain: rgba(255, 255, 255, 0.03);
   --rank-1: #d86a52;
   --rank-2: #d18a5e;

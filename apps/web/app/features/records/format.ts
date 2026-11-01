@@ -11,15 +11,36 @@ export const RECORD_TYPE_LABELS: Record<RegulatoryRecordType, string> = {
   abnormal_remove: "移出活动异常名录",
 };
 
-/** 严重程度高的用红，预警用琥珀，恢复（移出）用绿，送达用中性。 */
-export const RECORD_TYPE_TONES: Record<RegulatoryRecordType, string> = {
-  penalty: "bg-hot-soft text-hot ring-hot/25",
-  dishonesty_enrol: "bg-hot-soft text-hot ring-hot/25",
-  abnormal_enrol: "bg-amber-soft text-amber-ink ring-amber/25",
-  delivery: "bg-bg-sunk text-ink-3 ring-line",
-  dishonesty_remove: "bg-ok/10 text-ok ring-ok/20",
-  abnormal_remove: "bg-ok/10 text-ok ring-ok/20",
+/** 图例、堆叠条、胶囊和卡片左缘共用的类型色，取值在 app.css 的 --rec-* 里（含深色主题）。 */
+export const RECORD_TYPE_COLORS: Record<RegulatoryRecordType, string> = {
+  penalty: "var(--rec-penalty)",
+  dishonesty_enrol: "var(--rec-dishonesty)",
+  abnormal_enrol: "var(--rec-abnormal)",
+  delivery: "var(--rec-delivery)",
+  dishonesty_remove: "var(--rec-remove-dishonesty)",
+  abnormal_remove: "var(--rec-remove-abnormal)",
 };
+
+/** 概览图例里的简称：全称在图例和胶囊上都排不进一行。 */
+export const RECORD_TYPE_SHORT: Record<RegulatoryRecordType, string> = {
+  penalty: "行政处罚",
+  dishonesty_enrol: "列入失信名单",
+  abnormal_enrol: "列入异常名录",
+  delivery: "送达公告",
+  dishonesty_remove: "移出失信名单",
+  abnormal_remove: "移出异常名录",
+};
+
+/**
+ * 概览的三组：变糟 / 程序性 / 恢复。分组的用处不只是好看——两列平铺时人会竖着读，
+ * 七个数字竖着读会串成「处罚、列入异常、移出失信」这种没有意义的序列；按组排，竖读的每一列
+ * 本身就是一件事，横条的配色也有了说法（红 → 琥珀 → 灰 → 绿）。
+ */
+export const RECORD_TYPE_GROUPS: { key: string; label: string; types: RegulatoryRecordType[] }[] = [
+  { key: "worse", label: "变糟", types: ["penalty", "dishonesty_enrol", "abnormal_enrol"] },
+  { key: "procedural", label: "程序性", types: ["delivery"] },
+  { key: "recover", label: "恢复", types: ["dishonesty_remove", "abnormal_remove"] },
+];
 
 export const ORG_KIND_LABELS: Record<RegulatoryOrgKind, string> = {
   social_group: "社会团体",

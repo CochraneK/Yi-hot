@@ -217,14 +217,24 @@ export const PeriodSchema = z.object({
   themes: z
     .array(z.object({ heading: z.string().max(60), summary: z.string().max(800), refs: z.array(z.union([z.number(), z.string()])).transform((refs) => refs.slice(0, 20)) }))
     .min(1)
-    .transform((themes) => themes.slice(0, 10)),
+    // Not a design target: themes now follow from "every entry cited", so this only stops a runaway
+    // answer. Anything sliced away here lands in the leftover block, so the ceiling sits well above
+    // the count the prompt asks for (a 120-entry week groups into about ten).
+    .transform((themes) => themes.slice(0, 20)),
 });
 
 /** The editor's brief for a week or month: its top entries as a numbered list, each with its section. */
 export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endDateInclusive: string, top: Candidate[]) {
   const list = top.map((e, i) => `${i + 1}. [${SECTION_OF[e.category ?? ""] ?? DEFAULT_SECTION}] ${e.title}｜${e.summary.slice(0, 140)}`).join("\n");
   return {
-    system: promptText("report-period", { kindName: kind === "weekly" ? "周报" : "月报", overviewLength: kind === "weekly" ? "150–300" : "200–400" }),
+    system: promptText("report-period", {
+      kindName: kind === "weekly" ? "周报" : "月报",
+      overviewLength: kind === "weekly" ? "150–300" : "200–400",
+      // The theme count is a consequence of this number, not the other way round: with the count
+      // capped the model keeps it by dropping entries into the leftover block, whereas a floor on
+      // entries per theme reaches the same count while citing what it was skipping.
+      minPerTheme: kind === "weekly" ? "10" : "20",
+    }),
     user: `本期：${startDate} 至 ${endDateInclusive}\n${list}`,
   };
 }
@@ -245,7 +255,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   if (top.length) {
     const res = await chatJson({
       model, purpose: `report_${kind}`, subject: `report:${kind}:${key}`, promptVersion: REPORT_VERSION,
-      ...periodPrompt(kind, startDate, endDateInclusive, top), schema: PeriodSchema, temperature: 0.3, maxTokens: 4000,
+      ...periodPrompt(kind, startDate, endDateInclusive, top), schema: PeriodSchema, temperature: 0.3, maxTokens: 6000,
     });
     receiptId = res.receiptId;
     headline = res.data.headline.trim();

@@ -146,19 +146,25 @@ function clip(s: string, n = 20): string {
   return chars.length > n ? `${chars.slice(0, n).join("")}…` : s;
 }
 
-/** 一条记录的关键事实：依据、文号、时间、机关，按类型取相关的几项。 */
+/** 一条记录的关键事实，按类型排优先级：卡片只露前三项，
+ *  移出类如果先列「列入时间」，真正要紧的移出时间就被挤掉了。 */
 function factsOf(r: RegulatoryRecord): string[] {
-  const out: string[] = [];
-  if (r.caseNo) out.push(`文号 ${clip(r.caseNo, 24)}`);
-  if (r.punishOn) out.push(`决定日期 ${r.punishOn}`);
-  if (r.punishOrgan) out.push(r.punishOrgan);
-  if (r.punishBasis) out.push(`依据 ${clip(r.punishBasis)}`);
-  if (r.enrolOn) out.push(`列入时间 ${r.enrolOn}`);
-  if (r.enrolGist) out.push(`列入依据 ${clip(r.enrolGist)}`);
-  if (r.removeOn) out.push(`移出时间 ${r.removeOn}`);
-  if (r.removeGist) out.push(`移出依据 ${clip(r.removeGist)}`);
-  if (r.registerDept) out.push(r.registerDept);
-  return out;
+  const punish = [
+    r.caseNo ? `文号 ${clip(r.caseNo, 24)}` : "",
+    r.punishOn ? `决定日期 ${r.punishOn}` : "",
+    r.punishBasis ? `依据 ${clip(r.punishBasis)}` : "",
+    r.punishOrgan ?? "",
+  ];
+  const enrol = [r.enrolOn ? `列入时间 ${r.enrolOn}` : "", r.enrolGist ? `列入依据 ${clip(r.enrolGist)}` : ""];
+  const remove = [r.removeOn ? `移出时间 ${r.removeOn}` : "", r.removeGist ? `移出依据 ${clip(r.removeGist)}` : ""];
+  const dept = r.registerDept ? [r.registerDept] : [];
+  const ordered =
+    r.type === "penalty"
+      ? [...punish, ...dept]
+      : r.type === "dishonesty_remove" || r.type === "abnormal_remove"
+        ? [...remove, ...enrol, ...dept]
+        : [...enrol, ...dept, ...punish];
+  return ordered.filter(Boolean);
 }
 
 /** 图例的一行：色点、简称、条数，占比压成括号小字跟在后面——数字贴着名字，

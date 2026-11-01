@@ -77,6 +77,9 @@
 - 行业全景：汽车（AUTOHOT×3）、机器人/具身（ROBOTHOT×2）、金融（FinanceHot、A 股、qhot）、
   保险（InsurHOT、baoxian.news）、房地产 REHOT、医疗信息化 HITHOT、漏洞 vulnhot、芯片 ChipHOT、
   地理 GeoHot、游戏 GAMEHOT（韩语）、葡语 MedIA-briefing 等。
+- **两个只确认在线、没有公开做法的站**：`FilmTechNews`（[filmtech.lumenghe.com](https://filmtech.lumenghe.com)，
+  影视技术日报）与 `VulnHOT`（[vulnhot.com](https://vulnhot.com)，漏洞情报，扫描里唯一的安全领域站）。
+  README 的站点表收了它们，但本文件给不出「可搬走的东西」，属正常的空白，**不要为凑表去补不存在的做法**。
 - 上游「作品展示区」是在线案例密度最高的地方：大厂观察 → innews.site、RoboHot → robohot.news、
   MediaStack → mediastack.work、AI4Math Radar（数学论文，按证据分级）、营销通鉴 → yingxiaoclub.com/news
   （AIHOT 只跑内网做采集/打分/归组，主站每 30 分钟按游标同步精选，SEO 权重留在原站）。
@@ -133,7 +136,9 @@
    改得越深越不敢跟，最后变成自己维护一条死分支。
 
 这份索引和由它推出的三个协作提议（领域注册表、适配器以数据回贡、跨站索引只做索引不做混池）已同步到上游
-[Discussion #284](https://github.com/KKKKhazix/AIHOT/discussions/284)。
+[Discussion #284](https://github.com/KKKKhazix/AIHOT/discussions/284)。2026-10-31 又在该帖下补了一条
+[清单底稿回复](https://github.com/KKKKhazix/AIHOT/discussions/284#discussioncomment-19299115)，
+把 2.1 / 2.4 / 2.5 的表格原样贴了过去（帖子正文只有结论，没有原表）。
 
 ## 三、框架外的同类站
 

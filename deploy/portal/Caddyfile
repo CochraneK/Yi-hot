@@ -1,0 +1,82 @@
+# Reference Caddyfile for a host that already serves a portal and another app on
+# :443, and now hosts AnyDoor at /anydoor.
+#
+# Two things here are not obvious:
+#
+#   1. `encode` is scoped per handler instead of sitting at site level. A
+#      site-level encoder compresses the AnyDoor reverse_proxy output too, and
+#      gzip buffers: the SSE stream arrives as one burst at the end instead of
+#      token by token. Measured on this shape of deployment: every chunk in the
+#      last 70 ms. Streaming is the whole point of the gateway, so the AnyDoor
+#      branch has no encoder and sets flush_interval -1.
+#
+#   2. The prefix is NOT stripped (no handle_path, no rewrite). The gateway is
+#      started with BASE_PATH=/anydoor and strips it itself; stripping here as
+#      well would work for API-only use but break the console, whose HTML is
+#      told the prefix by the gateway.
+#
+# Reload: `admin off` makes `caddy reload` unavailable, so restart the container.
+# Validate first:  docker exec <caddy> caddy validate --config /etc/caddy/Caddyfile
+
+{
+  auto_https disable_redirects
+  admin off
+  default_sni 49.233.72.222
+}
+
+# Publicly trusted IP certificate; no self-signed certificate fallback.
+# Port 80 remains owned by the portal. Renewal uses TLS-ALPN-01 on 443.
+https://49.233.72.222 {
+  tls {
+    issuer acme {
+      dir https://acme-v02.api.letsencrypt.org/directory
+      profile shortlived
+      disable_http_challenge
+    }
+  }
+  header {
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "no-referrer"
+    Permissions-Policy "camera=(self), microphone=(self)"
+  }
+
+  # ---- 图标归属：根路径不属于任何一个子站 ---------------------------------
+  # 443 上挂着四个入口：根路径的「项目入口」门户、/futureme/、/anydoor/，以及
+  # 兜底到 yihot 的其余路径。而 /favicon.ico 只有一个，谁占着它，谁就给所有
+  # 「页面没声明图标」的地方当标签页徽章。它此前归 yihot（api 在根路径提供品牌图），
+  # 于是门户页和另外两个子站的标签页全都挂上了 yihot 的标。
+  #
+  # 现在这些路径刻意**不在这里接管**，一律落到下面的兜底反代，由 yihot 的 web
+  # 服务统一决定（apps/web/server.ts）：
+  #   · /portal-icon.svg → 门户自己的图标（深绿拱门）；
+  #   · /favicon.ico 等  → 204，让没声明的页面回落到浏览器默认图标；
+  #   · yihot 自己       → 改用 /yihot/ 前缀取图标，不再占根路径。
+  # 之所以放在前面那层而不是这里，是为了让 80 与 443 共用同一份实现——两处各写
+  # 一遍正是这次图标串站的成因。想给 /futureme 或 /anydoor 配专属图标，得在
+  # 各自页面里声明 <link rel="icon">，本文件不代劳。
+
+  # AnyDoor account console + OpenAI-compatible API.
+  redir /anydoor /anydoor/ 308
+  handle /anydoor/* {
+    reverse_proxy 127.0.0.1:8787 {
+      header_up X-Real-IP {remote_host}
+      # Do not let the proxy hold bytes waiting for a full buffer.
+      flush_interval -1
+    }
+  }
+
+  # FutureMe (unchanged).
+  redir /futureme /futureme/ 308
+  handle_path /futureme/* {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8766 {
+      header_up X-Real-IP {remote_host}
+    }
+  }
+
+  handle {
+    # Keep the existing project portal and its routes on HTTPS too.
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:80
+  }
+}

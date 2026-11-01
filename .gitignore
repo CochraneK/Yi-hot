@@ -30,3 +30,7 @@ secrets/*
 
 # 临时导出：scripts/export-source-registry.py 的输入，每次现从库里导出，不入库
 sources-export.tsv
+
+# 排版与发帖流水线的中间产物：财务计划的 .docx 等由 docs/*.md 重新生成即可，
+# 只把源文档入库；这里还留着上游评论草稿与抓取样本，属于一次性材料。
+/output/

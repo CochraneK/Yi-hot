@@ -19,10 +19,25 @@
 
 | 地址 | 内容 |
 | --- | --- |
-| `http://49.233.72.222/` | 多项目门户（静态 `apps/web/portal.html`，由 `server.ts` 的 `servePortal` 直接发出） |
-| `http://49.233.72.222/yihot/` | **Yi-Hot 主站**（本项目） |
-| `http://49.233.72.222/futureme/` | FutureMe（另一项目，由 Yi-Hot 的 web 容器反向代理转发） |
-| `http://49.233.72.222/yihot/admin` | 管理后台 |
+| `/`（http 与 https 都可） | 多项目门户（静态 `apps/web/portal.html`，由 `server.ts` 的 `servePortal` 直接发出） |
+| `/yihot/` | **Yi-Hot 主站**（本项目） |
+| `/yihot/admin` | 管理后台 |
+| `/futureme/` | FutureMe（另一项目）。80 由 `server.ts` 反代、443 由宿主 Caddy 反代，都指向 `127.0.0.1:8766` |
+| `/anydoor/` | AnyDoor（OpenAI 兼容网关 + 控制台）。**只有 443**：宿主 Caddy → `127.0.0.1:8787` |
+
+- **两个端口的分工**：宿主 80 整段归 `aihot-web`（所以 `/`、`/yihot/`、`/futureme/` 在 80 上都通）；
+  **443 由宿主上的 Caddy 接管**，容器名 `futureme-https`，配置在
+  `/home/ubuntu/futureme/deploy/portal/Caddyfile`（**不在本仓库**）。`admin off` 让 `caddy reload` 不可用，
+  改完只能重启容器；先 `docker run --rm --entrypoint caddy -v <新文件>:/etc/caddy/Caddyfile:ro caddy:2.11.7-alpine
+  validate --config /etc/caddy/Caddyfile` 校验（容器 rootfs 只读，`docker cp` 进不去）。
+- **HTTPS 证书**：Let's Encrypt 给 **IP** 签的短周期证书（`profile shortlived`，有效期约 6 天），
+  Caddy 自动续期。**不需要域名就有锁标**，SAN 是 `IP Address:49.233.72.222`。
+- **根路径 `/favicon.ico` 不属于本站**。这台机器的根是门户的地盘，而浏览器遇到「页面没声明图标」
+  时会自动去请求根 `/favicon.ico`——所以本站若占着它，`/futureme/` 与 `/anydoor/` 的标签页就会
+  显示成 Yi-Hot 的徽章。现在的约定：本站图标一律走 `/yihot/` 前缀（`root.tsx` 的 `links` 与
+  manifest 的 `icons` 都带），`server.ts` 对根 `/favicon.ico`、`/apple-touch-icon*.png` 回 **204**
+  （80 与 443 共用这一份实现，Caddy 刻意不接管）。门户页自己声明 `/portal-icon.svg`。
+
 
 - 服务器：腾讯云 2C2G 北京，Ubuntu 24.04 + Docker。源码树在 `/opt/yihot`（**与本地仓库同一份内容**）。
 - 容器：`aihot-{db,api,worker,web}-1`，全部来自**同一个镜像 `aihot-app`**（web / api / worker / setup 共用）。web 占宿主 80 端口。

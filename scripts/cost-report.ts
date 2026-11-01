@@ -18,14 +18,15 @@ const pad = (v: string | number, n: number, right = false) => {
 };
 const yuan = (v: unknown) => Number(v ?? 0).toFixed(2);
 
-/** 按天 × 用途。`cost` 是调用当时写下的钱（providers/pricing.ts 同一份实现），用途记在回执上。 */
+/** 按天 × 用途。`cost` 是调用当时写下的钱（providers/pricing.ts 同一份实现），用途记在回执上。
+ *  只算 CNY：非 CNY 的调用折不动，一律不进合计（与 pricing.ts 的 `spend.unconverted` 同一条规矩）。 */
 const byPurpose = await sql<{ day: string; purpose: string; n: number; cost: number }[]>`
   SELECT to_char(a.started_at AT TIME ZONE 'Asia/Shanghai', 'MM-DD') AS day,
          coalesce(r.purpose, '?') AS purpose,
          count(*)::int AS n,
          round(sum(a.cost), 4)::float8 AS cost
   FROM receipt_attempts a JOIN receipts r ON r.id = a.receipt_id
-  WHERE a.started_at > now() - (${days} || ' days')::interval
+  WHERE a.started_at > now() - (${days} || ' days')::interval AND a.currency = 'CNY'
   GROUP BY 1, 2
   ORDER BY 1 DESC, 4 DESC NULLS LAST`;
 
@@ -47,7 +48,7 @@ const byKind = await sql<{ day: string; live: number; live_cost: number; hist: n
     FROM receipt_attempts a
     LEFT JOIN receipts r ON r.id = a.receipt_id
     LEFT JOIN articles ar ON ar.id = split_part(split_part(r.subject, ':', 2), '@', 1)
-    WHERE a.started_at > now() - (${days} || ' days')::interval
+    WHERE a.started_at > now() - (${days} || ' days')::interval AND a.currency = 'CNY'
     GROUP BY 1, 2, 3
   ) t
   GROUP BY day
@@ -61,16 +62,28 @@ const [perArticle] = await sql<{ live: number; live_cost: number; hist: number; 
          round(coalesce(sum(r.cost) FILTER (WHERE coalesce(ar.backfill, false)), 0), 3)::float8 AS hist_cost
   FROM receipts r
   LEFT JOIN articles ar ON ar.id = split_part(split_part(r.subject, ':', 2), '@', 1)
-  WHERE r.service = 'llm' AND r.created_at > now() - (${days} || ' days')::interval`;
+  WHERE r.service = 'llm' AND r.currency = 'CNY' AND r.created_at > now() - (${days} || ' days')::interval`;
 
 const [total] = await sql<{ cost: number }[]>`
   SELECT round(coalesce(sum(cost), 0), 2)::float8 AS cost
-  FROM receipt_attempts WHERE started_at > now() - (${days} || ' days')::interval`;
+  FROM receipt_attempts
+  WHERE started_at > now() - (${days} || ' days')::interval AND currency = 'CNY'`;
+
+/** 非 CNY 的调用单列，不折算、不相加。 */
+const unconverted = await sql<{ currency: string; cost: number }[]>`
+  SELECT currency, round(coalesce(sum(cost), 0), 2)::float8 AS cost
+  FROM receipt_attempts
+  WHERE started_at > now() - (${days} || ' days')::interval
+    AND cost IS NOT NULL AND currency <> 'CNY'
+  GROUP BY 1 ORDER BY 2 DESC`;
 
 const budgets = await sql<{ service: string; per_hour: number; per_day: number }[]>`
   SELECT service, per_hour, per_day FROM budgets WHERE service IN ('llm', 'deepseek-tools') ORDER BY service`;
 
-console.log(`近 ${days} 天合计 ¥${yuan(total?.cost)}（模型调用 + 网页搜索，含一次性回填）\n`);
+console.log(`近 ${days} 天合计 ¥${yuan(total?.cost)}（模型调用 + 网页搜索，含一次性回填；仅 CNY）\n`);
+if (unconverted.length) {
+  console.log(`另有未折算外币：${unconverted.map((u) => `${u.currency} ${Number(u.cost).toFixed(2)}`).join(" · ")}（不进上方合计）\n`);
+}
 
 console.log("按天：今天的新闻 / 补历史 / 搜索");
 console.log(`${pad("日期", 8)}${pad("新稿调用", 10, true)}${pad("新稿花费", 12, true)}${pad("回填调用", 10, true)}${pad("回填花费", 12, true)}${pad("搜索", 8, true)}${pad("搜索花费", 10, true)}`);

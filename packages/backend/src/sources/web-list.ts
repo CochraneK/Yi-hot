@@ -79,6 +79,62 @@ export function dayInOffset(at: Date, utcOffset = "+08:00"): string {
   return new Date(at.getTime() + minutes * 60_000).toISOString().slice(0, 10);
 }
 
+const collapseSpaces = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim();
+
+/** A page element printing an age ("20小时前", "2天前", "昨天", "今天 15:46", "3 hours ago", "16h ago") instead of a date. */
+const RELATIVE_UNITS: Record<string, number> = {
+  秒: 1e3, 分钟: 60e3, 分: 60e3, 小时: 3600e3, 天: 86400e3,
+  second: 1e3, minute: 60e3, min: 60e3, m: 60e3, hour: 3600e3, hr: 3600e3, h: 3600e3, day: 86400e3, d: 86400e3,
+};
+const DAYS_BACK: Record<string, number> = { 今天: 0, 昨天: 1, 前天: 2, yesterday: 1 };
+
+export interface ParsedPublicationDate {
+  at: Date | null;
+  precision: "date" | "datetime" | null;
+}
+
+/**
+ * A listing's own element printing an age rather than a date, counted back from `now`, the moment it was
+ * read. Only the whole text of a date field is read this way, after a leading authoring mark ("版面之外·今天 15:46"):
+ * a sentence that mentions "两天前" is no date. Some listing pages print the age for an article's first days and
+ * the date only after, so every new article came in undated and missed that day's news. Hours and minutes keep a
+ * real time; days keep the calendar day in the source's offset, and "今天/昨天/前天 HH:MM" is that time on that day.
+ */
+export function readRelativeDate(value: string | null | undefined, now: Date, utcOffset = "+08:00"): ParsedPublicationDate {
+  const v = collapseSpaces(value).replace(/^[^·]+·\s*/, "");
+  const none: ParsedPublicationDate = { at: null, precision: null };
+  if (!v) return none;
+  const dayTime = /^(今天|昨天|前天)\s*(\d{1,2}):(\d{2})$/.exec(v);
+  if (dayTime) {
+    const day = dayInOffset(new Date(now.getTime() - DAYS_BACK[dayTime[1]!]! * 86400e3), utcOffset);
+    const at = atOffset(day.slice(0, 4), day.slice(5, 7), day.slice(8, 10), dayTime[2]!, dayTime[3]!, 0, utcOffset);
+    return at ? { at, precision: "datetime" } : none;
+  }
+  let ms: number | null = null;
+  let unitMs = 0;
+  if (/^(刚刚|just now)$/i.test(v)) ms = 0;
+  else if (/^(昨天|前天|yesterday)$/i.test(v)) [ms, unitMs] = [DAYS_BACK[v.toLowerCase()]! * 86400e3, 86400e3];
+  else {
+    const m = /^(\d{1,3})\s*(秒|分钟|分|小时|天)前$/.exec(v) ?? /^(\d{1,3})\s*(?:(second|minute|min|hour|hr|day)s?|(m|h|d))\s+ago$/i.exec(v);
+    const name = (m?.[2] ?? m?.[3])?.toLowerCase();
+    if (m && name) [ms, unitMs] = [Number(m[1]) * RELATIVE_UNITS[name]!, RELATIVE_UNITS[name]!];
+  }
+  if (ms === null) return none;
+  const at = new Date(now.getTime() - ms);
+  // The text's own unit sets the precision: "47小时前" keeps its time, though it is more than a day back.
+  if (unitMs < 86400e3) return { at, precision: "datetime" };
+  const day = dayInOffset(at, utcOffset);
+  const dayAt = atOffset(day.slice(0, 4), day.slice(5, 7), day.slice(8, 10), 0, 0, 0, utcOffset);
+  return dayAt ? { at: dayAt, precision: "date" } : none;
+}
+
+/** Absolute date first; if the field holds a relative age ("3小时前"), resolve it against `now`. */
+function parseDateOrRelative(raw: string | null | undefined, utcOffset: string, dayFirst: boolean, now: Date): ParsedPublicationDate {
+  const at = parseLooseDate(raw, utcOffset, dayFirst);
+  if (at) return { at, precision: datePrecision(raw) };
+  return readRelativeDate(raw, now, utcOffset);
+}
+
 /** The datePublished of the page's structured data (JSON-LD, also inside @graph or embedded app state). */
 export function jsonLdPublished($: cheerio.CheerioAPI, html: string): string | null {
   const find = (v: unknown, depth = 0): string | null => {
@@ -303,14 +359,16 @@ export function fromHtml(html: string, base: string, source: SourceRow): Candida
     if (c.publishedAtSelector) {
       const dateEl = el.find(c.publishedAtSelector).first();
       const raw = dateEl.attr("datetime") ?? dateEl.attr("title") ?? dateEl.text();
-      publishedAt = parseLooseDate(raw, c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
-      if (publishedAt) publishedAtPrecision = datePrecision(raw);
+      const parsed = parseDateOrRelative(raw, c.publishedAtUtcOffset, c.publishedAtDayFirst === true, new Date());
+      publishedAt = parsed.at;
+      if (publishedAt) publishedAtPrecision = parsed.precision ?? "date";
     }
     if (!publishedAt && c.publishedAtRegex) {
       const m = new RegExp(c.publishedAtRegex).exec($.html(el));
       const text = dateMatchText(m);
-      publishedAt = parseLooseDate(text, c.publishedAtUtcOffset, c.publishedAtDayFirst === true);
-      if (publishedAt) publishedAtPrecision = datePrecision(m?.[1]);
+      const parsed = parseDateOrRelative(text, c.publishedAtUtcOffset, c.publishedAtDayFirst === true, new Date());
+      publishedAt = parsed.at;
+      if (publishedAt) publishedAtPrecision = parsed.precision ?? "date";
     }
     seen.add(url);
     out.push({ url, title, publishedAt, publishedAtPrecision });
@@ -492,13 +550,16 @@ export async function fetchDetail(url: string, source: SourceRow, need: DetailNe
     if ($ && !dateInJina && d.publishedAtSelector) {
       const el = $(d.publishedAtSelector).first();
       const raw = el.attr("datetime") ?? el.attr("title") ?? el.text();
-      publishedAt = parseLooseDate(raw, offset, d.publishedAtDayFirst === true);
+      const parsed = parseDateOrRelative(raw, offset, d.publishedAtDayFirst === true, new Date());
+      publishedAt = parsed.at;
       // Same rule as the listing parse: a byline that carries a clock time refines the listing's
       // day. Without it the caller keeps "date", and the feed then prints no time at all.
-      if (publishedAt) publishedAtPrecision = datePrecision(raw);
+      if (publishedAt) publishedAtPrecision = parsed.precision ?? "date";
     }
     if (!publishedAt && d.publishedAtRegex) {
-      publishedAt = parseLooseDate(dateMatchText(new RegExp(d.publishedAtRegex).exec(dateText)), offset, d.publishedAtDayFirst === true);
+      const parsed = parseDateOrRelative(dateMatchText(new RegExp(d.publishedAtRegex).exec(dateText)), offset, d.publishedAtDayFirst === true, new Date());
+      publishedAt = parsed.at;
+      if (publishedAt && parsed.precision) publishedAtPrecision = parsed.precision;
     }
     // An authoritative rule is the only source of the date: when its byline is missing, no other
     // timestamp on the page (an update time, a related post) stands in for it.

@@ -27,6 +27,41 @@ const MAX_BODY_CHARS = 60_000;
 const ATTACHMENT_MAX_BYTES = 64 * 1024 * 1024;
 
 /**
+ * Paths that serve a sign-in form rather than the page that was asked for. A path segment, never a
+ * substring: "/auth-for-agents" and "/authors/x" are ordinary pages. Sign-in paths read from the
+ * final address, never the text, so an article that merely mentions signing in is untouched.
+ */
+// login|log-in|log_in|signin|sign-in|sign_in|register|signup|sign-up|sign_up cover the naming schemes
+// sites use (Devise's /users/sign_in among them); wp-login.php is WordPress's login page; the extension
+// alternatives read /login.php, /register.html — a segment only counts when it ends at a delimiter (a
+// real page path or an extension), so a page that merely carries an auth word ("login.company",
+// "sso-products") stays content.
+const AUTH_PATH = /(?:^|\/)(?:login|log-in|log_in|signin|sign-in|sign_in|register|signup|sign-up|sign_up|authorize|oauth2?|sso|auth|wp-login(?:\.php)?)(?:\/|$|\.(?:php|aspx?|html?|jsp))/i;
+
+/** Whether an address is a sign-in form's own path (a listing's "Log in" link is no post either). */
+export function isSignInUrl(url: string): boolean {
+  try {
+    return AUTH_PATH.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A redirect that ended on a sign-in form: the site sent us to authenticate instead of to the page.
+ * Read from the final address of the fetch, never from the text. An address already on such a path was
+ * not sent anywhere: a registry page at ".../register" that only gained a trailing slash is still the
+ * page that was asked for.
+ */
+export function isSignInRedirect(asked: string, landed: string): boolean {
+  try {
+    return !AUTH_PATH.test(new URL(asked).pathname) && AUTH_PATH.test(new URL(landed).pathname);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Containers the CMSes behind Chinese government and foundation sites put their article text in
  * (TRS/WCM editors, and the generic names the rest use). Readability scores a whole document and gives
  * up on some of these layouts — a TRS page whose paragraphs all sit in one styled div scores below its
@@ -154,6 +189,7 @@ async function fetchForBody(url: string) {
 export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<ExtractedBody | null> {
   try {
     const res = await fetchForBody(url);
+    if (isSignInRedirect(url, res.url)) return null;
     const type = res.headers.get("content-type") ?? "";
     if (res.status === 200 && /pdf/i.test(type)) {
       const got = await readablePdf(res.body, res.url);

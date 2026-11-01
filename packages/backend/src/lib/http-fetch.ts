@@ -49,12 +49,16 @@ function pinnedCurveDispatcher(): Dispatcher | undefined {
   return pinnedCurveAgent;
 }
 
-/** The handshake error codes a curve change can fix, read off the cause chain undici wraps them in. */
+/**
+ * The refused key share, read off the cause chain undici wraps it in. It can only come from the key
+ * exchange, before any request byte is sent, so the retry never replays a request a server has seen
+ * (a paid API would bill it twice). EPROTO is not matched: it also follows a request already sent.
+ */
 function brokenHandshake(error: unknown): boolean {
   let cause: unknown = error;
   for (let depth = 0; depth < 4 && cause; depth++) {
     const code = (cause as { code?: string }).code;
-    if (code === "ERR_SSL_BAD_ECPOINT" || code === "EPROTO") return true;
+    if (code === "ERR_SSL_BAD_ECPOINT") return true;
     cause = (cause as { cause?: unknown }).cause;
   }
   return false;

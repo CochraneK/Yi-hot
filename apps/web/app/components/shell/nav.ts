@@ -3,7 +3,7 @@ import { withSubject } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import type { ReactNode } from "react";
 import {
-  IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMenu, IconMessage, IconPlug,
+  IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMenu, IconMessage, IconPlug, IconShield,
 } from "../icons";
 
 export interface NavItem {
@@ -41,12 +41,15 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
     : []),
   {
     title: "更多",
+    // 顺序固定为：关于 / 更新 / 反馈 / 监管(监察) / 收藏 / Agent。手机「更多」页与此一致（见 routes/more.tsx），
+    // 两处要一起改，否则桌面与手机会出现两种顺序。
     items: [
-      { to: "/agent", label: "Agent", icon: IconPlug },
       { to: "/about", label: "关于", icon: IconHeart },
       { to: "/changelog", label: "更新", icon: IconHistory, changelog: true },
       { to: "/feedback", label: "反馈", icon: IconMessage },
+      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: IconShield }] : []),
       { to: "/starred", label: "收藏", icon: IconBookmark },
+      { to: "/agent", label: "Agent", icon: IconPlug },
     ],
   },
 ];

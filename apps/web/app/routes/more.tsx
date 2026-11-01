@@ -19,33 +19,20 @@ export function meta() {
 
 type Row = { to: string; label: string; icon: ReactNode };
 
-const GROUPS: Array<{ title: string; rows: Row[] }> = [
-  {
-    title: "内容",
-    rows: [
-      ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
-      ...(FEATURES.leaderboard ? [{ to: "/leaderboard", label: "模型榜", icon: <IconChart size={18} /> }] : []),
-      ...(FEATURES.codexResetMonitor ? [{ to: "/codex-reset", label: "Tibo重置监控", icon: <IconHistory size={18} /> }] : []),
-      { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },
-    ],
-  },
-  {
-    title: "偏好",
-    rows: [
-      // 「主题」「热点」已在手机底栏常驻，这里不再重复（桌面侧栏仍保留）。
-      { to: "/starred", label: "收藏", icon: <IconBookmark size={18} /> },
-    ],
-  },
-  {
-    title: "关于",
-    rows: [
-      { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
-      { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
-      { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
-    ],
-  },
+/** 单一列表，顺序与桌面侧栏「更多」分组（components/shell/nav.ts）保持一致：
+ *  关于 / 更新 / 反馈 / 监管(监察) / 收藏 / Agent。
+ *  原来按「内容 / 偏好 / 关于」分三组，桌面两列时读起来是列优先，顺序会被打乱；这里并成一条。
+ *  可选的行业模块（模型榜、Tibo 重置监控）只在对应开关打开时追加在 Agent 之后，不会插进这六项之间。 */
+const ROWS: Row[] = [
+  { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
+  { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
+  { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
+  ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
+  { to: "/starred", label: "收藏", icon: <IconBookmark size={18} /> },
+  { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },
+  ...(FEATURES.leaderboard ? [{ to: "/leaderboard", label: "模型榜", icon: <IconChart size={18} /> }] : []),
+  ...(FEATURES.codexResetMonitor ? [{ to: "/codex-reset", label: "Tibo重置监控", icon: <IconHistory size={18} /> }] : []),
 ];
-
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="card overflow-hidden">
@@ -71,30 +58,25 @@ export default function MorePage() {
         </span>
         <IconChevronRight size={16} className="shrink-0 text-ink-4" />
       </Link>
-      <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4 lg:space-y-0 2xl:grid-cols-3">
-        {GROUPS.map((g) => (
-          <Group key={g.title} title={g.title}>
-            {g.rows.map((r) => (
-              <li key={r.to}>
-                <Link to={r.to} className="flex h-[50px] items-center gap-3 px-4 text-[15px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
-                  <span className="text-ink-3">{r.icon}</span>
-                  <span className="flex flex-1 items-center gap-2">{r.label}{r.to === "/changelog" && changelogDot && <span className="size-1.5 rounded-full bg-hot" aria-label="有新的更新" />}</span>
-                  <IconChevronRight size={16} className="text-ink-4" />
-                </Link>
-              </li>
-            ))}
-            {g.title === "偏好" && (
-              <li className="flex h-[58px] items-center gap-3 px-4 text-[15px] font-medium text-ink">
-                <span className="text-ink-3">
-                  <IconMoon size={18} />
-                </span>
-                <span className="flex-1">外观</span>
-                <ThemeSwitch className="w-[124px]" />
-              </li>
-            )}
-          </Group>
+      <Group title="全部入口">
+        {ROWS.map((r) => (
+          <li key={r.to}>
+            <Link to={r.to} className="flex h-[50px] items-center gap-3 px-4 text-[15px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
+              <span className="text-ink-3">{r.icon}</span>
+              <span className="flex flex-1 items-center gap-2">{r.label}{r.to === "/changelog" && changelogDot && <span className="size-1.5 rounded-full bg-hot" aria-label="有新的更新" />}</span>
+              <IconChevronRight size={16} className="text-ink-4" />
+            </Link>
+          </li>
         ))}
-      </div>
+        {/* 外观不是页面入口，所以排在六项之后，不插进上面的顺序里。 */}
+        <li className="flex h-[58px] items-center gap-3 px-4 text-[15px] font-medium text-ink">
+          <span className="text-ink-3">
+            <IconMoon size={18} />
+          </span>
+          <span className="flex-1">外观</span>
+          <ThemeSwitch className="w-[124px]" />
+        </li>
+      </Group>
       <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[12px] text-ink-4">
         <Link to="/subscribe" className="hover:text-ink-2">邮件订阅</Link>
         <a href="/feed.xml" className="hover:text-ink-2">RSS</a>

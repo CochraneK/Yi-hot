@@ -2113,7 +2113,7 @@ Synology/QNAP 等 NAS 未必使用 systemd。邮件采集和邮件投递可以�
 ## 2026-10-18 本次维护变更
 
 - 邮件订阅现在支持日报、周报、月报；活动订阅再次提交偏好时，必须通过新的确认邮件后才会更新，避免仅凭公开邮箱地址改动订阅。
-- 日期只有来源日期而没有时刻时，数据库保存 `published_at_precision=date`，页面保留原文日期并用收录时刻显示排序；动态列表按展示时间倒序。
+- 日期只有来源日期而没有时刻时，数据库保存 `published_at_precision=date`，页面保留原文日期并用收录时刻显示排序（2026-11-02 起时间栏在「收录」下方直接印出原文日期，此前只有悬停提示里才有）；动态列表按展示时间倒序。
 - Docker Compose 不再把 `.env` 全量注入 Web 容器；只有 setup、api、worker 读取服务端凭据。开发示例默认关闭采集和模型调用，生产启用前请显式设置安全阀并填写 `AIHOT_RELEASE`。
 
 ## 二十三、儿童权益国际信源与长期覆盖缺口（2026-10-21）
@@ -2332,9 +2332,13 @@ weibo-search-unattended-children → failed  Budget for everyinfra exhausted (st
 2. **日级幂等**：幂等键含北京日期（`window`），同一查询**同一天只真正请求一次**，后续调度复用
    已保存的响应且不再计费。所以 `interval_minutes` 设 360 也不会多花钱；`adaptIntervals` 对
    `kind='search'` 固定为 360。
-3. **发布时间精度是 `date`**：搜索结果的 `date` 只到日，入库时归一到该日 00:00Z 并标
-   `publishedAtPrecision='date'`，前端只显示日期。正文抽取若拿到真实时间会升级精度
-   （`upsertMaterial` 的精度不降级保护会保住它）。
+3. **发布时间精度是 `date`**：搜索结果的 `date` 只到日，而且是**北京那一天的零点**写成 RFC3339
+   ——`2026-10-31T16:00:00Z` 就是 11 月 1 日。`dayOf()` 先换算到北京时间再取日，然后归一到该日
+   00:00Z 并标 `publishedAtPrecision='date'`。**按字符串前 10 位截会在整批上退一天**：2026-11-02
+   修掉时回填了 12,228 篇（`_bak_pubdate_20261102` 是备份表）。正文抽取若拿到真实时间会升级精度
+   （`upsertMaterial` 的精度不降级保护会保住它）；每源每轮只升级 `dateUpgradeMaxFetches` 条
+   （默认 6，搜索源已按 `config._aihot.dateUpgradeMaxFetches=16` 调高，只对新候选生效）。
+   抓详情页是免费的，限的是对源站的请求节奏，不是钱。
 
 ### 费用核算的三处修正（此前金额是错的）
 

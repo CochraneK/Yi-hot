@@ -10,6 +10,7 @@
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 import { deepseekSearch, type SearchHit } from "../providers/deepseek-tools.ts";
 import { BudgetExceededError } from "../providers/receipts.ts";
+import { dayInOffset } from "./web-list.ts";
 
 export interface SearchRead {
   candidates: Candidate[];
@@ -29,15 +30,23 @@ function minusDays(ymd: string, days: number): string {
 }
 
 /**
- * 搜索结果里的 `date` 只到日（UTC RFC3339，通常是当天 00:00:00Z）。整串照收会在前端显示成
- * 「08:00」这种凭空出现的钟点，所以统一归一到该日 00:00Z，并标注 precision='date' —— 前端据此
- * 只显示日期。真实时间由后续的正文抽取（详情页）升级，upsertMaterial 的精度不降级保护会保住它。
+ * 搜索结果里的 `date` 只到日，但它是**北京那一天的零点**写成 RFC3339：`2026-10-31T16:00:00Z`
+ * 就是 11 月 1 日。原先按字符串前 10 位取日，整批搜索结果的日期都退了一天——页面上「11 月 1 日
+ * 发布」的稿子标成 10 月 31 日。这里先换算到北京时间再取那天。
+ *
+ * 取到的日仍归一到该日 00:00Z 并标 precision='date'：整串照收会在前端显示成「08:00」这种凭空
+ * 出现的钟点。真实时间由后续的正文抽取（详情页）升级，upsertMaterial 的精度不降级保护会保住它。
  */
-function dayOf(date: string | null): Date | null {
+export function dayOf(date: string | null): Date | null {
   if (!date) return null;
-  const ymd = /^(\d{4}-\d{2}-\d{2})/.exec(date)?.[1];
-  if (!ymd) return null;
-  const t = Date.parse(`${ymd}T00:00:00Z`);
+  const v = date.trim();
+  let day = v;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const ms = Date.parse(v);
+    if (!Number.isFinite(ms)) return null;
+    day = dayInOffset(new Date(ms), "+08:00");
+  }
+  const t = Date.parse(`${day}T00:00:00Z`);
   return Number.isFinite(t) ? new Date(t) : null;
 }
 

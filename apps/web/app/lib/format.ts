@@ -78,6 +78,12 @@ export function feedDateLabel(iso: string): string {
   return `${y}年${m}月${d}日`;
 }
 
+/** "11.1" — a day read inside the time rail, where the year is never in question. */
+export function monthDotDay(iso: string): string {
+  const [, m, d] = beijingDate(iso).split("-").map(Number) as [number, number, number];
+  return `${m}.${d}`;
+}
+
 /** "9月24日 10:51" (Beijing), for lists that span days. */
 export function monthDayTime(iso: string): string {
   const [, m, d] = beijingDate(iso).split("-").map(Number) as [number, number, number];

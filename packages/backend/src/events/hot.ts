@@ -4,8 +4,17 @@
 import { sql } from "../db.ts";
 import { tierRank, type HotEntry } from "./hot-read.ts";
 
-export const HOT_RULE_VERSION = "heat-v1-48h-halflife24h";
+export const HOT_RULE_VERSION = "heat-v1-48h72h-halflife24h";
 const WINDOW_HOURS = 48;
+/**
+ * A quiet stretch — a weekend, a holiday — leaves the 48-hour window holding one or two events while
+ * the week's discussion is intact; read on Monday morning, the window starts on Saturday morning and
+ * everything that arrived before it has just aged out. The board then looks one day further back
+ * instead of emptying. Heat decays the same way, so the older evidence still sinks below the new.
+ */
+const FALLBACK_WINDOW_HOURS = 72;
+/** Below this many qualifying events, the wider window is read instead. */
+const FALLBACK_MIN_ENTRIES = 6;
 const HALF_LIFE_HOURS = 24;
 const MIN_PARTICIPANTS = 2;
 
@@ -51,11 +60,11 @@ export function behindSources(clocks: SourceClock[], at: number, grace: boolean)
 }
 
 /** Heat of every story at `at` (defaults to now), from story_signals alone; `behind` marks sources not fully observed. */
-async function heatRows(at: Date, behind: string[] = []): Promise<HeatRow[]> {
+async function heatRows(at: Date, behind: string[] = [], windowHours = WINDOW_HOURS): Promise<HeatRow[]> {
   const prev = new Date(at.getTime() - 6 * 3600 * 1000);
   const decayNow = sql`power(0.5, extract(epoch FROM (${at}::timestamptz - last_at)) / 3600.0 / ${HALF_LIFE_HOURS})`;
   const decayPrev = sql`power(0.5, extract(epoch FROM (${prev}::timestamptz - last_prev)) / 3600.0 / ${HALF_LIFE_HOURS})`;
-  const inPrevWindow = sql`last_prev IS NOT NULL AND last_prev > ${prev}::timestamptz - make_interval(hours => ${WINDOW_HOURS})`;
+  const inPrevWindow = sql`last_prev IS NOT NULL AND last_prev > ${prev}::timestamptz - make_interval(hours => ${windowHours})`;
   return sql<HeatRow[]>`
     WITH obs AS (
       SELECT story_id, participant_key, max(observed_at) AS last_at, min(observed_at) AS first_at,
@@ -63,7 +72,7 @@ async function heatRows(at: Date, behind: string[] = []): Promise<HeatRow[]> {
              max(observed_at) FILTER (WHERE observed_at <= ${prev}) AS last_prev,
              bool_or(source_id = ANY(${behind}::text[])) AS behind
       FROM story_signals
-      WHERE observed_at > ${at}::timestamptz - make_interval(hours => ${WINDOW_HOURS}) AND observed_at <= ${at}
+      WHERE observed_at > ${at}::timestamptz - make_interval(hours => ${windowHours}) AND observed_at <= ${at}
       GROUP BY story_id, participant_key
     ), agg AS (
       SELECT story_id,
@@ -88,9 +97,20 @@ export function heatIndex(heat: number): number {
   return Math.round(heat * 100) / 10; // one decimal on the 10× scale shown to readers
 }
 
-export async function computeHotRanking(at = new Date()): Promise<{ id: number; entries: number }> {
+export async function computeHotRanking(at = new Date()): Promise<{ id: number; entries: number; windowHours: number }> {
   const behind = behindSources(await sourceClocks(), at.getTime(), true);
-  const rows = (await heatRows(at, behind)).filter((r) => Number(r.participants) >= MIN_PARTICIPANTS && Number(r.editorial_participants) >= 1);
+  const qualifying = (rows: HeatRow[]) => rows.filter((r) => Number(r.participants) >= MIN_PARTICIPANTS && Number(r.editorial_participants) >= 1);
+  // The narrower window is the rule; the wider one only stands in when the narrower is left with
+  // almost nothing, and only when it actually finds more — a quiet week stays honestly short.
+  let windowHours = WINDOW_HOURS;
+  let rows = qualifying(await heatRows(at, behind, windowHours));
+  if (rows.length < FALLBACK_MIN_ENTRIES) {
+    const wider = qualifying(await heatRows(at, behind, FALLBACK_WINDOW_HOURS));
+    if (wider.length > rows.length) {
+      rows = wider;
+      windowHours = FALLBACK_WINDOW_HOURS;
+    }
+  }
   rows.sort((a, b) => Number(b.heat) - Number(a.heat) || (b.latest_at?.getTime() ?? 0) - (a.latest_at?.getTime() ?? 0));
 
   const entries: HotEntry[] = [];
@@ -154,11 +174,11 @@ export async function computeHotRanking(at = new Date()): Promise<{ id: number; 
   const [row] = await sql<{ id: number }[]>`
     INSERT INTO hot_rankings (computed_at, rule_version, entries, evidence, published)
     VALUES (${at}, ${HOT_RULE_VERSION}, ${sql.json(entries as never)},
-            ${sql.json({ windowHours: WINDOW_HOURS, halfLifeHours: HALF_LIFE_HOURS, minParticipants: MIN_PARTICIPANTS, candidates: rows.length } as never)}, true)
+            ${sql.json({ windowHours, halfLifeHours: HALF_LIFE_HOURS, minParticipants: MIN_PARTICIPANTS, candidates: rows.length } as never)}, true)
     RETURNING id`;
   // Keep a bounded history of rankings.
   await sql`DELETE FROM hot_rankings WHERE computed_at < now() - interval '30 days'`;
-  return { id: row!.id, entries: entries.length };
+  return { id: row!.id, entries: entries.length, windowHours };
 }
 
 /**

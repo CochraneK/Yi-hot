@@ -18,7 +18,7 @@ export async function loader({ request }: { request: Request }) {
 export function meta() {
   return pageMeta({
     title: withSubject("热点"),
-    description: "过去 48 小时公益圈讨论最多的 10 个事件：热度指数、趋势与组成热度的公开来源。",
+    description: "公益圈近期讨论最多的事件：热度指数、趋势与组成热度的公开来源。",
     path: "/hot",
     image: "/og/pages/hot.png",
   });
@@ -294,7 +294,7 @@ export default function HotPage() {
         </summary>
         <div className="max-w-[760px] space-y-2 pb-2 pl-[21px] pt-2 leading-[1.75] text-ink-3">
           <p>热度来自参与同一事件的独立账号与机构，重复采集只算一次，并按 24 小时半衰期衰减。它衡量讨论活跃程度，不是报道质量评分。</p>
-          <p>榜单统计过去 48 小时。趋势只比较持续覆盖的同一组信源；它反映我们的监测范围，不代表全网人数。缺少可比历史时，不展示趋势线。</p>
+          <p>榜单统计过去 48 小时；讨论偏少的日子会往前多看一天，页头写明实际统计的窗口。趋势只比较持续覆盖的同一组信源；它反映我们的监测范围，不代表全网人数。缺少可比历史时，不展示趋势线。</p>
           <p>
             信源名单只展示可公开阅读的报道来源；讨论参与者还包括只计入热度的账号与机构。同一机构的多个渠道可能合并计数，因此参与者不一定多于信源数。点击事件可查看各方报道与观点。
           </p>

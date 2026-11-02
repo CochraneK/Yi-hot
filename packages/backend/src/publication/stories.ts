@@ -174,15 +174,47 @@ export async function loadStoryDetail(storyId: number, now = new Date()): Promis
 const SPARK_HOURS = 24;
 
 /** Hourly heat of the ranked stories over the day before the ranking, one slot per hour. */
-async function sparklines(storyIds: number[], at: Date): Promise<Map<number, Array<number | null>>> {
+async function sparklines(storyIds: number[], at: Date, windowHours = 48): Promise<Map<number, Array<number | null>>> {
   const end = Math.floor(at.getTime() / 3600000) * 3600000;
   const start = end - SPARK_HOURS * 3600000;
+  // The stored hourly heat is a 48-hour figure. A ranking that had to look further back redraws the
+  // line from the same signals, so the curve and the index beside it come from one rule.
+  if (windowHours !== 48) return recomputedSparklines(storyIds, start, end, windowHours);
   const rows = storyIds.length
     ? await sql<{ story_id: number; hour: Date; heat: string }[]>`
         SELECT story_id, hour, heat FROM story_heat_hourly
         WHERE story_id = ANY(${storyIds}::bigint[]) AND complete AND hour >= ${new Date(start)} AND hour <= ${new Date(end)}`
     : [];
   const out = new Map<number, Array<number | null>>(storyIds.map((id) => [id, Array.from({ length: SPARK_HOURS + 1 }, () => null)]));
+  for (const r of rows) {
+    const slot = Math.round((r.hour.getTime() - start) / 3600000);
+    const line = out.get(Number(r.story_id));
+    if (line && slot >= 0 && slot <= SPARK_HOURS) line[slot] = Number(r.heat);
+  }
+  return out;
+}
+
+/**
+ * The same line over a window the hourly snapshots do not hold: heat at each hour from the signals
+ * inside that hour's own window, each participant counted once at its latest observation, decayed
+ * with the same 24-hour half-life and rounded the way the index is.
+ */
+async function recomputedSparklines(storyIds: number[], start: number, end: number, windowHours: number): Promise<Map<number, Array<number | null>>> {
+  const out = new Map<number, Array<number | null>>(storyIds.map((id) => [id, Array.from({ length: SPARK_HOURS + 1 }, () => null)]));
+  if (!storyIds.length) return out;
+  const rows = await sql<{ story_id: number; hour: Date; heat: string }[]>`
+    WITH slot AS (
+      SELECT generate_series(${new Date(start)}::timestamptz, ${new Date(end)}::timestamptz, interval '1 hour') AS hour
+    ), obs AS (
+      SELECT slot.hour, ss.story_id, ss.participant_key, max(ss.observed_at) AS last_at
+      FROM slot
+      JOIN story_signals ss ON ss.observed_at > slot.hour - make_interval(hours => ${windowHours}) AND ss.observed_at <= slot.hour
+      WHERE ss.story_id = ANY(${storyIds}::bigint[])
+      GROUP BY 1, 2, 3
+    )
+    SELECT hour, story_id,
+           (round(sum(power(0.5, extract(epoch FROM (hour - last_at)) / 3600.0 / 24)) * 100) / 10)::text AS heat
+    FROM obs GROUP BY hour, story_id`;
   for (const r of rows) {
     const slot = Math.round((r.hour.getTime() - start) / 3600000);
     const line = out.get(Number(r.story_id));
@@ -231,10 +263,14 @@ export async function loadHot(): Promise<HotResponse> {
   const ranking = await latestHotRanking();
   if (!ranking) return { computedAt: null, ruleVersion: null, windowHours: 48, entries: [] };
   const at = new Date(ranking.computedAt);
+  // The window the ranking was actually computed with (48 hours, or 72 when the board would
+  // otherwise be nearly empty); rankings written before it was recorded carry 48.
+  const windowHours = Number((ranking.coverage as { windowHours?: unknown } | null)?.windowHours ?? 48) || 48;
   const [sparks, covers, extras] = await Promise.all([
     sparklines(
       ranking.entries.map((e) => e.storyId),
       at,
+      windowHours,
     ),
     hotCovers(ranking.id, ranking.entries, at),
     rankingExtras(ranking),
@@ -242,7 +278,7 @@ export async function loadHot(): Promise<HotResponse> {
   return {
     computedAt: ranking.computedAt,
     ruleVersion: ranking.ruleVersion,
-    windowHours: 48,
+    windowHours,
     entries: ranking.entries.map((e) => {
       const picture = covers.get(e.storyId);
       const coverUrl = picture ? proxiedImage(picture.url, "full") : null;

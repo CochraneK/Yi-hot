@@ -167,14 +167,27 @@ const overHttps = (url: string) => url.replace(/^http:\/\//i, "https://");
 // Suffixes where the registrable name is the third label from the right ("mca.gov.cn", not "gov.cn").
 const MULTI_LABEL_SUFFIX = new Set(["gov.cn", "org.cn", "com.cn", "net.cn", "edu.cn", "ac.cn", "gov.hk", "com.hk", "gov.tw", "co.uk", "org.uk", "co.jp", "or.jp"]);
 
+/**
+ * Labels that name one outlet's reading surface, not an outlet: "m.gmw.cn" is 光明网, and
+ * "big5.www.gov.cn" is 中国政府网. They have to go before the registrable name is picked, or the
+ * same outlet holds two participant slots ("www.gov.cn" beside "gov.cn") and looks like a duplicate.
+ */
+const SERVICE_LABEL = new Set(["www", "m", "m2", "wap", "3g", "4g", "h5", "mobile", "big5"]);
+
+/** Drops the reading-surface prefixes from a host or from a site key ("big5.www.gov.cn" → "gov.cn"). */
+export function siteName(host: string): string {
+  let parts = host.toLowerCase().split(".").filter(Boolean);
+  while (parts.length > 2 && SERVICE_LABEL.has(parts[0]!)) parts = parts.slice(1);
+  return parts.join(".");
+}
+
 /** The site a URL belongs to, ignoring www and its CMS subdomains ("mzt.ln.gov.cn" → "ln.gov.cn"). */
 export function siteHost(url: string): string {
   try {
-    const host = new URL(url).hostname.toLowerCase().replace(/^www\./i, "");
-    const parts = host.split(".");
+    const parts = siteName(new URL(url).hostname).split(".");
     const suffix = parts.slice(-2).join(".");
     if (parts.length >= 3 && MULTI_LABEL_SUFFIX.has(suffix)) return parts.slice(-3).join(".");
-    return parts.length >= 2 ? suffix : host;
+    return parts.length >= 2 ? suffix : parts.join(".");
   } catch {
     return "";
   }

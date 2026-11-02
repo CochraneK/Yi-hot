@@ -24,8 +24,11 @@ export interface HotEntry {
   representativeItemId: string | null;
   representativeUrl: string | null;
   representativeSource: string | null;
-  /** 精选组 first by tier, then 氛围组; tier is absent on rankings from before 2026-09-29. */
-  participants: Array<{ name: string; kind: "editorial" | "signal"; tier?: string }>;
+  /**
+   * 精选组 first by tier, then 氛围组; tier is absent on rankings from before 2026-09-29.
+   * `site` marks a participant a search source surfaced by the outlet it came from, not the source.
+   */
+  participants: Array<{ name: string; kind: "editorial" | "signal"; tier?: string; site?: string }>;
 }
 
 /** Faces are the 精选组 sources, T1 before T1.5 before T2; the rest (and 氛围组) count in "+N". */
@@ -113,8 +116,11 @@ export async function rankingExtras(ranking: HotRanking) {
         .sort((x, y) => Number(y.p.kind === "editorial") - Number(x.p.kind === "editorial") || tierRank(x.p.tier) - tierRank(y.p.tier) || Number(!!y.icon) - Number(!!x.icon) || x.i - y.i);
       // Every name stays for the tooltip; only visible Faces need srcSet.
       return people.map(({ p, icon }, i): HotParticipant => {
-        const person: HotParticipant = { name: p.name, kind: p.kind, iconUrl: proxiedImage(icon, "avatar") };
-        const srcSet = p.kind === "editorial" && i < MAX_FACES ? proxiedImageSet(icon, "avatar") : undefined;
+        // A site participant is the outlet, not the search source that surfaced it: the source's
+        // own logo on two outlets made one outlet's board look like the same source listed twice.
+        const person: HotParticipant = { name: p.name, kind: p.kind, iconUrl: proxiedImage(p.site ? null : icon, "avatar") };
+        if (p.site) person.site = p.site;
+        const srcSet = p.kind === "editorial" && !p.site && i < MAX_FACES ? proxiedImageSet(icon, "avatar") : undefined;
         if (srcSet) person.iconSrcSet = srcSet;
         return person;
       });

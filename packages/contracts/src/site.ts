@@ -208,6 +208,8 @@ export interface ProblemBody {
 export interface HotParticipant {
   name: string;
   kind: "editorial" | "signal";
+  /** The outlet a search source surfaced (its registrable host), when the participant is that site. */
+  site?: string;
   /** The source's icon, or for an X account its latest collected avatar (proxied). */
   iconUrl: string | null;
   iconSrcSet?: string;

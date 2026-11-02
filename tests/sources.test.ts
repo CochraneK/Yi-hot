@@ -233,6 +233,9 @@ test("a search source counts by site, every other source by itself", () => {
   assert.equal(participantKey({ ...search, url: "https://m.china.com/a.html" }), "site:china.com");
   // A government CMS subdomain belongs to its parent site.
   assert.equal(participantKey({ ...search, url: "https://mzt.hunan.gov.cn/yw/1.htm" }), "site:hunan.gov.cn");
+  // So is a reading surface of it: "big5.www.gov.cn" and "www.gov.cn" were two votes for one outlet.
+  assert.equal(participantKey({ ...search, url: "https://www.gov.cn/zhengce/1.htm" }), "site:gov.cn");
+  assert.equal(participantKey({ ...search, url: "http://big5.www.gov.cn/gate/big5/www.gov.cn/zhengce/1.htm" }), "site:gov.cn");
   // Every other kind speaks as itself, however many of its articles describe the same thing.
   assert.equal(participantKey({ id: "web-mca-news", signal_group_id: null, kind: "web_list", url: "https://www.mca.gov.cn/a" }), "source:web-mca-news");
   // An explicit signal group still wins over both.

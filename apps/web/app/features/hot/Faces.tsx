@@ -5,20 +5,45 @@ import { shortSourceName } from "../../lib/format";
 import { SourceAvatar } from "../../components/ui/SourceAvatar";
 
 /**
+ * Outlets one search source surfaced are named after that source, so a story with two of them read
+ * as one source listed twice. Those are listed once, as the source with the sites it surfaced; a
+ * lone outlet keeps the plain name and the host only disambiguates it.
+ */
+function labelsOf(participants: HotParticipant[]): string[] {
+  const sites = new Map<string, string[]>();
+  for (const p of participants) if (p.site) sites.set(p.name, [...(sites.get(p.name) ?? []), p.site]);
+  const listed = new Set<string>();
+  return participants.map((p) => {
+    const name = shortSourceName(p.name);
+    if (!p.site) return name;
+    const found = sites.get(p.name) ?? [];
+    if (found.length < 2) return `${name}（${p.site}）`;
+    if (listed.has(p.name)) return "";
+    listed.add(p.name);
+    return `${name}（${found.join("、")}）`;
+  });
+}
+
+/** Faces keep their own identity: two outlets behind one source must not share a key or an initial. */
+const keyOf = (p: HotParticipant, i: number) => `${p.kind}:${p.site ?? p.name}:${i}`;
+
+/**
  * Who is talking about a hot story: overlapping faces of the 精选组 sources in the order the server
  * gives (T1, T1.5, T2), then a count for everyone else, 氛围组 included. Hover lists every name; where
  * the faces are their own control (not inside a link), a tap or Enter opens the list, as the legacy
  * list's <details> did, so phones and keyboards reach it too.
  */
 export function Faces({ participants, total, size = 24, max = 6, interactive = true }: { participants: HotParticipant[]; total: number; size?: number; max?: number; interactive?: boolean }) {
-  const shown = participants.filter((p) => p.kind === "editorial").slice(0, max);
+  const labels = labelsOf(participants);
+  const labelled = participants.map((p, i) => ({ p, label: labels[i]! }));
+  const shown = labelled.filter((x) => x.p.kind === "editorial").slice(0, max);
   const rest = total - shown.length;
-  const names = participants.map((p) => shortSourceName(p.name)).join("、");
+  const names = labelled.map((x) => x.label).filter(Boolean).join("、");
   const faces = (
     <>
-      {shown.map((p, i) => (
-        <span key={p.name} className={`rounded-full ring-2 ring-surface ${i ? "-ml-1.5" : ""}`}>
-          <SourceAvatar name={p.name} iconUrl={p.iconUrl} iconSrcSet={p.iconSrcSet} size={size} />
+      {shown.map(({ p }, i) => (
+        <span key={keyOf(p, i)} className={`rounded-full ring-2 ring-surface ${i ? "-ml-1.5" : ""}`}>
+          <SourceAvatar name={p.site ?? p.name} iconUrl={p.iconUrl} iconSrcSet={p.iconSrcSet} size={size} />
         </span>
       ))}
       {rest > 0 && (
@@ -35,10 +60,10 @@ export function Faces({ participants, total, size = 24, max = 6, interactive = t
       </span>
     );
   }
-  return <FacesButton participants={participants} total={total} names={names}>{faces}</FacesButton>;
+  return <FacesButton labelled={labelled} total={total} names={names}>{faces}</FacesButton>;
 }
 
-function FacesButton({ participants, total, names, children }: { participants: HotParticipant[]; total: number; names: string; children: React.ReactNode }) {
+function FacesButton({ labelled, total, names, children }: { labelled: Array<{ p: HotParticipant; label: string }>; total: number; names: string; children: React.ReactNode }) {
   // Where the list opens: under the faces, kept on screen; fixed, so a card's clipping never hides it.
   const [at, setAt] = useState<{ top: number; left: number } | null>(null);
   const open = at !== null;
@@ -63,9 +88,11 @@ function FacesButton({ participants, total, names, children }: { participants: H
       window.removeEventListener("resize", close);
     };
   }, [open]);
-  const editorial = participants.filter((p) => p.kind === "editorial");
-  const signal = participants.filter((p) => p.kind !== "editorial");
-  const more = total - participants.length;
+  const editorial = labelled.filter((x) => x.p.kind === "editorial");
+  const signal = labelled.filter((x) => x.p.kind !== "editorial");
+  // A source listed once under its first outlet leaves nothing to print at its later outlets.
+  const lines = (items: typeof labelled) => items.map((x) => x.label).filter(Boolean).join("、");
+  const more = total - labelled.length;
   return (
     <span ref={root} className="relative z-10 inline-flex shrink-0">
       <button
@@ -88,16 +115,16 @@ function FacesButton({ participants, total, names, children }: { participants: H
       </button>
       {open && createPortal(
         <span ref={popup} id={id} role="dialog" aria-label="参与讨论的来源" style={at} className="fixed z-50 max-h-[240px] w-[240px] overflow-y-auto rounded-control border border-line bg-raised p-3 text-[12.5px] leading-relaxed text-ink-2 shadow-[var(--shadow-pop)]">
-          {editorial.length > 0 && (
+          {lines(editorial) && (
             <>
               <span className="block text-[11.5px] font-semibold text-ink-4">精选组</span>
-              <span className="mt-0.5 block">{editorial.map((p) => shortSourceName(p.name)).join("、")}</span>
+              <span className="mt-0.5 block">{lines(editorial)}</span>
             </>
           )}
-          {signal.length > 0 && (
+          {lines(signal) && (
             <>
-              <span className={`block text-[11.5px] font-semibold text-ink-4 ${editorial.length ? "mt-2" : ""}`}>氛围组</span>
-              <span className="mt-0.5 block">{signal.map((p) => shortSourceName(p.name)).join("、")}</span>
+              <span className={`block text-[11.5px] font-semibold text-ink-4 ${lines(editorial) ? "mt-2" : ""}`}>氛围组</span>
+              <span className="mt-0.5 block">{lines(signal)}</span>
             </>
           )}
           {more > 0 && <span className="mt-2 block text-[11.5px] text-ink-4">另有 {more} 位未列出</span>}

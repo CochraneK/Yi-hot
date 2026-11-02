@@ -5,6 +5,7 @@ import { sql } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
 import { latestHotRanking, rankingExtras } from "../events/hot-read.ts";
 import { behindSources, sourceClocks } from "../events/hot.ts";
+import { participantIdentity } from "../events/participants.ts";
 import { storyStatusFor } from "../events/digest.ts";
 import { itemUrl, storyApiUrl, storyUrl } from "./links.ts";
 import { SITE } from "@aihot/industry/site";
@@ -122,9 +123,9 @@ export async function loadStoryDetail(storyId: number, now = new Date()): Promis
   if (!content) return null;
   const { s, reports, developments } = content;
   const [why] = await sql<{ p48: number; p6: number; r24: number }[]>`
-    SELECT count(DISTINCT participant_key) FILTER (WHERE observed_at > ${now}::timestamptz - interval '48 hours') AS p48,
-           count(DISTINCT participant_key) FILTER (WHERE observed_at > ${now}::timestamptz - interval '6 hours'
-             AND participant_key NOT IN (SELECT participant_key FROM story_signals x WHERE x.story_id = ${storyId} AND x.observed_at <= ${now}::timestamptz - interval '6 hours')) AS p6,
+    SELECT count(DISTINCT ${participantIdentity()}) FILTER (WHERE observed_at > ${now}::timestamptz - interval '48 hours') AS p48,
+           count(DISTINCT ${participantIdentity()}) FILTER (WHERE observed_at > ${now}::timestamptz - interval '6 hours'
+             AND ${participantIdentity()} NOT IN (SELECT ${participantIdentity()} FROM story_signals x WHERE x.story_id = ${storyId} AND x.observed_at <= ${now}::timestamptz - interval '6 hours')) AS p6,
            count(*) FILTER (WHERE kind = 'editorial' AND observed_at > ${now}::timestamptz - interval '24 hours') AS r24
     FROM story_signals WHERE story_id = ${storyId} AND observed_at <= ${now}`;
   const ranking = await latestHotRanking();
@@ -206,7 +207,7 @@ async function recomputedSparklines(storyIds: number[], start: number, end: numb
     WITH slot AS (
       SELECT generate_series(${new Date(start)}::timestamptz, ${new Date(end)}::timestamptz, interval '1 hour') AS hour
     ), obs AS (
-      SELECT slot.hour, ss.story_id, ss.participant_key, max(ss.observed_at) AS last_at
+      SELECT slot.hour, ss.story_id, ${participantIdentity()} AS participant_key, max(ss.observed_at) AS last_at
       FROM slot
       JOIN story_signals ss ON ss.observed_at > slot.hour - make_interval(hours => ${windowHours}) AND ss.observed_at <= slot.hour
       WHERE ss.story_id = ANY(${storyIds}::bigint[])

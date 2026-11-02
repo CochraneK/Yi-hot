@@ -88,7 +88,7 @@ export function monthDayTime(iso: string): string {
 export function shortSourceName(name: string): string {
   const m = /^X[:：]\s*(.+?)\s*\(@[^)]+\)\s*$/.exec(name);
   if (m) return m[1]!.replace(/（.*?）/g, "").trim();
-  return name.replace(/（RSS）|（网页）|（API）/g, "").trim();
+  return name.replace(/（RSS）|（网页）|（API）|（DeepSeek）/g, "").trim();
 }
 
 export function sourceInitial(name: string): string {

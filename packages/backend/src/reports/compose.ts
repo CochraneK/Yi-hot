@@ -273,16 +273,31 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
       return storyRefs.length ? [{ heading: t.heading, summary: t.summary, storyRefs }] : [];
     });
     // The model writes the synthesis, but completeness is deterministic: every candidate remains
-    // inspectable in the issue even when the editor does not cite it in a narrative theme.
+    // inspectable in the issue even when the editor does not cite it in a narrative theme. Leftover
+    // entries are grouped by the site's own section taxonomy (政策与监管 / 机构动态 / …) instead of
+    // being dumped under a single "更多动态" block, so the issue keeps a topic layout at any volume —
+    // a month with hundreds of entries would otherwise collapse into one undifferentiated pile.
     const cited = new Set(themes.flatMap((t) => t.storyRefs.map((e) => e.itemId)));
     const remaining = top.filter((e) => !cited.has(e.itemId));
-    for (let i = 0; i < remaining.length; i += 20) {
-      const chunk = remaining.slice(i, i + 20);
-      themes.push({
-        heading: remaining.length > 20 ? `更多动态 ${Math.floor(i / 20) + 1}` : "更多动态",
-        summary: "以下动态也属于本期合格信息，为保留完整覆盖一并列出，可继续查看摘要与原文。",
-        storyRefs: chunk.map(({ category: _c, factKey: _f, ...e }) => e),
-      });
+    if (remaining.length) {
+      const bySection = new Map<string, Candidate[]>();
+      for (const c of remaining) {
+        const label = SECTION_OF[c.category ?? ""] ?? DEFAULT_SECTION;
+        const list = bySection.get(label) ?? [];
+        list.push(c);
+        bySection.set(label, list);
+      }
+      for (const label of SECTION_ORDER.filter((l) => bySection.has(l))) {
+        const list = bySection.get(label)!;
+        for (let i = 0; i < list.length; i += 20) {
+          const chunk = list.slice(i, i + 20);
+          themes.push({
+            heading: list.length > 20 ? `${label}（${Math.floor(i / 20) + 1}）` : label,
+            summary: "以下动态也属于本期合格信息，按板块一并列出，可继续查看摘要与原文。",
+            storyRefs: chunk.map(({ category: _c, factKey: _f, ...e }) => e),
+          });
+        }
+      }
     }
   }
   const content = {

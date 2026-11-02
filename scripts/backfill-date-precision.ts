@@ -3,23 +3,40 @@
 // Collectors read the listing page, and some listings print only the day ("2026/10/21") while the
 // article page carries the time ("2026/10/21 17:45"). The detail pass in collect.ts only runs for
 // material it has not seen yet, so rows stored before that pass covered a source keep their midnight
-// date forever. This walks them and refines the ones whose page agrees.
+// date forever — and a run that met more day-only items than its clock budget could read left the
+// rest at midnight for good. This walks them and refines the ones whose page agrees.
+//
+// 2026-11-02 抽样 30 条：19 条页面确实印了钟点、7 条只有日、4 条取不到。也就是说这批"只到日"
+// 里约三分之二不是页面没写，而是我们没读。
 //
 // node --env-file-if-exists=/app/.env scripts/backfill-date-precision.ts <sourceId> [limit]
 // node --env-file-if-exists=/app/.env scripts/backfill-date-precision.ts --all [limit]
+//   --days=N        只看最近 N 天入库的
+//   --selected      只看已入选的（读者真正看得到的那批）
+//   --concurrency=N 并发抓取，默认 4
 import { closeDb, sql } from "@aihot/backend/db";
 import { dayInOffset, fetchDetail } from "@aihot/backend/sources/web-list";
 import { decideTimeline } from "@aihot/backend/content/materials";
 import { publishArticle } from "@aihot/backend/publication/publish";
 import type { SourceRow } from "@aihot/backend/sources/types";
 
-const sourceArg = process.argv[2];
+const argv = process.argv.slice(2);
+const flag = (name: string): string | null => {
+  const hit = argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : null;
+};
+const positional = argv.filter((a) => !a.startsWith("--"));
+const all = argv.includes("--all");
+// `<sourceId|--all> [limit]`: the id is the non-numeric positional, the limit the numeric one.
+const sourceArg = positional.find((a) => !/^\d+$/.test(a)) ?? (all ? "--all" : null);
 if (!sourceArg) {
-  console.error("usage: backfill-date-precision.ts <sourceId|--all> [limit]");
+  console.error("usage: backfill-date-precision.ts <sourceId|--all> [limit] [--days=N] [--selected] [--concurrency=N]");
   process.exit(1);
 }
-const all = sourceArg === "--all";
-const limit = Number(process.argv[3] ?? (all ? "400" : "40"));
+const limit = Number(positional.filter((a) => /^\d+$/.test(a)).at(-1) ?? (all ? "400" : "40"));
+const days = Number(flag("days") ?? 0);
+const onlySelected = argv.includes("--selected");
+const concurrency = Math.max(1, Number(flag("concurrency") ?? 4));
 
 const sources = all
   ? await sql<SourceRow[]>`
@@ -44,43 +61,47 @@ interface Row {
   discovered_at: Date;
   backfill_reason: string | null;
 }
-const rows = all
-  ? await sql<Row[]>`
-      SELECT id, source_id, url, published_at, discovered_at, backfill_reason
-      FROM articles
-      WHERE published_at_precision = 'date' AND published_at IS NOT NULL
-      ORDER BY discovered_at DESC
-      LIMIT ${limit}`
-  : await sql<Row[]>`
-      SELECT id, source_id, url, published_at, discovered_at, backfill_reason
-      FROM articles
-      WHERE published_at_precision = 'date' AND published_at IS NOT NULL AND source_id = ${sourceArg}
-      ORDER BY discovered_at DESC
-      LIMIT ${limit}`;
+const rows = await sql<Row[]>`
+  SELECT a.id, a.source_id, a.url, a.published_at, a.discovered_at, a.backfill_reason
+  FROM articles a
+  WHERE a.published_at_precision = 'date' AND a.published_at IS NOT NULL
+    ${all ? sql`` : sql`AND a.source_id = ${sourceArg}`}
+    ${days > 0 ? sql`AND a.discovered_at >= now() - ${`${days} days`}::interval` : sql``}
+    ${onlySelected ? sql`AND EXISTS (SELECT 1 FROM publications p WHERE p.article_id = a.id AND p.selected)` : sql``}
+  ORDER BY a.discovered_at DESC
+  LIMIT ${limit}`;
 
 let fixed = 0;
 let skipped = 0;
 let failed = 0;
 const touchedSources = new Set<string>();
-for (const a of rows) {
+let cursor = 0;
+
+async function one(a: Row): Promise<void> {
   const source = byId.get(a.source_id);
   if (!source) {
     skipped += 1;
-    continue;
+    return;
   }
   try {
-    // A search result's day comes from the retrieval index and is often a day off: the page decides.
+    // A search result's day comes from the retrieval index and is often a day off: the page decides,
+    // but only within a day or two. Without that leash one stale byline (a page still printing 2021
+    // under a 2026 listing) dragged the article back five years.
     const expectDay = source.kind === "search" ? null : dayInOffset(a.published_at);
     const got = await fetchDetail(a.url, source, { date: true, title: false, summary: false, expectDay });
     if (!got.publishedAt || got.publishedAtPrecision !== "datetime") {
       skipped += 1;
-      continue;
+      return;
     }
     // Only a time on the same day refines the listing's day; a different day is a different claim,
     // and overwriting it here would silently move the article.
     if (expectDay && dayInOffset(got.publishedAt) !== expectDay) {
       skipped += 1;
-      continue;
+      return;
+    }
+    if (source.kind === "search" && Math.abs(got.publishedAt.getTime() - a.published_at.getTime()) > 2 * 86_400_000) {
+      skipped += 1;
+      return;
     }
     const t = decideTimeline(got.publishedAt, a.discovered_at, a.backfill_reason);
     await sql`
@@ -96,5 +117,17 @@ for (const a of rows) {
     failed += 1;
   }
 }
-console.log(JSON.stringify({ scope: all ? "all" : sourceArg, scanned: rows.length, fixed, skipped, failed, sources: touchedSources.size }));
+
+async function worker(): Promise<void> {
+  while (cursor < rows.length) {
+    const a = rows[cursor++];
+    await one(a);
+    if ((fixed + skipped + failed) % 100 === 0) {
+      console.log(JSON.stringify({ done: fixed + skipped + failed, of: rows.length, fixed, skipped, failed }));
+    }
+  }
+}
+
+await Promise.all(Array.from({ length: concurrency }, worker));
+console.log(JSON.stringify({ scope: all ? "all" : sourceArg, days, onlySelected, scanned: rows.length, fixed, skipped, failed, sources: touchedSources.size }));
 await closeDb();

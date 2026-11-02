@@ -2337,8 +2337,18 @@ weibo-search-unattended-children → failed  Budget for everyinfra exhausted (st
    00:00Z 并标 `publishedAtPrecision='date'`。**按字符串前 10 位截会在整批上退一天**：2026-11-02
    修掉时回填了 12,228 篇（`_bak_pubdate_20261102` 是备份表）。正文抽取若拿到真实时间会升级精度
    （`upsertMaterial` 的精度不降级保护会保住它）；每源每轮只升级 `dateUpgradeMaxFetches` 条
-   （默认 6，搜索源已按 `config._aihot.dateUpgradeMaxFetches=16` 调高，只对新候选生效）。
+   （默认 6，搜索源已按 `config._aihot.dateUpgradeMaxFetches=16` 调高）。
    抓详情页是免费的，限的是对源站的请求节奏，不是钱。
+   **2026-11-02 补：这条「升级」原先是一次性的。** 详情页只在文章**第一次入库那一轮**读，
+   URL 一旦在库里，后续每轮都在 `stored !== undefined` 处 `continue`。于是首轮没排进额度的稿子
+   永远停在零点——实例：`hb.dzwww.com/p/pdNVK4jxdG2.html` 页内 JSON-LD 明写
+   `datePublished: 2026-11-01T11:21+08:00`，05:02 那轮 `dateOnlyFound=54`、`dateUpgrades=6`
+   （当时上限就是 6），它排在 7 名之外，此后每一轮都被跳过。
+   现在改为：库里仍是 `date`、且原文日在 `DATE_UPGRADE_RETRY_DAYS`（7 天）内的，**后续轮次继续
+   争取**，只花本轮剩下的额度（新条目永远先跑），只读钟点不重读正文；run 记录多一个 `dateRetried`。
+   存量用 `scripts/backfill-date-precision.ts --all <limit> --selected --days=8` 补。
+   抽样 30 条的结果：19 条页面确实印着钟点、7 条只有日、4 条取不到——**这批"只到日"里约三分之二
+   不是页面没写，而是我们没读**。
 
 ### 费用核算的三处修正（此前金额是错的）
 

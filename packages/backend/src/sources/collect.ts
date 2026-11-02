@@ -39,6 +39,15 @@ const SEARCH_INTERVAL_MINUTES = 360;
  */
 const DATE_UPGRADE_MAX_FETCHES = 6;
 /**
+ * 只到日的稿子补钟点的重试窗口（天）。
+ *
+ * 补钟点原先是「一次性」的：URL 一旦入库，后续每轮都在 `stored !== undefined` 处 continue，
+ * 于是首轮没排进额度的稿子永远停在零点。2026-11-02 的实例：一篇 11-01 11:21 的稿子首轮排在
+ * 第 7 位（当时额度 6），此后每轮都被跳过，页面上只能印「原文11.1」。这里让仍在窗口内、且库里
+ * 还只有日的稿子继续争取，只花本轮剩下的额度（新条目永远优先），且只读钟点不重读正文。
+ */
+const DATE_UPGRADE_RETRY_DAYS = 7;
+/**
  * 增量采集的年龄闸门（天）。首采有 initialBackfillMonths 那道窗，增量原先只卡条数——
  * 而 RSS 的 etag 会在配置变更时被丢掉（rss.ts），feed 于是整份重读，归档页上几年前的条目
  * 一次性灌进来：WHO 源一轮进了 73 条、最早 2020 年，每条都要过一遍模型，既稀释池子又烧钱。
@@ -92,11 +101,18 @@ async function loadSource(id: string): Promise<SourceRow | null> {
   return s ?? null;
 }
 
-/** Titles of the articles already stored under these URLs. */
-async function storedTitles(urls: string[]): Promise<Map<string, string>> {
+/**
+ * What we already hold for these URLs: the stored title, and whether the page was ever read for a
+ * clock. The precision is what tells a day-only article apart from one already known to the minute —
+ * without it every known URL looked alike, and a page that states a time stayed at midnight forever.
+ */
+type KnownArticle = { title: string; precision: "date" | "datetime"; publishedAt: Date | null };
+
+async function storedArticles(urls: string[]): Promise<Map<string, KnownArticle>> {
   if (urls.length === 0) return new Map();
-  const rows = await sql<{ url: string; title: string }[]>`SELECT url, title FROM articles WHERE url IN ${sql(urls)}`;
-  return new Map(rows.map((r) => [r.url, r.title]));
+  const rows = await sql<{ url: string; title: string; published_at_precision: "date" | "datetime"; published_at: Date | null }[]>`
+    SELECT url, title, published_at_precision, published_at FROM articles WHERE url IN ${sql(urls)}`;
+  return new Map(rows.map((r) => [r.url, { title: r.title, precision: r.published_at_precision, publishedAt: r.published_at }]));
 }
 
 const DAY_MS = 86_400_000;
@@ -205,7 +221,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     // EveryInfra 小红书：列表自带摘要（summaryIsBody 时即正文）。开启 everyinfraDetail 后，只对
     // 没见过的笔记升级详情；已入库的 URL 不再产生第二次详情费。预算耗尽时 break 而不是 throw：
     // 保住已经付费拿到的列表结果、用摘要入库，比整批回滚更划算。
-    const known = await storedTitles(candidates.map((c) => c.url));
+    const known = await storedArticles(candidates.map((c) => c.url));
     if (source.kind === "json_list" && source.config.adapter === "everyinfra_xhs" && source.config.everyinfraDetail === true) {
       for (const c of candidates) {
         if (known.has(c.url)) continue;
@@ -263,20 +279,37 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     // Its own counter: reading a clock off a page the listing dated only to the day is the one thing
     // every date-only source needs, and most of them carry no detail config to spend.
     let dateUsed = 0;
+    // Retries on articles we already hold, so a run record can show the clock pass working on them.
+    let dateRetried = 0;
     const jinaListing = String(source.config.url ?? "").startsWith("https://r.jina.ai/");
+    // New material first. A retry spends only the budget this run has left after every new item has
+    // had its chance, so a backlog of old day-only pages cannot starve today's arrivals.
+    if (known.size > 0) candidates = [...candidates.filter((c) => !known.has(c.url)), ...candidates.filter((c) => known.has(c.url))];
     for (const c of candidates) {
       // Listing dates the source marks unreliable are dropped; the detail page's rule decides.
       if (d?.publishedAtAuthoritative === true) c.publishedAt = null;
       const stored = known.get(c.url);
-      if (stored !== undefined) {
+      // Still only a day in the database, and recent enough for the clock to matter: the page gets
+      // another read. Without this the first run that met an article was its only chance — anything
+      // past that run's budget stayed at midnight for good, however plainly the page printed a time.
+      const retryDate = stored !== undefined && stored.precision === "date" && stored.publishedAt !== null
+        && Date.now() - stored.publishedAt.getTime() < DATE_UPGRADE_RETRY_DAYS * DAY_MS;
+      if (stored !== undefined && !retryDate) {
         // The title came from the detail page: the listing's own rendering must not revise it back.
-        if (d?.titleSelector || d?.titleRegex) c.title = stored;
+        if (d?.titleSelector || d?.titleRegex) c.title = stored.title;
         continue;
+      }
+      if (retryDate) {
+        // Judge the page against the day we stored, not the listing's: a search listing's day comes
+        // from the retrieval index and is often a day off, while the stored day was already accepted.
+        c.publishedAt = stored!.publishedAt!;
+        c.publishedAtPrecision = "date";
       }
       // Declared date-only, which is not the same as "no precision stated": a feed's own pubDate is
       // a clock already, and only the listing parsers (and search) say when they had a day alone.
       const dateOnly = !!c.publishedAt && c.publishedAtPrecision === "date";
-      const wantRules = !!d && detailUsed < detailBudget;
+      // Title, summary and body rules are for material we do not hold yet; a retry only reads a clock.
+      const wantRules = stored === undefined && !!d && detailUsed < detailBudget;
       // A listing read through Jina pays for every page it opens: its clock is only upgraded when the
       // source asked for it, never automatically.
       const wantDate = dateOnly && dateUsed < dateBudget && (!jinaListing || d?.upgradeDatePrecision === true);
@@ -286,14 +319,15 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       const reposted = d?.publishedAtForExternal === true && externalLink(c.url, String(source.config.url ?? ""));
       const need: DetailNeed = {
         date: wantDate || (wantRules && (!c.publishedAt || d!.upgradeDatePrecision === true || reposted)),
-        title: !!d && !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
-        summary: !!d && !!d.summarySelector && !c.excerpt,
-        body: source.participation_mode === "editorial" && !c.bodyText && (!c.bodyStatus || c.bodyStatus === "pending"),
+        title: stored === undefined && !!d && !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
+        summary: stored === undefined && !!d && !!d.summarySelector && !c.excerpt,
+        body: stored === undefined && source.participation_mode === "editorial" && !c.bodyText && (!c.bodyStatus || c.bodyStatus === "pending"),
         // A page read only for its clock must agree with the day the listing named. Search results
         // name no day of their own (the retrieval index's date is often a day off), so theirs is open.
         expectDay: dateOnly && source.kind !== "search" ? dayInOffset(c.publishedAt!, d?.publishedAtUtcOffset ?? "+08:00") : null,
       };
       if (!need.date && !need.title && !need.summary) continue;
+      if (retryDate) dateRetried += 1;
       // The rules have their own budget; a page read only for its clock spends the date one.
       if (need.title || need.summary || !wantDate) detailUsed += 1;
       else dateUsed += 1;
@@ -342,6 +376,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         ...(detail ?? {}),
         dateOnlyFound: candidates.filter((c) => c.publishedAtPrecision === "date").length,
         dateUpgrades: dateUsed,
+        ...(dateRetried > 0 ? { dateRetried } : {}),
         detailPages: detailUsed,
       };
     }

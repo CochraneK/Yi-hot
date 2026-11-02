@@ -28,6 +28,21 @@ export const SPECIFIC_MISSION_TOPIC_NAMES = SAVE_THE_CHILDREN_TOPICS
   .map((topic) => topic.name)
   .filter((name) => name !== OTHER_MISSION_TOPIC);
 
+/**
+ * 动态页（首页与 /all）额外展示的高产公益领域。它们不属于 12 个使命领域，
+ * 只增加筛选入口，不参与 normalizeTags 的「其他领域」兜底判定。
+ */
+export const EXTRA_FEED_TOPICS: readonly MissionTopic[] = [
+  { slug: "elderly-care", name: "养老服务", color: "#B5838D" },
+];
+
+/** 动态页与首页的筛选轴：使命主题 + 额外领域，「其他领域」始终排在最后。 */
+export const FEED_TOPIC_PILLS: readonly MissionTopic[] = [
+  ...SAVE_THE_CHILDREN_TOPICS.filter((topic) => topic.slug !== "other-fields"),
+  ...EXTRA_FEED_TOPICS,
+  ...SAVE_THE_CHILDREN_TOPICS.filter((topic) => topic.slug === "other-fields"),
+];
+
 /** slug → 颜色，供筛选 pill 与主题卡片共用。 */
 export const MISSION_TOPIC_COLORS: Record<string, string> = Object.fromEntries(
   SAVE_THE_CHILDREN_TOPICS.map((t) => [t.slug, t.color]),

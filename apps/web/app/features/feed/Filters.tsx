@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import { CATEGORY_KEYS, CATEGORY_LABELS, CHANNEL_LABELS, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
-import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
+import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
 import { IconClose, IconSearch } from "../../components/icons";
 import { PillTabs } from "../../components/ui/Tabs";
 
@@ -36,16 +36,17 @@ export function CategoryTabs({ base, category, channel = "all", layoutId, size =
 }
 
 /**
- * The feed's topic row (精选 and 动态 alike): 全部, 一手, then Save the Children's mission topics,
- * each with a dot in its dashboard color. One choice at a time: picking a topic clears the category
- * and the channel, and 一手 clears the topic — the same mutual exclusion the category row had.
+ * The feed's topic row (精选 and 动态 alike): 全部, 一手, then the mission topics plus the extra
+ * high-volume fields (e.g. 养老服务), each with a dot in its dashboard color. One choice at a time:
+ * picking a topic clears the category and the channel, and 一手 clears the topic — the same mutual
+ * exclusion the category row had.
  */
 export function TopicTabs({ base, topic, layoutId, className = "" }: { base: string; topic: string | null; channel?: ChannelKey; layoutId: string; size?: "md" | "sm"; className?: string }) {
   const [params] = useSearchParams();
-  const current = SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === topic);
+  const current = FEED_TOPIC_PILLS.find((t) => t.slug === topic);
   const links = [
     { slug: null, name: "全部", color: null },
-    ...SAVE_THE_CHILDREN_TOPICS.map((t) => ({ slug: t.slug, name: t.name, color: t.color })),
+    ...FEED_TOPIC_PILLS.map((t) => ({ slug: t.slug, name: t.name, color: t.color })),
   ];
   const href = (slug: string | null) => hrefWith(base, params, { topic: slug, category: null, channel: null });
   const chip = (entry: (typeof links)[number], mobile = false) => {

@@ -10,9 +10,9 @@ import { FeedItem } from "./FeedItem";
 import { IconChevronDown } from "../../components/icons";
 import { RingMark } from "../../components/Logo";
 import { EmptyState } from "../../components/ui/Page";
-import { beijingDate, beijingTime, beijingWeekday, feedDisplayAt, fullDateTime } from "../../lib/format";
+import { beijingDate, beijingTime, beijingWeekday, feedDisplayAt, fullDateTime, monthDotDay } from "../../lib/format";
 import { markRead, useReadSet } from "../../lib/local-state";
-import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
+import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
 import { isHydrated, isReload, markHydrated, readSnapshot, restoreAnchor, saveSnapshot } from "./restore";
 
 const AUTO_BATCHES = 3;
@@ -103,6 +103,10 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, 
   // The card sits where we collected it; a date-only source still knows its own day, so the tooltip
   // says both rather than letting the collection clock pass as the publication time.
   const sourceDay = sourceAt ? beijingDate(sourceAt) : null;
+  // A day-only source still knows its own day: print it in the rail, not only in the tooltip. The
+  // clock above is our collection time, so the card keeps its place in today's list while the reader
+  // still sees the article came out yesterday. Same-day publications need no second line.
+  const otherDay = dateOnly && sourceAt != null && sourceDay !== beijingDate(clockSource) ? monthDotDay(sourceAt) : null;
   const title = dateOnly
     ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
     : timeLabel ? `${timeLabel}：${at}` : undefined;
@@ -115,6 +119,7 @@ export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, 
       <time dateTime={at} title={title} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
         {clock}
         {(clockLabel ?? timeLabel) === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
+        {otherDay && <span className="mt-0.5 block text-[10px] font-normal opacity-80">原文{otherDay}</span>}
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />
@@ -361,7 +366,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
 }
 
 function topicColor(tags: string[]) {
-  return SAVE_THE_CHILDREN_TOPICS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
+  return FEED_TOPIC_PILLS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
 }
 
 /** The foot of a paged list: loading, retry, "加载更多" after a few automatic pages, or the end. */

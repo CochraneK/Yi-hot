@@ -9,7 +9,7 @@ import { Wordmark } from "../components/Logo";
 import { Timeline } from "../features/feed/Timeline";
 import { HotTopics } from "../features/feed/HotTopics";
 import { TopicTabs, SearchField, SearchIconLink } from "../features/feed/Filters";
-import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
+import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
 import { beijingDate, beijingWeekday } from "../lib/format";
 import { FEATURES } from "@aihot/industry/features";
 
@@ -52,7 +52,7 @@ function TodayLabel() {
 
 export default function Home() {
   const { data, filters } = useLoaderData<typeof loader>();
-  const topicName = filters.topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === filters.topic)?.name ?? null : null;
+  const topicName = filters.topic ? FEED_TOPIC_PILLS.find((t) => t.slug === filters.topic)?.name ?? null : null;
   const title = filters.tag ? `#${filters.tag}` : topicName ?? "精选";
   return (
     <div className="pb-6">

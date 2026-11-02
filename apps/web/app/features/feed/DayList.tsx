@@ -8,7 +8,7 @@ import { beijingDate, feedDisplayAt, type FeedTimeDisplay } from "../../lib/form
 import { markRead, useReadSet } from "../../lib/local-state";
 import { DayHeader, TimelineSlot } from "./Timeline";
 import { FeedItem } from "./FeedItem";
-import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
+import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
 
 export function DayList({ items, todayCount = null, showTags = true, animate = false }: { items: FeedItemSummary[]; todayCount?: number | null; showTags?: boolean; animate?: boolean }) {
   const readSet = useReadSet();
@@ -53,7 +53,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
 }
 
 function topicColor(tags: string[]) {
-  return SAVE_THE_CHILDREN_TOPICS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
+  return FEED_TOPIC_PILLS.find((t) => tags.includes(t.name))?.color ?? "#94A3B8";
 }
 
 /** Numbered pages (the list stays crawlable), with previous / next at the ends. */

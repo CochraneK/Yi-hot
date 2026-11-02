@@ -7,7 +7,7 @@ import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
 import { loadOr404, queryString } from "../lib/api.server";
 import { listPath, pageMeta } from "../lib/seo";
 import { TopicTabs, SearchField } from "../features/feed/Filters";
-import { SAVE_THE_CHILDREN_TOPICS } from "@aihot/industry/save-the-children";
+import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
 import { PillTabs } from "../components/ui/Tabs";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { ToggleChip } from "../components/ui/Controls";
@@ -39,7 +39,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
   const f = loaderData?.data.filters;
   const q = f?.q;
   const page = loaderData?.data.page ?? 1;
-  const topicName = f?.topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === f.topic)?.name ?? null : null;
+  const topicName = f?.topic ? FEED_TOPIC_PILLS.find((t) => t.slug === f.topic)?.name ?? null : null;
   return pageMeta({
     title: q ? `搜索：${q}` : topicName ?? "动态",
     description: `${SITE.name} 收录的动态，按原文发布时间排列；原文只标注日期的，按本站收录时间落位。可按主题与标签筛选，支持中英文搜索。`,
@@ -78,7 +78,7 @@ export default function AllPage() {
     else sp.delete("tab");
     return `/all?${sp}`;
   };
-  const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : topic ? SAVE_THE_CHILDREN_TOPICS.find((t) => t.slug === topic)?.name ?? null : null;
+  const title = f.q ? `搜索“${f.q}”` : f.tag ? `#${f.tag}` : topic ? FEED_TOPIC_PILLS.find((t) => t.slug === topic)?.name ?? null : null;
   const updated = new Date(data.freshness).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Shanghai" });
   // 只看未读 is a reader-side filter over this page: the read record lives in this browser only, so
   // the server never has to know who read what. Turning it on can empty a page, and the note below

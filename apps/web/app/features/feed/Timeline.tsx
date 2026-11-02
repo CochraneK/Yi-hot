@@ -93,20 +93,21 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
  * One dated slot: the time, the rail (desktop) and the item. As on the original timeline, the rail is a
  * 1px line from this node's centre to the next one's, so the day reads as one continuous thread.
  * A day-precision article has no clock time of its own, so the slot prints when we collected it and says
- * so under the clock. When that was a different day it prints the date instead, since an hour alone
- * would read as belonging to the day above it.
+ * so underneath. When that collection moment falls on another day than the one the card is filed under,
+ * it prints that date instead, since an hour alone would read as belonging to the day header above it.
  */
-export function TimelineSlot({ at, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, dotColor }: { at: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; dotColor?: string }) {
+export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, dotColor }: { at: string; filedDay?: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; dotColor?: string }) {
   const clockSource = clockAt ?? at;
-  const collectedAnotherDay = beijingDate(clockSource) !== beijingDate(at);
+  // The day this card sits under — the header above it, which is the publication day, not the clock.
+  const filed = filedDay ?? beijingDate(at);
+  const collectedAnotherDay = beijingDate(clockSource) !== filed;
   const clock = collectedAnotherDay ? beijingDate(clockSource).slice(5) : beijingTime(clockSource);
-  // The card sits where we collected it; a date-only source still knows its own day, so the tooltip
+  // The card is filed by publication day; a date-only source still knows its own day, so the tooltip
   // says both rather than letting the collection clock pass as the publication time.
   const sourceDay = sourceAt ? beijingDate(sourceAt) : null;
-  // A day-only source still knows its own day: print it in the rail, not only in the tooltip. The
-  // clock above is our collection time, so the card keeps its place in today's list while the reader
-  // still sees the article came out yesterday. Same-day publications need no second line.
-  const otherDay = dateOnly && sourceAt != null && sourceDay !== beijingDate(clockSource) ? monthDotDay(sourceAt) : null;
+  // A second line only when the filing day and the publication day differ. Under its own day the
+  // header already says it, and repeating "原文11.1" inside a "11月1日" group reads as a mistake.
+  const otherDay = dateOnly && sourceAt != null && sourceDay !== filed ? monthDotDay(sourceAt) : null;
   const title = dateOnly
     ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
     : timeLabel ? `${timeLabel}：${at}` : undefined;
@@ -348,7 +349,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                     // so the slot prints the collection clock and says so under it.
                     const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision);
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} filedDay={c.dayAt} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );

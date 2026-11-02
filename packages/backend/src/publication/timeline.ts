@@ -67,13 +67,20 @@ async function groupPool(q: TimelineQuery, now: Date, storyIds: number[], factId
  *
  * Two keys per card: the day it is filed under and the position inside that day.
  *
- * A source that states only a day has no clock, so the card is filed where we collected it: both keys
- * are then the collection moment, which is exactly what the slot prints under the label "收录". Filing
- * it under its own publication day instead put a 7-day lookback batch on seven different days in the
- * middle of the list — collected today, shown four screens down, and invisible to anyone reading the
- * top of the feed. The publication day is still stated (the item page prints it, the slot title says
- * it), it just no longer decides where the card sits.
+ * A card is filed under the day its article was **published**, not the day we found it. Filing by
+ * collection instead made every backfill batch read as today's news: on 2026-11-02, 62 of the 92
+ * items collected that day had been published two or more days earlier (average lag 2.7 days, 90 of
+ * 92 from search sources running on a 3-day rotation), so a card filed under "今天" printed "原文
+ * 10.30" underneath. The cost of the publication-day rule is that the current day only holds what
+ * was actually published today — it fills in over the following days as sources are crawled again,
+ * which is the truth about our coverage, not a gap to paper over.
+ *
+ * `FEED_DAY_GRACE_DAYS` (default 0) is the escape hatch: N means "a card collected within N days of
+ * its publication day still files under the collection day", i.e. 1 restores the old overnight rule
+ * without a rebuild. Inside a day a date-only card is positioned by the moment we collected it —
+ * the only clock it has, and the one the slot prints.
  */
+const DAY_GRACE_DAYS = Math.max(0, Math.floor(Number(process.env.FEED_DAY_GRACE_DAYS ?? 0)) || 0);
 const groupedCache = new Map<string, { at: number; rows: Array<{ gk: string; anchor: number; day: number }> }>();
 const groupedPending = new Map<string, Promise<Array<{ gk: string; anchor: number; day: number }>>>();
 async function groupedAnchors(q: TimelineQuery, now: Date): Promise<Array<{ gk: string; anchor: number; day: number }>> {
@@ -100,7 +107,12 @@ async function queryGroupedAnchors(q: TimelineQuery, now: Date) {
     await sql<{ gk: string; anchor_at: Date; day: string }[]>`
       WITH base AS (
         SELECT coalesce('s' || p.story_id::text, 'f' || p.fact_id::text, 'a' || p.article_id) AS gk,
-          to_char((CASE WHEN a.published_at_precision = 'date' THEN coalesce(p.discovered_at, p.sort_at) ELSE p.sort_at END) + interval '8 hours', 'YYYY-MM-DD') AS day,
+          to_char((CASE
+            WHEN a.published_at IS NULL THEN coalesce(p.discovered_at, p.sort_at)
+            WHEN (p.discovered_at + interval '8 hours')::date - (a.published_at + interval '8 hours')::date > ${DAY_GRACE_DAYS}::int
+              THEN a.published_at
+            ELSE coalesce(p.discovered_at, p.sort_at)
+          END) + interval '8 hours', 'YYYY-MM-DD') AS day,
           CASE WHEN a.published_at_precision = 'date' THEN coalesce(p.discovered_at, p.sort_at) ELSE p.sort_at END AS pos_at
         FROM publications p JOIN articles a ON a.id = p.article_id
         WHERE ${selectedCondition(now)} ${filterSql(q)}

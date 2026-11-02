@@ -46,8 +46,8 @@ export interface FeedTimeDisplay {
   clockLabel: "收录" | null;
   /**
    * The article's own moment, as the page may state it: Beijing midnight of its day when the source
-   * states only a day, the exact instant otherwise, null when we do not know it at all. Never used
-   * for placement — a date-only article collected today is filed under today.
+   * states only a day, the exact instant otherwise, null when we do not know it at all. The backend
+   * files the card under this day; the slot still prints the collection clock.
    */
   sourceAt: string | null;
 }
@@ -55,12 +55,11 @@ export interface FeedTimeDisplay {
 /**
  * What the feed shows for an article's time.
  *
- * A date-only article is placed by its collection moment, not by the day it was published. A source
- * that states only a day gives no clock to sort by, so filing the card under its own day pushed a
- * batch collected today onto seven different days in the middle of the list; the card now sits where
- * we collected it, the slot says "收录" under that clock, and `sourceAt` still carries the
- * publication day for the item page and the slot's tooltip. "收录" is also what an article with no
- * date at all gets.
+ * A date-only article has no clock, so the slot prints the moment we collected it under the label
+ * "收录", while `sourceAt` carries the day it was published. Placement is the backend's call: the
+ * card is filed under its publication day (see queryGroupedAnchors), so the rail and the day header
+ * above it agree even when the collection clock falls on another day. "收录" is also what an article
+ * with no date at all gets.
  */
 export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): FeedTimeDisplay {
   const collected = timelineAt || discoveredAt;

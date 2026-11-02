@@ -874,9 +874,9 @@ journalctl -u yihot-email-delivery.service -n 50 --no-pager
 - **窗口 48 小时，可回退到 72 小时**：只看窗口内的 `story_signals`。48 小时窗口里合格事件 `< 6` 条时再按 72 小时算一遍，只有确实更多才采用，并把实际窗口写进 `evidence.windowHours`（读取端据此标注页头、并按同一窗口重画走势线）。
 - **24 小时半衰**：每条信号权重 `0.5^(距现在小时数 / 24)`，越近越重。
 - **按参与者计数，不按文章数**：`story_signals` 按 `participant_key` 去重，同一家媒体连发多篇只算 1 个参与者。
-- **搜索源按站点域名去重**：`participantKey()` 对 `kind='search'` 返回 `site:<host>`（如 `mzt.hunan.gov.cn → hunan.gov.cn`），同一网站多条搜索结果算 1 个参与者。
+- **搜索源按站点域名计数，一个域名一票**：`participantKey()` 对 `kind='search'` 返回 `site:<host>`（如 `mzt.hunan.gov.cn → hunan.gov.cn`）。**不同域名分开算**——同一篇稿子被两家媒体转载/摘编，说明传播范围更广，就该是两个参与者；只有同一网站的多条搜索结果、同一域名的多个栏目合并成 1 个。
 - **阅读入口前缀不算另一个站点**：`siteHost()` 先剥掉 `www / m / wap / 3g / h5 / mobile / big5` 等前缀再取可注册域名，所以 `big5.www.gov.cn` 与 `www.gov.cn` 都是 `gov.cn`。历史上按旧规则写进 `story_signals` 的键由 `events/participants.ts` 的 `participantIdentity()` 在读取时归一（热榜、事件页计数、走势线共用一个口径），不改写原表——同一故事同一来源下两行会撞唯一约束。
-- **参与者保留站点身份**：搜索源检索到的站点参与者带 `site` 字段，热榜名单按「渠道（站点，站点…）」只列一次；同一源下的两家媒体不再显示成两行同名（页面上的「两个重名来源」就是这两件事）。
+- **站点参与者用自己的名字，不拼渠道名**：站点参与者带 `site`（域名）和 `outlet`（站点自称，取自 `articles.author`，如「光明网」；只重复域名的回落到域名）。热榜名单每个域名各列一行、用自己的名字，所以四个域名读起来是「光明网、中工网、手机新浪网、人民政协网」，而不是「网页搜索·老年人权益（gmw.cn、workercn.cn、…）」这种越标越长的括注。事件页的报道列表也按同一口径署名。
 - **上榜门槛**：`participants >= 2` **且** `editorial_participants >= 1`。搜索源当前的 `participation_mode` 是 `editorial`（它检索到的是各站已发布的报道），写入的 `story_signals.kind` 也是 `editorial`，所以**两家以上站点被同一搜索源检索到，事件就能上榜**——2026-11 的近 72 小时里就有 2 个只由搜索源覆盖的事件达标。若要让搜索源只做加权、不单独决定上榜，需要把搜索源的 `participation_mode` 改成非 editorial，而不是改门槛。
 - `sourceClocks()` 已把 `'search'` 列入观察来源，所以搜索源采集滞后时会被标 `behind`，对应时段的参与者不计入可比热度（`heat_obs`）。
 - 状态标 `new`（首报 <6h）、`surge`（6h 内新增参与者 ≥3 且占比 ≥0.5）、`rising`（相对 6h 前涨幅 >15%）。

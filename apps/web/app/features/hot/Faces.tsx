@@ -5,23 +5,16 @@ import { shortSourceName } from "../../lib/format";
 import { SourceAvatar } from "../../components/ui/SourceAvatar";
 
 /**
- * Outlets one search source surfaced are named after that source, so a story with two of them read
- * as one source listed twice. Those are listed once, as the source with the sites it surfaced; a
- * lone outlet keeps the plain name and the host only disambiguates it.
+ * One name per participant. A search source surfaces outlets by domain and each domain keeps its own
+ * vote, so a sentence listing four of them as "渠道（a.cn、b.cn…）" grew longer than the list it
+ * labelled; the outlet's own name says the same in four short names. Where two outlets share a name,
+ * the host is what tells them apart.
  */
 function labelsOf(participants: HotParticipant[]): string[] {
-  const sites = new Map<string, string[]>();
-  for (const p of participants) if (p.site) sites.set(p.name, [...(sites.get(p.name) ?? []), p.site]);
-  const listed = new Set<string>();
-  return participants.map((p) => {
-    const name = shortSourceName(p.name);
-    if (!p.site) return name;
-    const found = sites.get(p.name) ?? [];
-    if (found.length < 2) return `${name}（${p.site}）`;
-    if (listed.has(p.name)) return "";
-    listed.add(p.name);
-    return `${name}（${found.join("、")}）`;
-  });
+  const plain = participants.map((p) => shortSourceName(p.name));
+  const seen = new Map<string, number>();
+  for (const name of plain) seen.set(name, (seen.get(name) ?? 0) + 1);
+  return plain.map((name, i) => ((seen.get(name) ?? 0) > 1 && participants[i]!.site ? `${name}（${participants[i]!.site}）` : name));
 }
 
 /** Faces keep their own identity: two outlets behind one source must not share a key or an initial. */
@@ -43,7 +36,7 @@ export function Faces({ participants, total, size = 24, max = 6, interactive = t
     <>
       {shown.map(({ p }, i) => (
         <span key={keyOf(p, i)} className={`rounded-full ring-2 ring-surface ${i ? "-ml-1.5" : ""}`}>
-          <SourceAvatar name={p.site ?? p.name} iconUrl={p.iconUrl} iconSrcSet={p.iconSrcSet} size={size} />
+          <SourceAvatar name={p.name} iconUrl={p.iconUrl} iconSrcSet={p.iconSrcSet} size={size} />
         </span>
       ))}
       {rest > 0 && (

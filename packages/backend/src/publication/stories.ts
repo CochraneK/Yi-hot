@@ -5,7 +5,8 @@ import { sql } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
 import { latestHotRanking, rankingExtras } from "../events/hot-read.ts";
 import { behindSources, sourceClocks } from "../events/hot.ts";
-import { participantIdentity } from "../events/participants.ts";
+import { outletName, participantIdentity } from "../events/participants.ts";
+import { siteHost } from "../sources/web-list.ts";
 import { storyStatusFor } from "../events/digest.ts";
 import { itemUrl, storyApiUrl, storyUrl } from "./links.ts";
 import { SITE } from "@aihot/industry/site";
@@ -48,6 +49,8 @@ interface ReportRow {
   source_kind: string;
   first_party: boolean;
   icon_url: string | null;
+  /** The outlet's own name, which search results carry (the source's name is our search channel). */
+  author: string | null;
   fact_public_id: string;
   fact_id: number;
 }
@@ -62,20 +65,23 @@ async function storyReports(storyId: number, now: Date): Promise<ReportRow[]> {
   return sql<ReportRow[]>`
     SELECT DISTINCT ON (p.article_id) p.article_id AS id, p.title, p.summary, p.url, p.selected,
       coalesce(p.published_at, p.discovered_at) AS at, s.id AS source_id, s.name AS source_name, s.kind AS source_kind,
-      p.first_party, s.icon_url, f.public_id AS fact_public_id, f.id AS fact_id
+      p.first_party, s.icon_url, a.author, f.public_id AS fact_public_id, f.id AS fact_id
     FROM facts f JOIN fact_articles fa ON fa.fact_id = f.id JOIN publications p ON p.article_id = fa.article_id
-    JOIN sources s ON s.id = p.source_id
+    JOIN sources s ON s.id = p.source_id JOIN articles a ON a.id = p.article_id
     WHERE f.story_id = ${storyId} AND p.visibility = 'public' AND s.participation_mode = 'editorial'
       AND (NOT p.selected OR p.visible_after <= ${now})
     ORDER BY p.article_id, (fa.role = 'primary') DESC`;
 }
 
 function reportView(r: ReportRow): StoryReportView {
+  // A searched-out report is attributed to the outlet that published it, not to the search channel
+  // that found it — the same name the hot board puts on its faces.
+  const name = r.source_kind === "search" ? outletName(r.author, siteHost(r.url)) : r.source_name;
   return {
     id: r.id,
     title: r.title,
     summary: r.summary,
-    source: { id: r.source_id, name: r.source_name, kind: r.source_kind as never, firstParty: r.first_party, iconUrl: proxiedImage(r.icon_url, "avatar") },
+    source: { id: r.source_id, name, kind: r.source_kind as never, firstParty: r.first_party, iconUrl: proxiedImage(r.icon_url, "avatar") },
     publishedAt: r.at.toISOString(),
     originalUrl: r.url,
     selected: r.selected,

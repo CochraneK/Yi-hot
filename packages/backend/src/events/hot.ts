@@ -3,7 +3,7 @@
 // 24-hour half-life, and the source time (not collection time) places evidence in the window.
 import { sql } from "../db.ts";
 import { siteName } from "../sources/web-list.ts";
-import { participantIdentity } from "./participants.ts";
+import { outletName, participantIdentity } from "./participants.ts";
 import { tierRank, type HotEntry } from "./hot-read.ts";
 
 export const HOT_RULE_VERSION = "heat-v1-48h72h-halflife24h";
@@ -129,19 +129,20 @@ export async function computeHotRanking(at = new Date()): Promise<{ id: number; 
     const rep = [...reports].sort((x, y) => Number(y.first_party) - Number(x.first_party) || Number(y.selected) - Number(x.selected) || (Number(y.score ?? 0) - Number(x.score ?? 0)))[0]!;
     // The identity is computed once in a subquery: repeated in DISTINCT ON and ORDER BY it interpolates
     // as separate bind parameters, and PostgreSQL then refuses to see the two as the same expression.
-    const participants = await sql<{ pkey: string; name: string; kind: "editorial" | "signal"; tier: string; at: Date }[]>`
-      SELECT DISTINCT ON (pkey) pkey, name, kind, tier, at FROM (
-        SELECT ${participantIdentity()} AS pkey, s.name, ss.kind, s.tier, ss.observed_at AS at
-        FROM story_signals ss JOIN sources s ON s.id = ss.source_id
+    const participants = await sql<{ pkey: string; name: string; kind: "editorial" | "signal"; tier: string; at: Date; outlet: string | null }[]>`
+      SELECT DISTINCT ON (pkey) pkey, name, kind, tier, at, outlet FROM (
+        SELECT ${participantIdentity()} AS pkey, s.name, ss.kind, s.tier, ss.observed_at AS at, a.author AS outlet
+        FROM story_signals ss JOIN sources s ON s.id = ss.source_id JOIN articles a ON a.id = ss.article_id
         WHERE ss.story_id = ${r.story_id} AND ss.observed_at > ${at}::timestamptz - make_interval(hours => ${windowHours}) AND ss.observed_at <= ${at}
       ) p
       ORDER BY pkey, (kind = 'editorial') DESC, at DESC`;
-    // A site participant is the outlet a search source surfaced, not the search source: it carries
-    // its own name so two outlets read as two lines instead of one repeated name.
-    const named = participants.map((p) => ({
-      name: p.name, kind: p.kind, tier: p.tier, at: p.at,
-      ...(p.pkey.startsWith("site:") ? { site: siteName(p.pkey.slice(5)) } : {}),
-    }));
+    // A site participant is the outlet a search source surfaced, not the search source itself: each
+    // domain keeps its own vote, and carries the name its own site uses ("光明网"), so the board reads
+    // as four outlets instead of the same channel four times.
+    const named = participants.map((p) => {
+      const site = p.pkey.startsWith("site:") ? siteName(p.pkey.slice(5)) : undefined;
+      return { name: p.name, kind: p.kind, tier: p.tier, at: p.at, site, outlet: site ? outletName(p.outlet, site) : undefined };
+    });
     // The reporting sources of the window, latest first (signal participants are counted separately).
     const reporting = named.filter((p) => p.kind === "editorial").sort((x, y) => y.at.getTime() - x.at.getTime());
     const heat = heatIndex(Number(r.heat));
@@ -157,7 +158,7 @@ export async function computeHotRanking(at = new Date()): Promise<{ id: number; 
     if (surge) badges.push("surge");
     if (isNew) badges.push("new");
     if (!surge && pct !== null && pct > 0.15) badges.push("rising");
-    const sourceNames = [...new Set(reporting.map((x) => x.name))].slice(0, 8);
+    const sourceNames = [...new Set(reporting.map((x) => x.outlet ?? x.name))].slice(0, 8);
     entries.push({
       rank: entries.length + 1,
       storyId: r.story_id,
@@ -180,7 +181,7 @@ export async function computeHotRanking(at = new Date()): Promise<{ id: number; 
       // Faces go to the 精选组 by tier, the most recently active first within a tier (ordered before the cap).
       participants: named
         .sort((x, y) => Number(y.kind === "editorial") - Number(x.kind === "editorial") || tierRank(x.tier) - tierRank(y.tier) || y.at.getTime() - x.at.getTime())
-        .slice(0, 40).map(({ name, kind, tier, site }) => (site ? { name, kind, tier, site } : { name, kind, tier })),
+        .slice(0, 40).map(({ name, kind, tier, site, outlet }) => (site ? { name, kind, tier, site, outlet } : { name, kind, tier })),
     });
   }
   const [row] = await sql<{ id: number }[]>`

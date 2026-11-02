@@ -11,3 +11,14 @@ const SITE_PREFIX = "^site:((www|m|m2|wap|3g|4g|h5|mobile|big5)[.])+";
 
 /** The participant key with reading-surface prefixes removed; `participant_key` must be in scope. */
 export const participantIdentity = () => sql`regexp_replace(participant_key, ${SITE_PREFIX}, 'site:')`;
+
+/**
+ * What to call a site participant. A search result carries the outlet's own name ("光明网") in the
+ * article's author; some only repeat the domain back ("qq.com"), and a stray sentence or a long
+ * byline is not a site name either — those fall back to the host.
+ */
+const HOSTLIKE = /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i;
+export function outletName(author: string | null | undefined, host: string): string {
+  const name = author?.trim().replace(/\s+/g, " ") ?? "";
+  return name && name.length <= 24 && !HOSTLIKE.test(name) ? name : host;
+}

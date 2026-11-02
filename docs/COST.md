@@ -271,3 +271,52 @@ sudo docker exec aihot-worker-1 node scripts/cost-report.ts 7
 第八节的两条，以及**高峰避让**（`ANALYZE_OFFPEAK_ONLY` + 高峰每小时放 8 篇的涓流，
 worker 容器里早就开着，要调是改那两个 env，不是写代码）。
 把 8 篇继续降到 4 篇没有必要：加 20 个源首采 160 篇 ≈ ¥0.64，砍一半只省三毛。
+
+## 九、2026-11-02：prefilter + summarize 改走 AnyDoor 免费池（已上线）
+
+线上把两步换成本机 AnyDoor 网关（`https://<host>/anydoor/v1`，93 家上游免费 provider）：
+`PREFILTER_MODEL=anydoor-auto`、`SUMMARIZE_MODEL=anydoor-auto`，其余三步仍是 `deepseek-flash`。
+`anydoor-auto` 由网关在免费池里挑一家（实测多为 qwen-plus），不进 DeepSeek 计费。
+这是第八节末尾"换免费网关能省 ¥80–100/月"的第一步，只改了**输入侧最重、且不需要读者可见文案**的两步。
+
+### 当天踩到的两个坑（表现都是「内容不更新」）
+
+1. **入口限流按 IP 算，不是按 key。** 网关 `RATE_LIMIT_PER_MINUTE` 默认 60/分钟，
+   而本站全站一个出口 IP → 一次 sweep 发几百个 prefilter 就是几倍的 60，
+   直接回 `429 gateway_error / rate_limited`。这种 429 **不参与 failover**
+   （它在选 provider 之前就被拦下），所以"auto 自动换家"救不了它。
+   `.env` 里那条 `RATE_LIMIT_PER_MINUTE_OVERRIDES=gw_…:300` 是**无效配置** ——
+   当前 `server.mjs` 根本不读这个键，别以为给本站开过小灶。
+2. **网关重建后 401，不等于用户被删。** `users.json` 的 `tokenHash` 是纯 sha256，不依赖任何密钥；
+   401 是因为 `GATEWAY_KEY`（运营密钥）和本站用的 `gw_` 用户 token 是**两套凭据**，
+   重建会重新解析 `.env`。worker 侧 401 属非可重试 → 立即回退 DeepSeek，
+   **不会卡死，但免费池白配**，账上还按 DeepSeek 计价。
+
+### 处置口径（2026-11-02 生效，`/home/ubuntu/anydoor/.env`）
+
+| 键 | 值 | 为什么 |
+|---|---|---|
+| `RATE_LIMIT_PER_MINUTE` | `0` | 0 = 不限。按 IP 计，本站全站共用一个出口 |
+| `PER_USER_RPM` | `0` | 同上，单用户维度 |
+| `DAILY_TOKEN_BUDGET` | `0` | 0 = 不限；25 万/天对一次积压就吃掉 |
+| `STICKY_SESSION` | `false` | 粘性会把调用方钉在一家 30 分钟，某家限流时不会游走 |
+| `FAILOVER_MAX_ATTEMPTS` | `50` | 93 家上游，允许大范围换家 |
+| `FAILOVER_DISABLE_THRESHOLD` | `8` | 3 → 8，免费池抖动时不轻易熔断 |
+| `FAILOVER_DISABLE_COOLDOWN_MS` | `15000` | 60s → 15s，熔断后恢复更快 |
+
+### 怎么判断又卡住了
+
+`articles` 里 `processing_state='new'` 且 `processing_error LIKE 'HTTP 429%'` 的条数，
+和 `processing_retry_at > now()` 的条数。指数退避会把最长的推到 **40 分钟后**，
+表面上就是"站点不动了"。恢复：
+
+```sql
+UPDATE articles SET processing_retry_at = now()
+WHERE processing_state = 'new' AND processing_retry_at > now();
+```
+
+下一轮 5 分钟 sweep 会重发全部任务。
+
+**风险**：免费池不受本站预算熔断管（`budgets.llm` 只算 DeepSeek）；
+网关侧 `DAILY_TOKEN_BUDGET=0` 等于放开了唯一的总闸。
+要收紧改上面几个 env 即可，不用动代码。

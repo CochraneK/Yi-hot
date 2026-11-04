@@ -14,6 +14,13 @@ export const sql = postgres(config.databaseUrl, {
   // Keep connections through quiet minutes: a reconnect costs a SCRAM exchange on the next request.
   idle_timeout: 600,
   connect_timeout: 10,
+  // 根因修复（2026-11-04）：worker 曾因 db 连接被网络抖动变成半开而永久 hang——postgres.js 没有
+  // 查询级超时，idle_timeout 只对空闲连接生效，正在执行的死查询会一直 pending。开启 TCP keepalive
+  // 并把首次探测前空闲压到 10s，配合宿主 sysctl 的 tcp_keepalive_intvl=10/probes=3，半开连接约 40s
+  // 被 OS 关闭，postgres.js 随即 reject 挂起的查询，任务失败重试而非卡死。
+  keep_alive: 10,
+  // 双保险：每条连接最多存活 10 分钟就强制回收重建，避免长期存活的连接悄悄变死。
+  max_lifetime: 600,
   onnotice: () => {},
   // Prepared statements keep PostgreSQL's plan cache: planning a detail read took longer than running
   // it. Searches plan every execution instead (withCustomPlans). JIT compilation costs more than

@@ -3661,7 +3661,7 @@
           "婴幼儿 照护 托育 普惠 服务 托位",
           "流动儿童 随迁子女 入学 城市 公办"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3712,7 +3712,7 @@
           "老年人 无障碍 环境 建设",
           "敬老月 助老 公益活动"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3768,7 +3768,7 @@
           "残疾人 托养 照护 服务",
           "辅助器具 残疾人 适配 补贴"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3824,7 +3824,7 @@
           "女职工 劳动保护 权益",
           "性别 偏见 消除 倡导 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3880,7 +3880,7 @@
           "塑料污染 治理 公益 行动",
           "环保 社会组织 公益 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3936,7 +3936,7 @@
           "农村 养老 服务 体系建设",
           "乡村 治理 积分 公益 实践"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -3994,7 +3994,7 @@
           "北京 社区治理 社会工作 基层",
           "北京 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4052,7 +4052,7 @@
           "上海 社区治理 社会工作 基层",
           "上海 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4110,7 +4110,7 @@
           "山东 社区治理 社会工作 基层",
           "山东 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4168,7 +4168,7 @@
           "江苏 社区治理 社会工作 基层",
           "江苏 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4226,7 +4226,7 @@
           "浙江 社区治理 社会工作 基层",
           "浙江 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4284,7 +4284,7 @@
           "湖北 社区治理 社会工作 基层",
           "湖北 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4338,7 +4338,7 @@
           "基层 医疗卫生 服务 政策",
           "健康中国 行动 公益 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4392,7 +4392,7 @@
           "交通安全 未成年人 保护 宣传",
           "反有组织犯罪 社会治理"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4446,7 +4446,7 @@
           "新就业形态 劳动者 权益 保护",
           "人社 公共服务 便民 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4500,7 +4500,7 @@
           "假冒伪劣 打击 侵权 案例",
           "明码标价 计量 民生 监管"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4554,7 +4554,7 @@
           "律师 法律援助 弱势群体 权益",
           "法治乡村 建设 公益 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4608,7 +4608,7 @@
           "困难群众 救助 财政 保障",
           "民生支出 预算 政策 通知"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4662,7 +4662,7 @@
           "北京 青年 社会组织 培育 政策",
           "北京 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4716,7 +4716,7 @@
           "上海 青年 社会组织 培育 政策",
           "上海 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4770,7 +4770,7 @@
           "山东 青年 社会组织 培育 政策",
           "山东 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4824,7 +4824,7 @@
           "江苏 青年 社会组织 培育 政策",
           "江苏 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4878,7 +4878,7 @@
           "浙江 青年 社会组织 培育 政策",
           "浙江 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4932,7 +4932,7 @@
           "湖北 青年 社会组织 培育 政策",
           "湖北 大学生 志愿服务 西部计划"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -4986,7 +4986,7 @@
           "北京 巾帼 志愿服务 公益",
           "北京 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5040,7 +5040,7 @@
           "上海 巾帼 志愿服务 公益",
           "上海 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5094,7 +5094,7 @@
           "山东 巾帼 志愿服务 公益",
           "山东 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5148,7 +5148,7 @@
           "江苏 巾帼 志愿服务 公益",
           "江苏 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5202,7 +5202,7 @@
           "浙江 巾帼 志愿服务 公益",
           "浙江 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5256,7 +5256,7 @@
           "湖北 巾帼 志愿服务 公益",
           "湖北 女童 教育 助学 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5310,7 +5310,7 @@
           "北京 助残 社会组织 公益 项目",
           "北京 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5364,7 +5364,7 @@
           "上海 助残 社会组织 公益 项目",
           "上海 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5418,7 +5418,7 @@
           "山东 助残 社会组织 公益 项目",
           "山东 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5472,7 +5472,7 @@
           "江苏 助残 社会组织 公益 项目",
           "江苏 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5526,7 +5526,7 @@
           "浙江 助残 社会组织 公益 项目",
           "浙江 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5580,7 +5580,7 @@
           "湖北 助残 社会组织 公益 项目",
           "湖北 残疾人 权益 保障 政策"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5632,7 +5632,7 @@
           "社会组织 研究 报告 中国",
           "乡村振兴 公益 研究"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5685,7 +5685,7 @@
           "乡村教育 公益 项目 研究",
           "教育公益 组织 研究"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5738,7 +5738,7 @@
           "共同富裕 研究 报告",
           "社会工作 发展 研究"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5791,7 +5791,7 @@
           "家族慈善 研究",
           "公益 创投 研究"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5843,7 +5843,7 @@
           "公益 研究 北大",
           "社会创新 研究 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5895,7 +5895,7 @@
           "慈善 行业 观察 报告",
           "公益 基金会 观察"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -5948,7 +5948,7 @@
           "家事审判 典型案例",
           "消费者权益 公益诉讼 案例"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6000,7 +6000,7 @@
           "侵害未成年人 案例 通报",
           "未成年人 法律援助 检察"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6052,7 +6052,7 @@
           "弱势群体 维权 案例",
           "法律援助 便民 服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6104,7 +6104,7 @@
           "人口普查 数据 报告",
           "民生 数据 统计 发布"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6156,7 +6156,7 @@
           "社会组织 信用信息 公示",
           "基金会 透明度 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6208,7 +6208,7 @@
           "政府采购 公益 服务",
           "民生支出 预算 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6259,7 +6259,7 @@
           "公共卫生 政策 世界卫生组织",
           "儿童 健康 报告 WHO"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6310,7 +6310,7 @@
           "减贫 发展 报告 UNDP",
           "可持续 发展 目标 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6361,7 +6361,7 @@
           "妇女 权益 报告 联合国",
           "性别 平等 政策 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6412,7 +6412,7 @@
           "难民 儿童 保护 报告",
           "人道主义 援助 报告"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6463,7 +6463,7 @@
           "社会发展 数据 世界银行",
           "减贫 报告 世界银行"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6514,7 +6514,7 @@
           "慈善 行业 动态 公益时报",
           "公益 组织 报道"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6565,7 +6565,7 @@
           "社会救助 新闻 中国社会报",
           "基层治理 报道"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6616,7 +6616,7 @@
           "慈善 动态 慈善公益报",
           "公益 新闻 报道"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6667,7 +6667,7 @@
           "慈善 基金会 调查 财新",
           "公益 行业 调查 报道"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6718,7 +6718,7 @@
           "医疗 公益 捐赠 韩红",
           "乡村 医疗 援助 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6769,7 +6769,7 @@
           "素养教育 报告 真爱梦想",
           "乡村 儿童 教育 公益"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6820,7 +6820,7 @@
           "乡村儿童 营养 公益",
           "学校 营养 改善 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -6871,7 +6871,7 @@
           "唇腭裂 救助 公益",
           "儿童 医疗 救助 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7189,7 +7189,7 @@
           "河北 社区治理 社会工作 基层",
           "河北 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7248,7 +7248,7 @@
           "山西 社区治理 社会工作 基层",
           "山西 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7307,7 +7307,7 @@
           "安徽 社区治理 社会工作 基层",
           "安徽 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7366,7 +7366,7 @@
           "江西 社区治理 社会工作 基层",
           "江西 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7425,7 +7425,7 @@
           "海南 社区治理 社会工作 基层",
           "海南 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7484,7 +7484,7 @@
           "云南 社区治理 社会工作 基层",
           "云南 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7543,7 +7543,7 @@
           "甘肃 社区治理 社会工作 基层",
           "甘肃 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7602,7 +7602,7 @@
           "宁夏 社区治理 社会工作 基层",
           "宁夏 殡葬 婚姻登记 管理服务"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -7980,7 +7980,7 @@
           "学校 心理健康 教师 配备 政策",
           "儿童 心理 康复 公益 项目"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -8034,7 +8034,7 @@
           "唇腭裂 先心病 救助 行动",
           "儿童 康复 医疗 援助 基金"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {
@@ -8086,7 +8086,7 @@
           "关工委 家庭教育 指导 服务",
           "关工委 留守儿童 关爱 服务 阵地"
         ],
-        "count": 20,
+        "count": 50,
         "lookbackDays": 7,
         "minAuthority": 2,
         "ingestNoiseFilter": {

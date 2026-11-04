@@ -96,7 +96,17 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
  * so underneath. When that collection moment falls on another day than the one the card is filed under,
  * it prints that date instead, since an hour alone would read as belonging to the day header above it.
  */
-export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, dotColor }: { at: string; filedDay?: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; dotColor?: string }) {
+/** The article's own moment, printed under the collection clock on the home timeline. */
+function sourceTimeLabel(sourceAt: string | null, dateOnly: boolean, filedDay: string, clockAt: string): string | null {
+  if (!sourceAt) return null;
+  const day = beijingDate(sourceAt);
+  if (day !== filedDay) return `原文${monthDotDay(sourceAt)}${dateOnly ? "" : ` ${beijingTime(sourceAt)}`}`;
+  // Under its own day the header already says the date; a date-only source has no clock to add.
+  if (dateOnly) return null;
+  return beijingTime(sourceAt) === beijingTime(clockAt) ? null : `原文${beijingTime(sourceAt)}`;
+}
+
+export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, originalLabel, dotColor }: { at: string; filedDay?: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; originalLabel?: string | null; dotColor?: string }) {
   const clockSource = clockAt ?? at;
   // The day this card sits under — the header above it, which is the publication day, not the clock.
   const filed = filedDay ?? beijingDate(at);
@@ -108,9 +118,13 @@ export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0,
   // A second line only when the filing day and the publication day differ. Under its own day the
   // header already says it, and repeating "原文11.1" inside a "11月1日" group reads as a mistake.
   const otherDay = dateOnly && sourceAt != null && sourceDay !== filed ? monthDotDay(sourceAt) : null;
-  const title = dateOnly
-    ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
-    : timeLabel ? `${timeLabel}：${at}` : undefined;
+  // One note under the clock: "收录" plus the article's own time when the clock is our placement.
+  const clockNote = originalLabel ? `收录 · ${originalLabel}` : (clockLabel ?? timeLabel) === "收录" ? "收录" : null;
+  const title = originalLabel && sourceAt
+    ? `本站收录时间：${fullDateTime(clockSource)}；原文发表：${fullDateTime(sourceAt)}`
+    : dateOnly
+      ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
+      : timeLabel ? `${timeLabel}：${at}` : undefined;
   return (
     <li
       data-card-key={dataKey}
@@ -119,8 +133,8 @@ export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0,
     >
       <time dateTime={at} title={title} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
         {clock}
-        {(clockLabel ?? timeLabel) === "收录" && <span className="mt-0.5 block text-[10px] font-normal">收录</span>}
-        {otherDay && <span className="mt-0.5 block text-[10px] font-normal opacity-80">原文{otherDay}</span>}
+        {clockNote && <span className="mt-0.5 block text-[10px] font-normal">{clockNote}</span>}
+        {!originalLabel && otherDay && <span className="mt-0.5 block text-[10px] font-normal opacity-80">原文{otherDay}</span>}
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />
@@ -345,11 +359,13 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
                   {cards.map((c) => {
                     const fresh = freshKeys.has(c.key);
                     const delay = fresh ? Math.min(order++, 10) * 40 : 0;
-                    // A card sits where we collected it; a source that states only a day gets no clock,
-                    // so the slot prints the collection clock and says so under it.
-                    const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision);
+                    // A card sits at the moment we collected it (or a new development brought it back
+                    // up). Print that same moment as the main clock so the rail reads newest-first;
+                    // the article's own time goes on the note under it.
+                    const display = feedDisplayAt(c.item.publishedAt, c.item.discoveredAt, c.item.timelineAt, c.item.publishedAtPrecision, c.anchorAt);
+                    const originalLabel = sourceTimeLabel(display.sourceAt, display.dateOnly, c.dayAt, display.at);
                     return (
-                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} filedDay={c.dayAt} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
+                      <TimelineSlot key={c.key} dataKey={c.key} at={display.at} filedDay={c.dayAt} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} originalLabel={originalLabel} fresh={fresh} delay={delay} dotColor={topicColor(c.item.tags)}>
                         <FeedItem item={c.item} group={c.group} filters={filters} read={readSet.has(c.item.id)} onOpen={markRead} />
                       </TimelineSlot>
                     );

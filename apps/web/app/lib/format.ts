@@ -60,13 +60,19 @@ export interface FeedTimeDisplay {
  * card is filed under its publication day (see queryGroupedAnchors), so the rail and the day header
  * above it agree even when the collection clock falls on another day. "收录" is also what an article
  * with no date at all gets.
+ *
+ * `placementAt` is the home timeline's sort key (the collection moment, or the moment a new
+ * development brought a grouped card back up). When the caller supplies it, the main clock prints
+ * that moment instead of the article's own time: the rail then reads strictly newest-first, and the
+ * article's time moves to the note under the clock. Detail views omit it and keep the original time.
  */
-export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime"): FeedTimeDisplay {
+export function feedDisplayAt(publishedAt: string | null, discoveredAt: string, timelineAt: string, precision: "date" | "datetime" = "datetime", placementAt?: string | null): FeedTimeDisplay {
   const collected = timelineAt || discoveredAt;
   // A 00:00 stamp on a datetime-precision article is a date in disguise (the parser filled the clock),
   // so it is treated like one: no clock to sort by, no clock to print.
   const dateOnly = publishedAt !== null && (precision === "date" || (beijingTime(publishedAt) === "00:00" && beijingTime(discoveredAt) !== "00:00"));
   const sourceAt = publishedAt === null ? null : dateOnly ? `${beijingDate(publishedAt)}T00:00:00+08:00` : publishedAt;
+  if (placementAt) return { at: placementAt, label: "收录", dateOnly, clockAt: placementAt, clockLabel: "收录", sourceAt };
   if (sourceAt === null || dateOnly) return { at: collected, label: "收录", dateOnly, clockAt: collected, clockLabel: "收录", sourceAt };
   return { at: sourceAt, label: "原文发表", dateOnly: false, clockAt: sourceAt, clockLabel: null, sourceAt };
 }

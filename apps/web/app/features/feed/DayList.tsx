@@ -22,11 +22,13 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
     const rows = items.map((it) => {
       const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
       const filedAt = it.publishedAt ?? it.timelineAt;
-      return { it, display, filedAt, day: beijingDate(filedAt) };
+      // Filed by publication day, but ordered by the very moment printed in the clock column:
+      // a date-only item has no clock of its own, so it sorts by its collection time, not 00:00.
+      return { it, display, orderAt: display.at, day: beijingDate(filedAt) };
     });
     rows.sort((a, b) =>
       a.day === b.day
-        ? Date.parse(b.filedAt) - Date.parse(a.filedAt) || (a.it.id < b.it.id ? 1 : -1)
+        ? Date.parse(b.orderAt) - Date.parse(a.orderAt) || (a.it.id < b.it.id ? 1 : -1)
         : a.day < b.day ? 1 : -1);
     for (const r of rows) {
       const last = out[out.length - 1];

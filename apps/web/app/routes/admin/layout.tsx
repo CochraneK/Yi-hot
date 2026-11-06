@@ -41,6 +41,7 @@ const NAV: Array<{ group: string; items: Array<{ to: string; label: string; coun
       { to: "/admin/models", label: "模型与评测" },
       { to: "/admin/selectbench", label: "SelectBench" },
       { to: "/admin/settings", label: "设置" },
+      { to: "/admin/subscriptions", label: "订阅人" },
       { to: "/admin/audit", label: "审计记录" },
     ],
   },

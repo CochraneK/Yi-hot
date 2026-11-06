@@ -50,7 +50,7 @@ REGISTRY_DOC = "docs/SOURCE_REGISTRY.md"
 
 KIND_ORDER = ["search", "web_list", "rss", "json_list", "external"]
 KIND_LABEL = {
-    "search": "搜索源（DeepSeek Search）",
+    "search": "搜索源",
     "web_list": "网页列表源",
     "rss": "RSS 源",
     "json_list": "JSON / API 列表源",

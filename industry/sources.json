@@ -3644,7 +3644,7 @@
     },
     {
       "id": "search-child-rights",
-      "name": "网页搜索·儿童与公益（DeepSeek）",
+      "name": "网页搜索·儿童与公益",
       "kind": "search",
       "config": {
         "queries": [
@@ -3697,7 +3697,7 @@
     },
     {
       "id": "search-elderly",
-      "name": "网页搜索·老年人权益（DeepSeek）",
+      "name": "网页搜索·老年人权益",
       "kind": "search",
       "config": {
         "queries": [
@@ -3753,7 +3753,7 @@
     },
     {
       "id": "search-disability",
-      "name": "网页搜索·残障融合（DeepSeek）",
+      "name": "网页搜索·残障融合",
       "kind": "search",
       "config": {
         "queries": [
@@ -3809,7 +3809,7 @@
     },
     {
       "id": "search-gender",
-      "name": "网页搜索·性别平等（DeepSeek）",
+      "name": "网页搜索·性别平等",
       "kind": "search",
       "config": {
         "queries": [
@@ -3865,7 +3865,7 @@
     },
     {
       "id": "search-environment",
-      "name": "网页搜索·生态环境（DeepSeek）",
+      "name": "网页搜索·生态环境",
       "kind": "search",
       "config": {
         "queries": [
@@ -3921,7 +3921,7 @@
     },
     {
       "id": "search-rural",
-      "name": "网页搜索·乡村振兴（DeepSeek）",
+      "name": "网页搜索·乡村振兴",
       "kind": "search",
       "config": {
         "queries": [
@@ -3977,7 +3977,7 @@
     },
     {
       "id": "search-mca-bj",
-      "name": "网页搜索·北京民政（DeepSeek）",
+      "name": "网页搜索·北京民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4035,7 +4035,7 @@
     },
     {
       "id": "search-mca-sh",
-      "name": "网页搜索·上海民政（DeepSeek）",
+      "name": "网页搜索·上海民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4093,7 +4093,7 @@
     },
     {
       "id": "search-mca-sd",
-      "name": "网页搜索·山东民政（DeepSeek）",
+      "name": "网页搜索·山东民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4151,7 +4151,7 @@
     },
     {
       "id": "search-mca-js",
-      "name": "网页搜索·江苏民政（DeepSeek）",
+      "name": "网页搜索·江苏民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4209,7 +4209,7 @@
     },
     {
       "id": "search-mca-zj",
-      "name": "网页搜索·浙江民政（DeepSeek）",
+      "name": "网页搜索·浙江民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4267,7 +4267,7 @@
     },
     {
       "id": "search-mca-hub",
-      "name": "网页搜索·湖北民政（DeepSeek）",
+      "name": "网页搜索·湖北民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -4325,7 +4325,7 @@
     },
     {
       "id": "search-mohw",
-      "name": "网页搜索·国家卫健委（DeepSeek）",
+      "name": "网页搜索·国家卫健委",
       "kind": "search",
       "config": {
         "queries": [
@@ -4379,7 +4379,7 @@
     },
     {
       "id": "search-mps",
-      "name": "网页搜索·公安部（DeepSeek）",
+      "name": "网页搜索·公安部",
       "kind": "search",
       "config": {
         "queries": [
@@ -4433,7 +4433,7 @@
     },
     {
       "id": "search-mohrss",
-      "name": "网页搜索·人社部（DeepSeek）",
+      "name": "网页搜索·人社部",
       "kind": "search",
       "config": {
         "queries": [
@@ -4487,7 +4487,7 @@
     },
     {
       "id": "search-samr",
-      "name": "网页搜索·市场监管总局（DeepSeek）",
+      "name": "网页搜索·市场监管总局",
       "kind": "search",
       "config": {
         "queries": [
@@ -4541,7 +4541,7 @@
     },
     {
       "id": "search-moj",
-      "name": "网页搜索·司法部（DeepSeek）",
+      "name": "网页搜索·司法部",
       "kind": "search",
       "config": {
         "queries": [
@@ -4595,7 +4595,7 @@
     },
     {
       "id": "search-mof",
-      "name": "网页搜索·财政部（DeepSeek）",
+      "name": "网页搜索·财政部",
       "kind": "search",
       "config": {
         "queries": [
@@ -4649,7 +4649,7 @@
     },
     {
       "id": "search-gqt-bj",
-      "name": "网页搜索·北京共青团（DeepSeek）",
+      "name": "网页搜索·北京共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4703,7 +4703,7 @@
     },
     {
       "id": "search-gqt-sh",
-      "name": "网页搜索·上海共青团（DeepSeek）",
+      "name": "网页搜索·上海共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4757,7 +4757,7 @@
     },
     {
       "id": "search-gqt-sd",
-      "name": "网页搜索·山东共青团（DeepSeek）",
+      "name": "网页搜索·山东共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4811,7 +4811,7 @@
     },
     {
       "id": "search-gqt-js",
-      "name": "网页搜索·江苏共青团（DeepSeek）",
+      "name": "网页搜索·江苏共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4865,7 +4865,7 @@
     },
     {
       "id": "search-gqt-zj",
-      "name": "网页搜索·浙江共青团（DeepSeek）",
+      "name": "网页搜索·浙江共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4919,7 +4919,7 @@
     },
     {
       "id": "search-gqt-hub",
-      "name": "网页搜索·湖北共青团（DeepSeek）",
+      "name": "网页搜索·湖北共青团",
       "kind": "search",
       "config": {
         "queries": [
@@ -4973,7 +4973,7 @@
     },
     {
       "id": "search-women-bj",
-      "name": "网页搜索·北京妇联（DeepSeek）",
+      "name": "网页搜索·北京妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5027,7 +5027,7 @@
     },
     {
       "id": "search-women-sh",
-      "name": "网页搜索·上海妇联（DeepSeek）",
+      "name": "网页搜索·上海妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5081,7 +5081,7 @@
     },
     {
       "id": "search-women-sd",
-      "name": "网页搜索·山东妇联（DeepSeek）",
+      "name": "网页搜索·山东妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5135,7 +5135,7 @@
     },
     {
       "id": "search-women-js",
-      "name": "网页搜索·江苏妇联（DeepSeek）",
+      "name": "网页搜索·江苏妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5189,7 +5189,7 @@
     },
     {
       "id": "search-women-zj",
-      "name": "网页搜索·浙江妇联（DeepSeek）",
+      "name": "网页搜索·浙江妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5243,7 +5243,7 @@
     },
     {
       "id": "search-women-hub",
-      "name": "网页搜索·湖北妇联（DeepSeek）",
+      "name": "网页搜索·湖北妇联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5297,7 +5297,7 @@
     },
     {
       "id": "search-cdpf-bj",
-      "name": "网页搜索·北京残联（DeepSeek）",
+      "name": "网页搜索·北京残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5351,7 +5351,7 @@
     },
     {
       "id": "search-cdpf-sh",
-      "name": "网页搜索·上海残联（DeepSeek）",
+      "name": "网页搜索·上海残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5405,7 +5405,7 @@
     },
     {
       "id": "search-cdpf-sd",
-      "name": "网页搜索·山东残联（DeepSeek）",
+      "name": "网页搜索·山东残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5459,7 +5459,7 @@
     },
     {
       "id": "search-cdpf-js",
-      "name": "网页搜索·江苏残联（DeepSeek）",
+      "name": "网页搜索·江苏残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5513,7 +5513,7 @@
     },
     {
       "id": "search-cdpf-zj",
-      "name": "网页搜索·浙江残联（DeepSeek）",
+      "name": "网页搜索·浙江残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5567,7 +5567,7 @@
     },
     {
       "id": "search-cdpf-hub",
-      "name": "网页搜索·湖北残联（DeepSeek）",
+      "name": "网页搜索·湖北残联",
       "kind": "search",
       "config": {
         "queries": [
@@ -5621,7 +5621,7 @@
     },
     {
       "id": "search-think-tass",
-      "name": "网页搜索·北师大中国公益研究院（DeepSeek）",
+      "name": "网页搜索·北师大中国公益研究院",
       "kind": "search",
       "config": {
         "queries": [
@@ -5675,7 +5675,7 @@
     },
     {
       "id": "search-think-21edu",
-      "name": "网页搜索·21世纪教育研究院（DeepSeek）",
+      "name": "网页搜索·21世纪教育研究院",
       "kind": "search",
       "config": {
         "queries": [
@@ -5728,7 +5728,7 @@
     },
     {
       "id": "search-think-cass",
-      "name": "网页搜索·社科院社会政策（DeepSeek）",
+      "name": "网页搜索·社科院社会政策",
       "kind": "search",
       "config": {
         "queries": [
@@ -5781,7 +5781,7 @@
     },
     {
       "id": "search-think-tsinghua",
-      "name": "网页搜索·清华公益慈善研究院（DeepSeek）",
+      "name": "网页搜索·清华公益慈善研究院",
       "kind": "search",
       "config": {
         "queries": [
@@ -5834,7 +5834,7 @@
     },
     {
       "id": "search-think-pku",
-      "name": "网页搜索·北大社会研究中心（DeepSeek）",
+      "name": "网页搜索·北大社会研究中心",
       "kind": "search",
       "config": {
         "queries": [
@@ -5886,7 +5886,7 @@
     },
     {
       "id": "search-think-nandu",
-      "name": "网页搜索·南都观察/报告（DeepSeek）",
+      "name": "网页搜索·南都观察/报告",
       "kind": "search",
       "config": {
         "queries": [
@@ -5938,7 +5938,7 @@
     },
     {
       "id": "search-judicial-spc",
-      "name": "网页搜索·最高法典型案例（DeepSeek）",
+      "name": "网页搜索·最高法典型案例",
       "kind": "search",
       "config": {
         "queries": [
@@ -5991,7 +5991,7 @@
     },
     {
       "id": "search-judicial-spp",
-      "name": "网页搜索·最高检未检（DeepSeek）",
+      "name": "网页搜索·最高检未检",
       "kind": "search",
       "config": {
         "queries": [
@@ -6043,7 +6043,7 @@
     },
     {
       "id": "search-judicial-legalaid",
-      "name": "网页搜索·法律援助（DeepSeek）",
+      "name": "网页搜索·法律援助",
       "kind": "search",
       "config": {
         "queries": [
@@ -6095,7 +6095,7 @@
     },
     {
       "id": "search-data-stats",
-      "name": "网页搜索·国家统计局数据（DeepSeek）",
+      "name": "网页搜索·国家统计局数据",
       "kind": "search",
       "config": {
         "queries": [
@@ -6147,7 +6147,7 @@
     },
     {
       "id": "search-data-charity",
-      "name": "网页搜索·慈善信息公开（DeepSeek）",
+      "name": "网页搜索·慈善信息公开",
       "kind": "search",
       "config": {
         "queries": [
@@ -6199,7 +6199,7 @@
     },
     {
       "id": "search-data-finance",
-      "name": "网页搜索·财政民生支出（DeepSeek）",
+      "name": "网页搜索·财政民生支出",
       "kind": "search",
       "config": {
         "queries": [
@@ -6251,7 +6251,7 @@
     },
     {
       "id": "search-intl-who",
-      "name": "网页搜索·WHO 世界卫生组织（DeepSeek）",
+      "name": "网页搜索·WHO 世界卫生组织",
       "kind": "search",
       "config": {
         "queries": [
@@ -6302,7 +6302,7 @@
     },
     {
       "id": "search-intl-undp",
-      "name": "网页搜索·UNDP 开发计划署（DeepSeek）",
+      "name": "网页搜索·UNDP 开发计划署",
       "kind": "search",
       "config": {
         "queries": [
@@ -6353,7 +6353,7 @@
     },
     {
       "id": "search-intl-unwomen",
-      "name": "网页搜索·UN Women 妇女署（DeepSeek）",
+      "name": "网页搜索·UN Women 妇女署",
       "kind": "search",
       "config": {
         "queries": [
@@ -6404,7 +6404,7 @@
     },
     {
       "id": "search-intl-unhcr",
-      "name": "网页搜索·UNHCR 难民署（DeepSeek）",
+      "name": "网页搜索·UNHCR 难民署",
       "kind": "search",
       "config": {
         "queries": [
@@ -6455,7 +6455,7 @@
     },
     {
       "id": "search-intl-worldbank",
-      "name": "网页搜索·世界银行（DeepSeek）",
+      "name": "网页搜索·世界银行",
       "kind": "search",
       "config": {
         "queries": [
@@ -6506,7 +6506,7 @@
     },
     {
       "id": "search-media-gongyi",
-      "name": "网页搜索·公益时报（DeepSeek）",
+      "name": "网页搜索·公益时报",
       "kind": "search",
       "config": {
         "queries": [
@@ -6557,7 +6557,7 @@
     },
     {
       "id": "search-media-chinasocial",
-      "name": "网页搜索·中国社会报（DeepSeek）",
+      "name": "网页搜索·中国社会报",
       "kind": "search",
       "config": {
         "queries": [
@@ -6608,7 +6608,7 @@
     },
     {
       "id": "search-media-charity",
-      "name": "网页搜索·慈善公益报（DeepSeek）",
+      "name": "网页搜索·慈善公益报",
       "kind": "search",
       "config": {
         "queries": [
@@ -6659,7 +6659,7 @@
     },
     {
       "id": "search-media-caixin",
-      "name": "网页搜索·财新公益（DeepSeek）",
+      "name": "网页搜索·财新公益",
       "kind": "search",
       "config": {
         "queries": [
@@ -6710,7 +6710,7 @@
     },
     {
       "id": "search-found-han",
-      "name": "网页搜索·韩红基金会（DeepSeek）",
+      "name": "网页搜索·韩红基金会",
       "kind": "search",
       "config": {
         "queries": [
@@ -6761,7 +6761,7 @@
     },
     {
       "id": "search-found-dream",
-      "name": "网页搜索·真爱梦想（DeepSeek）",
+      "name": "网页搜索·真爱梦想",
       "kind": "search",
       "config": {
         "queries": [
@@ -6812,7 +6812,7 @@
     },
     {
       "id": "search-found-free",
-      "name": "网页搜索·免费午餐（DeepSeek）",
+      "name": "网页搜索·免费午餐",
       "kind": "search",
       "config": {
         "queries": [
@@ -6863,7 +6863,7 @@
     },
     {
       "id": "search-found-smile",
-      "name": "网页搜索·嫣然天使（DeepSeek）",
+      "name": "网页搜索·嫣然天使",
       "kind": "search",
       "config": {
         "queries": [
@@ -7172,7 +7172,7 @@
     },
     {
       "id": "search-mca-hebei",
-      "name": "网页搜索·河北民政（DeepSeek）",
+      "name": "网页搜索·河北民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7231,7 +7231,7 @@
     },
     {
       "id": "search-mca-shanxi",
-      "name": "网页搜索·山西民政（DeepSeek）",
+      "name": "网页搜索·山西民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7290,7 +7290,7 @@
     },
     {
       "id": "search-mca-anhui",
-      "name": "网页搜索·安徽民政（DeepSeek）",
+      "name": "网页搜索·安徽民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7349,7 +7349,7 @@
     },
     {
       "id": "search-mca-jiangxi",
-      "name": "网页搜索·江西民政（DeepSeek）",
+      "name": "网页搜索·江西民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7408,7 +7408,7 @@
     },
     {
       "id": "search-mca-hainan",
-      "name": "网页搜索·海南民政（DeepSeek）",
+      "name": "网页搜索·海南民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7467,7 +7467,7 @@
     },
     {
       "id": "search-mca-yunnan",
-      "name": "网页搜索·云南民政（DeepSeek）",
+      "name": "网页搜索·云南民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7526,7 +7526,7 @@
     },
     {
       "id": "search-mca-gansu",
-      "name": "网页搜索·甘肃民政（DeepSeek）",
+      "name": "网页搜索·甘肃民政",
       "kind": "search",
       "config": {
         "queries": [
@@ -7585,7 +7585,7 @@
     },
     {
       "id": "search-mca-ningxia",
-      "name": "网页搜索·宁夏民政（DeepSeek）",
+      "name": "网页搜索·宁夏民政",
       "kind": "search",
       "config": {
         "queries": [

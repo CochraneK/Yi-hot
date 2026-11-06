@@ -249,6 +249,33 @@ export function pagePublishedAt(html: string, expectDay?: string | null, utcOffs
     const day = /(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?)/.exec(text);
     if (day) take(day[1]);
   }
+  // Pages that render their clock through JS (WeChat especially) keep the publication instant in a
+  // named script variable rather than in metadata. These keys name *this* article's creation, never
+  // a related post's, so they are safe even when the caller could not name the expected day.
+  if (!seen.some((s) => s.precision === "datetime")) {
+    const named = /(?:ori_?create_time|create_timestamp|create_time|publish_time|pub_time|publishDate|pubDate|ptime)\s*[:=]\s*['"]?(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?)['"]?/i.exec(html);
+    if (named) take(named[1]);
+  }
+  if (!seen.some((s) => s.precision === "datetime")) {
+    const unix = /(?:ori_?create_time|create_timestamp|create_time|publish_time|publishTime|ptime)\s*[:=]\s*['"]?(\d{10})['"]?(?:\s*\*\s*1)?/i.exec(html);
+    if (unix) {
+      const at = new Date(Number(unix[1]) * 1000);
+      if (Number.isFinite(at.getTime()) && (!expectDay || dayInOffset(at, utcOffset) === expectDay)) seen.push({ at, precision: "datetime" });
+    }
+  }
+  // A byline or JSON blob past the 3000-char body scan. Anchor it to a day the page already stated
+  // — the caller's expected day, or the first date candidate we accepted (metadata comes first in
+  // `seen`) — so a raw-HTML scan cannot pick up a related-post timestamp from another day. Search
+  // sources name no expected day, which is exactly why this fallback needs the page's own day.
+  const dayToMatch = expectDay ?? (seen.length ? dayInOffset(seen[0]!.at, utcOffset) : null);
+  if (dayToMatch && !seen.some((s) => s.precision === "datetime")) {
+    let scanned = 0;
+    for (const m of html.matchAll(/(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?[ T]\d{1,2}:\d{2}(?::\d{2})?)/g)) {
+      if (++scanned > 12) break;
+      const at = parseLooseDate(m[1], utcOffset);
+      if (at && dayInOffset(at, utcOffset) === dayToMatch) { seen.push({ at, precision: "datetime" }); break; }
+    }
+  }
   return seen.find((s) => s.precision === "datetime") ?? seen[0] ?? null;
 }
 

@@ -22,8 +22,9 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
     const rows = items.map((it) => {
       const display = feedDisplayAt(it.publishedAt, it.discoveredAt, it.timelineAt, it.publishedAtPrecision);
       const filedAt = it.publishedAt ?? it.timelineAt;
-      // Filed by publication day, but ordered by the very moment printed in the clock column:
-      // a date-only item has no clock of its own, so it sorts by its collection time, not 00:00.
+      // Filed by publication day, but ordered by the collection moment: a date-only item has no clock
+      // of its own, so it sorts by its collection time rather than sinking to 00:00. That sort key
+      // stays `display.at` even though the slot now prints the article's own day under the header.
       return { it, display, orderAt: display.at, day: beijingDate(filedAt) };
     });
     rows.sort((a, b) =>
@@ -45,7 +46,7 @@ export function DayList({ items, todayCount = null, showTags = true, animate = f
           <DayHeader day={day} today={today} count={day === today ? todayCount : null} />
           <ol className="lg:pt-1">
             {list.map(({ it, display }) => (
-              <TimelineSlot key={it.id} at={display.at} filedDay={day} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
+              <TimelineSlot key={it.id} at={display.at} filedDay={day} timeLabel={display.label} dateOnly={display.dateOnly} clockAt={display.clockAt} clockLabel={display.clockLabel} sourceAt={display.sourceAt} sourceDayPrimary fresh={animate} delay={animate ? Math.min(order++, 12) * 25 : 0} dotColor={topicColor(it.tags)}>
                 <FeedItem item={it} read={readSet.has(it.id)} onOpen={markRead} showTags={showTags} />
               </TimelineSlot>
             ))}

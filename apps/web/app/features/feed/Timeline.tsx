@@ -92,49 +92,73 @@ export function DayHeader({ day, today, count, collapsed, onToggle }: { day: str
 /**
  * One dated slot: the time, the rail (desktop) and the item. As on the original timeline, the rail is a
  * 1px line from this node's centre to the next one's, so the day reads as one continuous thread.
- * A day-precision article has no clock time of its own, so the slot prints when we collected it and says
- * so underneath. When that collection moment falls on another day than the one the card is filed under,
- * it prints that date instead, since an hour alone would read as belonging to the day header above it.
+ * A day-precision article has no clock time of its own, so the only real clock is the moment we
+ * collected it. The home timeline prints that in the clock column. A day-grouped list passes
+ * `sourceDayPrimary`: it already has a date header ("11月6日"), so printing the article's day again
+ * ("11.6") is redundant — the clock column keeps the collection time and the note labels it "收录".
  */
 /** The article's own moment, printed under the collection clock on the home timeline. */
 function sourceTimeLabel(sourceAt: string | null, dateOnly: boolean, filedDay: string, clockAt: string): string | null {
   if (!sourceAt) return null;
   const day = beijingDate(sourceAt);
-  if (day !== filedDay) return `原文${monthDotDay(sourceAt)}${dateOnly ? "" : ` ${beijingTime(sourceAt)}`}`;
+  // Filed under a different day than the article's own: the clock column prints the exact time now,
+  // so the note only has to say which day that time belongs to (no "收录", no repeated clock).
+  if (day !== filedDay) return `原文${monthDotDay(sourceAt)}`;
   // Under its own day the header already says the date; a date-only source has no clock to add.
   if (dateOnly) return null;
   return beijingTime(sourceAt) === beijingTime(clockAt) ? null : `原文${beijingTime(sourceAt)}`;
 }
 
-export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, originalLabel, dotColor }: { at: string; filedDay?: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; originalLabel?: string | null; dotColor?: string }) {
+export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0, dataKey, timeLabel, dateOnly = false, clockAt, clockLabel, sourceAt, originalLabel, sourceDayPrimary = false, dotColor }: { at: string; filedDay?: string; children: React.ReactNode; fresh?: boolean; delay?: number; dataKey?: string; timeLabel?: string; dateOnly?: boolean; clockAt?: string; clockLabel?: "收录" | null; sourceAt?: string | null; originalLabel?: string | null; sourceDayPrimary?: boolean; dotColor?: string }) {
   const clockSource = clockAt ?? at;
   // The day this card sits under — the header above it, which is the publication day, not the clock.
   const filed = filedDay ?? beijingDate(at);
   const collectedAnotherDay = beijingDate(clockSource) !== filed;
-  const clock = collectedAnotherDay ? beijingDate(clockSource).slice(5) : beijingTime(clockSource);
-  // The card is filed by publication day; a date-only source still knows its own day, so the tooltip
-  // says both rather than letting the collection clock pass as the publication time.
   const sourceDay = sourceAt ? beijingDate(sourceAt) : null;
+  // DayList (/all, 动态/搜索/主题) groups cards under the article's own day. Repeating that day in
+  // the clock column ("11.6" under a "11月6日" header) told the reader nothing, so a date-only card
+  // prints the one clock it does have — our collection time — and labels it in the note. `at` stays
+  // the sort key, so the order inside the day does not change.
+  const dayGroupedDateOnly = sourceDayPrimary && dateOnly && sourceAt != null;
+  // An exact time stays an exact time even when the card is filed under a later day (we collected
+  // it a day after it appeared): only a date-only article falls back to printing a date here.
+  const clock = dayGroupedDateOnly
+    ? beijingTime(clockSource)
+    : collectedAnotherDay && dateOnly ? beijingDate(clockSource).slice(5) : beijingTime(clockSource);
   // A second line only when the filing day and the publication day differ. Under its own day the
   // header already says it, and repeating "原文11.1" inside a "11月1日" group reads as a mistake.
-  const otherDay = dateOnly && sourceAt != null && sourceDay !== filed ? monthDotDay(sourceAt) : null;
-  // One note under the clock: "收录" plus the article's own time when the clock is our placement.
-  const clockNote = originalLabel ? `收录 · ${originalLabel}` : (clockLabel ?? timeLabel) === "收录" ? "收录" : null;
-  const title = originalLabel && sourceAt
+  const otherDay = !dayGroupedDateOnly && dateOnly && sourceAt != null && sourceDay !== filed ? monthDotDay(sourceAt) : null;
+  // One note under the clock: plain "收录" when we collected it on the day in the header, "收录 11.6"
+  // when we did not, so a bare clock never reads as belonging to the wrong day.
+  const collectedNote = dayGroupedDateOnly
+    ? beijingDate(clockSource) !== sourceDay ? `收录 ${monthDotDay(clockSource)}` : "收录"
+    : null;
+  // DayList (/all, the page readers actually see) does not pass originalLabel. Compute the same
+  // cross-day note here: an exact clock filed under a later collection day must say which day it
+  // belongs to, or "09:20" under a "11月6日" header reads as today's 09:20.
+  const originalNote = originalLabel ?? sourceTimeLabel(sourceAt ?? null, dateOnly, filed, at);
+  const clockNote = dayGroupedDateOnly
+    ? collectedNote
+    : originalNote
+      ? dateOnly ? `收录 · ${originalNote}` : originalNote
+      : (clockLabel ?? timeLabel) === "收录" ? "收录" : null;
+  const title = originalNote && sourceAt && !dateOnly
     ? `本站收录时间：${fullDateTime(clockSource)}；原文发表：${fullDateTime(sourceAt)}`
     : dateOnly
       ? `原文仅标注日期：${sourceDay ?? "未知"}；此处是本站收录时间：${fullDateTime(clockSource)}`
-      : timeLabel ? `${timeLabel}：${at}` : undefined;
+      // Spell out the exact instant in the tooltip, not the raw ISO string: the clock column shows
+      // only "14:57" inside a day group, and readers asked for the full publication time.
+      : timeLabel ? `${timeLabel}：${fullDateTime(at)}` : undefined;
   return (
     <li
       data-card-key={dataKey}
       className={`group/slot grid grid-cols-[48px_minmax(0,1fr)] border-b border-line-soft py-3.5 last:border-b-0 lg:grid-cols-[64px_22px_minmax(0,1fr)] lg:border-b-0 lg:py-0 lg:pb-3 lg:last:pb-0 ${fresh ? "animate-fade-up" : ""}`}
       style={fresh ? { animationDelay: `${delay}ms` } : undefined}
     >
-      <time dateTime={at} title={title} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
+      <time dateTime={dayGroupedDateOnly ? clockSource : at} title={title} className="mono pt-[2px] text-[13px] leading-[18px] text-ink-4 lg:pt-[17px] lg:text-[12.5px] lg:font-semibold lg:leading-6 lg:text-ink-3">
         {clock}
         {clockNote && <span className="mt-0.5 block text-[10px] font-normal">{clockNote}</span>}
-        {!originalLabel && otherDay && <span className="mt-0.5 block text-[10px] font-normal opacity-80">原文{otherDay}</span>}
+        {!originalNote && otherDay && <span className="mt-0.5 block text-[10px] font-normal opacity-80">原文{otherDay}</span>}
       </time>
       <span aria-hidden="true" className="relative hidden lg:block">
         <span className="absolute -bottom-[41px] left-[10.5px] top-[29px] w-px bg-line-strong group-last/slot:hidden" />

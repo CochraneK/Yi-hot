@@ -57,14 +57,18 @@ interface Row {
   id: string;
   source_id: string;
   url: string;
-  published_at: Date;
+  published_at: Date | null;
   discovered_at: Date;
   backfill_reason: string | null;
 }
 const rows = await sql<Row[]>`
   SELECT a.id, a.source_id, a.url, a.published_at, a.discovered_at, a.backfill_reason
   FROM articles a
-  WHERE a.published_at_precision = 'date' AND a.published_at IS NOT NULL
+  -- Both cases the feed cannot show a real publication instant for: a bare day, and no date at all
+  -- (the latter otherwise prints nothing but our own collection clock).
+  -- The outer parentheses matter: without them AND binds tighter than OR and the --selected /
+  -- --days filters below would apply only to the second branch, sweeping the whole archive.
+  WHERE ((a.published_at_precision = 'date' AND a.published_at IS NOT NULL) OR a.published_at IS NULL)
     ${all ? sql`` : sql`AND a.source_id = ${sourceArg}`}
     ${days > 0 ? sql`AND a.discovered_at >= now() - ${`${days} days`}::interval` : sql``}
     ${onlySelected ? sql`AND EXISTS (SELECT 1 FROM publications p WHERE p.article_id = a.id AND p.selected)` : sql``}
@@ -86,10 +90,16 @@ async function one(a: Row): Promise<void> {
   try {
     // A search result's day comes from the retrieval index and is often a day off: the page decides,
     // but only within a day or two. Without that leash one stale byline (a page still printing 2021
-    // under a 2026 listing) dragged the article back five years.
-    const expectDay = source.kind === "search" ? null : dayInOffset(a.published_at);
+    // under a 2026 listing) dragged the article back five years. With no date at all there is no
+    // day to anchor to, so the discovery moment becomes the leash instead.
+    const expectDay = a.published_at && source.kind !== "search" ? dayInOffset(a.published_at) : null;
     const got = await fetchDetail(a.url, source, { date: true, title: false, summary: false, expectDay });
     if (!got.publishedAt || got.publishedAtPrecision !== "datetime") {
+      skipped += 1;
+      return;
+    }
+    // A midnight stamp is a date in disguise, not a clock.
+    if (new Date(got.publishedAt.getTime() + 8 * 3600_000).toISOString().slice(11, 16) === "00:00") {
       skipped += 1;
       return;
     }
@@ -99,9 +109,17 @@ async function one(a: Row): Promise<void> {
       skipped += 1;
       return;
     }
-    if (source.kind === "search" && Math.abs(got.publishedAt.getTime() - a.published_at.getTime()) > 2 * 86_400_000) {
+    if (a.published_at && source.kind === "search" && Math.abs(got.publishedAt.getTime() - a.published_at.getTime()) > 2 * 86_400_000) {
       skipped += 1;
       return;
+    }
+    if (!a.published_at) {
+      const t = got.publishedAt.getTime();
+      const now = a.discovered_at.getTime();
+      if (t > now + 86_400_000 || t < now - 7 * 86_400_000) {
+        skipped += 1;
+        return;
+      }
     }
     const t = decideTimeline(got.publishedAt, a.discovered_at, a.backfill_reason);
     await sql`

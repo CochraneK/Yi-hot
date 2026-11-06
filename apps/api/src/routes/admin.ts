@@ -14,6 +14,7 @@ import { listMonitorEvents, listMonitorPosts, relinkPost, resolveMonitorPost, re
 import { releaseReceipt, requeueFailedArticles, resolveDelivery, runsOverview } from "@aihot/backend/admin/runs";
 import { listBudgets, listTargets, replaceContactQr, setTargetEnabled, updateBudget } from "@aihot/backend/admin/settings";
 import { createSource, fetchNow, listSources, previewSource, sourceDetail, updateSource } from "@aihot/backend/admin/sources";
+import { listSubscriptions } from "@aihot/backend/admin/subscriptions";
 import { discoverFeeds } from "@aihot/backend/sources/discovery";
 import { sql } from "@aihot/backend/db";
 import { loadContact } from "@aihot/backend/site/contact";
@@ -119,6 +120,14 @@ export function registerAdmin(app: FastifyInstance) {
   }));
   app.put("/api/admin/budgets/:service", adminHandler(async (req, _reply, admin) => updateBudget(param(req, "service"), body(req) as never, actorOf(admin))));
 
+
+  // Newsletter subscriptions (read-only)
+  app.get("/api/admin/subscriptions", adminHandler(async (req) => listSubscriptions({
+    status: q(req).status,
+    kind: q(req).kind,
+    q: q(req).q,
+    page: page(req),
+  })));
 
   // Token usage and estimated spend (F20)
   app.get("/api/admin/usage", adminHandler(async (req) => usageOverview(Math.min(365, Number(q(req).days) || 30))));

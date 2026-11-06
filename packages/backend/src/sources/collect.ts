@@ -2,6 +2,7 @@
 // A failed fetch never advances the success cursor; the source's health reflects consecutive failures.
 import { sql } from "../db.ts";
 import { identityKeyFor, upsertMaterial } from "../content/materials.ts";
+import { pageFetchable } from "../content/extract.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
 import { queueProcessing } from "../jobs/content.ts";
 import { BudgetExceededError, ProviderRejectedError } from "../providers/receipts.ts";
@@ -45,8 +46,17 @@ const DATE_UPGRADE_MAX_FETCHES = 6;
  * 于是首轮没排进额度的稿子永远停在零点。2026-11-02 的实例：一篇 11-01 11:21 的稿子首轮排在
  * 第 7 位（当时额度 6），此后每轮都被跳过，页面上只能印「原文11.1」。这里让仍在窗口内、且库里
  * 还只有日的稿子继续争取，只花本轮剩下的额度（新条目永远优先），且只读钟点不重读正文。
+ *
+ * 7 天窗口下搜索源的老稿每轮都来抢额度（实测 479 次重试/天），而它们的页面本来就没印钟点。
+ * 缩到 3 天，把额度留给昨天刚进来的新稿。可用 config._aihot.dateUpgradeRetryDays 覆盖。
  */
-const DATE_UPGRADE_RETRY_DAYS = 7;
+const DATE_UPGRADE_RETRY_DAYS = 3;
+/**
+ * 一轮里「只为读钟点」的详情页抓取累计耗时上限。逐个 await、单次超时 20s，额度提到 24 后
+ * 最坏一轮 24×20s=8 分钟，会把整轮采集拖爆（worker 卡住的教训）。到点就停止补钟点，剩下的
+ * 稿子留给下一轮，新稿永远排在队首，不会被饿死。这里只管时间，不管次数。
+ */
+const DATE_UPGRADE_MAX_MS = 90_000;
 /**
  * 增量采集的年龄闸门（天）。首采有 initialBackfillMonths 那道窗，增量原先只卡条数——
  * 而 RSS 的 etag 会在配置变更时被丢掉（rss.ts），feed 于是整份重读，归档页上几年前的条目
@@ -275,6 +285,10 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     const d = source.config.detail;
     const detailBudget = Number(d?.maxFetches ?? 0);
     const dateBudget = Number(source.config._aihot?.dateUpgradeMaxFetches ?? DATE_UPGRADE_MAX_FETCHES);
+    const retryDays = Number(source.config._aihot?.dateUpgradeRetryDays ?? DATE_UPGRADE_RETRY_DAYS);
+    // Wall-clock spent on clock-only page reads this run. The pass has a hard cap: a handful of
+    // unresponsive third-party pages must not hold up the whole collection cycle.
+    let dateFetchMs = 0;
     let detailUsed = 0;
     // Its own counter: reading a clock off a page the listing dated only to the day is the one thing
     // every date-only source needs, and most of them carry no detail config to spend.
@@ -284,7 +298,19 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
     const jinaListing = String(source.config.url ?? "").startsWith("https://r.jina.ai/");
     // New material first. A retry spends only the budget this run has left after every new item has
     // had its chance, so a backlog of old day-only pages cannot starve today's arrivals.
-    if (known.size > 0) candidates = [...candidates.filter((c) => !known.has(c.url)), ...candidates.filter((c) => known.has(c.url))];
+    // Within today's arrivals the limited clock budget goes where nothing else can help: the body
+    // job refines an ordinary page's clock for free, but it cannot fetch WeChat/X, and an item
+    // with no date at all would otherwise show nothing but our own collection clock. Filter keeps
+    // each group's existing order, so a source's sortByPublishedAt still holds inside the group.
+    const isNew = (c: Candidate) => !known.has(c.url);
+    const needsThisPass = (c: Candidate) => !pageFetchable(c.url, source.kind) || !c.publishedAt;
+    const fresh = candidates.filter(isNew);
+    candidates = [
+      ...fresh.filter(needsThisPass),
+      ...fresh.filter((c) => !needsThisPass(c)),
+      ...candidates.filter((c) => !isNew(c)),
+    ];
+    const noTimeBefore = candidates.filter((c) => !c.publishedAt).length;
     for (const c of candidates) {
       // Listing dates the source marks unreliable are dropped; the detail page's rule decides.
       if (d?.publishedAtAuthoritative === true) c.publishedAt = null;
@@ -293,7 +319,7 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       // another read. Without this the first run that met an article was its only chance — anything
       // past that run's budget stayed at midnight for good, however plainly the page printed a time.
       const retryDate = stored !== undefined && stored.precision === "date" && stored.publishedAt !== null
-        && Date.now() - stored.publishedAt.getTime() < DATE_UPGRADE_RETRY_DAYS * DAY_MS;
+        && Date.now() - stored.publishedAt.getTime() < retryDays * DAY_MS;
       if (stored !== undefined && !retryDate) {
         // The title came from the detail page: the listing's own rendering must not revise it back.
         if (d?.titleSelector || d?.titleRegex) c.title = stored.title;
@@ -308,17 +334,25 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       // Declared date-only, which is not the same as "no precision stated": a feed's own pubDate is
       // a clock already, and only the listing parsers (and search) say when they had a day alone.
       const dateOnly = !!c.publishedAt && c.publishedAtPrecision === "date";
+      // Worse than a day-only listing: with no date at all the feed can only print our own
+      // collection clock. Its page deserves the same chance to state a real publication time.
+      const noTime = !c.publishedAt;
       // Title, summary and body rules are for material we do not hold yet; a retry only reads a clock.
       const wantRules = stored === undefined && !!d && detailUsed < detailBudget;
       // A listing read through Jina pays for every page it opens: its clock is only upgraded when the
       // source asked for it, never automatically.
-      const wantDate = dateOnly && dateUsed < dateBudget && (!jinaListing || d?.upgradeDatePrecision === true);
+      const wantDate = (dateOnly || noTime) && dateUsed < dateBudget && dateFetchMs < DATE_UPGRADE_MAX_MS
+        && (!jinaListing || d?.upgradeDatePrecision === true);
       if (!wantRules && !wantDate) continue;
       // A reposted article (the listing links another site) carries the repost date; its own page has
       // the publication date, which can be days earlier than the listing's.
       const reposted = d?.publishedAtForExternal === true && externalLink(c.url, String(source.config.url ?? ""));
       const need: DetailNeed = {
-        date: wantDate || (wantRules && (!c.publishedAt || d!.upgradeDatePrecision === true || reposted)),
+        // Once the page is in hand, reading its clock is free. Rule-driven fetches used to discard
+        // it whenever the listing had already named a day, and those articles never reach the body
+        // job (their body was written here), so nothing could ever refine them. Jina listings stay
+        // on the old rule: need.date there can trigger a separate paid render.
+        date: wantDate || (wantRules && (!jinaListing || !c.publishedAt || d!.upgradeDatePrecision === true || reposted)),
         title: stored === undefined && !!d && !!(d.titleSelector || d.titleRegex) && (d.titleAuthoritative === true || needsTitle(c.title)),
         summary: stored === undefined && !!d && !!d.summarySelector && !c.excerpt,
         body: stored === undefined && source.participation_mode === "editorial" && !c.bodyText && (!c.bodyStatus || c.bodyStatus === "pending"),
@@ -328,9 +362,12 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       };
       if (!need.date && !need.title && !need.summary) continue;
       if (retryDate) dateRetried += 1;
-      // The rules have their own budget; a page read only for its clock spends the date one.
-      if (need.title || need.summary || !wantDate) detailUsed += 1;
+      // The rules have their own budget; a page read only for its clock spends the date one — and
+      // only those reads count against the wall-clock cap.
+      const clockOnly = wantDate && !need.title && !need.summary;
+      if (!clockOnly) detailUsed += 1;
       else dateUsed += 1;
+      const startedAt = clockOnly ? Date.now() : 0;
       try {
         const got = await fetchDetail(c.url, source, need);
         if (got.title) c.title = got.title;
@@ -347,21 +384,34 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
         // result's date comes from the retrieval index rather than the page, and is off by a day
         // often enough (a /20261022/ URL dated 10-21) that the page's own date wins within two days.
         const claimWindow = source.kind === "search" ? 2 * DAY_MS : DAY_MS;
-        if (got.publishedAt && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < claimWindow)) {
+        // With no date from the listing there is no anchor: hold the page's claim to a week around
+        // the crawl, so a stale byline on an old page cannot file it as today's news.
+        const plausible = !c.publishedAt
+          ? got.publishedAt !== null && got.publishedAt.getTime() <= Date.now() + DAY_MS
+            && got.publishedAt.getTime() >= Date.now() - 7 * DAY_MS
+          : true;
+        // A page that prints only a day must never demote a clock we already hold.
+        const claimPrecision = () =>
+          got.publishedAtPrecision === "datetime" || c.publishedAtPrecision !== "datetime"
+            ? (got.publishedAtPrecision ?? c.publishedAtPrecision)
+            : c.publishedAtPrecision;
+        if (got.publishedAt && plausible && (!c.publishedAt || Math.abs(got.publishedAt.getTime() - c.publishedAt.getTime()) < claimWindow)) {
+          c.publishedAtPrecision = claimPrecision();
           c.publishedAt = got.publishedAt;
-          if (got.publishedAtPrecision) c.publishedAtPrecision = got.publishedAtPrecision;
         }
         // A repost's own date can be days before the copy; the page still has to be plausible (not in the
         // future, not older than two months) before it replaces what the listing said.
         else if (got.publishedAt && reposted) {
           const t = got.publishedAt.getTime();
           if (t <= Date.now() + DAY_MS && t >= c.publishedAt!.getTime() - 60 * DAY_MS) {
+            c.publishedAtPrecision = claimPrecision();
             c.publishedAt = got.publishedAt;
-            if (got.publishedAtPrecision) c.publishedAtPrecision = got.publishedAtPrecision;
           }
         }
       } catch {
         // detail is best effort
+      } finally {
+        if (startedAt) dateFetchMs += Date.now() - startedAt;
       }
     }
 
@@ -375,7 +425,10 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       detail = {
         ...(detail ?? {}),
         dateOnlyFound: candidates.filter((c) => c.publishedAtPrecision === "date").length,
+        ...(noTimeBefore > 0 ? { noTimeFound: noTimeBefore, noTimeFixed: noTimeBefore - candidates.filter((c) => !c.publishedAt).length } : {}),
         dateUpgrades: dateUsed,
+        datePassMs: Math.round(dateFetchMs),
+        ...(dateFetchMs >= DATE_UPGRADE_MAX_MS ? { dateCapHit: true } : {}),
         ...(dateRetried > 0 ? { dateRetried } : {}),
         detailPages: detailUsed,
       };

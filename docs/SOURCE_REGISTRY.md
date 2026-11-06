@@ -7,7 +7,7 @@
 
 | 类型 | 源数 | 在用且有产出 | 入池文章 | 占比 |
 | :--- | :--- | :--- | :--- | :--- |
-| 搜索源（DeepSeek Search） | 72 | 70 | 1256 | 67% |
+| 搜索源 | 72 | 70 | 1256 | 67% |
 | 网页列表源 | 93 | 68 | 465 | 25% |
 | RSS 源 | 26 | 9 | 80 | 4% |
 | JSON / API 列表源 | 17 | 2 | 52 | 3% |
@@ -18,77 +18,77 @@
 
 下表只列**主力源**（启用且入池 ≥5，共 113 个）；入池 1–4 的、零入池与已停用的 97 个收在下方折叠块里。**名称带链接的指向原始采集地址**，可直接点开核对原文；网页搜索源按主题词检索、没有固定地址，故不设链接。状态：● 主力（入池 ≥5）· 少量（1–4）· △ 有稿零入池 · ○ 从未产出 · ⚠️ 退避中 · ⛔ 停用；数字为**入池 / 产出**。
 
-#### 搜索源（DeepSeek Search）（主力 67 个，入池 1256）
+#### 搜索源（主力 67 个，入池 1256）
 
 | 名称 | ID | 状态 | 入池/产出 |
 | :--- | :--- | :--- | :--- |
-| 网页搜索·老年人权益（DeepSeek） | `search-elderly` | ● 主力 | 62/82 |
-| 网页搜索·残障融合（DeepSeek） | `search-disability` | ● 主力 | 49/73 |
-| 网页搜索·儿童与公益（DeepSeek） | `search-child-rights` | ● 主力 | 48/98 |
-| 网页搜索·国家卫健委（DeepSeek） | `search-mohw` | ● 主力 | 47/82 |
-| 网页搜索·江苏民政（DeepSeek） | `search-mca-js` | ● 主力 | 44/72 |
-| 网页搜索·浙江残联（DeepSeek） | `search-cdpf-zj` | ● 主力 | 38/65 |
-| 网页搜索·山东民政（DeepSeek） | `search-mca-sd` | ● 主力 | 38/70 |
-| 网页搜索·北京民政（DeepSeek） | `search-mca-bj` | ● 主力 | 35/51 |
-| 网页搜索·乡村振兴（DeepSeek） | `search-rural` | ● 主力 | 33/71 |
-| 网页搜索·浙江民政（DeepSeek） | `search-mca-zj` | ● 主力 | 31/54 |
-| 网页搜索·韩红基金会（DeepSeek） | `search-found-han` | ● 主力 | 30/37 |
-| 网页搜索·嫣然天使（DeepSeek） | `search-found-smile` | ● 主力 | 29/33 |
-| 网页搜索·江苏残联（DeepSeek） | `search-cdpf-js` | ● 主力 | 27/71 |
-| 网页搜索·上海民政（DeepSeek） | `search-mca-sh` | ● 主力 | 25/61 |
-| 网页搜索·安徽民政（DeepSeek） | `search-mca-anhui` | ● 主力 | 24/65 |
-| 网页搜索·河北民政（DeepSeek） | `search-mca-hebei` | ● 主力 | 24/55 |
-| 网页搜索·山西民政（DeepSeek） | `search-mca-shanxi` | ● 主力 | 22/76 |
-| 网页搜索·湖北民政（DeepSeek） | `search-mca-hub` | ● 主力 | 21/63 |
-| 网页搜索·云南民政（DeepSeek） | `search-mca-yunnan` | ● 主力 | 21/64 |
-| 网页搜索·财政部（DeepSeek） | `search-mof` | ● 主力 | 21/54 |
-| 网页搜索·北师大中国公益研究院（DeepSeek） | `search-think-tass` | ● 主力 | 21/42 |
-| 网页搜索·上海残联（DeepSeek） | `search-cdpf-sh` | ● 主力 | 20/68 |
-| 网页搜索·UNHCR 难民署（DeepSeek） | `search-intl-unhcr` | ● 主力 | 20/34 |
-| 网页搜索·江西民政（DeepSeek） | `search-mca-jiangxi` | ● 主力 | 20/50 |
-| 网页搜索·山东残联（DeepSeek） | `search-cdpf-sd` | ● 主力 | 19/69 |
+| 网页搜索·老年人权益 | `search-elderly` | ● 主力 | 62/82 |
+| 网页搜索·残障融合 | `search-disability` | ● 主力 | 49/73 |
+| 网页搜索·儿童与公益 | `search-child-rights` | ● 主力 | 48/98 |
+| 网页搜索·国家卫健委 | `search-mohw` | ● 主力 | 47/82 |
+| 网页搜索·江苏民政 | `search-mca-js` | ● 主力 | 44/72 |
+| 网页搜索·浙江残联 | `search-cdpf-zj` | ● 主力 | 38/65 |
+| 网页搜索·山东民政 | `search-mca-sd` | ● 主力 | 38/70 |
+| 网页搜索·北京民政 | `search-mca-bj` | ● 主力 | 35/51 |
+| 网页搜索·乡村振兴 | `search-rural` | ● 主力 | 33/71 |
+| 网页搜索·浙江民政 | `search-mca-zj` | ● 主力 | 31/54 |
+| 网页搜索·韩红基金会 | `search-found-han` | ● 主力 | 30/37 |
+| 网页搜索·嫣然天使 | `search-found-smile` | ● 主力 | 29/33 |
+| 网页搜索·江苏残联 | `search-cdpf-js` | ● 主力 | 27/71 |
+| 网页搜索·上海民政 | `search-mca-sh` | ● 主力 | 25/61 |
+| 网页搜索·安徽民政 | `search-mca-anhui` | ● 主力 | 24/65 |
+| 网页搜索·河北民政 | `search-mca-hebei` | ● 主力 | 24/55 |
+| 网页搜索·山西民政 | `search-mca-shanxi` | ● 主力 | 22/76 |
+| 网页搜索·湖北民政 | `search-mca-hub` | ● 主力 | 21/63 |
+| 网页搜索·云南民政 | `search-mca-yunnan` | ● 主力 | 21/64 |
+| 网页搜索·财政部 | `search-mof` | ● 主力 | 21/54 |
+| 网页搜索·北师大中国公益研究院 | `search-think-tass` | ● 主力 | 21/42 |
+| 网页搜索·上海残联 | `search-cdpf-sh` | ● 主力 | 20/68 |
+| 网页搜索·UNHCR 难民署 | `search-intl-unhcr` | ● 主力 | 20/34 |
+| 网页搜索·江西民政 | `search-mca-jiangxi` | ● 主力 | 20/50 |
+| 网页搜索·山东残联 | `search-cdpf-sd` | ● 主力 | 19/69 |
 | 网页搜索·大病与罕见病儿童救助 | `search-child-medical` | ● 主力 | 18/31 |
-| 网页搜索·甘肃民政（DeepSeek） | `search-mca-gansu` | ● 主力 | 18/48 |
-| 网页搜索·海南民政（DeepSeek） | `search-mca-hainan` | ● 主力 | 17/54 |
-| 网页搜索·南都观察/报告（DeepSeek） | `search-think-nandu` | ● 主力 | 17/35 |
-| 网页搜索·江苏共青团（DeepSeek） | `search-gqt-js` | ● 主力 | 16/62 |
-| 网页搜索·北京残联（DeepSeek） | `search-cdpf-bj` | ● 主力 | 15/56 |
-| 网页搜索·湖北残联（DeepSeek） | `search-cdpf-hub` | ● 主力 | 15/66 |
-| 网页搜索·21世纪教育研究院（DeepSeek） | `search-think-21edu` | ● 主力 | 15/41 |
-| 网页搜索·社科院社会政策（DeepSeek） | `search-think-cass` | ● 主力 | 15/52 |
-| 网页搜索·山东妇联（DeepSeek） | `search-women-sd` | ● 主力 | 15/46 |
-| 网页搜索·浙江妇联（DeepSeek） | `search-women-zj` | ● 主力 | 15/68 |
-| 网页搜索·浙江共青团（DeepSeek） | `search-gqt-zj` | ● 主力 | 14/69 |
-| 网页搜索·慈善公益报（DeepSeek） | `search-media-charity` | ● 主力 | 14/28 |
-| 网页搜索·司法部（DeepSeek） | `search-moj` | ● 主力 | 14/70 |
-| 网页搜索·江苏妇联（DeepSeek） | `search-women-js` | ● 主力 | 14/65 |
-| 网页搜索·慈善信息公开（DeepSeek） | `search-data-charity` | ● 主力 | 13/33 |
-| 网页搜索·法律援助（DeepSeek） | `search-judicial-legalaid` | ● 主力 | 13/46 |
-| 网页搜索·宁夏民政（DeepSeek） | `search-mca-ningxia` | ● 主力 | 13/44 |
-| 网页搜索·中国社会报（DeepSeek） | `search-media-chinasocial` | ● 主力 | 13/38 |
-| 网页搜索·免费午餐（DeepSeek） | `search-found-free` | ● 主力 | 12/30 |
-| 网页搜索·性别平等（DeepSeek） | `search-gender` | ● 主力 | 11/83 |
-| 网页搜索·上海共青团（DeepSeek） | `search-gqt-sh` | ● 主力 | 11/54 |
-| 网页搜索·最高检未检（DeepSeek） | `search-judicial-spp` | ● 主力 | 11/47 |
-| 网页搜索·公益时报（DeepSeek） | `search-media-gongyi` | ● 主力 | 11/18 |
-| 网页搜索·UN Women 妇女署（DeepSeek） | `search-intl-unwomen` | ● 主力 | 10/33 |
-| 网页搜索·最高法典型案例（DeepSeek） | `search-judicial-spc` | ● 主力 | 10/79 |
-| 网页搜索·人社部（DeepSeek） | `search-mohrss` | ● 主力 | 10/65 |
-| 网页搜索·北大社会研究中心（DeepSeek） | `search-think-pku` | ● 主力 | 10/41 |
-| 网页搜索·清华公益慈善研究院（DeepSeek） | `search-think-tsinghua` | ● 主力 | 10/30 |
+| 网页搜索·甘肃民政 | `search-mca-gansu` | ● 主力 | 18/48 |
+| 网页搜索·海南民政 | `search-mca-hainan` | ● 主力 | 17/54 |
+| 网页搜索·南都观察/报告 | `search-think-nandu` | ● 主力 | 17/35 |
+| 网页搜索·江苏共青团 | `search-gqt-js` | ● 主力 | 16/62 |
+| 网页搜索·北京残联 | `search-cdpf-bj` | ● 主力 | 15/56 |
+| 网页搜索·湖北残联 | `search-cdpf-hub` | ● 主力 | 15/66 |
+| 网页搜索·21世纪教育研究院 | `search-think-21edu` | ● 主力 | 15/41 |
+| 网页搜索·社科院社会政策 | `search-think-cass` | ● 主力 | 15/52 |
+| 网页搜索·山东妇联 | `search-women-sd` | ● 主力 | 15/46 |
+| 网页搜索·浙江妇联 | `search-women-zj` | ● 主力 | 15/68 |
+| 网页搜索·浙江共青团 | `search-gqt-zj` | ● 主力 | 14/69 |
+| 网页搜索·慈善公益报 | `search-media-charity` | ● 主力 | 14/28 |
+| 网页搜索·司法部 | `search-moj` | ● 主力 | 14/70 |
+| 网页搜索·江苏妇联 | `search-women-js` | ● 主力 | 14/65 |
+| 网页搜索·慈善信息公开 | `search-data-charity` | ● 主力 | 13/33 |
+| 网页搜索·法律援助 | `search-judicial-legalaid` | ● 主力 | 13/46 |
+| 网页搜索·宁夏民政 | `search-mca-ningxia` | ● 主力 | 13/44 |
+| 网页搜索·中国社会报 | `search-media-chinasocial` | ● 主力 | 13/38 |
+| 网页搜索·免费午餐 | `search-found-free` | ● 主力 | 12/30 |
+| 网页搜索·性别平等 | `search-gender` | ● 主力 | 11/83 |
+| 网页搜索·上海共青团 | `search-gqt-sh` | ● 主力 | 11/54 |
+| 网页搜索·最高检未检 | `search-judicial-spp` | ● 主力 | 11/47 |
+| 网页搜索·公益时报 | `search-media-gongyi` | ● 主力 | 11/18 |
+| 网页搜索·UN Women 妇女署 | `search-intl-unwomen` | ● 主力 | 10/33 |
+| 网页搜索·最高法典型案例 | `search-judicial-spc` | ● 主力 | 10/79 |
+| 网页搜索·人社部 | `search-mohrss` | ● 主力 | 10/65 |
+| 网页搜索·北大社会研究中心 | `search-think-pku` | ● 主力 | 10/41 |
+| 网页搜索·清华公益慈善研究院 | `search-think-tsinghua` | ● 主力 | 10/30 |
 | 网页搜索·儿童心理服务 | `search-child-mental` | ● 主力 | 9/29 |
-| 网页搜索·湖北共青团（DeepSeek） | `search-gqt-hub` | ● 主力 | 9/68 |
-| 网页搜索·真爱梦想（DeepSeek） | `search-found-dream` | ● 主力 | 8/25 |
-| 网页搜索·北京共青团（DeepSeek） | `search-gqt-bj` | ● 主力 | 8/69 |
-| 网页搜索·公安部（DeepSeek） | `search-mps` | ● 主力 | 8/67 |
-| 网页搜索·湖北妇联（DeepSeek） | `search-women-hub` | ● 主力 | 8/61 |
-| 网页搜索·上海妇联（DeepSeek） | `search-women-sh` | ● 主力 | 8/52 |
-| 网页搜索·UNDP 开发计划署（DeepSeek） | `search-intl-undp` | ● 主力 | 6/45 |
-| 网页搜索·WHO 世界卫生组织（DeepSeek） | `search-intl-who` | ● 主力 | 6/38 |
-| 网页搜索·财新公益（DeepSeek） | `search-media-caixin` | ● 主力 | 6/22 |
-| 网页搜索·生态环境（DeepSeek） | `search-environment` | ● 主力 | 5/90 |
-| 网页搜索·山东共青团（DeepSeek） | `search-gqt-sd` | ● 主力 | 5/55 |
-| 网页搜索·北京妇联（DeepSeek） | `search-women-bj` | ● 主力 | 5/63 |
+| 网页搜索·湖北共青团 | `search-gqt-hub` | ● 主力 | 9/68 |
+| 网页搜索·真爱梦想 | `search-found-dream` | ● 主力 | 8/25 |
+| 网页搜索·北京共青团 | `search-gqt-bj` | ● 主力 | 8/69 |
+| 网页搜索·公安部 | `search-mps` | ● 主力 | 8/67 |
+| 网页搜索·湖北妇联 | `search-women-hub` | ● 主力 | 8/61 |
+| 网页搜索·上海妇联 | `search-women-sh` | ● 主力 | 8/52 |
+| 网页搜索·UNDP 开发计划署 | `search-intl-undp` | ● 主力 | 6/45 |
+| 网页搜索·WHO 世界卫生组织 | `search-intl-who` | ● 主力 | 6/38 |
+| 网页搜索·财新公益 | `search-media-caixin` | ● 主力 | 6/22 |
+| 网页搜索·生态环境 | `search-environment` | ● 主力 | 5/90 |
+| 网页搜索·山东共青团 | `search-gqt-sd` | ● 主力 | 5/55 |
+| 网页搜索·北京妇联 | `search-women-bj` | ● 主力 | 5/63 |
 
 #### 网页列表源（主力 39 个，入池 465）
 
@@ -179,7 +179,7 @@
 | 网页列表源 | [UNICEF Innocenti·儿童研究报告](https://www.unicef.org/innocenti/projects-and-reports) | `web-unicef-innocenti-reports` | · 少量 | 4/6 |
 | 网页列表源 | [世界银行·儿童](https://www.worldbank.org/en/news/all?qterm=children&lang_exact=English) | `web-worldbank` | · 少量 | 4/8 |
 | JSON / API 列表源 | [基金会中心网·动态](https://api.foundationcenter.org.cn/api/HomeAPI/News) | `json-foundation-center-fti` | · 少量 | 3/12 |
-| 搜索源（DeepSeek Search） | 网页搜索·世界银行（DeepSeek） | `search-intl-worldbank` | · 少量 | 3/34 |
+| 搜索源 | 网页搜索·世界银行 | `search-intl-worldbank` | · 少量 | 3/34 |
 | 网页列表源 | [安徽省残联·市县动态](https://www.ahdpf.org.cn/xwzx/sxdt/index.html) | `web-ahdpf-sxdt` | · 少量 | 3/9 |
 | 网页列表源 | [广西壮族自治区残联·要闻](http://www.gxdpf.org.cn/) | `web-gxdpf-news` | · 少量 | 3/11 |
 | 网页列表源 | [生态环境部·政策文件](http://www.mee.gov.cn/zcwj/) | `web-mee-zcwj` | · 少量 | 3/36 |
@@ -188,7 +188,7 @@
 | 网页列表源 | [新疆维吾尔自治区民政厅·通知公告](https://mzt.xinjiang.gov.cn/xjmzt/c112990/list.shtml) | `web-probe-mzt-xinjiang-gov-cn-316374` | · 少量 | 3/19 |
 | 网页列表源 | [西藏自治区民政厅·通知公告](https://mzt.xizang.gov.cn/zxzx/tzgg/) | `web-probe-mzt-xizang-gov-cn-316374` | · 少量 | 3/17 |
 | JSON / API 列表源 | 小红书 · 公益项目 | `xhs-search-charity-project` | ⛔ 停用 | 3/32 |
-| 搜索源（DeepSeek Search） | 网页搜索·关心下一代工作 | `search-guangongwei` | · 少量 | 2/37 |
+| 搜索源 | 网页搜索·关心下一代工作 | `search-guangongwei` | · 少量 | 2/37 |
 | 网页列表源 | [国家疾控局](https://www.ndcpa.gov.cn/jbkzzx/c100008/common/list.html) | `web-ndcpa` | · 少量 | 2/27 |
 | 网页列表源 | [辽宁省民政厅·图片新闻](https://mzt.ln.gov.cn/mzt/tpxw/index.shtml) | `web-probe-mzt-ln-gov-cn-0283c5` | · 少量 | 2/10 |
 | 网页列表源 | [浙江省民政厅·社会组织年检公告](https://mzt.zj.gov.cn/col/col1648467/index.html) | `web-probe-mzt-zj-gov-cn-5b3418` | · 少量 | 2/15 |
@@ -200,7 +200,7 @@
 | 网页列表源 | [中国发展简报](https://www.chinadevelopmentbrief.org.cn/) | `china-development-brief` | · 少量 | 1/10 |
 | RSS 源 | [中国新闻网·教育](https://www.chinanews.com.cn/rss/edu.xml) | `rss-chinanews-edu` | · 少量 | 1/3 |
 | RSS 源 | [中国新闻网·健康](https://www.chinanews.com.cn/rss/health.xml) | `rss-chinanews-health` | · 少量 | 1/7 |
-| 搜索源（DeepSeek Search） | 网页搜索·财政民生支出（DeepSeek） | `search-data-finance` | · 少量 | 1/44 |
+| 搜索源 | 网页搜索·财政民生支出 | `search-data-finance` | · 少量 | 1/44 |
 | 网页列表源 | [安徽省残联·残联要闻](https://www.ahdpf.org.cn/xwzx/gzdt/index.html) | `web-ahdpf-gzdt` | · 少量 | 1/9 |
 | 网页列表源 | [中国人口福利基金会·新闻动态](https://www.cpwf.org.cn/category/13) | `web-cpwf-news` | · 少量 | 1/9 |
 | 网页列表源 | [中国红十字基金会·新闻中心](https://www.crcf.org.cn/) | `web-crcf-news` | · 少量 | 1/10 |
@@ -211,8 +211,8 @@
 | JSON / API 列表源 | 公众号 · 中国红十字会 | `wechat-oa-red-cross` | ⛔ 停用 | 1/10 |
 | 外部系统源 | AmCham China Events 邮件 | `email-amcham-events` | △ 零入池 | 0/16 |
 | RSS 源 | [联合国新闻（中文）](https://news.un.org/feed/subscribe/zh/news/all/rss.xml) | `rss-un-news` | ⛔ 停用 | 0/0 |
-| 搜索源（DeepSeek Search） | 网页搜索·国家统计局数据（DeepSeek） | `search-data-stats` | △ 零入池 | 0/40 |
-| 搜索源（DeepSeek Search） | 网页搜索·市场监管总局（DeepSeek） | `search-samr` | △ 零入池 | 0/68 |
+| 搜索源 | 网页搜索·国家统计局数据 | `search-data-stats` | △ 零入池 | 0/40 |
+| 搜索源 | 网页搜索·市场监管总局 | `search-samr` | △ 零入池 | 0/68 |
 | 网页列表源 | [财新网](https://www.caixin.com/) | `web-caixin` | △ 零入池 | 0/43 |
 | 网页列表源 | [中国发展研究基金会](https://www.cdrf.org.cn/zxdt/index.htm) | `web-cdrf` | △ 零入池 | 0/10 |
 | 网页列表源 | [中国基金会发展论坛·行业资讯](https://www.cfforum.org.cn/category/6) | `web-cfforum-news` | ○ 未产出 | 0/0 |

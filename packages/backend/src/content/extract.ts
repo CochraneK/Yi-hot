@@ -10,7 +10,7 @@ import { BudgetExceededError } from "../providers/receipts.ts";
 import { getArticle } from "../providers/socialdata.ts";
 import { onlyXArticleLink, xArticleText } from "../sources/x.ts";
 import { sanitizeBody, trimTrailingChrome } from "./sanitize.ts";
-import { contentHash } from "./materials.ts";
+import { contentHash, decideTimeline } from "./materials.ts";
 import { extractTextItems } from "unpdf";
 
 export interface ExtractedBody {
@@ -186,7 +186,7 @@ async function fetchForBody(url: string) {
   }
 }
 
-export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string }): Promise<ExtractedBody | null> {
+export async function extractFromUrl(url: string, opts: { allowJina: boolean; subject: string; captured?: { html?: string; finalUrl?: string } }): Promise<ExtractedBody | null> {
   try {
     const res = await fetchForBody(url);
     if (isSignInRedirect(url, res.url)) return null;
@@ -195,7 +195,11 @@ export async function extractFromUrl(url: string, opts: { allowJina: boolean; su
       const got = await readablePdf(res.body, res.url);
       if (got) return got;
     } else if (res.status === 200 && /html/.test(type)) {
-      const got = readable(res.text(), res.url);
+      // Keep the bytes: the page's own publication clock lives in <head> / metadata, which the body
+      // reader discards. Handing it back costs nothing — this request already happened for the body.
+      const html = res.text();
+      if (opts.captured) { opts.captured.html = html; opts.captured.finalUrl = res.url; }
+      const got = readable(html, res.url);
       if (got) return got;
     }
   } catch {
@@ -225,15 +229,74 @@ export function pageFetchable(url: string, sourceKind: string): boolean {
   }
 }
 
+/**
+ * Refine an article's publication instant from HTML we already fetched for its body. A listing
+ * knows only the day ("2026/10/21") — or nothing at all — while the article's own page prints
+ * "09:20". collect.ts reads just a handful of those pages per run (its clock budget), and an
+ * article with no date would otherwise show nothing but our collection clock forever. The
+ * extraction job fetches the same page anyway, so reading the clock from those bytes costs no
+ * extra request and no model call.
+ *
+ * A stored day anchors the page's claim to that day. With no date at all there is no anchor, so
+ * the discovery moment acts as a leash: a page still printing 2021 under today's crawl must not
+ * be filed as news from five years ago. Timeline fields go through decideTimeline, the one rule
+ * shared by every entrance, so this path and scripts/backfill-date-precision.ts cannot disagree.
+ */
+export async function upgradeArticleClock(articleId: string, html: string): Promise<boolean> {
+  const [a] = await sql<{
+    published_at: Date | null;
+    published_at_precision: "date" | "datetime" | null;
+    discovered_at: Date;
+    backfill_reason: string | null;
+  }[]>`
+    SELECT published_at, published_at_precision, discovered_at, backfill_reason
+    FROM articles WHERE id = ${articleId}`;
+  if (!a) return false;
+  // Already an exact time: nothing to refine. A row with no time at all is the other case this
+  // repairs — the feed would otherwise print our own collection moment as if it were published.
+  if (a.published_at && a.published_at_precision === "datetime") return false;
+  // web-list imports this module's `readable`, so a static import here would close a cycle.
+  const { pagePublishedAt, dayInOffset } = await import("../sources/web-list.ts");
+  const expectDay = a.published_at ? dayInOffset(a.published_at) : null;
+  const page = pagePublishedAt(html, expectDay, "+08:00");
+  if (!page || page.precision !== "datetime") return false;
+  // A midnight stamp is a date in disguise (format.ts treats it as one): only a real clock counts.
+  if (new Date(page.at.getTime() + 8 * 3600_000).toISOString().slice(11, 16) === "00:00") return false;
+  if (!a.published_at && !expectDay) {
+    const now = a.discovered_at.getTime();
+    if (page.at.getTime() > now + 86_400_000 || page.at.getTime() < now - 7 * 86_400_000) return false;
+  }
+  const t = decideTimeline(page.at, a.discovered_at, a.backfill_reason);
+  if (!t.publishedAt) return false;
+  const [updated] = await sql<{ id: string }[]>`
+    UPDATE articles SET published_at = ${t.publishedAt}, published_at_claim = ${page.at},
+      published_at_precision = 'datetime', timeline_at = ${t.timelineAt},
+      backfill = ${t.backfill}, backfill_reason = ${t.backfillReason}, updated_at = now()
+    WHERE id = ${articleId} AND (published_at IS NULL OR published_at_precision <> 'datetime')
+    RETURNING id`;
+  if (!updated) return false;
+  // The feed reads publications.published_at, which keeps its own copy of the time.
+  const { publishArticle } = await import("../publication/publish.ts");
+  await publishArticle(articleId);
+  return true;
+}
+
 /** Fetches and stores the body of one article. Unconfirmed bodies are recorded as such. */
 export async function extractArticleBody(articleId: string, allowJina = process.env.JINA_BODY_FALLBACK !== "false"): Promise<"ok" | "unconfirmed" | "skipped"> {
   const [a] = await sql<{ id: string; url: string; body_status: string; revision: number; x_post: { tweetId?: string } | null }[]>`
     SELECT id, url, body_status, revision, x_post FROM articles WHERE id = ${articleId}`;
   if (!a || a.body_status === "ok") return "skipped";
   if (a.x_post?.tweetId) return extractXArticle(a.id, a.x_post.tweetId);
-  const got = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}` });
+  // Best effort: a page that yields no readable body can still state its clock. A failed clock read
+  // must never fail the extraction job.
+  const refineClock = async (html: string) => {
+    try { await upgradeArticleClock(articleId, html); } catch { /* metadata is best effort */ }
+  };
+  const captured: { html?: string; finalUrl?: string } = {};
+  const got = await extractFromUrl(a.url, { allowJina, subject: `article:${a.id}`, captured });
   if (!got) {
     await sql`UPDATE articles SET body_status = 'unconfirmed', updated_at = now() WHERE id = ${articleId} AND body_status <> 'ok'`;
+    if (captured.html) await refineClock(captured.html);
     return "unconfirmed";
   }
   // The body is new content: a new revision, so an analysis of the body-less input counts as stale.
@@ -249,6 +312,7 @@ export async function extractArticleBody(articleId: string, allowJina = process.
     await tx`INSERT INTO article_revisions (article_id, revision, content_hash, title, body_text)
              VALUES (${articleId}, ${r!.revision}, ${hash}, ${row.title}, ${got.text})`;
   });
+  if (captured.html) await refineClock(captured.html);
   return "ok";
 }
 

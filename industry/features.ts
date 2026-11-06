@@ -4,7 +4,7 @@
 export const FEATURES = {
   /** 暂时隐藏独立精选栏目；精选判定、标签、RSS 和公开 API 继续保留。 */
   selectedFeed: false,
-  /** 公益总报只生成周报、月报；旧日报保留为历史记录。 */
+  /** 日报仍每日生成并通过邮件发送给订阅人（dailyNewsletter=true）；公开日报页面/导航入口隐藏（dailyReports=false）。 */
   dailyReports: false,
   dailyNewsletter: true,
   /** 模型榜：汇总公开评测，按公开方法 v15 计算共识排名（/leaderboard）。每天抓 4 次评测来源。公益行业无此需求。 */

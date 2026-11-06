@@ -123,7 +123,11 @@ export default function ItemPage() {
   const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? "正文 · AI 翻译" : lang === "original" && hasTranslation ? "正文 · 原文" : "正文";
   const isX = item.channel === "x" && !!item.x;
   const display = feedDisplayAt(item.publishedAt, item.discoveredAt, item.timelineAt, item.publishedAtPrecision);
-  const placedIso = display.at;
+  // A date-only article knows the day it was published. The header used to print our collection day
+  // ("收录于 11月6日") while the rail below said 原文发布日期 11月5日 — two disagreeing dates on one
+  // page. Print the article's own day here; the collection moment stays in the source rail.
+  const headAt = display.dateOnly && display.sourceAt ? display.sourceAt : display.at;
+  const headLabel = display.dateOnly && display.sourceAt ? "原文" : display.label === "收录" ? "收录于" : null;
   const summaryOnly = item.readingMode === "summary-only";
   const showOutline = item.outline.length >= 3;
   const originalLabel = isX ? "在 X 查看原推" : "打开原文";
@@ -302,9 +306,9 @@ export default function ItemPage() {
             {isX && <span>· @{item.x!.handle} · X</span>}
             {item.author && !isX && <span>· {item.author}</span>}
             <span>·</span>
-            {display.label === "收录" && <span>收录于</span>}
-            <time dateTime={placedIso} className="mono">{display.dateOnly ? feedDateLabel(placedIso) : fullDateTime(placedIso)}</time>
-            <span suppressHydrationWarning>· {relativeTime(placedIso)}</span>
+            {headLabel && <span>{headLabel}</span>}
+            <time dateTime={headAt} className="mono">{display.dateOnly ? feedDateLabel(headAt) : fullDateTime(headAt)}</time>
+            <span suppressHydrationWarning>· {relativeTime(headAt)}</span>
             {item.selected && (
               <span className="ml-1 lg:hidden">
                 <SelectedBadge />

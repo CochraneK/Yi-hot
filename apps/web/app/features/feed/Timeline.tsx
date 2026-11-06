@@ -128,11 +128,11 @@ export function TimelineSlot({ at, filedDay, children, fresh = false, delay = 0,
   // A second line only when the filing day and the publication day differ. Under its own day the
   // header already says it, and repeating "原文11.1" inside a "11月1日" group reads as a mistake.
   const otherDay = !dayGroupedDateOnly && dateOnly && sourceAt != null && sourceDay !== filed ? monthDotDay(sourceAt) : null;
-  // One note under the clock: plain "收录" when we collected it on the day in the header, "收录 11.6"
-  // when we did not, so a bare clock never reads as belonging to the wrong day.
-  const collectedNote = dayGroupedDateOnly
-    ? beijingDate(clockSource) !== sourceDay ? `收录 ${monthDotDay(clockSource)}` : "收录"
-    : null;
+  // A day-grouped list already has a date header, so the note only has to say whose clock this is.
+  // No second date anywhere in the rail — not "11.6" as the clock, not "收录 11.6" underneath it,
+  // on same-day or cross-day cards alike. The exact collection instant stays in the tooltip and in
+  // the <time datetime> attribute for anyone who needs to know which day we filed it.
+  const collectedNote = dayGroupedDateOnly ? "收录" : null;
   // DayList (/all, the page readers actually see) does not pass originalLabel. Compute the same
   // cross-day note here: an exact clock filed under a later collection day must say which day it
   // belongs to, or "09:20" under a "11月6日" header reads as today's 09:20.

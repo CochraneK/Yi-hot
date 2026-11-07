@@ -606,8 +606,8 @@ export async function scheduleDueSources(limit = Number(process.env.FETCH_SCHEDU
 }
 
 /**
- * Daily: adapt each source's interval to its recent output (active 15 min … quiet 120 min).
- * hot_signal sources are allowed to be slower.
+ * Daily: adapt each source's interval to its recent output (active 15 min … quiet 60 min,
+ * seven days with no original articles 360 min). hot_signal sources are allowed to be slower.
  */
 export async function adaptIntervals(): Promise<{ updated: number }> {
   const rows = await sql<Array<Pick<SourceRow, "id" | "participation_mode" | "kind" | "config" | "cursor"> & { paid_listing: boolean; per_day: number }>>`
@@ -625,9 +625,16 @@ export async function adaptIntervals(): Promise<{ updated: number }> {
     const min = r.paid_listing ? 60 : 15;
     // X accounts read by shard follow the shard's pace, whatever their own volume. Search sources
     // follow the pay-once-a-day window instead: asking again sooner only re-reads a stored response.
+    // A source with no original (non-backfill) articles for seven days is not "quiet editorially":
+    // it is a stale/JS-only listing that only fills fetch_runs 24 times a day. Park it at six hours.
+    // The window is a rolling seven days, so a source that starts publishing again returns to the
+    // normal 15–60 min band on the next daily pass.
     const target = r.kind === "search"
       ? SEARCH_INTERVAL_MINUTES
-      : shardHandle(r) ? shardMinutes(r.participation_mode) : perDay <= 0.15 ? max : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * 3))));
+      : shardHandle(r) ? shardMinutes(r.participation_mode)
+      : perDay <= 0 ? Math.max(max, 360)
+      : perDay <= 0.15 ? max
+      : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * 3))));
     const res = await sql`UPDATE sources SET interval_minutes = ${target} WHERE id = ${r.id} AND interval_minutes <> ${target}`;
     updated += res.count;
   }

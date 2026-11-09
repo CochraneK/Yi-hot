@@ -21,9 +21,10 @@
 
 用法：python scripts/export-source-registry.py <sources-export.tsv> [docs/SOURCE_REGISTRY.md]
 
-设计意图（2026-10-25 用户定）：README 是项目门面，信源只在「📖 文档导航」表格里占一行
-链接，不摊任何名单；完整名单连同失败复盘全部放 docs/SOURCE_REGISTRY.md，由本脚本生成。
-README 与该脚本完全解耦——改 README 不会被覆盖，跑脚本也不会改动 README。
+设计意图：README 只展示精简图谱与专题入口，不摊开全部逐源名单；
+详细名单和失败复盘均在 docs/SOURCE_REGISTRY.md，由本脚本生成。
+README 与本脚本解耦；重新导出台账不会自动更新 README 中的静态图谱。
+当信源口径或数据快照变化，维护者应同步刷新 docs/SOURCE_ATLAS.md 及配图并标日期。
 
 口径：只看入池数（publications.selected，LLM 评分 ≥40），不看 found / created。
 失败清单为人工维护的 curated 数据，依据 docs/SOURCE_COVERAGE.md §3、

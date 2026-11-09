@@ -1,6 +1,6 @@
-# 信源全名单（实时快照）
+# 信源全名单（带时间戳的生产快照）
 
-[← 返回 README](../README.md) · 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成，可重复执行。
+[← 返回 README](../README.md) · 由 `scripts/export-source-registry.py` 从 PostgreSQL 导出并生成；仅代表标注日期的静态快照，可重复执行刷新。
 
 > 数据时间：2026-10-25 13:09（北京时间）· **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created——技术接通 ≠ 内容对口。
 > 共 210 个源（`sources.json` seed 153 + 仅数据库 57），启用 175 / 停用 35，其中主力（启用且入池 ≥5）113 个。生产信源以数据库运行时配置为准（含 36 个只在库的 `web-probe-*` 探测源）。

@@ -17,6 +17,7 @@
 <p align="center">
   <a href="https://49.233.72.222/yihot/"><strong>🌐 浏览线上站点</strong></a> ·
   <a href="#-快速开始"><strong>🚀 自行部署</strong></a> ·
+  <a href="docs/YIHOT_OPERATIONS_HANDOFF_2026-11-09.md"><strong>📘 全景使用与交接指南</strong></a> ·
   <a href="MAINTENANCE.md"><strong>📖 完整维护手册</strong></a> ·
   <a href="docs/PROJECT_CONTEXT.md"><strong>🧭 项目交接</strong></a>
 </p>

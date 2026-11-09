@@ -147,9 +147,9 @@ def build_registry(rows):
     probe = sum(1 for r in rows if r["id"].startswith("web-probe-"))
 
     L = []
-    L.append("# 信源全名单（实时快照）")
+    L.append("# 信源全名单（带时间戳的生产快照）")
     L.append("")
-    L.append("[← 返回 README](../README.md) · 由 `scripts/export-source-registry.py` 从线上 PostgreSQL 实时生成，可重复执行。")
+    L.append("[← 返回 README](../README.md) · 由 `scripts/export-source-registry.py` 从 PostgreSQL 导出并生成；仅代表标注日期的静态快照，可重复执行刷新。")
     L.append("")
     L.append("> 数据时间：%s（北京时间）· **唯一口径是入池数**（`publications.selected`，LLM 评分 ≥40），不看 found / created——技术接通 ≠ 内容对口。" % now)
     L.append("> 共 %d 个源（`sources.json` seed %d + 仅数据库 %d），启用 %d / 停用 %d，其中主力（启用且入池 ≥5）%d 个。生产信源以数据库运行时配置为准（含 %d 个只在库的 `web-probe-*` 探测源）。" % (total, seed, total - seed, enabled, total - enabled, len(main), probe))

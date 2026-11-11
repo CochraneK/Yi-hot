@@ -98,6 +98,41 @@ export interface RenderedPage {
 }
 
 /**
+ * Chromium does not use Node's guardedLookup. Intercept every navigation, redirect,
+ * XHR, image, script and frame before its socket opens. If a denied subresource is
+ * swallowed by the page's JS, verification still fails the *whole* render.
+ *
+ * The optional checker is for an offline, synthetic-request regression only.
+ * The production caller always uses async assertPublicUrl with private addresses off.
+ * A Chromium-level DNS-rebinding/network-isolation test is still required at deploy.
+ */
+export async function installBrowserRequestGuard(
+  page: Page,
+  checkUrl: (url: string) => Promise<unknown> = (url) => assertPublicUrl(url, false, false),
+): Promise<() => Promise<void>> {
+  const pending = new Set<Promise<void>>();
+  let rejected = false;
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    const current = (async () => {
+      try {
+        await checkUrl(request.url());
+        await request.continue();
+      } catch {
+        rejected = true;
+        await request.abort("blockedbyclient").catch(() => {});
+      }
+    })();
+    pending.add(current);
+    void current.finally(() => pending.delete(current));
+  });
+  return async () => {
+    while (pending.size) await Promise.all([...pending]);
+    if (rejected) throw new Error("Blocked outbound browser request");
+  };
+}
+
+/**
  * Render `url` in headless chromium and return the post-hydration HTML. The URL is guarded the same
  * way outbound fetches are (public http(s) only) because source config is admin-controlled but still
  * untrusted input. Throws on timeout, navigation failure, or a dead browser.
@@ -113,25 +148,7 @@ export async function renderBrowser(url: string, opts: RenderOptions = {}): Prom
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     );
     await page.setViewport({ width: 1366, height: 900 });
-    // Chromium does not use Node's guardedLookup. Intercept *every* request, including
-    // redirects, XHR, frames, images and scripts. Deny by default until async DNS validation
-    // completes; rejected subresources also fail the entire render, not merely the resource.
-    const blockedRequests: string[] = [];
-    const pending = new Set<Promise<void>>();
-    await page.setRequestInterception(true);
-    page.on("request", (request) => {
-      const check = (async () => {
-        try {
-          await assertPublicUrl(request.url(), false, false);
-          await request.continue();
-        } catch {
-          blockedRequests.push("Blocked outbound browser request");
-          await request.abort("blockedbyclient").catch(() => {});
-        }
-      })();
-      pending.add(check);
-      void check.finally(() => pending.delete(check));
-    });
+    const verifyRequests = await installBrowserRequestGuard(page);
 
     if (opts.acceptLanguage) await page.setExtraHTTPHeaders({ "accept-language": opts.acceptLanguage });
     await page.goto(url, { waitUntil: "networkidle2", timeout: timeoutMs });
@@ -142,8 +159,7 @@ export async function renderBrowser(url: string, opts: RenderOptions = {}): Prom
         // The list may have mounted without matching the hint; read whatever rendered.
       }
     }
-    await Promise.all([...pending]);
-    if (blockedRequests.length) throw new Error("Blocked outbound browser request");
+    await verifyRequests();
     await assertPublicUrl(page.url(), false, false);
     const html = await page.content();
     return { html, url: page.url() };

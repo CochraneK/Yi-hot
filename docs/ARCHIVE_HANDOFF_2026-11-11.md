@@ -46,6 +46,10 @@
 - 这两份是**重新排版/重写的可编辑归档版本**，**并非**旧会话原 DOCX 或 PPTX 的精确恢复；演示稿是 40 页的精简培训提纲，不等同于 25 章全文逐页转换。后续若找到原版，需另存新文件名并保留出处，不覆盖这份再生版。
 - 已入库的 PDF（`docs/pdf/`）仍是 README/MAINTENANCE 及两者合订版，不能冒称这里 25 章 Word 的完整 PDF 对应件。需要时再根据主版本生成同名 PDF，并明确生成日期。
 
+## 新增：2026-11-11 正式推荐的视觉重设计版
+
+旧 Markdown 自动生成 PPT 仍保留作为早期版本；**新推荐版** [YiHot_Editorial_Redesign_40_Slides_2026-11-11.pptx](archive/YiHot_Editorial_Redesign_40_Slides_2026-11-11.pptx) 已作为真正的二进制文件提交到 `main`（40 页，983,168 字节，Git blob SHA `d20beae41bbbc058978707899d8b41e30f2f29f4`）。配套 [编辑型设计源码](training/build_yihot_editorial.cjs) 与 [视觉交接说明](training/EDITORIAL_REDESIGN_2026-11-11.md) 均已入库，方便未来修改。Canva 是另一个编辑入口，不是唯一存储位置。
+
 ## 归档后必须继续区分的工作
 
 | 优先 | 任务 | 完成定义 | 证据边界 |

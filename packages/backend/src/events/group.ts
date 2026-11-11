@@ -743,8 +743,12 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
   // An old report joins only a fact it matches as an occurrence; a mere "same story" is not enough
   // for history to add another report to a card.
   if (history && !factId) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
+    await sql.begin(async (tx) => {
+      await tx`SELECT 1 FROM articles WHERE id=${articleId} FOR UPDATE`;
+      await tx`UPDATE articles SET grouped_at=coalesce(grouped_at,now()) WHERE id=${articleId}`;
+      for (const id of receipts) await completeReceipt(tx, id);
+      await publishArticleTx(tx, articleId);
+    });
     return { verdict: "historical" };
   }
 

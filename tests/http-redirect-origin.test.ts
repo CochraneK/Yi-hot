@@ -4,14 +4,14 @@ import { after, test } from "node:test";
 import { config } from "@aihot/backend/config";
 import { guardedFetch } from "@aihot/backend/lib/http-fetch";
 
-interface Hit { method: string; body: string; authorization?: string; secret?: string; contentType?: string }
+interface Hit { url: string; method: string; body: string; authorization?: string; secret?: string; contentType?: string }
 const servers: Server[] = [];
 async function fixture(handler: (req: Hit) => { code?: number; location?: string; body?: string }) {
   const hits: Hit[] = [];
   const server = createServer(async (req, res) => {
     let body = "";
     for await (const chunk of req) body += Buffer.from(chunk).toString("utf8");
-    const hit = { method: req.method || "", body, authorization: req.headers.authorization, secret: req.headers["x-private-secret"] as string | undefined, contentType: req.headers["content-type"] };
+    const hit = { url: req.url || "/", method: req.method || "", body, authorization: req.headers.authorization, secret: req.headers["x-private-secret"] as string | undefined, contentType: req.headers["content-type"] };
     hits.push(hit);
     const result = handler(hit);
     res.writeHead(result.code || 200, result.location ? { location: result.location } : { "content-type": "text/plain" });
@@ -42,14 +42,26 @@ test("protected headers and even empty bodies never redirect across origins", as
   assert.equal(second.hits.length, 0);
 });
 
-test("same-origin 301/302 POST and 303 PUT turn into GET without entity headers", async () => {
-  for (const [code,method] of [[301, "POST"], [302, "POST"], [303, "PUT"]] as const) {
-    let requests = 0;
-    const fixtureServer = await fixture(() => ({ body: "ok" }));
-    const redirect = await fixture(() => ({ code, location: fixtureServer.url + "/next" }));
-    // Both fixture services are distinct origins; protected requests must refuse this.
-    await assert.rejects(guardedFetch(redirect.url, { method, body: "payload" }), /cross-origin/);
-    assert.equal(fixtureServer.hits.length, requests);
+test("same-origin redirects preserve or transform method, body and entity headers", async () => {
+  for (const code of [301, 302, 303, 307, 308]) {
+    const origin = await fixture(hit => hit.url === "/start" ? { code, location: "/finish" } : { body: "ok" });
+    const result = await guardedFetch(origin.url + "/start", {
+      method: "POST", body: "payload", headers: { Authorization: "Bearer fictitious", "Content-Type": "text/plain" },
+    });
+    assert.equal(result.status, 200);
+    const hit = origin.hits.at(-1)!;
+    const converted = [301, 302, 303].includes(code);
+    assert.equal(hit.method, converted ? "GET" : "POST");
+    assert.equal(hit.body, converted ? "" : "payload");
+    assert.equal(hit.authorization, "Bearer fictitious");
+    assert.equal(hit.contentType, converted ? undefined : "text/plain");
+  }
+});
+test("PUT on 301 keeps the method but 303 turns into GET", async () => {
+  for (const code of [301, 303]) {
+    const origin = await fixture(hit => hit.url === "/start" ? { code, location: "/finish" } : { body: "ok" });
+    await guardedFetch(origin.url + "/start", { method: "PUT", body: "payload", headers: { "Content-Type": "text/plain" } });
+    assert.equal(origin.hits.at(-1)!.method, code === 303 ? "GET" : "PUT");
   }
 });
 

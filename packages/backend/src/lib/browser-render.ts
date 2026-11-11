@@ -148,6 +148,9 @@ export async function renderBrowser(url: string, opts: RenderOptions = {}): Prom
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     );
     await page.setViewport({ width: 1366, height: 900 });
+    // A service worker can own requests outside page interception; never let one
+    // short-circuit the request guard for untrusted third-party source pages.
+    await page.setBypassServiceWorker(true);
     const verifyRequests = await installBrowserRequestGuard(page);
 
     if (opts.acceptLanguage) await page.setExtraHTTPHeaders({ "accept-language": opts.acceptLanguage });

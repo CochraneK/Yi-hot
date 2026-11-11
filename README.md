@@ -186,6 +186,7 @@ AIHOT 是开源的，社区里有人把它换成自己的信源和判断标准�
 | **只想了解产品** | [线上站点](https://49.233.72.222/yihot/) |
 | **第一次接手维护** | [完整维护手册](MAINTENANCE.md)（前三分之一是「接手人最常问的 14 个问题」人话版） |
 | **换机器 / 换 AI 冷启动** | [PROJECT_CONTEXT](docs/PROJECT_CONTEXT.md)（必读：拓扑、口径、凭据、接手清单） |
+| **项目介绍 / 演示汇报（推荐）** | [新版 40 页编辑型 PPTX](docs/archive/YiHot_Editorial_Redesign_40_Slides_2026-11-11.pptx) · [视觉与来源说明](docs/training/EDITORIAL_REDESIGN_2026-11-11.md) |
 | **旧聊天失效后如何接手、哪些材料真正入库** | [归档交接（2026-11-11）](docs/ARCHIVE_HANDOFF_2026-11-11.md) · [可编辑 Word 再生版](docs/archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx) · [40 页 PPT 再生版](docs/archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx) |
 | **看上一轮会话与决策沉淀** | [会话归档 2026-10-24](docs/HANDOFF-2026-10-24-CHAT-ARCHIVE.md) |
 | **下一阶段做什么 / 哪些别再提** | [想法台账](docs/IDEAS.md) |

@@ -25,11 +25,14 @@ request/response，`article_revisions` 存的是每次改稿的全文。这些�
     sudo python3 /opt/yihot/scripts/archive-db.py                 # 演练
     sudo python3 /opt/yihot/scripts/archive-db.py --delete        # 导出并删除
     sudo python3 /opt/yihot/scripts/archive-db.py --table receipts --days 90
+    sudo python3 /opt/yihot/scripts/archive-db.py --before 2026-11-01 --delete
+        # 归档并删除北京时间 11-01 之前的全部流水（按自然月切）
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import gzip
 import hashlib
 import json
@@ -44,6 +47,11 @@ DB_CONTAINER = os.environ.get("AIHOT_DB_CONTAINER", "aihot-db-1")
 DB_USER = os.environ.get("AIHOT_DB_USER", "aihot")
 DB_NAME = os.environ.get("AIHOT_DB_NAME", "aihot")
 DEFAULT_OUT = Path(os.environ.get("AIHOT_ARCHIVE_DIR", "/opt/yihot-archive"))
+BJT = timezone(timedelta(hours=8))
+
+# csv 模块默认单字段上限 128 KB。receipts 的 request/response 是整段 JSON，
+# 实测远超这个值（不放开会直接 _csv.Error: field larger than field limit）。
+csv.field_size_limit(1 << 30)
 
 # (表, 时间列, 保留天数, 说明)
 # 保留期到期才删：90 天够回看一次事故，180 天够回看一个季度的成本异常。
@@ -92,12 +100,14 @@ def export(table: str, ts: str, cutoff: str, target: Path) -> dict:
         f"TO STDOUT WITH (FORMAT csv, HEADER)",
         stream_to=target,
     )
-    # gzip 是流式写的，行数要回头数一遍：表头 + 数据行，CSV 里的换行已被引号包住，够用。
+    # gzip 是流式写的，行数要回头数一遍。不能按 \n 切：request/response 是 JSON，
+    # 里面的换行被 CSV 引号包住后照样占一行，按行切会多算（实测 56619 行数成 56635）。
     rows = 0
-    with gzip.open(target, "rb") as fh:
-        for _ in fh:
+    with gzip.open(target, "rt", encoding="utf-8", newline="") as fh:
+        reader = csv.reader(fh)
+        next(reader, None)  # 表头
+        for _ in reader:
             rows += 1
-    rows = max(rows - 1, 0)
     digest = hashlib.sha256()
     with target.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1 << 20), b""):
@@ -135,6 +145,7 @@ def delete_old(table: str, ts: str, cutoff: str, batch: int = 5000) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="导出并清理过期运维日志")
     ap.add_argument("--days", type=int, help="覆盖默认保留天数，测试时用")
+    ap.add_argument("--before", help="按北京时间日期切：归档并删除 YYYY-MM-DD 00:00 之前的全部行（优先于 --days）")
     ap.add_argument("--table", action="append", help="只处理指定表，可重复")
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="归档输出目录")
     ap.add_argument("--delete", action="store_true", help="导出校验后真的删除")
@@ -160,17 +171,29 @@ def main() -> int:
     run = {"startedAt": now.isoformat(timespec="seconds"), "delete": args.delete, "items": []}
 
     print(f"归档目录：{out_dir}")
-    print(f"{'表':20}{'保留':>6}{'可删行':>9}  说明")
+    print(f"{'表':20}{'保留':>10}{'可删行':>9}  说明")
     total_rows = 0
     for table, ts, days, note in plan:
         if not table_exists(table):
-            print(f"{table:20}{'—':>6}{'—':>9}  表不存在，跳过")
+            print(f"{table:20}{'—':>10}{'—':>9}  表不存在，跳过")
             continue
-        keep_days = args.days if args.days is not None else days
-        cutoff = (now - timedelta(days=keep_days)).strftime("%Y-%m-%d %H:%M:%S+00")
+        if args.before:
+            # 按北京时间的自然日切：--before 2026-11-01 归档 10 月及更早，
+            # 11 月一行不动。cron 里可以写成 --before $(date +%Y-%m-01)。
+            try:
+                edge = datetime.strptime(args.before, "%Y-%m-%d").replace(tzinfo=BJT)
+            except ValueError:
+                print(f"--before 格式应为 YYYY-MM-DD：{args.before}", file=sys.stderr)
+                return 2
+            cutoff = edge.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00")
+            label = f"<{args.before}"
+        else:
+            keep_days = args.days if args.days is not None else days
+            cutoff = (now - timedelta(days=keep_days)).strftime("%Y-%m-%d %H:%M:%S+00")
+            label = f"{keep_days}d"
         pending = count_before(table, ts, cutoff)
         total_rows += pending
-        print(f"{table:20}{keep_days:>5}d{pending:>9}  {note}")
+        print(f"{table:20}{label:>10}{pending:>9}  {note}")
         if not pending:
             continue
 

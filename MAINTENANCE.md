@@ -252,11 +252,25 @@ docs/memory/MEMORY.md、tools/README.md 和 secrets/README.md。
 ```bash
 sudo python3 /opt/yihot/scripts/archive-db.py            # 演练：只数行数
 sudo python3 /opt/yihot/scripts/archive-db.py --delete   # 导出并删除
+sudo python3 /opt/yihot/scripts/archive-db.py --before 2026-11-01 --delete
+        # 按北京时间自然日切：归档并删除 11-01 之前的全部流水
 ```
 
 导出是 `COPY (SELECT … WHERE 时间 < 截止) TO STDOUT` 直接 gzip 到 `/opt/yihot-archive/<年>/`，文件名带首末行时间；同目录 `manifest.json` 记行数与 sha256。删除按 ctid 分批（5000 行/批），每批独立事务，不会长时间锁表。
 
-规则是「先落盘、再核对、后删除」：导出行数与应删行数不一致就停下不删；删完再查一次过期行必须为 0。宿主 root cron 每月 1 日 04:40 跑一次（当前**只导出不删除**），要开启自动删除就在那行末尾加 `--delete`。归档文件请定期 `scp` 到本机留一份，服务器不是唯一副本。
+规则是「先落盘、再核对、后删除」：导出行数与应删行数不一致就停下不删；删完再查一次过期行必须为 0。宿主 root cron 每月 1 日 04:40 跑一次并带 `--delete`。归档文件请定期 `scp` 到本机留一份，服务器不是唯一副本。
+
+**删完记得 VACUUM。** Postgres 的 DELETE 只把行标成死元组，表文件不会缩小，磁盘也不还。要对被删的表跑 `VACUUM FULL` 才真正回收（会短暂锁表，几秒到几十秒）：
+
+```bash
+for t in receipts receipt_attempts article_revisions fetch_runs; do
+  sudo docker exec aihot-db-1 psql -U aihot -d aihot -c "VACUUM FULL $t"
+done
+```
+
+`receipts` 的 `request`/`response` 是整段 JSON，单字段远超 csv 模块 128 KB 默认上限，脚本已把 `field_size_limit` 放到 1 GB；数行数也必须走 csv 解析器而不是按 `\n` 切。
+
+2026-11-11 首次真跑（`--before 2026-11-01`）：归档 17.7 万行 / 96 MB 到 `/opt/yihot-archive/2026/`，同时 `scp` 到本机 `yihot-archive/`；`VACUUM FULL` 后库 1338 MB → 1039 MB，`receipts` 440 → 242 MB。内容表行数前后一致（articles 30718 / publications 25154 / analyses 25284 / reports 91）。
 
 基线全量备份用 `docker exec aihot-db-1 pg_dump -U aihot -d aihot --no-owner --format=custom | gzip > /opt/yihot-archive/base/aihot-$(date +%Y%m%d).dump.gz`，恢复用 `pg_restore`；这一步不影响在线服务。
 

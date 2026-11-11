@@ -1,6 +1,6 @@
 # YiHot 演示稿视觉重设计 · 2026-11-11
 
-> 状态：已制作 40 页可编辑 PowerPoint，并导入 Canva。**本页是版本索引，不代表 PPTX 二进制已提交到 GitHub。**
+> 状态：**正式 40 页编辑型 PPTX 已提交 GitHub `main`**，保留可再生 PptxGenJS 源码，Canva 提供辅助在线编辑。旧版仍保留用于历史比较。
 
 ## 为什么重做
 
@@ -15,6 +15,9 @@
 
 ## 可编辑设计
 
+- **[正式推荐版 · GitHub PPTX 下载](../archive/YiHot_Editorial_Redesign_40_Slides_2026-11-11.pptx)**（40 页，983,168 字节，SHA-256 `484b94e0e8f0e4c00a245d482bdd98f435bc466c6cd85a0b3761554f97a82624`，本地与 Git Blob 对照一致）
+- **[可再生设计源码](build_yihot_editorial.cjs)**（PptxGenJS v4.0.0，PowerPoint 原生文本、图形与流程元素）
+
 - [Canva 编辑版](https://www.canva.com/d/w9PUwo9swBlLF76)
 - [Canva 预览](https://www.canva.com/d/S4rjIuPPurIElDv)
 - Canva 已导入并反馈页数为 **40 页**。在 2026-11-11 的本地构建中，PPTX 经 LibreOffice 成功导出为 **40 页 PDF**，并逐页渲染检查。
@@ -27,7 +30,11 @@
 - 信源历史数据：2026-10-25 的 210 / 175 / 150 / 113 / 1,868，不是 11 月实时数据。
 - 费用历史数据：截至 2026-10-31 的近 30 天，模型估算 ¥66.02，搜索估算 ¥12.04。
 - 页面中的后台 UI 仅为概念化示意，不能当线上真实截图。
-- Canva 的设计稿当前为外部可编辑资产；若要彻底不依赖外部平台，需将正式 PPTX 与可再生源文件作为后续单独提交。
+- 正式 PPTX 与可再生脚本现已同步进 GitHub，**不依赖 Canva 才能下载或继续改版**。Canva 是辅助预览/编辑入口，后续 Canva 改动不会自动反写 GitHub。
+
+## 从 GitHub 重新生成
+
+在具备 Node.js 的开发环境中安装 `pptxgenjs@4.0.0`，然后运行 `node docs/training/build_yihot_editorial.cjs`，输出为 `docs/archive/YiHot_Editorial_Redesign_40_Slides_2026-11-11.pptx`。此操作会重建文件，**不会自动修改腾讯云部署**。脚本重生成的 ZIP 元数据可能不同，更新前仍需对视觉和内容重新验收。
 
 ## 今后更新
 

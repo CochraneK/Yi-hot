@@ -239,6 +239,28 @@ export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endD
   };
 }
 
+/** A genuinely quiet interval requires *all* daily issues since the site's first daily.
+ * If a daily once contained material that is now withdrawn, do not call that a quiet period.
+ * The skipped interval is not written to reports, so later public backfill can fill it.
+ */
+async function completeQuietDailies(startDate: string, endDate: string): Promise<boolean> {
+  const [first] = await sql<{ key: string | null }[]>`SELECT min(key) AS key FROM reports WHERE kind = 'daily'`;
+  if (!first?.key || first.key > endDate) return false;
+  const from = first.key > startDate ? first.key : startDate;
+  const issues = await sql<{
+    key: string;
+    content: { sections?: Array<{ items?: unknown[] }>; flashes?: unknown[]; metrics?: { totalEvents?: number } }
+  }[]>`SELECT key,content FROM reports WHERE kind='daily' AND key >= ${from} AND key <= ${endDate} ORDER BY key`;
+  const byDay = new Map(issues.map(issue => [issue.key, issue.content]));
+  for (let day = from; day <= endDate; day = addDays(day, 1)) {
+    const issue = byDay.get(day);
+    if (!issue) return false;
+    if ((issue.sections ?? []).some(section => (section.items ?? []).length > 0) ||
+        (issue.flashes ?? []).length > 0 || Number(issue.metrics?.totalEvents ?? 0) > 0) return false;
+  }
+  return true;
+}
+
 async function composePeriod(kind: "weekly" | "monthly", key: string, startDate: string, endDateInclusive: string, reason: string) {
   const start = beijingMidnight(startDate);
   const end = beijingMidnight(addDays(endDateInclusive, 1));
@@ -247,6 +269,15 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   const all = await candidates(start, end, { selectedOnly: false, includeBackfill: true });
   const top = all.slice(0, kind === "weekly" ? 120 : 300);
   const dailyCount = (await sql<{ n: number }[]>`SELECT count(*) AS n FROM reports WHERE kind = 'daily' AND key >= ${startDate} AND key <= ${endDateInclusive}`)[0]?.n ?? 0;
+  if (top.length === 0) {
+    // Never publish a misleading empty weekly/monthly report. Only the automatic
+    // runs may skip a *proven* quiet period. A missing daily or a withdrawn former
+    // entry is an incomplete report and must remain an error for operator review.
+    const [existing] = await sql`SELECT 1 FROM reports WHERE kind=${kind} AND key=${key}`;
+    if (!existing && (reason === "scheduled" || reason === "catch-up") &&
+        await completeQuietDailies(startDate, endDateInclusive)) return null;
+    throw new Error(`${kind} ${key}: no eligible entries or incomplete daily coverage`);
+  }
   let themes: Array<{ heading: string; summary: string; storyRefs: ReportEntry[] }> = [];
   let headline = "";
   let overview = "";
@@ -376,8 +407,7 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
   if (weekDue) {
     const [w] = await sql`SELECT 1 FROM reports WHERE kind = 'weekly' AND key = ${lastWeek}`;
     if (!w) {
-      await composeWeekly(lastWeek, "catch-up");
-      generated.push(`weekly:${lastWeek}`);
+      if (await composeWeekly(lastWeek, "catch-up") !== null) generated.push(`weekly:${lastWeek}`);
     }
   }
   // Last complete month (1st 06:30 onwards, see reports.monthly).
@@ -387,8 +417,7 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
   if (monthDue) {
     const [m] = await sql`SELECT 1 FROM reports WHERE kind = 'monthly' AND key = ${prevMonth}`;
     if (!m) {
-      await composeMonthly(prevMonth, "catch-up");
-      generated.push(`monthly:${prevMonth}`);
+      if (await composeMonthly(prevMonth, "catch-up") !== null) generated.push(`monthly:${prevMonth}`);
     }
   }
   return { generated };

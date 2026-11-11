@@ -12,7 +12,7 @@
 
 ## 持续维护手册（Living Handbook）
 
-- [ ] 已更新 [MAINTENANCE.md](../blob/main/MAINTENANCE.md) 对应操作章节与相关 `docs/` 专题页
+- [ ] 已更新 [MAINTENANCE.md](../MAINTENANCE.md) 对应操作章节与相关 `docs/` 专题页
 - [ ] 或者：变更不影响用户/管理员/运维操作，无需更新（下方解释）
 
 **本次更新的章节 / 无需更新的理由：**

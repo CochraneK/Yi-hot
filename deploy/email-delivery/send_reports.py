@@ -530,6 +530,51 @@ def send(subject, body, text, recipient, unsubscribe_url=""):
             client.send_message(msg)
 
 
+def _beijing(ts):
+    """报告窗口用 UTC 存，读者只关心北京日期。"""
+    try:
+        moment = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=datetime.timezone.utc)
+    return moment.astimezone(datetime.timezone(datetime.timedelta(hours=8)))
+
+
+def period_label(report):
+    """周报「11月2日–11月8日」、月报「2026年11月」、日报「11月11日」。
+
+    窗口右端是排他的（11-09 00:00 收在 11-08 23:59），所以要减一天再显示，
+    否则周报会写成「11月2日–11月9日」，读者会以为今天那期还没算完。
+    """
+    start, end = _beijing(report.get("windowStart")), _beijing(report.get("windowEnd"))
+    if not start or not end:
+        return report.get("key") or ""
+    last = end - datetime.timedelta(days=1)
+    kind = report.get("kind")
+    if kind == "daily" or start.date() == last.date():
+        return f"{start.month}月{start.day}日"
+    if kind == "monthly":
+        return f"{start.year}年{start.month}月"
+    if start.month == last.month:
+        return f"{start.month}月{start.day}日–{start.month}月{last.day}日"
+    return f"{start.month}月{start.day}日–{last.month}月{last.day}日"
+
+
+def subject_for(report, label, test=False):
+    """主题写成「周报｜11月2日–11月8日 · 本期主标题」。
+
+    旧主题取 report.title（「公益总报 · 周报 · 2026-W45」），只有 ISO 周号，在收件箱里
+    跟系统通知长得一样，周一那期因此被当成没发。主标题在 lead.title 里，才是真正的看点。
+    """
+    period = period_label(report)
+    headline = ((report.get("lead") or {}).get("title") or "").strip()
+    if len(headline) > 30:
+        headline = headline[:29] + "…"
+    head = "｜".join([f"Yi-Hot · {label}"] + ([period] if period else []))
+    return ("[测试] " if test else "") + (f"{head} · {headline}" if headline else head)
+
+
 def deliver_outbox(item, base, hot=None, state=None):
     payload = item["payload"]
     recipient = payload["email"]
@@ -539,7 +584,7 @@ def deliver_outbox(item, base, hot=None, state=None):
     else:
         report = payload["report"]
         label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
-        subject = "Yi-Hot · " + (report.get("title") or ("公益总报 · " + label + " · " + report["key"]))
+        subject = subject_for(report, label)
         brief = brief_for(report, state if state is not None else {})
         body, text = render(report, base, payload.get("unsubscribeUrl", ""), hot, brief)
     send(subject, body, text, recipient, payload.get("unsubscribeUrl", "") if item["kind"] == "report" else "")
@@ -643,7 +688,7 @@ def save_state(path, state):
 def deliver(report, base, target, state, test=False):
     body, text = render(report, base, "", fetch_hot(base), brief_for(report, state))
     label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
-    subject = ("[测试] " if test else "") + "Yi-Hot · " + (report.get("title") or ("公益总报 · " + label + " · " + report["key"]))
+    subject = subject_for(report, label, test)
     key = f"{report['kind']}:{report['key']}:{target}"
     if not test and key in state["sent"]:
         return {"recipient": target, "status": "duplicate", "key": key}

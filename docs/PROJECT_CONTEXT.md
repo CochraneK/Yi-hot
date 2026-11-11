@@ -53,8 +53,8 @@ scp <本地路径> <用户>@49.233.72.222:/opt/yihot/<相对路径>
 # 2) 重建 + 重启
 ssh <用户>@49.233.72.222
 cd /opt/yihot
-sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml build
-sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml up -d
+sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml build
+sudo -n docker compose -f docker-compose.yml -f compose.futureme-proxy.yml -f compose.werss.yml up -d
 ```
 
 > ✅ **部署辅助脚本已在仓库里**：`tools/deploy/sshexec.js`（远程执行）、`tools/deploy/sftp-upload.js`（单文件上传）、`tools/deploy/sftp-upload-many.js`（按清单批量、单连接）。用法与依赖见 `tools/README.md`。只用上面的 `scp` / `ssh` 也能完成部署，脚本只是省事。
@@ -120,8 +120,8 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
   - 因此**被 prefilter 判为 `BLOCK` / `UNKNOWN` 的内容不会出现在列表里**；列表上"最新的一天"由**第一个 eligible 条目**决定，**与采集时间无关**。
 - prefilter 在 `packages/backend/src/editorial/analyze.ts`：**只有 `BLOCK` 才停止**（`UNKNOWN` 放行）。判为"与公益无关"的文章 `processing_state='blocked'` —— 这是**正常业务结果**，不是故障。
 - 晋升门槛在 `industry/selection.ts`：**T1 = 35 / T1_5 = 35 / T2 = 40**。改门槛后需重算 `analyses.selected` 并入队 `publication.republish-source` 才会生效（`judgedSelected` 是分析时存下的布尔，republish **只读不重算**）。
-- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），当前 **20 条（19 启用 + 1 停用）**。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 断言 `select count(*) from sources` = 20，加源必须同步。
-- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。当前启用源统一 30 分钟。
+- 信源清单在 `industry/sources.json`（顶层 `{"$comment", "sources":[…]}`），当前 **153 条（136 启用）**；线上 `sources` 表 **210 条（172 启用）**，多出的是后台新建、探测与已暂停的公众号/微博源（2026-11-10 快照）。**运行时以数据库 `sources.config` 为准**，`sources.json` 只被 seed 读取（只增不覆盖）。CI 只比对 `select count(*) from sources` 与 `industry/sources.json` 的条数（`.github/workflows/check.yml`），不再写死固定值；加源必须同步清单。
+- 采集是**定时轮询制**（不是推送）：`sources.interval_minutes` 就是"新内容最多多久被发现"。当前不是统一值：搜索源固定 360 分钟（按北京当天幂等，一天只真正请求一次），活跃 web/RSS 源 15–60 分钟，近 7 天无原创稿的源由 `adaptIntervals()` 自动降到 360 分钟；启用源均值约 250 分钟（2026-11-10 快照）。
 
 ## 4. 数据模型要点（写 SQL 前先看这段）
 

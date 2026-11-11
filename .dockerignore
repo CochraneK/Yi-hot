@@ -15,3 +15,15 @@ apps/web/.react-router
 #   tools/   = 开发机的同步/部署脚本（只在开发机跑）
 secrets
 tools
+
+# 本地工作产物与一次性材料，运行时都不需要：
+#   package/    = 解包的 Noto Sans SC，只在重生成名牌（scripts/nameplates.ts）时用，约 71MB
+#   .workbuddy/ = 会话记忆与本地笔记，含内部路径，不应烘进镜像
+#   output/ .preview/ = 一次性导出与探测脚本
+#   *.tsv       = sel.tsv / sources-export.tsv 等采集样本
+package/
+output/
+.workbuddy/
+.claude/
+.preview/
+*.tsv

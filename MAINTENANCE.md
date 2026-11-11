@@ -243,6 +243,23 @@ docs/memory/MEMORY.md、tools/README.md 和 secrets/README.md。
 - 凭据发生变化后，要更新服务器、更新本机明文归档、重新加密并提交新的密文。
 - 换电脑或交接的完整步骤见 [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) 第 8、9 节和 [`secrets/README.md`](secrets/README.md)。
 
+### 数据库归档（历史流水怎么裁）
+
+站点内容（`articles` / `publications` / `analyses` / `reports`）**一行都不删**——页面、站点地图、旧报告都靠它们。只裁排障用的流水：`receipts` 与 `receipt_attempts`（每次模型请求的完整 request/response）、`article_revisions`（改稿全文）、`fetch_runs`、`hot_rankings`。默认保留期 180 / 180 / 180 / 90 / 365 天，写在 `scripts/archive-db.py` 的表里。
+
+脚本在**宿主**跑（容器里才有 psql）：
+
+```bash
+sudo python3 /opt/yihot/scripts/archive-db.py            # 演练：只数行数
+sudo python3 /opt/yihot/scripts/archive-db.py --delete   # 导出并删除
+```
+
+导出是 `COPY (SELECT … WHERE 时间 < 截止) TO STDOUT` 直接 gzip 到 `/opt/yihot-archive/<年>/`，文件名带首末行时间；同目录 `manifest.json` 记行数与 sha256。删除按 ctid 分批（5000 行/批），每批独立事务，不会长时间锁表。
+
+规则是「先落盘、再核对、后删除」：导出行数与应删行数不一致就停下不删；删完再查一次过期行必须为 0。宿主 root cron 每月 1 日 04:40 跑一次（当前**只导出不删除**），要开启自动删除就在那行末尾加 `--delete`。归档文件请定期 `scp` 到本机留一份，服务器不是唯一副本。
+
+基线全量备份用 `docker exec aihot-db-1 pg_dump -U aihot -d aihot --no-owner --format=custom | gzip > /opt/yihot-archive/base/aihot-$(date +%Y%m%d).dump.gz`，恢复用 `pg_restore`；这一步不影响在线服务。
+
 ## 给技术维护者的入口
 
 请依次阅读：

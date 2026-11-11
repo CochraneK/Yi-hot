@@ -209,7 +209,7 @@ DeepSeek retired the legacy `deepseek-chat` alias, while YiHot's last production
 ## What this PR does
 - `tools/switch_deepseek_flash.py`: safe **dry-run by default**; `--apply` backs up the live `.env` inside ignored `.data/backups/model-switch/`, preserves the actual API Key, changes only `LLM_MODEL=deepseek-flash` and non-thinking `LLM_EXTRA_JSON`, recreates **api and worker only**, checks their container environment, and attempts rollback if validation fails. Rejects non-official endpoint / missing key; does not print secrets or call any LLM API.
 - Seven offline Python unit tests, wired into GitHub Check.
-- [Production cutover instructions](docs/DEEPSEEK_FLASH_SWITCH_2026-10-21.md) with no-secret, copy/paste commands, receipt/pricing caveats, rollback and admin per-stage overrides. Synchronize MAINTENANCE living manual and tools index.
+- [Production cutover instructions](DEEPSEEK_FLASH_SWITCH_2026-10-21.md) with no-secret, copy/paste commands, receipt/pricing caveats, rollback and admin per-stage overrides. Synchronize MAINTENANCE living manual and tools index.
 
 ## Explicit boundary
 The user requested switching the model. This PR prepares and audits the production switch but **does not claim Tencent Cloud was modified**: `/opt/yihot/.env` and live DB are inaccessible from the GitHub plugin. After merging, a server operator must run `cd /opt/yihot && python3 tools/switch_deepseek_flash.py --apply` to make the real change. Do not re-run historical jobs just to create receipts, and do not change the existing account keys.

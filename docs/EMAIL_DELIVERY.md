@@ -1,8 +1,13 @@
 # 公益总报邮件投递
 
-Yi-Hot 只使用自己的周报、月报作为邮件内容来源。公开订阅采用双重确认：网站把确认信和新一期总报写入
+Yi-Hot 只使用自己的日报、周报、月报作为邮件内容来源。日报按订阅人的 `daily` 偏好每日 08:00 后投递，
+周报周一、月报每月 1 日；日报没有公开页面，只走邮件。公开订阅采用双重确认：网站把确认信和新一期总报写入
 PostgreSQL outbox，`deploy/email-delivery/send_reports.py` 从受保护的 ingest API 领取任务，生成 HTML 与纯文本
 版本，再通过 SMTP 逐个发送。它不采集新闻、不生成另一份报告，也不会调用模型。
+
+> 线上 `yihot-email-delivery.timer` 执行的是 `/opt/yihot-email-delivery/send_reports.py`；仓库
+> `deploy/email-delivery/send_reports.py` 是同一份副本。**改一处必须同步另一处**（11-06 已对齐 md5），
+> 否则线上会继续跑旧逻辑。
 
 服务器配置位于 `/opt/yihot-email-delivery/.env`，支持：
 
@@ -30,6 +35,6 @@ systemctl status yihot-email-delivery.timer
 journalctl -u yihot-email-delivery.service -n 50 --no-pager
 ```
 
-公开流程：`/subscribe` 提交 → 48 小时确认信 → 激活周报/月报 → 邮件内确认退订。服务用 IMAP
+公开流程：`/subscribe` 提交 → 48 小时确认信 → 激活日报/周报/月报 → 邮件内确认退订。服务用 IMAP
 `BODY.PEEK[]` 只读扫描新增的标准 DSN 退信，识别 `Final-Recipient`/`Original-Recipient` 后把地址标为
 `bounced`；不会因为普通来信或旧退信停发。

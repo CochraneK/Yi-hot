@@ -185,6 +185,8 @@ export async function fetchJsonList(source: SourceRow): Promise<Candidate[]> {
     headers: c.bodyJson ? { ...headers, "content-type": "application/json" } : headers,
     body: c.bodyJson ? JSON.stringify(c.bodyJson) : undefined,
     timeoutMs: 25_000,
+    // JSON APIs may put opaque credentials in query fields not named "key".
+    redirectPolicy: "same-origin",
   });
   if (res && res.status !== 200) throw new FetchError(`HTTP ${res.status}`, res.status);
   let data: unknown;

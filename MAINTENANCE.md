@@ -613,17 +613,20 @@ SELECT count(*) FROM articles WHERE processing_error LIKE 'HTTP 402%' AND proces
 DeepSeek 工作日高峰价是空闲价的**两倍**，而原来采集一篇就立刻分析一篇，白天采的稿子全撞在贵的时候。`.env` 里设 `ANALYZE_OFFPEAK_ONLY=true` 后：
 
 - `isPeakAnalysisHour()`（`jobs/content.ts`）把工作日北京时间 **9–12、14–18** 判为高峰；周末全天、其余 17 小时为空闲。
-- 高峰时 `queueProcessing()` 的 **analyze 步骤不入队**，文章停在 `processing_state='new'`；**正文抓取（extract）照常立即执行**，因为抓网页不花钱。
-- `sweepUnprocessed()` 在高峰整体返回 0，积压留到第一个空闲窗口（12:00 或 18:00）一次推给 worker 批量跑。
+- 高峰**不是全停**，而是一小时放行一小批：
+  - `peakSlotsLeft()` 用 `ANALYZE_PEAK_PER_HOUR`（`.env`，默认 8，2026-11-11 起线上设 **20**）限制**当日新稿**的付费分析篇数；计数从 `receipt_attempts` 里 `purpose='prefilter_article'` 且 `origin='live'` 的回执恢复，所以 worker 重启不会多给一整份额度。
+  - `holdsHistoryForOffPeak()` 把**历史回填**整段压到空闲窗口——旧稿等几小时不涨价也没有人等着看，而回填曾是高峰花费的大头（10-24 实测：30 天高峰花费 ¥9.93，其中绝大部分是回填）。
+  - 正文抓取（extract）照常立即执行，因为抓网页不花钱。
 - 管理员手动重评（带 `attemptTag`）**不受限制**——人点「现在就要」就是现在就要。
 
-**为什么不是「全攒到夜里」**：`notify/selected.ts` 有 12 小时推送时效门槛（`MAX_AGE_MS`），超过就跳过推送。全攒夜间会让 18:01 采的稿子等到次日 12:00（18 小时），推送直接废掉。所以只压高峰这 7 小时，最长延迟 9 小时（08:59 的稿子 18:00 处理），留在门槛内。
+**为什么是「放一点」而不是「全停」**：全停三小时会让 feed 从 9 点到 12 点一条不动，然后 12:00 连本带利倒灌一批，读者的观感就是「网站坏了」。2026-11-11 上午的实测正是这个症状——09、10、11 点各恰好 8 篇，卡在默认上限，于是把 `ANALYZE_PEAK_PER_HOUR` 从 8 调到 20。代价是高峰单价翻倍，但每篇全流程只要几分钱，一天多花的量级在个位数人民币。
+
+**为什么也不是「全攒到夜里」**：`notify/selected.ts` 有 12 小时推送时效门槛（`MAX_AGE_MS`），超过就跳过推送。全攒夜间会让 18:01 采的稿子等到次日 12:00（18 小时），推送直接废掉。所以只压高峰这 7 小时，最长延迟 9 小时（08:59 的稿子 18:00 处理），留在门槛内。
 
 **时间语义不受影响**（这是最容易被误解的一点）：`discovered_at`（收录时刻）和 `published_at`（原始发布时间）在入库那一刻由 `decideTimeline()` 写死，`timeline_at` 由二者推出。改的只是**模型何时跑**，不是时间轴说什么。延迟分析不会把新闻变成历史回填，也不会挪动任何时间。
 
-- 预期省 **20–25%**（不是一半——高峰只占工作日 7 小时），约 ¥30/月 → ¥23/月；批量连续处理还会让 system prompt 前缀更连贯，命中率略升。
-- 关闭方式：`.env` 改 `false` 或删掉该行，重新 `up -d`（不需要 `--build`，这是运行时变量）。
-- **验证方式**：高峰时段查 `select count(*) from articles where processing_state='new'`，应该持续累积而不下降；到 12:00/18:00 后该数应快速归零，同时 `pgboss.job` 里 `content.analyze` 出现一批 created。
+- 改法：`.env` 里调 `ANALYZE_PEAK_PER_HOUR`（0 = 高峰完全停，即旧行为），然后 `docker compose ... up -d --no-deps --force-recreate worker`。这是运行时变量，**不需要 `--build`**。
+- **验证方式**：高峰时段按小时统计 `select to_char(created_at,'HH24'), count(*) from analyses where created_at > now() - interval '12 hours' group by 1`，数值应贴近 `ANALYZE_PEAK_PER_HOUR` 而不是 0；`select count(*) from articles where processing_state='new'` 不应持续堆积。若每小时都精确等于上限，说明还有更多稿子在排队，可以考虑再上调。
 
 ### 免费官方 RSS 现状（2026-10-21 实测）
 

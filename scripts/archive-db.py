@@ -56,7 +56,6 @@ csv.field_size_limit(1 << 30)
 # (表, 时间列, 保留天数, 说明)
 # 保留期到期才删：90 天够回看一次事故，180 天够回看一个季度的成本异常。
 TABLES = [
-    ("receipt_attempts", "started_at", 180, "每次模型调用的回执（含错误与成本）"),
     ("receipts", "created_at", 180, "模型请求的完整 request/response"),
     ("article_revisions", "created_at", 180, "改稿历史全文"),
     ("fetch_runs", "started_at", 90, "采集轮次日志"),
@@ -142,6 +141,169 @@ def delete_old(table: str, ts: str, cutoff: str, batch: int = 5000) -> int:
             return total
 
 
+
+def durable_manifest(path: Path, manifest: dict) -> None:
+    """A successful export must be discoverable after interruption, *before* any deletion."""
+    temp = path.with_name(path.name + f".{os.getpid()}.tmp")
+    with temp.open("w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, ensure_ascii=False, indent=1)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temp, path)
+    directory = os.open(str(path.parent), os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def csv_export(table: str, where: str, order: str, target: Path, cutoff: str) -> dict:
+    """Export one *fixed ID batch*; never reuse an archive filename."""
+    if target.exists():
+        raise FileExistsError(f"拒绝覆盖旧归档：{target}")
+    psql(f"COPY (SELECT * FROM {table} WHERE {where} ORDER BY {order}) TO STDOUT WITH (FORMAT csv, HEADER)",
+         stream_to=target)
+    rows = 0
+    with gzip.open(target, "rt", encoding="utf-8", newline="") as fh:
+        reader = csv.reader(fh)
+        next(reader, None)
+        for _ in reader:
+            rows += 1
+    with target.open("rb") as fh:
+        os.fsync(fh.fileno())
+    digest = hashlib.sha256()
+    with target.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return {
+        "table": table, "file": target.name, "rows": rows,
+        "bytes": target.stat().st_size, "sha256": digest.hexdigest(),
+        "cutoff": cutoff, "exportedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def receipt_signature(ids_sql: str) -> str:
+    """Fingerprint ALL parent and child column values, including mutable attempt costs/status."""
+    return (
+        "md5("
+        "coalesce((SELECT string_agg(md5(to_jsonb(r)::text), ',' ORDER BY r.id) "
+        f"FROM receipts r WHERE r.id IN ({ids_sql})), '') || ':' || "
+        "coalesce((SELECT string_agg(md5(to_jsonb(a)::text), ',' ORDER BY a.receipt_id, a.id) "
+        f"FROM receipt_attempts a WHERE a.receipt_id IN ({ids_sql})), '')"
+        ")"
+    )
+
+
+def archive_receipts(cutoff: str, out_dir: Path, manifest: dict, run: dict,
+                     manifest_path: Path, delete: bool, batch: int) -> int:
+    """Archive receipts and ALL attempts by stable receipt IDs. Return 0 or a fail-closed code.
+
+    A recent attempt makes the logical receipt ineligible, regardless of parent creation.
+    Before deletion: fsync both CSV files and the manifest; lock parents and their children
+    inside a single transaction; compare the stored row fingerprint against the locked rows.
+    A newly inserted child, status change, concurrent archiver or interrupted run can only
+    reject this batch, never delete evidence absent from the persisted archive.
+    """
+    if not table_exists("receipts") or not table_exists("receipt_attempts"):
+        print("receipts / receipt_attempts 缺失，拒绝不完整归档", file=sys.stderr)
+        return 4
+    last_id = 0
+    while True:
+        raw = scalar(
+            "SELECT id FROM receipts r "
+            f"WHERE id > {last_id} AND created_at < '{cutoff}' "
+            "AND NOT EXISTS (SELECT 1 FROM receipt_attempts a "
+            f"WHERE a.receipt_id=r.id AND a.started_at >= '{cutoff}') "
+            f"ORDER BY id LIMIT {batch}"
+        )
+        ids = [int(v) for v in raw.splitlines() if v.strip()]
+        if not ids:
+            return 0
+        last_id = ids[-1]
+        ids_sql = ",".join(str(i) for i in ids)
+        parent_where = f"id IN ({ids_sql})"
+        child_where = f"receipt_id IN ({ids_sql})"
+        signature = scalar(f"SELECT {receipt_signature(ids_sql)}")
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        prefix = f"receipts-{ids[0]}-{ids[-1]}-{stamp}-{os.getpid()}"
+        parent = csv_export("receipts", parent_where, "id", out_dir / f"{prefix}-parents.csv.gz", cutoff)
+        child = csv_export("receipt_attempts", child_where, "receipt_id,id", out_dir / f"{prefix}-attempts.csv.gz", cutoff)
+        item = {
+            "table": "receipts+receipt_attempts", "firstId": ids[0], "lastId": ids[-1],
+            "parentRows": len(ids), "attemptRows": child["rows"],
+            "fingerprint": signature, "files": [parent, child], "delete": False,
+        }
+        run["items"].append(item)
+        if parent["rows"] != len(ids):
+            item["error"] = "parent count changed while exporting"
+            durable_manifest(manifest_path, manifest)
+            return 3
+        # Verify that all CSV child rows belong to this exact stable parent batch.
+        with gzip.open(out_dir / child["file"], "rt", encoding="utf-8", newline="") as fh:
+            reader = csv.DictReader(fh)
+            child_ids = set()
+            for row in reader:
+                if int(row["receipt_id"]) not in ids or int(row["id"]) in child_ids:
+                    item["error"] = "unexpected or duplicate child id"
+                    durable_manifest(manifest_path, manifest)
+                    return 3
+                child_ids.add(int(row["id"]))
+        with gzip.open(out_dir / parent["file"], "rt", encoding="utf-8", newline="") as fh:
+            actual = [int(row["id"]) for row in csv.DictReader(fh)]
+        if actual != ids:
+            item["error"] = "parent IDs mismatch"
+            durable_manifest(manifest_path, manifest)
+            return 3
+        # The archive and manifest are now durable; only *then* may deletion begin.
+        durable_manifest(manifest_path, manifest)
+        if not delete:
+            continue
+        # SELECT .. FOR UPDATE on parents blocks concurrent FK inserts (KEY SHARE).
+        # Lock existing children too, to fence off cost/status changes before checking.
+        # Each statement gets a fresh READ COMMITTED snapshot, including in-flight inserts
+        # that committed while the parent-lock acquisition was waiting.
+        delete_sql = f"""
+BEGIN;
+SELECT pg_advisory_xact_lock(1278514763);
+SELECT id FROM receipts WHERE id IN ({ids_sql}) ORDER BY id FOR UPDATE;
+SELECT id FROM receipt_attempts WHERE receipt_id IN ({ids_sql}) ORDER BY id FOR UPDATE;
+DO $safe_archive$
+DECLARE current_sig text;
+DECLARE parent_count bigint;
+BEGIN
+    SELECT {receipt_signature(ids_sql)} INTO current_sig;
+    IF current_sig IS DISTINCT FROM '{signature}' THEN
+        RAISE EXCEPTION 'receipt archive snapshot changed; not deleting';
+    END IF;
+    SELECT count(*) INTO parent_count FROM receipts WHERE id IN ({ids_sql});
+    IF parent_count <> {len(ids)} THEN
+        RAISE EXCEPTION 'receipt archive parents changed; not deleting';
+    END IF;
+    IF EXISTS (SELECT 1 FROM receipt_attempts
+               WHERE receipt_id IN ({ids_sql}) AND started_at >= '{cutoff}') THEN
+        RAISE EXCEPTION 'new attempt since cutoff; not deleting';
+    END IF;
+    DELETE FROM receipts WHERE id IN ({ids_sql});
+    GET DIAGNOSTICS parent_count = ROW_COUNT;
+    IF parent_count <> {len(ids)} THEN
+        RAISE EXCEPTION 'deleted parent count mismatch';
+    END IF;
+END
+$safe_archive$;
+COMMIT;
+"""
+        try:
+            psql(delete_sql)
+        except (RuntimeError, subprocess.CalledProcessError) as error:
+            item["error"] = "safe SQL transaction rejected or interrupted"
+            durable_manifest(manifest_path, manifest)
+            print(f"  ✗ 批次 {ids[0]}-{ids[-1]} 已归档但未删除：{str(error)[:350]}", file=sys.stderr)
+            return 4
+        item["delete"] = True
+        item["deleted"] = len(ids)
+        durable_manifest(manifest_path, manifest)
+        print(f"  ✓ 父回执 {len(ids)} 条 + 明细 {child['rows']} 条已归档，事务删除父行（关联明细级联）")
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="导出并清理过期运维日志")
     ap.add_argument("--days", type=int, help="覆盖默认保留天数，测试时用")
@@ -160,7 +322,14 @@ def main() -> int:
     out_dir = Path(args.out) / str(now.year)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    if args.batch <= 0:
+        print("--batch 必须为正数", file=sys.stderr)
+        return 2
     wanted = {t for t in (args.table or [])}
+    if "receipt_attempts" in wanted:
+        # Child attempts have a parent FK and must be archived together. No independent delete.
+        wanted.remove("receipt_attempts")
+        wanted.add("receipts")
     plan = [row for row in TABLES if not wanted or row[0] in wanted]
     if wanted - {row[0] for row in plan}:
         print(f"未知表：{sorted(wanted - {row[0] for row in TABLES})}", file=sys.stderr)
@@ -173,7 +342,27 @@ def main() -> int:
     print(f"归档目录：{out_dir}")
     print(f"{'表':20}{'保留':>10}{'可删行':>9}  说明")
     total_rows = 0
+    if not args.table or "receipts" in wanted:
+        # Never run the legacy receipts DELETE/ctid path: it cascades to unarchived attempts.
+        days = args.days if args.days is not None else 180
+        if args.before:
+            try:
+                edge = datetime.strptime(args.before, "%Y-%m-%d").replace(tzinfo=BJT)
+            except ValueError:
+                print("--before 格式应为 YYYY-MM-DD", file=sys.stderr)
+                return 2
+            receipt_cutoff = edge.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00")
+        else:
+            receipt_cutoff = (now - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S+00")
+        # Register this run before the first batch; every batch fsyncs its own manifest.
+        manifest["runs"].append(run)
+        code = archive_receipts(receipt_cutoff, out_dir, manifest, run, manifest_path, args.delete, args.batch)
+        if code:
+            return code
+        if "receipts" in wanted: wanted.remove("receipts")
     for table, ts, days, note in plan:
+        if table == "receipts":
+            continue
         if not table_exists(table):
             print(f"{table:20}{'—':>10}{'—':>9}  表不存在，跳过")
             continue
@@ -224,7 +413,8 @@ def main() -> int:
         run["items"].append(item)
 
     run["finishedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    manifest["runs"].append(run)
+    if run not in manifest["runs"]:
+        manifest["runs"].append(run)
     # 只留最近 200 次运行记录，别让清单自己长大。
     manifest["runs"] = manifest["runs"][-200:]
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=1), "utf-8")

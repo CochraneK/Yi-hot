@@ -274,6 +274,10 @@ done
 
 基线全量备份用 `docker exec aihot-db-1 pg_dump -U aihot -d aihot --no-owner --format=custom | gzip > /opt/yihot-archive/base/aihot-$(date +%Y%m%d).dump.gz`，恢复用 `pg_restore`；这一步不影响在线服务。
 
+`/opt/yihot-archive/` 下分三类：`base/` 全库基线（2026-11-11 一份 432 MB）、`<年>/` 按年滚动的流水 CSV 与 `manifest.json`、`scratch/<日期>/` 归档的一次性排查脚本与临时 SQL。服务器磁盘 50 G，按每天约 30 MB 增长估算只够两年，早于保留期的数据一律走「先归档再删」，并定期 `scp` 到本机留副本。
+
+**服务器上只应存在、且不进入 Git 的目录**：`secrets/`（`.env`、admin 登录口令、邮件源密码、ingest token）、`backups/`（迁移前的库与环境快照）。除此之外 `/opt/yihot` 应与仓库 `main` 完全一致；用 `python3 tools/server_diff.py` 核对，输出 `need upload total=0` 且 `SERVER stray` 只剩上述两类即正常。临时调试脚本不要留在 `/opt/yihot` 根目录——仓库 `tools/` 里已有 `dryrun-web-list.mjs`、`probe-deep.mjs`、`probe-24-sources.mjs` 等同类工具，用完归档到 `scratch/` 即可。
+
 ## 给技术维护者的入口
 
 请依次阅读：

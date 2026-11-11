@@ -33,6 +33,7 @@ const provider = await stub(async (_hit, req) => {
       return n === 1 ? "解释 Neuroglancer 的文字 ⟦0⟧。" : '解释 <a id="L0">Neuroglancer</a> 的文字 ⟦0⟧。';
     }
     if (s.includes("never keeps")) return "丢了链接。";
+    if (s.includes("Cited paragraph")) return '引用<a id="L0">来源</a>的段落。';
     if (s.includes("Introducing")) return "壹基金启动新项目。";
     return s.includes("twenty") ? "价格是二十美元。" : s.includes("ten") ? "价格是十美元。" : "译文";
   });
@@ -113,6 +114,26 @@ test("links and images inside a paragraph survive the translation, or the paragr
   assert.ok(tr!.body_html.includes(`chart-${T}.png`), "the chart stays");
   assert.ok(tr!.body_html.includes('<a href="https://example.com/kept">never keeps</a>'), "a paragraph that loses its link stays in the original");
   assert.equal(tr!.complete, false);
+});
+
+test("translation length cap counts actual shielded model characters, preserving long citation links", async () => {
+  // Roughly 69K raw HTML characters; model-facing text is under 6K after href shielding.
+  const href = `https://example.com/${"x".repeat(1600)}`;
+  const html = Array.from({ length: 40 }, (_v, i) => `<p>Cited paragraph ${i} with <a href="${href}">来源</a> (${T}).</p>`).join("");
+  const { articleId: id } = await upsertMaterial({
+    sourceId: SOURCE, url: `${URL_}-long-citations`, title: `Long citations ${T}`, language: "en",
+    bodyText: html.replace(/<[^>]+>/g, ""), bodyHtml: html, bodyStatus: "ok",
+    via: "fetch", publishedAt: new Date(), discoveredAt: new Date(Date.now() + 1_500_000),
+  });
+  await sql`INSERT INTO analyses (article_id,input_revision,origin,relevance,category,title_zh,summary_zh,reason_zh,score,selected)
+    VALUES (${id},1,'rule','pass','policy','长链接','摘要','理由',90,true)`;
+  await publishArticle(id, { releasedAt: new Date(Date.now() - 60_000) });
+  const { translateArticle } = await import("@aihot/backend/editorial/translate");
+  assert.equal((await translateArticle(id)).status, "translated");
+  const body = (await detail(id)).body;
+  assert.equal(body.complete, true, "all 40 paragraphs should be translated");
+  const entries = body.zh?.match(/引用<a href="https:\/\/example\.com\/x+">来源<\/a>的段落/g) ?? [];
+  assert.equal(entries.length, 40, "every long original hyperlink must be restored");
 });
 
 test("the post a selected X post quotes is translated once and shown with the item", async () => {

@@ -72,6 +72,8 @@ export interface GuardedFetchOptions {
   maxBytes?: number;
   /** Follow redirects manually so every hop passes the SSRF guard. */
   maxRedirects?: number;
+  /** Restrict redirect targets to the original origin, e.g. when the URL embeds API credentials. */
+  redirectPolicy?: "same-origin";
   /** "egress" by default; see EgressRoute. */
   route?: EgressRoute;
 }
@@ -107,15 +109,21 @@ export async function guardedFetch(input: string, opts: GuardedFetchOptions = {}
   let url = await check(input);
   const maxRedirects = opts.maxRedirects ?? 5;
   const maxBytes = opts.maxBytes ?? 8 * 1024 * 1024;
+  const headers = new Headers({ "user-agent": DEFAULT_UA, "accept-language": "zh-CN,zh;q=0.9,en;q=0.8", ...(opts.headers ?? {}) });
+  const publicHeaders = new Set(["accept", "accept-language", "accept-encoding", "user-agent", "cache-control", "if-modified-since", "if-none-match", "range", "if-range"]);
+  // Opaque headers, bodies and credentials in the original URL are never forwarded to another origin.
+  // Do not leak URLs in errors: they can contain tokens in their query string.
+  const secretParams = /^(?:key|api[_-]?key|token|access[_-]?token|secret|password|auth|signature|sign|credential|client[_-]?secret)$/i;
+  const queryBound = url.username !== "" || url.password !== "" ||
+    [...url.searchParams.keys()].some((key) => secretParams.test(key));
+  const originBound = opts.redirectPolicy === "same-origin" || opts.body !== undefined ||
+    [...headers.keys()].some((key) => !publicHeaders.has(key.toLowerCase())) || queryBound;
+  const initialOrigin = url.origin;
+  let method = (opts.method ?? "GET").toUpperCase();
+  let requestBody = opts.body;
   const send = async (target: URL) => {
     const viaProxy = proxied(target, route);
-    const init = {
-      method: opts.method ?? "GET",
-      headers: { "user-agent": DEFAULT_UA, "accept-language": "zh-CN,zh;q=0.9,en;q=0.8", ...(opts.headers ?? {}) },
-      body: opts.body,
-      redirect: "manual" as const,
-      signal,
-    };
+    const init = { method, headers, body: requestBody, redirect: "manual" as const, signal };
     try {
       return await undiciFetch(target, { ...init, dispatcher: dispatcherFor(viaProxy) });
     } catch (error) {
@@ -126,11 +134,18 @@ export async function guardedFetch(input: string, opts: GuardedFetchOptions = {}
   };
   for (let hop = 0; ; hop++) {
     const res = await send(url);
-    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
-      // Release the connection even when the next URL is refused or the redirect limit is reached.
+    if ([301, 302, 303, 307, 308].includes(res.status) && res.headers.get("location")) {
       await res.body?.cancel();
-      if (hop >= maxRedirects) throw new Error(`Too many redirects for ${input}`);
-      url = await check(new URL(res.headers.get("location")!, url).toString());
+      if (hop >= maxRedirects) throw new Error("Too many redirects");
+      const next = new URL(res.headers.get("location")!, url);
+      if (originBound && next.origin !== initialOrigin) throw new Error("Blocked cross-origin redirect for a protected request");
+      url = await check(next.toString());
+      if (((res.status === 301 || res.status === 302) && method === "POST") ||
+          (res.status === 303 && method !== "GET" && method !== "HEAD")) {
+        method = "GET";
+        requestBody = undefined;
+        for (const name of ["content-encoding", "content-language", "content-location", "content-type", "content-length", "transfer-encoding"]) headers.delete(name);
+      }
       continue;
     }
     const chunks: Buffer[] = [];

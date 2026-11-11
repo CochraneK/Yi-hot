@@ -256,9 +256,11 @@ sudo python3 /opt/yihot/scripts/archive-db.py --before 2026-11-01 --delete
         # 按北京时间自然日切：归档并删除 11-01 之前的全部流水
 ```
 
-导出是 `COPY (SELECT … WHERE 时间 < 截止) TO STDOUT` 直接 gzip 到 `/opt/yihot-archive/<年>/`，文件名带首末行时间；同目录 `manifest.json` 记行数与 sha256。删除按 ctid 分批（5000 行/批），每批独立事务，不会长时间锁表。
+**2026-11-11 安全修复候选，尚未验证生产部署：** 旧脚本先分别导出 `receipt_attempts` 和 `receipts`，随后按父行时间删除父表；`ON DELETE CASCADE` 会把**较新的、未导出的明细**也删掉。**在修复通过测试、并明确完成服务器部署与旧归档审计之前，应暂停任何生产 `archive-db.py --delete` 定时任务，不要拿开发分支直接执行生产删除。**
 
-规则是「先落盘、再核对、后删除」：导出行数与应删行数不一致就停下不删；删完再查一次过期行必须为 0。宿主 root cron 每月 1 日 04:40 跑一次并带 `--delete`。归档文件请定期 `scp` 到本机留一份，服务器不是唯一副本。
+候选安全路径将 `receipts` 与所有关联 `receipt_attempts` 作为一个归档单元，父 ID 批次固定；较新子行使父行暂缓归档。每批将父、子 CSV 分开 gzip、校验行数及 ID、记录 SHA-256 后 `fsync` 归档与 manifest；删除前事务锁定父子行并复核全行指纹、行数和有无新子行。发现并发修改、新明细或快照变化即回滚，归档保留供排查。独立按时间删除 `receipt_attempts` 的旧路径被禁用（`--table receipt_attempts` 改为成对归档父表）。恢复测试和中断重试必须在独立 PostgreSQL 17 测试库验证。
+
+其他 `article_revisions`、`fetch_runs`、`hot_rankings` 仍沿用原本的 CSV + ctid 批次方式；`manifest.json` 留下每次运行的证据。数据保全必须再复制一份离机备份。**本节只描述代码候选变更，不代表旧的线上 cron 已停或已安全迁移。**
 
 **删完记得 VACUUM。** Postgres 的 DELETE 只把行标成死元组，表文件不会缩小，磁盘也不还。要对被删的表跑 `VACUUM FULL` 才真正回收（会短暂锁表，几秒到几十秒）：
 
@@ -971,6 +973,11 @@ journalctl -u yihot-email-delivery.service -n 50 --no-pager
 **工作量评估**：中等，涉及 `publications` 加地域字段 + 迁移脚本、采集/分析阶段补打标、列表接口加过滤参数、前端加切换。建议作为独立迭代，先在非生产库验证打标准确率，再上生产。
 
 ## 九、公开 API、RSS 和 MCP
+
+> **P0 候选修复（2026-11-11，尚未生产部署）**：公开 MCP 服务端从 `@modelcontextprotocol/server@2.1.0` 升至 `2.3.0`，关联 Core 升级至兼容版；原客户端仍为开发依赖，锁文件保留其隔离的 Core 版本。HTTP 层与 SDK 层均限制 `/api/mcp` 请求体为 256 KiB。CI 的 `scripts/mcp-check.ts` 通过 **YiHot 自身的工具名**检查初始化、`tools/list`、`tools/call` 与超限拒绝；`npm audit --omit=dev` 提供独立依赖审计回执。服务器仍需要确认实际部署版本。
+
+> **HTTP 与浏览器采集安全**：`guardedFetch` 遇授权/自定义头、请求体或凭据查询参数时禁止跨来源重定向，普通公开 GET 仍可合理跳转。浏览器渲染先 await DNS 私网地址检查，再拦截每个导航、重定向及子资源请求，任何子请求拒绝会让整次渲染失败。CI 增加真实 Chromium 的离线 HTTP 重定向/子资源阻断测试；**强对抗 DNS rebinding 与线上网络出口策略尚需部署前在隔离网络复测**，不能把通过单次 DNS 检查当作连接时地址绑定。
+
 
 API 是给程序读取数据的地址，普通读者不需要使用。公开读取不需要后台密码或 API Key。
 

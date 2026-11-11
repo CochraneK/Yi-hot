@@ -60,6 +60,7 @@ export async function mpHistory(ghid: string, opts: { subject: string; window: s
         body: JSON.stringify({ ghid, key, verifycode: "" }),
         timeoutMs: 30_000,
         route: "direct",
+        redirectPolicy: "same-origin",
       });
       if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`dajiala HTTP ${res.status}`, res.status, true);
       const json = JSON.parse(res.text()) as { code?: number; msg?: string; cost_money?: number };
@@ -82,6 +83,7 @@ export async function mpArticle(articleUrl: string, opts: { subject: string; ide
         timeoutMs: 30_000,
         maxBytes: 8 * 1024 * 1024,
         route: "direct",
+        redirectPolicy: "same-origin",
       });
       if (res.status === 429 || res.status >= 500) throw new ProviderRejectedError(`dajiala HTTP ${res.status}`, res.status, true);
       const json = JSON.parse(res.text()) as { code?: number; msg?: string; cost_money?: number };

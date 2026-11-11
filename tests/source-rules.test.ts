@@ -13,6 +13,14 @@ import { collectSource } from "@aihot/backend/sources/collect";
 import { updateSource } from "@aihot/backend/admin/sources";
 
 const T = tag();
+const DAY_MS = 86_400_000;
+// Keep fixture publication times inside the collector's rolling seven-day trust window.
+// Old 2026-09 dates caused CI failures from 2026-10 onward; a fresh clock each test run
+// also exercises the real temporal rules instead of weakening them.
+const listingDate = new Date(Date.now() - 3 * DAY_MS).toISOString().slice(0, 10);
+const bylineDate = new Date(Date.now() - 2 * DAY_MS).toISOString();
+const jinaDate1 = new Date(Date.now() - 2 * DAY_MS).toISOString();
+const jinaDate2 = new Date(Date.now() - DAY_MS).toISOString();
 const LONG = `${"A card label that swallowed the summary of the article it links to, ".repeat(2)}${T}`;
 let jinaDetailReads = 0;
 let jinaListingReads = 0;
@@ -24,12 +32,12 @@ const pages: Record<string, (base: string) => string> = {
     `<?xml version="1.0"?><rss version="2.0"><channel><title>t</title>` +
     ["news/a", "business/b"].map((p) => `<item><title>Entry ${p} ${T}</title><link>https://example.org/rules-${T}/${p}</link><pubDate>${new Date().toUTCString()}</pubDate></item>`).join("") +
     `</channel></rss>`,
-  "/list.html": () => html("", `<ul><li><a href="/p/a-${T}">Short clean title ${T}</a><time>2026-09-20</time></li><li><a href="/p/b-${T}">${LONG}</a></li></ul>`),
+  "/list.html": () => html("", `<ul><li><a href="/p/a-${T}">Short clean title ${T}</a><time>${listingDate}</time></li><li><a href="/p/b-${T}">${LONG}</a></li></ul>`),
   [`/p/a-${T}`]: () =>
-    html(`<meta name="description" content="Summary of A"><meta property="article:published_time" content="2026-01-01T00:00:00Z">`, `<h1>Detail heading A</h1><p class="byline"><time datetime="2026-09-21T08:00:00Z">Sep 21</time></p>`),
+    html(`<meta name="description" content="Summary of A"><meta property="article:published_time" content="2026-01-01T00:00:00Z">`, `<h1>Detail heading A</h1><p class="byline"><time datetime="${bylineDate}">Sep 21</time></p>`),
   [`/p/b-${T}`]: () => html(`<meta name="description" content="Summary of B"><meta property="article:published_time" content="2026-01-01T00:00:00Z">`, `<article><h1>Detail heading B ${T}</h1><p>${ARTICLE_BODY}</p></article>`),
-  [`/j/1-${T}`]: () => html(`<meta property="article:published_time" content="2026-09-27T01:00:00Z">`, "<p>one</p>"),
-  [`/j/2-${T}`]: () => html(`<meta property="article:published_time" content="2026-09-27T02:00:00Z">`, "<p>two</p>"),
+  [`/j/1-${T}`]: () => html(`<meta property="article:published_time" content="${jinaDate1}">`, "<p>one</p>"),
+  [`/j/2-${T}`]: () => html(`<meta property="article:published_time" content="${jinaDate2}">`, "<p>two</p>"),
 };
 // Jina Reader: GET /<target URL> answers the rendering, with its header lines.
 const jina = (base: string, target: string) => {
@@ -108,7 +116,7 @@ test("feed entries outside the source's URL rules are skipped", async () => {
 test("detail rules fill what the listing lacks, and a detail title survives the next listing", async () => {
   for (let run = 0; run < 2; run++) assert.equal((await collectSource(id("detail"), { force: true })).status, "ok");
   const [a, b] = await articles(id("detail"));
-  assert.deepEqual([a!.title, a!.excerpt, a!.published_at?.toISOString(), a!.revision], [`Short clean title ${T}`, "Summary of A", "2026-09-21T08:00:00.000Z", 1],
+  assert.deepEqual([a!.title, a!.excerpt, a!.published_at?.toISOString(), a!.revision], [`Short clean title ${T}`, "Summary of A", bylineDate, 1],
     "a clean listing title stays; the byline, not the listing date or page metadata, dates it");
   assert.deepEqual([b!.title, b!.excerpt, b!.published_at, b!.revision], [`Detail heading B ${T}`, "Summary of B", null, 1],
     "a label that swallowed its summary takes the page's heading; without a byline there is no date; the listing does not revise it back");
@@ -118,8 +126,8 @@ test("a Jina listing is read on every fetch, and buys a detail rendering only wh
   assert.equal((await collectSource(id("jina"), { force: true })).status, "ok");
   const rows = await articles(id("jina"));
   assert.deepEqual(rows.map((r) => [r.title, r.published_at?.toISOString()]), [
-    [`Short Jina title ${T}`, "2026-09-27T01:00:00.000Z"],
-    [`Heading from Jina ${T}`, "2026-09-27T02:00:00.000Z"],
+    [`Short Jina title ${T}`, jinaDate1],
+    [`Heading from Jina ${T}`, jinaDate2],
   ], "the title regex reads Jina's text; dates come from the pages' own HTML");
   assert.equal(jinaDetailReads, 1, "one paid detail rendering: only the long title needed one");
   assert.equal((await collectSource(id("jina"), { force: true })).status, "ok");

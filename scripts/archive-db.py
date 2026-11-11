@@ -40,6 +40,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -258,6 +259,17 @@ def archive_receipts(cutoff: str, out_dir: Path, manifest: dict, run: dict,
         durable_manifest(manifest_path, manifest)
         if not delete:
             continue
+        # Deterministic integration-test barrier, refused outside throwaway databases.
+        barrier = os.environ.get("AIHOT_ARCHIVE_TEST_BARRIER")
+        if barrier and DB_NAME.endswith(("_ci", "_test")):
+            Path(barrier + ".ready").write_text(str(ids[0]), encoding="utf-8")
+            deadline = time.monotonic() + 15
+            while not Path(barrier + ".continue").exists():
+                if time.monotonic() >= deadline:
+                    item["error"] = "test barrier timed out (no deletion)"
+                    durable_manifest(manifest_path, manifest)
+                    return 4
+                time.sleep(0.05)
         # SELECT .. FOR UPDATE on parents blocks concurrent FK inserts (KEY SHARE).
         # Lock existing children too, to fence off cost/status changes before checking.
         # Each statement gets a fresh READ COMMITTED snapshot, including in-flight inserts

@@ -69,6 +69,13 @@ jobs:
         run: |
           node scripts/migrate.ts
           node scripts/seed.ts --topics-only
+      - name: Receipt archive PostgreSQL 17 race and restore regression
+        # Use only the throwaway postgres:17-alpine service for this job.
+        run: |
+          db_container=$(docker ps --filter 'ancestor=postgres:17-alpine' --format '{{.ID}}' | head -n 1)
+          test -n "$db_container"
+          AIHOT_DB_CONTAINER="$db_container" AIHOT_DB_USER=postgres AIHOT_DB_NAME=aihot_ci \\
+            python3 -m unittest discover -s tests -p test_archive_receipt_integrity.py -v
       - name: Smoke check of the built site
         # The site itself runs with collection and model calls off (the tests below use local stubs).
         env:

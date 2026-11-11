@@ -974,6 +974,11 @@ journalctl -u yihot-email-delivery.service -n 50 --no-pager
 
 ## 九、公开 API、RSS 和 MCP
 
+> **P0 候选修复（2026-11-11，尚未生产部署）**：公开 MCP 服务端从 `@modelcontextprotocol/server@2.1.0` 升至 `2.3.0`，关联 Core 升级至兼容版；原客户端仍为开发依赖，锁文件保留其隔离的 Core 版本。HTTP 层与 SDK 层均限制 `/api/mcp` 请求体为 256 KiB。CI 的 `scripts/mcp-check.ts` 通过 **YiHot 自身的工具名**检查初始化、`tools/list`、`tools/call` 与超限拒绝；`npm audit --omit=dev` 提供独立依赖审计回执。服务器仍需要确认实际部署版本。
+
+> **HTTP 与浏览器采集安全**：`guardedFetch` 遇授权/自定义头、请求体或凭据查询参数时禁止跨来源重定向，普通公开 GET 仍可合理跳转。浏览器渲染先 await DNS 私网地址检查，再拦截每个导航、重定向及子资源请求，任何子请求拒绝会让整次渲染失败。CI 增加真实 Chromium 的离线 HTTP 重定向/子资源阻断测试；**强对抗 DNS rebinding 与线上网络出口策略尚需部署前在隔离网络复测**，不能把通过单次 DNS 检查当作连接时地址绑定。
+
+
 API 是给程序读取数据的地址，普通读者不需要使用。公开读取不需要后台密码或 API Key。
 
 浏览器示例：

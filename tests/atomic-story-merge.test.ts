@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, test } from "node:test";
 import { closeDb, sql } from "@aihot/backend/db";
+import { detachFromFact } from "@aihot/backend/admin/content";
 import { upsertMaterial } from "@aihot/backend/content/materials";
 import { mergeStoryInto } from "@aihot/backend/events/merge";
 import { stopBoss } from "@aihot/backend/jobs/queue";
@@ -114,4 +115,64 @@ test("opposite concurrent merges serialize without deadlocking or forming a redi
   assert.equal(rows.filter(row=>row.merged_into!==null).length,1);
   const survivor=rows.find(row=>row.merged_into===null)!;
   assert.equal(Number(rows.find(row=>row.merged_into!==null)!.merged_into),Number(survivor.id));
+});
+
+test("manual detach and automatic merge serialize without a stale public story", async () => {
+  const from=await story("manual-race-from"),to=await story("manual-race-to");
+  const id=await article("manual-race",from.factId);
+  let unlock!:()=>void;
+  let acquired!:(value:void)=>void;
+  const locked=new Promise<void>(resolve=>{ acquired=resolve; });
+  const gate=new Promise<void>(resolve=>{ unlock=resolve; });
+  const blocker=sql.begin(async tx=>{
+    await tx`SELECT 1 FROM articles WHERE id=${id} FOR UPDATE`;
+    acquired();
+    await gate;
+  });
+  await locked;
+  let merger: ReturnType<typeof mergeStoryInto> | undefined;
+  let detached: ReturnType<typeof detachFromFact> | undefined;
+  try {
+    merger=mergeStoryInto(from.storyId,to.storyId,"automatic merge concurrently with editor","test");
+    detached=detachFromFact(id,"editor says unrelated","test");
+    // Both writers are blocked by the held article lock; they must serialize
+    // through the shared row lock rather than creating a redirect/membership split.
+    await new Promise(resolve=>setTimeout(resolve,60));
+    unlock();
+    await Promise.race([
+      Promise.all([blocker,merger,detached]),
+      new Promise<never>((_,reject)=>setTimeout(()=>reject(Error("merge and manual detach deadlocked")),10000)),
+    ]);
+    assert.equal(await membership(id),null,"public view must respect the manual detach");
+    assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id=${id}`).length,0);
+    assert.equal((await sql`SELECT 1 FROM grouping_overrides WHERE article_id=${id}`).length,1);
+  } finally {
+    unlock();
+    await Promise.allSettled([blocker,merger,detached].filter(Boolean) as Array<Promise<unknown>>);
+  }
+});
+
+test("manual detach projection failure rolls back membership, override and audit",async()=>{
+  const source=await story("manual-rollback");
+  const id=await article("manual-rollback",source.factId);
+  const functionName=`fail_detach_pub_${T}`,trigger=`reject_detach_pub_${T}`;
+  assert.match(functionName,/^[a-z0-9_]+$/);
+  await sql.unsafe(`CREATE FUNCTION ${functionName}() RETURNS trigger LANGUAGE plpgsql AS $fn$
+    BEGIN IF OLD.story_id IS DISTINCT FROM NEW.story_id THEN
+      RAISE EXCEPTION 'synthetic detach projection failure';
+    END IF; RETURN NEW; END $fn$`);
+  await sql.unsafe(`CREATE TRIGGER ${trigger} BEFORE UPDATE ON publications FOR EACH ROW
+    EXECUTE FUNCTION ${functionName}()`);
+  try {
+    await assert.rejects(detachFromFact(id,"injected failure","test"),/synthetic detach projection failure/);
+  } finally {
+    await sql.unsafe(`DROP TRIGGER ${trigger} ON publications`);
+    await sql.unsafe(`DROP FUNCTION ${functionName}()`);
+  }
+  assert.equal(await membership(id),source.storyId);
+  assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id=${id}`).length,1);
+  assert.equal((await sql`SELECT 1 FROM grouping_overrides WHERE article_id=${id}`).length,0);
+  assert.equal((await sql`SELECT 1 FROM audit_log WHERE action='content.detach' AND subject=${`content:${id}`}`).length,0);
+  assert.deepEqual(await detachFromFact(id,"retry safely","test"),{detached:1});
+  assert.equal(await membership(id),null);
 });

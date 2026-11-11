@@ -330,9 +330,12 @@ def main() -> int:
         print("没有 docker，这个脚本只能在宿主跑", file=sys.stderr)
         return 2
 
+    # Receipt archives may contain full request/response payloads and private metadata.
+    os.umask(0o077)
     now = datetime.now(timezone.utc)
     out_dir = Path(args.out) / str(now.year)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    out_dir.chmod(0o700)
 
     if args.batch <= 0:
         print("--batch 必须为正数", file=sys.stderr)

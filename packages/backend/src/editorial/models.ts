@@ -30,14 +30,18 @@ export const CAPABILITIES = {
 
 export type CapabilityKey = keyof typeof CAPABILITIES;
 
-let cache: { at: number; overrides: Record<string, string> } | null = null;
+let cache: { at: number; switches: Record<string, string> } | null = null;
 
-async function overrides(): Promise<Record<string, string>> {
-  if (cache && Date.now() - cache.at < 60_000) return cache.overrides;
+/** Preserve the exact configured model name, including retired or misspelled names.
+ * Only *valid* choices can become effective; invalid selections remain visible in admin.
+ */
+async function switches(): Promise<Record<string, string>> {
+  if (cache && Date.now() - cache.at < 60_000) return cache.switches;
   const rows = await sql<{ key: string; value: { model?: string } }[]>`SELECT key, value FROM settings WHERE key LIKE 'models.%'`;
   const map: Record<string, string> = {};
-  for (const r of rows) if (r.value?.model && MODELS[r.value.model]) map[r.key.slice("models.".length)] = r.value.model;
-  cache = { at: Date.now(), overrides: map };
+  for (const row of rows) if (typeof row.value?.model === "string" && row.value.model)
+    map[row.key.slice("models.".length)] = row.value.model;
+  cache = { at: Date.now(), switches: map };
   return map;
 }
 
@@ -48,18 +52,32 @@ export function invalidateModelCache() {
 /** The model a capability uses now: admin switch, else environment, else the code default. */
 export async function modelFor(capability: CapabilityKey): Promise<string> {
   const c: Capability = CAPABILITIES[capability];
-  const chosen = (await overrides())[capability] ?? process.env[c.env] ?? c.default;
-  return MODELS[chosen] ? chosen : c.default;
+  const admin = (await switches())[capability];
+  if (admin && MODELS[admin]) return admin;
+  const env = process.env[c.env];
+  if (env && MODELS[env]) return env;
+  return c.default;
 }
 
-/** Where the current choice comes from, for the admin page. */
-export async function modelSources(): Promise<Record<string, { model: string; source: "admin" | "env" | "default" }>> {
-  const o = await overrides();
-  const out: Record<string, { model: string; source: "admin" | "env" | "default" }> = {};
-  for (const [key, c] of Object.entries(CAPABILITIES) as Array<[string, Capability]>) {
-    if (o[key]) out[key] = { model: o[key]!, source: "admin" };
-    else if (process.env[c.env] && MODELS[process.env[c.env]!]) out[key] = { model: process.env[c.env]!, source: "env" };
-    else out[key] = { model: c.default, source: "default" };
+/** The effective model and the source of the override. Invalid configured names are surfaced,
+ * not silently hidden; this lets operators distinguish an accidental fallback from a deliberate one.
+ */
+export async function modelSources(): Promise<Record<string, {
+  model: string; source: "admin" | "env" | "default"; invalid?: string
+}>> {
+  const held = await switches();
+  const result: Record<string, { model: string; source: "admin" | "env" | "default"; invalid?: string }> = {};
+  for (const [key, capability] of Object.entries(CAPABILITIES) as Array<[string, Capability]>) {
+    const admin = held[key];
+    const env = process.env[capability.env];
+    if (admin && MODELS[admin]) {
+      result[key] = { model: admin, source: "admin" };
+      continue;
+    }
+    const invalid = admin || (env && !MODELS[env] ? env : undefined);
+    result[key] = env && MODELS[env]
+      ? { model: env, source: "env", ...(invalid ? { invalid } : {}) }
+      : { model: capability.default, source: "default", ...(invalid ? { invalid } : {}) };
   }
-  return out;
+  return result;
 }

@@ -26,7 +26,7 @@ interface Usage {
 
 interface Models {
   days: number;
-  capabilities: Array<{ key: string; label: string; env: string; defaultModel: string; vision: boolean; current: { model: string; source: "admin" | "env" | "default" }; usage: Usage[] }>;
+  capabilities: Array<{ key: string; label: string; env: string; defaultModel: string; vision: boolean; current: { model: string; source: "admin" | "env" | "default"; invalid?: string }; usage: Usage[] }>;
   choices: Array<{ key: string; service: string; vision: boolean }>;
   history: Array<{ at: string; actor: string; subject: string; reason: string | null; before: { model: string; source: string } | null; after: { model: string; source: string } | null }>;
   benches: Array<{ id: string; label: string; sample_size: number; prompt_version: string | null; models: string[]; created_at: string }>;
@@ -65,6 +65,7 @@ export default function ModelsAdmin({ loaderData: m }: Route.ComponentProps) {
                   {c.label}
                   <span className="font-mono text-[12px] font-normal text-ink-3">{c.current.model}</span>
                   <Badge tone={c.current.source === "admin" ? "accent" : "muted"}>{SOURCE_LABEL[c.current.source]}</Badge>
+                  {c.current.invalid && <Badge tone="bad">配置的 {c.current.invalid} 不存在，未生效</Badge>}
                 </span>
               }
               right={

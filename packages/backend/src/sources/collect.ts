@@ -606,7 +606,7 @@ export async function scheduleDueSources(limit = Number(process.env.FETCH_SCHEDU
 }
 
 /**
- * Daily: adapt each source's interval to its recent output (active 15 min … quiet 60 min,
+ * Daily: adapt each source's interval to its recent output (active 10 min … quiet 60 min,
  * seven days with no original articles 360 min). hot_signal sources are allowed to be slower.
  */
 export async function adaptIntervals(): Promise<{ updated: number }> {
@@ -622,19 +622,27 @@ export async function adaptIntervals(): Promise<{ updated: number }> {
     // hot signals may wait longer.
     const max = r.participation_mode === "hot_signal" ? 180 : r.kind === "x_search" || r.paid_listing ? 120 : 60;
     // Listings read through Jina are not looked at more than hourly: busy ones would outrun its daily budget.
-    const min = r.paid_listing ? 60 : 15;
+    // Anything else bottoms out at ten minutes: the gap sets how late a story can be picked up, and
+    // ten minutes of lag is invisible on a page whose cards show the wall clock.
+    const min = r.paid_listing ? 60 : 10;
     // X accounts read by shard follow the shard's pace, whatever their own volume. Search sources
     // follow the pay-once-a-day window instead: asking again sooner only re-reads a stored response.
     // A source with no original (non-backfill) articles for seven days is not "quiet editorially":
     // it is a stale/JS-only listing that only fills fetch_runs 24 times a day. Park it at six hours.
     // The window is a rolling seven days, so a source that starts publishing again returns to the
     // normal 15–60 min band on the next daily pass.
+    // Three samples per published item keeps the expected discovery lag near a third of the gap.
+    // The busiest editorial sources (20+ items a day, i.e. one every ~70 minutes) get six, so a
+    // busy morning still shows new cards within minutes instead of waiting out a whole cycle.
+    // Everything else keeps the cheaper 3x schedule — the trade is only fetch traffic, never
+    // analysis: a story enters the pipeline once however often the listing is read.
+    const samples = perDay >= 20 ? 6 : 3;
     const target = r.kind === "search"
       ? SEARCH_INTERVAL_MINUTES
       : shardHandle(r) ? shardMinutes(r.participation_mode)
       : perDay <= 0 ? Math.max(max, 360)
       : perDay <= 0.15 ? max
-      : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * 3))));
+      : Math.round(Math.min(max, Math.max(min, (24 * 60) / (perDay * samples))));
     const res = await sql`UPDATE sources SET interval_minutes = ${target} WHERE id = ${r.id} AND interval_minutes <> ${target}`;
     updated += res.count;
   }

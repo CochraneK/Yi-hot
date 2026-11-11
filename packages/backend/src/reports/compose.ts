@@ -359,7 +359,7 @@ export async function catchUpReports(now = new Date(), days = 7): Promise<{ gene
   const bjHour = Number(new Date(now.getTime() + 8 * 3600000).toISOString().slice(11, 13));
   const [first] = await sql<{ key: string | null }[]>`SELECT min(key) AS key FROM reports WHERE kind = 'daily'`;
   const latestDue = bjHour >= 8 ? today : addDays(today, -1);
-  for (let i = FEATURES.dailyReports ? days - 1 : -1; i >= 0; i--) {
+  for (let i = (FEATURES.dailyReports || FEATURES.dailyNewsletter) ? days - 1 : -1; i >= 0; i--) {
     if (shutdownSignal.signal.aborted) return { generated }; // the next hourly run continues
     const d = addDays(latestDue, -i);
     if (first?.key && d < first.key) continue;

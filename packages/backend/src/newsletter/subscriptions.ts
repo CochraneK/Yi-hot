@@ -31,29 +31,64 @@ export async function requestSubscription(input: { email?: unknown; weekly?: unk
   const monthly = input.monthly !== false;
   const daily = input.daily === true;
   if (!weekly && !monthly && !daily) throw Object.assign(new Error("请至少选择日报、周报或月报"), { statusCode: 400 });
-  const token = randomBytes(32).toString("base64url");
-  const tokenHash = hash(token);
-  const expires = new Date(Date.now() + 48 * 3600_000);
-  const [row] = await sql<{ id: number; status: string }[]>`
-    INSERT INTO newsletter_subscriptions (email, weekly, monthly, daily, status, confirm_token_hash, confirm_expires_at, updated_at)
-    VALUES (${email}, ${weekly}, ${monthly}, ${daily}, 'pending', ${tokenHash}, ${expires}, now())
-    ON CONFLICT ((lower(email))) DO UPDATE SET
-      weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.weekly ELSE EXCLUDED.weekly END,
-      monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.monthly ELSE EXCLUDED.monthly END,
-      daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.daily ELSE EXCLUDED.daily END,
-      pending_weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.weekly ELSE NULL END,
-      pending_monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.monthly ELSE NULL END,
-      pending_daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.daily ELSE NULL END,
-      status = CASE WHEN newsletter_subscriptions.status = 'active' THEN 'active' ELSE 'pending' END,
-      confirm_token_hash = EXCLUDED.confirm_token_hash, confirm_expires_at = EXCLUDED.confirm_expires_at,
-      updated_at = now()
-    RETURNING id, status`;
-  if (row) {
+  // Serialize same-email requests even before the subscription row exists; a row lock
+  // alone would not cover two concurrent first-time signups.
+  await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtextextended(${`newsletter-confirm:${email}`}, 0))`;
+    const [existing] = await tx<{
+      id: number; status: string; weekly: boolean; monthly: boolean; daily: boolean;
+      pending_weekly: boolean | null; pending_monthly: boolean | null; pending_daily: boolean | null;
+      confirm_token_hash: string | null; confirm_expires_at: Date | null; updated_at: Date;
+    }[]>`SELECT id,status,weekly,monthly,daily,pending_weekly,pending_monthly,pending_daily,
+             confirm_token_hash,confirm_expires_at,updated_at
+          FROM newsletter_subscriptions WHERE lower(email)=${email} FOR UPDATE`;
+    const prior = existing?.status === "active"
+      ? [existing.pending_weekly ?? existing.weekly, existing.pending_monthly ?? existing.monthly, existing.pending_daily ?? existing.daily]
+      : [existing?.weekly, existing?.monthly, existing?.daily];
+    const identical = prior[0] === weekly && prior[1] === monthly && prior[2] === daily;
+    const reusable = existing?.confirm_token_hash && existing.confirm_expires_at &&
+      existing.confirm_expires_at.getTime() > Date.now() &&
+      existing.updated_at.getTime() > Date.now() - 10 * 60_000 &&
+      identical && existing.status !== "unsubscribed" && existing.status !== "bounced" && existing.status !== "complained";
+    if (reusable) {
+      const queued = await tx`SELECT 1 FROM newsletter_outbox
+        WHERE subscription_id=${existing.id} AND kind='confirmation'
+          AND dedupe_key=${`confirm:${existing.id}:${existing.confirm_token_hash}`}
+          AND status <> 'cancelled' LIMIT 1`;
+      // Preserve the already-delivered (or pending) link instead of invalidating it
+      // while also sending another confirmation with a different token.
+      if (queued.length) return;
+    }
+
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = hash(token);
+    const expires = new Date(Date.now() + 48 * 3600_000);
+    const [row] = await tx<{ id: number; status: string }[]>`
+      INSERT INTO newsletter_subscriptions (email, weekly, monthly, daily, status, confirm_token_hash, confirm_expires_at, updated_at)
+      VALUES (${email}, ${weekly}, ${monthly}, ${daily}, 'pending', ${tokenHash}, ${expires}, now())
+      ON CONFLICT ((lower(email))) DO UPDATE SET
+        weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.weekly ELSE EXCLUDED.weekly END,
+        monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.monthly ELSE EXCLUDED.monthly END,
+        daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN newsletter_subscriptions.daily ELSE EXCLUDED.daily END,
+        pending_weekly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.weekly ELSE NULL END,
+        pending_monthly = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.monthly ELSE NULL END,
+        pending_daily = CASE WHEN newsletter_subscriptions.status = 'active' THEN EXCLUDED.daily ELSE NULL END,
+        status = CASE WHEN newsletter_subscriptions.status = 'active' THEN 'active' ELSE 'pending' END,
+        confirm_token_hash = EXCLUDED.confirm_token_hash, confirm_expires_at = EXCLUDED.confirm_expires_at,
+        updated_at = now()
+      RETURNING id, status`;
+    if (!row) throw new Error("Failed to stage newsletter subscription");
+    const dedupeKey = `confirm:${row.id}:${tokenHash}`;
+    // A preference change may require a new token. Withdraw still-queued old
+    // confirmations; an already delivered email is outside our control.
+    await tx`UPDATE newsletter_outbox SET status='cancelled', updated_at=now()
+      WHERE subscription_id=${row.id} AND kind='confirmation'
+        AND status IN ('pending','failed') AND dedupe_key <> ${dedupeKey}`;
     const confirmUrl = `${config.siteUrl}/subscribe/confirm?token=${encodeURIComponent(token)}`;
-    await sql`INSERT INTO newsletter_outbox (subscription_id, kind, dedupe_key, payload)
-      VALUES (${row.id}, 'confirmation', ${`confirm:${row.id}:${tokenHash}`}, ${sql.json({ email, weekly, monthly, daily, confirmUrl } as never)})
+    await tx`INSERT INTO newsletter_outbox (subscription_id, kind, dedupe_key, payload)
+      VALUES (${row.id}, 'confirmation', ${dedupeKey}, ${sql.json({ email, weekly, monthly, daily, confirmUrl } as never)})
       ON CONFLICT (dedupe_key) DO NOTHING`;
-  }
+  });
   return { ok: true, state: "confirmation_sent" };
 }
 

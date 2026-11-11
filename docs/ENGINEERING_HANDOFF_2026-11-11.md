@@ -11,7 +11,7 @@
 >
 > **重要区分**：这些是 GitHub 合并及 CI 结论，不证明腾讯云生产实际运行代码已同步，也不证明生产旧归档未丢数据。**[Issue #21](https://github.com/CochraneK/Yi-hot/issues/21) 仍然是部署前人工闸门**。生产归档 cron 暂停、历史父子回执完整性、服务器实际代码 SHA、Chromium 出站限制、邮件实投与服务商账单均要现场核验。未经核实，不恢复自动 `archive-db.py --delete`。
 >
-> **CI 补充**：核心 `Check` 和 `Docker` 已通过；独立的 `Export YiHot PDF manuals` 在 11 月 11 日多次因 GitHub Runner DNS 无法解析 Ubuntu `security.ubuntu.com`、导致 `fonts-noto-cjk` 无法安装而失败。这属于文档构建环境问题，**不能当作 P0/P1 回归失败**，但交付完整性仍需修复或重跑并验证输出。见 [失败记录](https://github.com/CochraneK/Yi-hot/actions/runs/43057498725)。
+> **CI 与 PDF 交付补充（2026-11-12 已恢复）**：核心 `Check` 和 `Docker` 已通过。旧 PDF 导出曾因 GitHub Runner 无法解析 `security.ubuntu.com`、导致中文字体无法安装而失败（[旧失败记录](https://github.com/CochraneK/Yi-hot/actions/runs/43057498725)）。现已由 [PR #30](https://github.com/CochraneK/Yi-hot/pull/30) 固定 Ubuntu 24.04、检查已有 CJK 字体并设置有界安装重试。**[新导出任务 43062347877 成功](https://github.com/CochraneK/Yi-hot/actions/runs/43062347877)**，并将 `docs/pdf/YiHot_README.pdf`、`YiHot_MAINTENANCE.pdf`、`YiHot_Complete.pdf` 三份 PDF 真正回写 `main`（[提交 `753bdb59`](https://github.com/CochraneK/Yi-hot/commit/753bdb59dde86e122ebd7d4582c6462f075c5c66)）。这是文档构建恢复，不代表腾讯云生产验收已完成。
 >
 > **唯一可信边界：** 这里核验的是 **GitHub 源码、提交与 GitHub Actions 测试**。没有访问腾讯云生产数据库、运行态、真实订阅邮箱或供应商账单，不能根据合并历史推断生产已部署或历史数据没有损失。详细老版文档见 [运营交接](YIHOT_OPERATIONS_HANDOFF_2026-11-09.md) 与 [生产证据](PRODUCTION_EVIDENCE_2026-11-10.md)。
 

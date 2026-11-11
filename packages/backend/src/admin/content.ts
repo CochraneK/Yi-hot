@@ -5,10 +5,10 @@
 import { z } from "zod";
 import { ARTICLE_ID_PATTERN, CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
 import { sql } from "../db.ts";
-import { enqueue, QUEUES } from "../jobs/queue.ts";
+import { ensureQueue, enqueue, QUEUES } from "../jobs/queue.ts";
 import { queueProcessing } from "../jobs/content.ts";
 import { normalizeUrl } from "../lib/url.ts";
-import { publishArticle } from "../publication/publish.ts";
+import { publishArticle, publishArticleTx } from "../publication/publish.ts";
 
 import { computeHotRanking } from "../events/hot.ts";
 import { mergeStoryInto } from "../events/merge.ts";
@@ -181,6 +181,9 @@ export async function rerun(id: string, step: "extract" | "analyze" | "group", r
  * evidence leaves the old story, whose digest is rewritten.
  */
 export async function detachFromFact(id: string, reason: string, actor: string) {
+  // The public projection and digest intent must commit together with the manual
+  // membership change; prepare queues outside the transaction to avoid setup locks.
+  await Promise.all([QUEUES.digest, QUEUES.notifySelected, QUEUES.prepareMedia].map(name => ensureQueue(name)));
   const { facts, stories } = await sql.begin(async (tx) => {
     // The grouping job writes under the same lock and reads this decision again before it does.
     await tx`SELECT 1 FROM articles WHERE id = ${id} FOR UPDATE`;
@@ -192,16 +195,18 @@ export async function detachFromFact(id: string, reason: string, actor: string) 
     await tx`INSERT INTO grouping_overrides (article_id, reason, actor) VALUES (${id}, ${reason}, ${actor})
              ON CONFLICT (article_id) DO UPDATE SET reason = EXCLUDED.reason, actor = EXCLUDED.actor, created_at = now()`;
     await tx`UPDATE articles SET grouped_at = now() WHERE id = ${id}`;
+    await publishArticleTx(tx, id);
+    for (const storyId of storyIds) await enqueue(QUEUES.digest, { storyId }, { singletonKey: `story:${storyId}` }, tx);
+    await tx`INSERT INTO audit_log (actor, action, subject, reason, before, after)
+      VALUES (${actor}, 'content.detach', ${`content:${id}`}, ${reason}, ${tx.json({ facts: factIds, stories: storyIds })}, NULL)`;
     return { facts: factIds, stories: storyIds };
   });
-  await publishArticle(id);
-  // The fact's other reports may take a new reading-group anchor.
+  // Other reports keep their membership, but may choose a different reading-group
+  // anchor after a detach. A failed ancillary republish is retryable independently.
   if (facts.length) {
     const others = await sql<{ article_id: string }[]>`SELECT DISTINCT article_id FROM fact_articles WHERE fact_id = ANY(${facts})`;
     for (const o of others) await publishArticle(o.article_id);
   }
-  for (const storyId of stories) await enqueue(QUEUES.digest, { storyId }, { singletonKey: `story:${storyId}` });
-  await audit(actor, "content.detach", `content:${id}`, reason, { facts, stories }, null);
   return { detached: facts.length };
 }
 

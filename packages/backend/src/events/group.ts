@@ -23,7 +23,7 @@ import { embeddingsAvailable, ensureEmbeddings } from "../providers/embeddings.t
 import { isHistorical, STALE_ON_DISCOVERY_MS } from "../content/materials.ts";
 import { siteHost } from "../sources/web-list.ts";
 import { enqueue, QUEUES } from "../jobs/queue.ts";
-import { publishArticle } from "../publication/publish.ts";
+import { publishArticle, publishArticleTx } from "../publication/publish.ts";
 import { passesPublicationRule, type PublicationRule } from "../publication/rules.ts";
 import { mergeStoryInto } from "./merge.ts";
 import {
@@ -743,8 +743,12 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
   // An old report joins only a fact it matches as an occurrence; a mere "same story" is not enough
   // for history to add another report to a card.
   if (history && !factId) {
-    await markGrouped(articleId);
-    await publishArticle(articleId);
+    await sql.begin(async (tx) => {
+      await tx`SELECT 1 FROM articles WHERE id=${articleId} FOR UPDATE`;
+      await tx`UPDATE articles SET grouped_at=coalesce(grouped_at,now()) WHERE id=${articleId}`;
+      for (const id of receipts) await completeReceipt(tx, id);
+      await publishArticleTx(tx, articleId);
+    });
     return { verdict: "historical" };
   }
 
@@ -760,6 +764,8 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     const late = await manualDecision(tx, articleId);
     if (late) {
       await tx`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
+      for (const id of receipts) await completeReceipt(tx, id);
+      await publishArticleTx(tx, articleId);
       return { manual: late, factId: null, storyId: null };
     }
     const story = storyId ?? (await createStory(tx, newTitle, observedAt));
@@ -771,10 +777,11 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     if (!history) await recordSignal(tx, story, articleId, source, "editorial", observedAt);
     await recordDecision(tx, articleId, fact, story, history ? "historical-attached" : verdict, decisionCandidates, receipts[0] ?? null);
     await tx`UPDATE articles SET grouped_at = coalesce(grouped_at, now()) WHERE id = ${articleId}`;
+    // Membership, public projection and paid-verdict receipts commit (or roll back) together.
+    for (const id of receipts) await completeReceipt(tx, id);
+    await publishArticleTx(tx, articleId);
     return { manual: null, factId: fact, storyId: story };
   });
-  for (const id of receipts) await completeReceipt(sql, id);
-  await publishArticle(articleId);
   if (written.manual) return { verdict: "manual", factId: written.manual.factId };
   const result: GroupResult = history
     ? { verdict: "historical-attached", factId: written.factId!, storyId: written.storyId! }
@@ -900,8 +907,10 @@ async function groupSignal(a: ArticleRow, source: SignalSource, observedAt: Date
   const query: ReportView = { title: a.title, source: a.source_name, firstParty: false, at: observedAt, summary: a.body_text?.slice(0, 300) ?? null };
   const { verdicts, receiptId } = await judgeSignal(a.id, query, cands);
   const target = signalTarget(cands, verdicts);
-  if (target) await recordSignal(sql, target.storyId, a.id, source, "signal", observedAt);
-  await recordDecision(sql, a.id, target?.factId ?? null, target?.storyId ?? null, target ? "signal" : "signal-unmatched", asCandidates(verdicts), receiptId);
-  await completeReceipt(sql, receiptId);
+  await sql.begin(async (tx) => {
+    if (target) await recordSignal(tx, target.storyId, a.id, source, "signal", observedAt);
+    await recordDecision(tx, a.id, target?.factId ?? null, target?.storyId ?? null, target ? "signal" : "signal-unmatched", asCandidates(verdicts), receiptId);
+    await completeReceipt(tx, receiptId);
+  });
   return target ? { verdict: "signal", storyId: target.storyId } : { verdict: "signal-unmatched" };
 }

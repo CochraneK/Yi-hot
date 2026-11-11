@@ -92,6 +92,10 @@ jobs:
       - name: MCP transport and tool contract smoke
         run: node scripts/mcp-check.ts http://127.0.0.1:3001/api/mcp
       # After the smoke check, which reads an empty database: these write their own rows.
+      - name: Event merge targeted PostgreSQL regressions
+        run: |
+          timeout 90s node --test tests/atomic-story-merge.test.ts
+          timeout 90s node --test tests/events.test.ts
       - name: Backend tests
         run: npm test
       - name: Server logs

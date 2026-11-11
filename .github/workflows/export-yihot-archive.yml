@@ -1,0 +1,89 @@
+name: Export YiHot handoff Word and training PPT
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/YIHOT_OPERATIONS_HANDOFF_2026-11-09.md
+      - docs/training/YIHOT_40_SLIDES_2026-11-11.md
+      - .github/workflows/export-yihot-archive.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yihot-archive-assets
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Rebuild editable handoff artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Install Pandoc and Chinese fonts
+        run: |
+          sudo apt-get update -qq -o Acquire::Retries=3
+          sudo apt-get install -y -qq pandoc fonts-noto-cjk
+      - name: Render canonical Word and 40-slide presentation
+        run: |
+          mkdir -p docs/archive
+          pandoc docs/YIHOT_OPERATIONS_HANDOFF_2026-11-09.md \
+            --from=gfm --to=docx --toc --toc-depth=2 \
+            --metadata title="YiHot 完整使用、运营与交接报告（可编辑再生版）" \
+            --output=docs/archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx
+          pandoc docs/training/YIHOT_40_SLIDES_2026-11-11.md \
+            --from=gfm --to=pptx --slide-level=1 \
+            --output=docs/archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx
+      - name: Validate ZIP structure and exact slide count
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          from re import fullmatch
+          word=Path("docs/archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx")
+          deck=Path("docs/archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx")
+          for item in [word, deck]:
+              assert item.is_file() and item.stat().st_size > 15000, f"Missing or too small: {item}"
+              with ZipFile(item) as z:
+                  assert z.testzip() is None
+                  names=z.namelist()
+                  if item==word:
+                      assert "word/document.xml" in names
+                  else:
+                      slides=[n for n in names if fullmatch(r"ppt/slides/slide\d+\.xml", n)]
+                      assert len(slides)==40, f"Expected 40 slides, got {len(slides)}"
+          print("Verified Word:", word.stat().st_size, "bytes")
+          print("Verified PPT: 40 slides;", deck.stat().st_size, "bytes")
+          PY
+      - name: Upload editable artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: YiHot-Editable-Handoff-2026-11-11
+          path: |
+            docs/archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx
+            docs/archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx
+          if-no-files-found: error
+          retention-days: 90
+      - name: Commit regenerated assets to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx docs/archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx
+          if git diff --cached --quiet; then
+            echo "Archive assets unchanged"
+            exit 0
+          fi
+          git commit -m "docs(archive): publish editable Word and PPTX [skip ci]"
+          for i in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; sleep 5; continue; }
+            git push origin HEAD:main && { echo "Published editable archive"; exit 0; }
+            sleep 5
+          done
+          echo "::error::Rendered assets are in the workflow artifacts, but Git push failed"
+          exit 1

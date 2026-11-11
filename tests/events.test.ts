@@ -312,3 +312,45 @@ test("stories that reports keep tying together without merging list each other a
     answerAll = false;
   }
 });
+
+
+test("receipt completion failure rolls back grouping/public projection and recovery reuses the paid verdict", async () => {
+  hold = gate();
+  hold.open();
+  const id = await report("atomic-receipt");
+  const name = `test_group_receipt_${T}`;
+  assert.match(name, /^[a-z0-9_]+$/);
+  await sql.unsafe(`CREATE FUNCTION ${name}() RETURNS trigger LANGUAGE plpgsql AS $fn$
+    BEGIN
+      IF NEW.status='completed' AND NEW.purpose='group_article' THEN
+        RAISE EXCEPTION 'synthetic receipt commit failure';
+      END IF;
+      RETURN NEW;
+    END $fn$`);
+  await sql.unsafe(`CREATE TRIGGER ${name} BEFORE UPDATE ON receipts
+    FOR EACH ROW EXECUTE FUNCTION ${name}()`);
+  const previousHits = provider.hits();
+  try {
+    await assert.rejects(groupArticle(id), /synthetic receipt commit failure/);
+  } finally {
+    await sql.unsafe(`DROP TRIGGER ${name} ON receipts`);
+    await sql.unsafe(`DROP FUNCTION ${name}()`);
+  }
+  const paidHits = provider.hits();
+  assert.ok(paidHits > previousHits, "the verdict was billed and cached before the simulated DB failure");
+  assert.equal((await sql`SELECT 1 FROM fact_articles WHERE article_id=${id}`).length, 0);
+  assert.equal((await sql`SELECT 1 FROM grouping_decisions WHERE article_id=${id}`).length, 0);
+  const [before] = await sql<{fact_id:number|null;story_id:number|null}[]>`
+    SELECT fact_id,story_id FROM publications WHERE article_id=${id}`;
+  assert.deepEqual([before?.fact_id,before?.story_id],[null,null]);
+  const receipts=await sql<{status:string}[]>`
+    SELECT status FROM receipts WHERE purpose='group_article' AND subject LIKE ${`article:${id}%`}`;
+  assert.ok(receipts.length > 0);
+  assert.ok(receipts.every(r=>r.status==="received"), "paid results remain reusable after rollback");
+  const recovered = await groupArticle(id);
+  assert.ok(["same-fact","new-story","new-fact-in-story"].includes(recovered.verdict));
+  assert.equal(provider.hits(), paidHits, "retry must use cached paid response");
+  assert.equal((await sql`SELECT 1 FROM grouping_decisions WHERE article_id=${id}`).length,1);
+  const now=await sql<{status:string}[]>`SELECT status FROM receipts WHERE purpose='group_article' AND subject LIKE ${`article:${id}%`}`;
+  assert.ok(now.every(r=>r.status==="completed"));
+});

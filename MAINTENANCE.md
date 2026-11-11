@@ -628,6 +628,34 @@ DeepSeek 工作日高峰价是空闲价的**两倍**，而原来采集一篇就�
 - 改法：`.env` 里调 `ANALYZE_PEAK_PER_HOUR`（0 = 高峰完全停，即旧行为），然后 `docker compose ... up -d --no-deps --force-recreate worker`。这是运行时变量，**不需要 `--build`**。
 - **验证方式**：高峰时段按小时统计 `select to_char(created_at,'HH24'), count(*) from analyses where created_at > now() - interval '12 hours' group by 1`，数值应贴近 `ANALYZE_PEAK_PER_HOUR` 而不是 0；`select count(*) from articles where processing_state='new'` 不应持续堆积。若每小时都精确等于上限，说明还有更多稿子在排队，可以考虑再上调。
 
+### 信源抓取节奏：`adaptIntervals`（2026-11-11 调整）
+
+抓取间隔不是手工配置，而是**每天 04:20 由 `sources.adapt-intervals` 按近 7 天日均产出重算**（`packages/backend/src/sources/collect.ts` 的 `adaptIntervals()`）。调度器 `sources.schedule` 每分钟跑一次，捞出 `next_fetch_at <= now()` 的源，抓完按 `interval_minutes` 排下一次。
+
+目标间隔 = `24 × 60 / (perDay × samples)`，再夹到上下限之间：
+
+| 参数 | 取值 |
+| --- | --- |
+| `max` | `hot_signal` 180；`x_search` 或走 Jina 的 120；其余 60 |
+| `min` | 走 Jina 的 60；**其余 10** |
+| `samples` | 日均 ≥ 20 篇取 6，否则取 3 |
+| 特例 | `perDay <= 0.15` 直接取 `max`；`perDay <= 0` 取 `max(max, 360)`；`kind='search'` 固定 360 |
+
+**关键：手动 `UPDATE sources SET interval_minutes` 只在下次 04:20 之前有效**，重算会盖掉它。要长期改变某个源的节奏，只能改上面的公式或改变这个源的实际产出（`perDay`）。2026-11-11 就发现过实例：caixin 表里写 20、按公式应为 21，等于手动值压不过重算。
+
+`samples=6` 那一档留给日均 20 篇以上（平均不到 72 分钟一篇）的源：3 倍采样时期望发现延迟约一个间隔的三分之一，6 倍能把繁忙时段的延迟压到个位数分钟。**这只增加抓取流量，不增加分析成本**——同一篇稿子无论列表被读几次，`articles` 里只有一行。
+
+实测（2026-11-11，近 7 天日均）：`web-thepaper` 81.9 篇 → 10 分钟、`rss-chinanews-scroll` 35.7 篇 → 10 分钟、`web-caixin` 23.1 篇 → 10 分钟，其余 60 个源一个没动。验证节奏查 `fetch_runs`：
+
+```sql
+SELECT s.id, f.started_at AT TIME ZONE 'Asia/Shanghai' AS started,
+       round(EXTRACT(EPOCH FROM (f.started_at - lag(f.started_at) OVER (PARTITION BY s.id ORDER BY f.started_at)))/60.0, 1) AS gap_min
+FROM fetch_runs f JOIN sources s ON s.id = f.source_id
+WHERE s.id = 'web-thepaper' ORDER BY f.started_at DESC LIMIT 10;
+```
+
+顺带一句：**抓取变快解决不了「午间空窗」**。间隔缩短只能让新稿更快被发现，源本身不发稿的时段仍然是空的——那要靠加信源，不是调节奏。
+
 ### 免费官方 RSS 现状（2026-10-21 实测）
 
 已接入并产出：

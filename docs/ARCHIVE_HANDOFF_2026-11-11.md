@@ -36,6 +36,16 @@
 - 发布主体（政府/机构/媒体）、技术入口（搜索/RSS/网页等）、治理状态（启用/有贡献/许可）必须正交。五层业务阅读导航与五类入口也不是一个概念。
 - `SOURCE_ATLAS.md`、两张 10-25 SVG 和 README 已同步；**31 省/机构主体的真实去重覆盖缺口、10 月 25 日后的生产增量**仍未核验。
 
+## 2026-11-11 新补齐：可编辑资产的 Git 级再生
+
+本轮追加了一个**不依赖聊天附件**的再生流程：[GitHub Actions](../.github/workflows/export-yihot-archive.yml)（[本次成功记录](https://github.com/CochraneK/Yi-hot/actions/runs/42986166195)）。
+
+- **Word 再生版**：[YiHot_Operations_Handbook_rebuilt_2026-11-11.docx](archive/YiHot_Operations_Handbook_rebuilt_2026-11-11.docx) — 由上述 25 章 Markdown 主版本导出；Git 文件大小约 49 KB。
+- **40 张幻灯片的 PPTX 再生版**：[YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx](archive/YiHot_Training_40_Slides_rebuilt_2026-11-11.pptx) — 文字唯一来源为 [YIHOT_40_SLIDES_2026-11-11.md](training/YIHOT_40_SLIDES_2026-11-11.md)；Git 文件大小约 68 KB。
+- Action 在发布前检查 Open XML ZIP 结构、文件大小，以及 PPTX **恰好 40 张幻灯片**，构建成功后自动提交到 `main`（[生成提交](https://github.com/CochraneK/Yi-hot/commit/b131c66328537a991078745c141d47ba43dbca98)）。
+- 这两份是**重新排版/重写的可编辑归档版本**，**并非**旧会话原 DOCX 或 PPTX 的精确恢复；演示稿是 40 页的精简培训提纲，不等同于 25 章全文逐页转换。后续若找到原版，需另存新文件名并保留出处，不覆盖这份再生版。
+- 已入库的 PDF（`docs/pdf/`）仍是 README/MAINTENANCE 及两者合订版，不能冒称这里 25 章 Word 的完整 PDF 对应件。需要时再根据主版本生成同名 PDF，并明确生成日期。
+
 ## 归档后必须继续区分的工作
 
 | 优先 | 任务 | 完成定义 | 证据边界 |

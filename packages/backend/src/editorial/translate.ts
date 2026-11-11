@@ -20,7 +20,7 @@ import { promptText, promptVersion } from "./prompts.ts";
 
 export const TRANSLATE_PROMPT_VERSION = promptVersion("translate-body", "translate-post");
 const BATCH_CHARS = 3500;
-/** Longer bodies get their first part translated and are marked incomplete. */
+/** Long bodies are truncated by model-visible (shielded) text size, not hidden link URLs. */
 const MAX_CHARS = 60_000;
 /** X posts shorter than this carry their meaning in the Chinese title and summary. */
 const X_MIN_CHARS = 60;
@@ -177,16 +177,18 @@ export async function translateArticle(articleId: string): Promise<TranslateResu
   const $ = cheerio.load(row.body_html, null, false);
   const blocks = segmentsOf($);
   if (!blocks.length) return result({ status: "skipped", reason: "no translatable text" });
-  // Beyond the cap, only the leading blocks are translated; the rest keep the original text.
+  // The model sees shielded text, not full link hrefs or media URLs.
+  // A long list of citations must not appear "over 60K" when its actual prompt is short.
   let budget = MAX_CHARS;
   const chosen: Element[] = [];
+  const shielded: Shielded[] = [];
   for (const el of blocks) {
-    const html = $(el).html() ?? "";
-    if (html.length > budget) break;
-    budget -= html.length;
+    const block = shield($(el).html() ?? "");
+    if (block.html.length > budget) break;
+    budget -= block.html.length;
     chosen.push(el);
+    shielded.push(block);
   }
-  const shielded = chosen.map((el) => shield($(el).html() ?? ""));
   const restore = (answers: Array<string | null>) => answers.map((t, i) => (t === null ? null : unshield(t, shielded[i]!)));
   const translations = restore(await translateAll(articleId, row.revision, shielded.map((b) => b.html), SYSTEM_BODY));
   // Blocks whose answer dropped a link or an image are asked once more, on their own receipt.

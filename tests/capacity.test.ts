@@ -70,7 +70,11 @@ test("history beyond the daily allowance is archived before any paid call", asyn
 test("the daily allowance survives a snapshot refresh", async () => {
   // 回归：放行数早先跟着一分钟一次的快照一起清零，等于把「每天 2 篇」放宽成「每分钟 2 篇」。
   // 这里换一天先把计数归零，然后在同一个自然日里跨过多次快照刷新，上限必须一直成立。
-  const day0 = Date.now() + 24 * 3600_000;
+  // Pin the simulated day to Beijing noon tomorrow. Using "now + 24h" crosses
+  // midnight when CI runs at 23:55 Beijing, resetting the real per-day counter
+  // halfway through this four-snapshot test (a nondeterministic false failure).
+  const tomorrowBeijing = new Date(Date.now() + 8 * 3600_000 + 24 * 3600_000).toISOString().slice(0, 10);
+  const day0 = Date.parse(`${tomorrowBeijing}T04:00:00Z`); // 12:00 Beijing
   const admits: boolean[] = [];
   for (let i = 0; i < 4; i += 1) {
     // 每次前进 90 秒，越过快照 60 秒的有效期，强制重算。

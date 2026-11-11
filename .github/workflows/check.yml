@@ -123,6 +123,8 @@ jobs:
           actual_sources=$(docker compose exec -T db psql -U aihot -d aihot -Atc "select count(*) from sources" | tr -d '[:space:]')
           echo "Seeded sources: ${actual_sources}; expected from industry/sources.json: ${expected_sources}"
           test "${actual_sources}" = "${expected_sources}"
+      - name: Chromium isolated redirect/subresource regression
+        run: docker compose exec -T worker node --test tests/browser-chromium-isolation.test.ts
       - name: Logs
         if: failure()
         run: docker compose logs --tail 80

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createServer, type Server } from "node:http";
 import { after, test } from "node:test";
 import { config } from "@aihot/backend/config";
-import { guardedFetch } from "@aihot/backend/lib/http-fetch";
+import { guardedFetch, type GuardedFetchOptions } from "@aihot/backend/lib/http-fetch";
 
 interface Hit { url: string; method: string; body: string; authorization?: string; secret?: string; contentType?: string }
 const servers: Server[] = [];
@@ -31,12 +31,12 @@ after(async () => {
 test("protected headers and even empty bodies never redirect across origins", async () => {
   const second = await fixture(() => ({ body: "should not arrive" }));
   const first = await fixture(() => ({ code: 307, location: second.url + "/capture" }));
-  for (const opts of [
+  for (const opts of ([
     { headers: { Authorization: "Bearer fictitious" } },
     { headers: { "X-Private-Secret": "fictional" } },
     { method: "POST", body: "" },
     { method: "POST", body: "fictional-secret" },
-  ]) {
+  ] as GuardedFetchOptions[])) {
     await assert.rejects(guardedFetch(first.url + "/redirect", opts), /Blocked cross-origin redirect/);
   }
   assert.equal(second.hits.length, 0);

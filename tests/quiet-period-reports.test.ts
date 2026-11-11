@@ -25,7 +25,7 @@ async function absent(kind: string,key: string) {
   assert.equal(rows.length,0);
 }
 after(async () => {
-  await sql`DELETE FROM reports WHERE kind IN ('weekly','monthly') AND key IN ('2011-W45','2011-W46','2011-W48','2011-11','2011-12')`;
+  await sql`DELETE FROM reports WHERE kind IN ('weekly','monthly') AND key IN ('2011-W45','2011-W46','2011-W48','2011-11','2011-12','2012-01')`;
   for (const date of CREATED) await sql`DELETE FROM reports WHERE kind='daily' AND key=${date}`;
   await closeDb();
 });
@@ -68,9 +68,9 @@ test("refill of a previously published period cannot erase its content", async (
 });
 
 test("catch-up never marks a skipped quiet week or month as generated", async () => {
-  await span("2011-11-01","2011-11-30");
-  await span("2011-12-01","2011-12-04");
-  const outcome=await catchUpReports(new Date("2011-12-05T02:00:00Z"),0);
+  await span("2012-01-01","2012-02-05");
+  const outcome=await catchUpReports(new Date("2012-02-06T02:00:00Z"),0);
   assert.deepEqual(outcome,{generated:[]});
-  await absent("monthly","2011-11");
+  await absent("monthly","2012-01");
+  await absent("weekly","2012-W05");
 });

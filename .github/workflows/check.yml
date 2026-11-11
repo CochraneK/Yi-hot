@@ -56,6 +56,9 @@ jobs:
         run: python3 -m unittest discover -s tests -p test_switch_deepseek_flash.py
       - name: Install
         run: npm ci --no-audit --no-fund
+      - name: Production dependency audit (reports existing advisories, does not change lock)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
       - name: Typecheck
         run: npm run typecheck
       - name: Source discovery tests (offline)
@@ -86,6 +89,8 @@ jobs:
           (cd apps/web && NODE_ENV=production exec node server.ts) > "$RUNNER_TEMP/web.log" 2>&1 &
           for i in $(seq 1 60); do curl -fsS -o /dev/null http://127.0.0.1:3000/api/health 2>/dev/null && break; sleep 1; done
           node scripts/smoke.ts --base http://127.0.0.1:3000
+      - name: MCP transport and tool contract smoke
+        run: node scripts/mcp-check.ts http://127.0.0.1:3001/api/mcp
       # After the smoke check, which reads an empty database: these write their own rows.
       - name: Backend tests
         run: npm test

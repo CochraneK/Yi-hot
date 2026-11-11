@@ -40,14 +40,14 @@ jobs:
         run: |
           # Some runner images already contain Noto CJK; do not force a network
           # dependency on every README/MAINTENANCE edit.
-          if command -v fc-list >/dev/null && fc-list -f '%{family}\n' | grep -Fq 'Noto Sans CJK SC'; then
+          if command -v fc-match >/dev/null && [[ "$(fc-match -f '%{family}' 'Noto Sans CJK SC')" == *'Noto Sans CJK SC'* ]]; then
             echo "Noto Sans CJK SC already present; skipping apt"
           else
             timeout 150s sudo apt-get update -qq -o Acquire::Retries=1 -o Acquire::http::Timeout=15
             timeout 150s sudo apt-get install -y -qq -o Acquire::Retries=1 -o Acquire::http::Timeout=15 fonts-noto-cjk
           fi
           # Fail clearly rather than silently exporting tofu/unreadable Chinese.
-          fc-list -f '%{family}\n' | grep -Fq 'Noto Sans CJK SC' || {
+          [[ "$(fc-match -f '%{family}' 'Noto Sans CJK SC')" == *'Noto Sans CJK SC'* ]] || {
             echo "::error::Noto Sans CJK SC is unavailable; PDF generation intentionally stopped"
             exit 1
           }

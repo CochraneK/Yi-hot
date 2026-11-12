@@ -53,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta({ loaderData }: Route.MetaArgs) {
   // Only the tab is part of the address (the default is not written).
   const path = listPath("/agent", { tab: loaderData && loaderData.tab !== DEFAULT_TAB ? loaderData.tab : null });
-  return pageMeta({ title: "Agent", description: `把 ${SITE.name} 接进你的 Agent：Agent Skill、MCP、RSS、REST API 四种方式，匿名只读，无需 API Key。`, path, image: "/og/pages/agent.png" });
+  return pageMeta({ title: "接入", description: `把 ${SITE.name} 接进你的 Agent：Agent Skill、MCP、RSS、REST API 四种方式，匿名只读，无需 API Key。`, path, image: "/og/pages/agent.png" });
 }
 
 function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
@@ -347,7 +347,7 @@ export default function AgentPage() {
   return (
     <ReadingLayout aside={aside}>
       <header>
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">让 Agent 直接使用 {SITE.name}</h1>
+        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">接入</h1>
         <p className="mt-1.5 text-[13px] text-ink-3">Agent Skill、MCP、RSS、REST API 四种方式读的是同一份数据：精选、热点、日报、周报和月报，按你用的工具选一种就行。全部匿名只读，不用注册，也不用 API Key。</p>
         <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
           <span className={pill}>匿名只读</span>
@@ -370,7 +370,7 @@ export default function AgentPage() {
       </div>
 
       <div className="sticky top-0 z-20 -mx-4 mt-7 bg-bg/90 px-4 py-2 backdrop-blur-md lg:mx-0 lg:px-0">
-        <PillTabs layoutId="agent-tab" label="接入方式" active={tab} onSelect={(k: string) => select(k as TabKey)} items={TABS.map((t) => ({ key: t.key, label: t.label }))} />
+        <PillTabs layoutId="agent-tab" label="接入" active={tab} onSelect={(k: string) => select(k as TabKey)} items={TABS.map((t) => ({ key: t.key, label: t.label }))} />
       </div>
 
       <div className="mt-7" role="tabpanel">

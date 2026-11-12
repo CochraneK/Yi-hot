@@ -8589,6 +8589,151 @@
         "minScore": 40
       },
       "enabled": false
+    },
+    {
+      "id": "search-tencent-charity",
+      "name": "网页搜索·腾讯公益",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "腾讯公益 公益项目",
+          "99公益日 腾讯公益"
+        ],
+        "count": 24,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": "tencent-charity",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "平台"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "search-alipay-charity",
+      "name": "网页搜索·支付宝公益",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "支付宝公益 捐赠",
+          "蚂蚁集团 公益 项目"
+        ],
+        "count": 24,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": "alipay-charity",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "平台"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "search-alibaba-charity",
+      "name": "网页搜索·阿里公益",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "阿里公益 项目",
+          "阿里巴巴 公益 捐赠"
+        ],
+        "count": 24,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": "alibaba-charity",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "平台"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "search-byte-charity",
+      "name": "网页搜索·抖音公益",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "抖音公益 项目",
+          "字节跳动 公益"
+        ],
+        "count": 24,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": "byte-charity",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "平台"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "search-china-youth-development-foundation",
+      "name": "网页搜索·希望工程",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "希望工程 助学",
+          "中国青少年发展基金会 项目"
+        ],
+        "count": 24,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "_aihot": {
+          "initialBackfillLimit": 12
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": "china-youth-development-foundation",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "搜索",
+        "助学"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ]
 }

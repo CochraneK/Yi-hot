@@ -16,13 +16,6 @@ let deadline: number;
 let refreshAt: string;
 let metaDelayMs = 0;
 const apiCookies: Array<string | undefined> = [];
-let hotStatus = 200;
-let hotRequests = 0;
-const boardEntries = Array.from({ length: 5 }, (_, i) => ({
-  rank: i + 1, story: { publicId: `board-${i + 1}`, title: `榜单测试事件${i + 1}` },
-  heat: 100 - i, trend: "flat", trendPct: 0, spark: [], badges: [],
-  sourceCount: 2, participantCount: 2, participants: [], sourceNames: [], summary: null, latest: null, cover: null,
-}));
 const api = createServer((req, res) => {
   const url = new URL(req.url!, "http://api.local");
   apiCookies.push(req.headers.cookie);
@@ -41,11 +34,7 @@ const api = createServer((req, res) => {
     const filters = { channel: "all", category: url.searchParams.get("category"), tag: url.searchParams.get("tag"), q: url.searchParams.get("q"), tab: "time" };
     return res.end(JSON.stringify({ filters, items: [], page: 1, pageCount: 1, total: 0, todayCount: 0, freshness: "2026-09-28T00:00:00Z", generatedAt: "2026-09-28T00:00:00Z" }));
   }
-  if (url.pathname === "/api/site/hot") {
-    hotRequests++;
-    res.statusCode = hotStatus;
-    return res.end(JSON.stringify({ entries: boardEntries, windowHours: 48, computedAt: null, ruleVersion: "fixture" }));
-  }
+  if (url.pathname === "/api/site/hot") return res.end(JSON.stringify({ entries: [] }));
   if (url.pathname === "/api/site/echo-client") return res.end(JSON.stringify({ forwarded: req.headers["x-forwarded-for"], real: req.headers["x-real-ip"] }));
   if (url.pathname === "/api/site/items/long-lived") return res.end(JSON.stringify({ id: "long-lived", title: "t" }));
   if (url.pathname === "/api/site/contact") return res.end(JSON.stringify({ wechatQr: "/qr.png", feishuQr: "/qr.png" }));
@@ -180,57 +169,4 @@ test("browser caching preserves noindex and private sign-in responses", async ()
 test("a visitor cannot name its own address to the api without a trusted proxy in front", async () => {
   const res = await fetch(`${origin}/api/site/echo-client`, { headers: { "X-Forwarded-For": "6.6.6.6", "X-Real-IP": "6.6.6.6" } });
   assert.deepEqual(await res.json(), { forwarded: "127.0.0.1", real: "127.0.0.1" });
-});
-
-
-test("dynamics embeds the expandable ranking and keeps exactly four mobile destinations", async () => {
-  const html = await (await fetch(origin + "/yihot/all")).text();
-  assert.ok(html.indexOf("热点榜") < html.indexOf("没有找到相关内容"));
-  assert.match(html, /榜单测试事件1/);
-  assert.match(html.replace(/<!--[\s\S]*?-->/g, ""), /<details[^>]*>[\s\S]*展开其余 2 条[\s\S]*榜单测试事件5/);
-  const tabs = html.match(/<nav aria-label="底部导航"[\s\S]*?<\/nav>/)?.[0] ?? "";
-  assert.equal((tabs.match(/<a /g) ?? []).length, 4);
-  for (const label of ["总报", "动态", "主题", "更多"]) assert.ok(tabs.includes(label));
-  assert.ok(!tabs.includes("/hot"));
-  const side = html.match(/<nav[^>]*aria-label="主导航"[\s\S]*?<\/nav>/)?.[0] ?? "";
-  assert.ok(side.includes("资料"));
-  for (const path of ["/about", "/feedback", "/agent", "/hot"]) assert.ok(!side.includes(`href="/yihot${path}"`));
-  const more = await (await fetch(origin + "/yihot/more")).text();
-  assert.match(more, />接入</);
-  assert.match(more, />资料</);
-});
-
-test("global ranking does not contaminate search, topic, category or later feed pages", async () => {
-  const before = hotRequests;
-  for (const query of ["q=公益", "topic=education", `category=${CATEGORY_KEYS[0]}`, "tag=儿童", "page=2"]) {
-    const response = await fetch(origin + "/yihot/all?" + query);
-    assert.equal(response.status, 200);
-    assert.ok(!(await response.text()).includes("hot-board-title"), query);
-  }
-  assert.equal(hotRequests, before);
-});
-
-test("ranking failure leaves dynamics readable instead of making the whole page unavailable", async () => {
-  hotStatus = 503;
-  try {
-    const response = await fetch(origin + "/yihot/all");
-    assert.equal(response.status, 200);
-    const html = await response.text();
-    assert.match(html, /没有找到相关内容/);
-    assert.ok(!html.includes("hot-board-title"));
-  } finally { hotStatus = 200; }
-});
-
-
-test("legacy hot links select dynamics, while bookmarks select only one entry per navigation", async () => {
-  for (const [path, desktopLabel, mobileLabel] of [["/hot", "动态", "动态"], ["/starred", "收藏", "更多"]]) {
-    const response = await fetch(origin + "/yihot" + path);
-    assert.equal(response.status, 200);
-    const html = await response.text();
-    for (const [name, label] of [["主导航", desktopLabel], ["底部导航", mobileLabel]]) {
-      const nav = html.match(new RegExp(`<nav[^>]*aria-label="${name}"[\\s\\S]*?<\\/nav>`))?.[0] ?? "";
-      assert.equal((nav.match(/aria-current="page"/g) ?? []).length, 1, `${path} ${name}`);
-      assert.match(nav, new RegExp(`aria-current="page"[\\s\\S]*?${label}`));
-    }
-  }
 });

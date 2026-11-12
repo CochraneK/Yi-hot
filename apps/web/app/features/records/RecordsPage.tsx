@@ -419,8 +419,7 @@ export function RecordsPage({ data }: { data: RegulatoryRecordsPage }) {
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-10">
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 pb-1 pt-4 lg:pt-1">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-semibold leading-[1.3] text-ink lg:text-[24px]">资料</h1>
-          <p className="mt-2 text-[13px] font-medium text-ink-2">监管记录</p>
+          <h1 className="text-[22px] font-semibold leading-[1.3] text-ink lg:text-[24px]">监管</h1>
           {/* 手机上只留一句话，完整说明给桌面：那段解释数据来源与归一规则，手机上占掉小半屏。 */}
           <p className="mt-1.5 max-w-[640px] text-[13px] leading-relaxed text-ink-3 lg:hidden">
             民政部对全国性社会组织的行政处罚，以及活动异常名录、严重违法失信名单的列入、移出与送达公告，每天同步一次。

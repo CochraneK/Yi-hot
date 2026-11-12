@@ -19,8 +19,8 @@ export function useChangelogDot(latestVersion: string | null): boolean {
 
 function SideLink({ item, dot }: { item: NavItem; dot: boolean }) {
   const { pathname } = useLocation();
-  // A page has one active desktop entry; mobile-only More descendants differ.
-  const isActive = tabIsActive(item, pathname, "desktop");
+  // Weekly and monthly reports belong to the daily report entry, as the phone tab bar has it.
+  const isActive = tabIsActive(item, pathname);
   const Icon = item.icon;
   return (
     <Link

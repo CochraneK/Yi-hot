@@ -1,7 +1,5 @@
 # Yi-Hot 页面与接口导航（从路由源码核对）
 
-> **2026-11-12 导航更新**：手机底栏为总报、动态、主题、更多；动态顶部含热点榜，资料沿用 `/records`，接入沿用 `/agent`。
->
 > **2026-10-30 源码核对**：根据 `apps/web/app/routes.ts`、`apps/web/app/routes/admin/layout.tsx`、`apps/api/src/routes/{site,static,feeds,agent}.ts`、`industry/features.ts` 和 `apps/web/server.ts` 汇总。**有路由不代表此刻线上服务正常；这次没有完成生产 HTTP 实测**。  
 > 站点的网页在 `/yihot/` 子路径；API / Feed / about/dashboard 可在根路径访问，服务端也接收带 `/yihot` 前缀的请求。以下以 README 已配置的 `https://49.233.72.222` 为示例；若证书或线上代理未就绪，请使用本站当前实际可访问的地址并保留相同路径。
 
@@ -11,13 +9,13 @@
 | --- | --- | --- |
 | **首页 / 精选** | [打开](https://49.233.72.222/yihot/) `/yihot/` | 公益动态入口 |
 | **动态** | [打开](https://49.233.72.222/yihot/all) `/yihot/all` | 阅读、搜索、精选/未读筛选 |
-| **热点** | [打开](https://49.233.72.222/yihot/hot) `/yihot/hot` | 热点完整详情与算法说明；主要阅读入口已并入动态顶部 |
+| **热点** | [打开](https://49.233.72.222/yihot/hot) `/yihot/hot` | 按事件聚合的热点 |
 | **主题** | [打开](https://49.233.72.222/yihot/topics) `/yihot/topics` | 领域分类、机构相关主题 |
 | **周报** | [打开](https://49.233.72.222/yihot/weekly) `/yihot/weekly` | 周度公益总报 |
 | **月报** | [打开](https://49.233.72.222/yihot/monthly) `/yihot/monthly` | 月度公益总报 |
-| **资料 · 监管记录** | [打开](https://49.233.72.222/yihot/records) `/yihot/records` | 民政部处罚与社会组织异常/失信公告；`regulatoryRecords=true`，手机版“更多”可进入 |
+| **监管记录** | [打开](https://49.233.72.222/yihot/records) `/yihot/records` | 民政部处罚与社会组织异常/失信公告；`regulatoryRecords=true`，手机版“更多”可进入 |
 | **邮件订阅** | [打开](https://49.233.72.222/yihot/subscribe) `/yihot/subscribe` | 确认订阅、按期收报、邮件内退订 |
-| **接入** | [打开](https://49.233.72.222/yihot/agent) `/yihot/agent` | Agent Skill / MCP / RSS / REST API 四种方式 |
+| **Agent 接入** | [打开](https://49.233.72.222/yihot/agent) `/yihot/agent` | Agent Skill / MCP / RSS / REST API 四种方式 |
 | **收藏** | [打开](https://49.233.72.222/yihot/starred) `/yihot/starred` | 浏览器本地收藏 |
 | **关于** | [打开](https://49.233.72.222/yihot/about) `/yihot/about` | 站点与主题介绍 |
 | **公众号内容分析** | [打开](https://49.233.72.222/about/dashboard) `/about/dashboard` | 独立静态数据图表页面；关于页底部有入口；**不是线上实时抓取报表** |

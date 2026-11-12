@@ -46,13 +46,13 @@ export default function MorePage() {
         {MORE_ITEMS.map((r) => {
           const Icon = r.icon;
           return (
-          <li key={r.to}>
-            <Link to={r.to} className="flex h-[50px] items-center gap-3 px-4 text-[15px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
-              <span className="text-ink-3"><Icon size={18} /></span>
-              <span className="flex flex-1 items-center gap-2">{r.label}{r.to === "/changelog" && changelogDot && <span className="size-1.5 rounded-full bg-hot" aria-label="有新的更新" />}</span>
-              <IconChevronRight size={16} className="text-ink-4" />
-            </Link>
-          </li>
+            <li key={r.to}>
+              <Link to={r.to} className="flex h-[50px] items-center gap-3 px-4 text-[15px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
+                <span className="text-ink-3"><Icon size={18} /></span>
+                <span className="flex flex-1 items-center gap-2">{r.label}{r.to === "/changelog" && changelogDot && <span className="size-1.5 rounded-full bg-hot" aria-label="有新的更新" />}</span>
+                <IconChevronRight size={16} className="text-ink-4" />
+              </Link>
+            </li>
           );
         })}
         {/* 外观保留在辅助入口之后。 */}

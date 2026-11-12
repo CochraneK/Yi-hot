@@ -46,6 +46,8 @@ export const config = {
   weRssBaseUrl: env.WERSS_BASE_URL || null,
   allowPrivateNetworkFetch: bool("ALLOW_PRIVATE_NETWORK_FETCH", false),
   feishuContentPushEnabled: bool("FEISHU_CONTENT_PUSH_ENABLED", false),
+  /** Hard ceiling on cards one chat target receives per rolling hour; 0 disables the cap. */
+  feishuPushMaxPerHour: int("FEISHU_PUSH_MAX_PER_HOUR", 6),
   indexNowSubmitEnabled: bool("INDEXNOW_SUBMIT_ENABLED", false),
   /** IndexNow key (32 hex characters); without one nothing is submitted and no key file is served. */
   indexNowKey: /^[0-9a-f]{32}$/.test(env.INDEXNOW_KEY ?? "") ? env.INDEXNOW_KEY! : null,

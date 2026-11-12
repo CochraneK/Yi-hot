@@ -47,6 +47,19 @@ export async function deliverContent(req: DeliveryRequest): Promise<Array<{ targ
       results.push({ target: t.key, status: "skipped" });
       continue;
     }
+    // Clearing the off-peak backlog can select hundreds of items within one hour; keep one group
+    // readable by refusing above the ceiling. Capped items stay skipped, never queued for later.
+    const cap = config.feishuPushMaxPerHour;
+    if (cap > 0) {
+      const [usage] = await sql<{ sent: number }[]>`
+        SELECT count(*)::int AS sent FROM deliveries
+        WHERE target_key = ${t.key} AND status = 'sent' AND sent_at > now() - interval '1 hour'`;
+      if ((usage?.sent ?? 0) >= cap) {
+        await sql`UPDATE deliveries SET status = 'skipped', response = 'hourly cap reached', updated_at = now() WHERE id = ${row.id}`;
+        results.push({ target: t.key, status: "skipped" });
+        continue;
+      }
+    }
     const url = t.config_ref ? credential("integrations", t.config_ref) : undefined;
     if (!url) {
       await sql`UPDATE deliveries SET status = 'failed', response = 'webhook not configured', updated_at = now() WHERE id = ${row.id}`;

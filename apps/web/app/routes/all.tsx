@@ -2,9 +2,9 @@ import { SITE, withSubject } from "@aihot/industry/site";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/all";
-import type { PoolResponse } from "@aihot/contracts/site";
+import type { HotResponse, PoolResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
-import { loadOr404, queryString } from "../lib/api.server";
+import { apiGet, loadOr404, queryString } from "../lib/api.server";
 import { listPath, pageMeta } from "../lib/seo";
 import { TopicTabs, SearchField } from "../features/feed/Filters";
 import { FEED_TOPIC_PILLS } from "@aihot/industry/save-the-children";
@@ -14,6 +14,7 @@ import { ToggleChip } from "../components/ui/Controls";
 import { useReadSet } from "../lib/local-state";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
+import { HotBoard } from "../features/hot/HotBoard";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -28,11 +29,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   const tab = url.searchParams.get("tab") === "relevance" ? "relevance" : null;
   // Legacy deep-paging parameters (deep, anchorAt) still open a normal page.
   const page = Math.min(Math.max(Number.parseInt(url.searchParams.get("page") ?? "1", 10) || 1, 1), 50);
-  const data = await loadOr404<PoolResponse>(
+  // A global board belongs only on the unfiltered first page. Its failure must not hide the feed.
+  const showHot = page === 1 && channel === "all" && !category && !topic && !tag && !q;
+  const hotPromise = showHot
+    ? apiGet<HotResponse>("/api/site/hot", { signal: AbortSignal.any([request.signal, AbortSignal.timeout(1500)]) }).catch(() => null)
+    : Promise.resolve(null);
+  const dataPromise = loadOr404<PoolResponse>(
     `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, page: page > 1 ? page : null })}`,
     { signal: request.signal, busyRedirect: "/all/search-busy" },
   );
-  return { data };
+  const [data, hot] = await Promise.all([dataPromise, hotPromise]);
+  return { data, hot };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -64,7 +71,7 @@ function pageHref(params: URLSearchParams, page: number) {
 }
 
 export default function AllPage() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, hot } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const navigation = useNavigation();
   const f = data.filters;
@@ -93,25 +100,16 @@ export default function AllPage() {
 
   return (
     <div className="pb-6">
-      {/* Desktop, as on 精选: the title, then one filter row with the search field aligned on the right. */}
-      <div className="hidden lg:block">
-        <h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1>
-        <div className="mb-5 mt-4 flex items-center justify-between gap-4">
-          <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0" />
-          <SearchField variant="track" defaultValue={f.q ?? ""} keep={keep} />
-        </div>
+      <header className="flex items-baseline justify-between pb-3 pt-5 lg:pb-5 lg:pt-0">
+        <h1 className="text-[22px] font-bold leading-[1.3] text-ink lg:text-[24px] lg:font-semibold">{title ?? "动态"}</h1>
+        {!f.q && <span className="text-[12.5px] text-ink-4 lg:hidden">今日 <span className="num">{data.todayCount}</span> 条</span>}
+      </header>
+      <HotBoard hot={hot} />
+      <div className="mb-5 hidden items-center justify-between gap-4 lg:flex">
+        <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0" />
+        <SearchField variant="track" defaultValue={f.q ?? ""} keep={keep} />
       </div>
-
-      {/* Phones: title with today's count, the search bar, then the same filter row as 精选. */}
       <div className="lg:hidden">
-        <div className="flex items-baseline justify-between pb-3 pt-5">
-          <h1 className="text-[22px] font-bold text-ink">{title ?? "动态"}</h1>
-          {!f.q && (
-            <span className="text-[12.5px] text-ink-4">
-              今日 <span className="num">{data.todayCount}</span> 条
-            </span>
-          )}
-        </div>
         <SearchField variant="bar" defaultValue={f.q ?? ""} keep={keep} autoFocus={params.get("search") === "1"} />
         <div className="-mx-4 mt-3 border-b border-line-soft px-4 pb-3">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-mobile" size="sm" className="min-w-0" />

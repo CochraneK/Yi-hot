@@ -1,12 +1,12 @@
 import { SITE } from "@aihot/industry/site";
-import { FEATURES } from "@aihot/industry/features";
 import type { ReactNode } from "react";
 import { Link, useRouteLoaderData } from "react-router";
 import type { loader as rootLoader } from "../root";
 import { useChangelogDot } from "../components/shell/Sidebar";
 import { pageMeta } from "../lib/seo";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
-import { IconBookmark, IconChart, IconChevronRight, IconHeart, IconHistory, IconMail, IconMessage, IconMoon, IconPlug, IconShield } from "../components/icons";
+import { IconChevronRight, IconMail, IconMoon } from "../components/icons";
+import { MORE_ITEMS } from "../components/shell/nav";
 
 /** Shared caches may keep this page for five minutes. */
 export function headers() {
@@ -17,22 +17,6 @@ export function meta() {
   return pageMeta({ title: "更多", path: "/more", noindex: true });
 }
 
-type Row = { to: string; label: string; icon: ReactNode };
-
-/** 单一列表，顺序与桌面侧栏「更多」分组（components/shell/nav.ts）保持一致：
- *  关于 / 更新 / 反馈 / 监管(监察) / 收藏 / Agent。
- *  原来按「内容 / 偏好 / 关于」分三组，桌面两列时读起来是列优先，顺序会被打乱；这里并成一条。
- *  可选的行业模块（模型榜、Tibo 重置监控）只在对应开关打开时追加在 Agent 之后，不会插进这六项之间。 */
-const ROWS: Row[] = [
-  { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
-  { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
-  { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
-  ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
-  { to: "/starred", label: "收藏", icon: <IconBookmark size={18} /> },
-  { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },
-  ...(FEATURES.leaderboard ? [{ to: "/leaderboard", label: "模型榜", icon: <IconChart size={18} /> }] : []),
-  ...(FEATURES.codexResetMonitor ? [{ to: "/codex-reset", label: "Tibo重置监控", icon: <IconHistory size={18} /> }] : []),
-];
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="card overflow-hidden">
@@ -59,16 +43,19 @@ export default function MorePage() {
         <IconChevronRight size={16} className="shrink-0 text-ink-4" />
       </Link>
       <Group title="全部入口">
-        {ROWS.map((r) => (
+        {MORE_ITEMS.map((r) => {
+          const Icon = r.icon;
+          return (
           <li key={r.to}>
             <Link to={r.to} className="flex h-[50px] items-center gap-3 px-4 text-[15px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
-              <span className="text-ink-3">{r.icon}</span>
+              <span className="text-ink-3"><Icon size={18} /></span>
               <span className="flex flex-1 items-center gap-2">{r.label}{r.to === "/changelog" && changelogDot && <span className="size-1.5 rounded-full bg-hot" aria-label="有新的更新" />}</span>
               <IconChevronRight size={16} className="text-ink-4" />
             </Link>
           </li>
-        ))}
-        {/* 外观不是页面入口，所以排在六项之后，不插进上面的顺序里。 */}
+          );
+        })}
+        {/* 外观保留在辅助入口之后。 */}
         <li className="flex h-[58px] items-center gap-3 px-4 text-[15px] font-medium text-ink">
           <span className="text-ink-3">
             <IconMoon size={18} />

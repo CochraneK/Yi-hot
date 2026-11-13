@@ -1,0 +1,1433 @@
+{
+  "source_repo": "CochraneK/NewsMail",
+  "source_revision": "c118b464e1d0806e35d5f940d3eb6ea3b8cd97db",
+  "scope": "offline code inventory; no database, collection, email or archive mutation",
+  "stats": {
+    "assets": 14,
+    "candidates": 99,
+    "replacement_in_code": 5,
+    "retained_for_review": 94
+  },
+  "retirement": {
+    "ready": false,
+    "blockers": [
+      "old_schedules_stopped: 需在旧运行机器核验 cron、Windows 计划任务和外部 automation；仓库没有 workflow 不代表没有任务。",
+      "private_runtime_backup_verified: 需核验旧 reports/logs、去重状态、配置与恢复；不把私有数据提交主仓库。",
+      "production_replacements_verified: 腾讯云部署与真实邮件输入需对应运行证据；离线解析通过不代替生产验收。"
+    ]
+  },
+  "assets": [
+    {
+      "path": ".gitignore",
+      "blob_sha": "cb34cc8efac6387ea16f4363bba0a074556508c9",
+      "decision": "superseded",
+      "targets": [
+        ".gitignore"
+      ],
+      "reason": "使用主仓库忽略规则，旧运行日志、配置和正文不导入 Git。"
+    },
+    {
+      "path": "README.md",
+      "blob_sha": "782ef83de09626771a7f0b00f002f7829d0f8cf2",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "旧产品说明保留于固定 Git 版本；维护入口收敛到 YiHot。"
+    },
+    {
+      "path": "README_EN.md",
+      "blob_sha": "19b630a162f0b7ea7648d168fe47266168c7f7d3",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "历史英文说明保留，不再复制一套运行说明。"
+    },
+    {
+      "path": "assets/architecture.svg",
+      "blob_sha": "1f22e67424311c2b1f75412ed540974c93a208e5",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "旧架构插图只作历史记录。"
+    },
+    {
+      "path": "config.example.py",
+      "blob_sha": "00085ab1fbe81d128694e726867fbad4776d17d2",
+      "decision": "superseded",
+      "targets": [
+        ".env.example",
+        "docs/EMAIL_SOURCE_DEPLOY.md"
+      ],
+      "reason": "Python 配置由 YiHot 环境配置与独立邮件凭据替代。"
+    },
+    {
+      "path": "info_sources.md",
+      "blob_sha": "df3d7d5d360e627710d626a56fdb12f2cf4dd791",
+      "decision": "preserved",
+      "targets": [
+        "data/source-registry/imports/newsmail-2026-10-08.json"
+      ],
+      "reason": "99 条候选保留来源行号；不把候选数当作启用数。"
+    },
+    {
+      "path": "scripts/dedup_store.py",
+      "blob_sha": "531fcd19f40ef36e8e3df66ba15622826f1db53b",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/content/materials.ts",
+        "deploy/email-delivery/send_reports.py"
+      ],
+      "reason": "使用规范 URL、内容及投递回执；不迁移标题前缀哈希或旧已发送标记。"
+    },
+    {
+      "path": "scripts/deploy_rssbridge.py",
+      "blob_sha": "644041efc443ee0a1f80ec97a7aa8020006584d6",
+      "decision": "dropped",
+      "targets": [
+        "docs/EMAIL_SOURCE_DEPLOY.md",
+        "docs/WERSS_DEPLOY.md"
+      ],
+      "reason": "不迁移会删除已有容器的部署脚本；现有邮件与公众号入口承担接入。"
+    },
+    {
+      "path": "scripts/fetch_news.py",
+      "blob_sha": "734835bc8ddedac139df25a2757475290c066960",
+      "decision": "adapted",
+      "targets": [
+        "packages/backend/src/sources/web-list.ts",
+        "packages/backend/src/sources/rss.ts",
+        "docs/legacy/NEWSMAIL-PARSER-AUDIT.md"
+      ],
+      "reason": "保留明确选择器与日期经验；缺失来源仍逐条待复核，不复制泛关键词爬虫。"
+    },
+    {
+      "path": "scripts/generate_report.py",
+      "blob_sha": "ef19f9baa010251e91f3323faabfdda83a0c714e",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/reports/compose.ts",
+        "deploy/email-delivery/send_reports.py"
+      ],
+      "reason": "共用同一份公开报告，不复制报告模板引擎。"
+    },
+    {
+      "path": "scripts/main.py",
+      "blob_sha": "54d26a2b2b44e0ce60bca53a8059eb06125a6799",
+      "decision": "superseded",
+      "targets": [
+        "apps/worker/src/main.ts",
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "主仓库 worker 与邮件服务替代旧主循环；旧机器是否还有任务需现场核验。"
+    },
+    {
+      "path": "scripts/send_email.py",
+      "blob_sha": "80833ed95ab46fa43f6930fa4701cdf18e211b35",
+      "decision": "superseded",
+      "targets": [
+        "deploy/email-delivery/send_reports.py",
+        "packages/backend/src/newsletter/subscriptions.ts"
+      ],
+      "reason": "复用发送回执、确认及退订；不导入旧收件人或授权码。"
+    },
+    {
+      "path": "scripts/summary_report.py",
+      "blob_sha": "0377d03cc4b1b31ef1adf210b2fa0aa73e0cb12a",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/reports/compose.ts"
+      ],
+      "reason": "日/周/月共用 YiHot 出版与报告管线。"
+    },
+    {
+      "path": "scripts/utils.py",
+      "blob_sha": "cc21236432e072c8594e2cfcdd0f0a0bcc87fa2e",
+      "decision": "adapted",
+      "targets": [
+        "packages/backend/src/sources/web-list.ts",
+        "packages/backend/src/editorial/translate.ts"
+      ],
+      "reason": "迁移严格日期经验；匿名 MyMemory 翻译和用户目录缓存不迁入。"
+    }
+  ],
+  "candidates": [
+    {
+      "legacy_id": "newsmail:001",
+      "name": "中国慈善联合会",
+      "source_line": 9,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cca-federation-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:002",
+      "name": "中华慈善总会",
+      "source_line": 10,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:003",
+      "name": "中国民政部",
+      "source_line": 11,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-mca-civil-news",
+        "web-mca-notice",
+        "web-mca-business",
+        "web-mca-local"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:004",
+      "name": "中国社会组织政务服务平台",
+      "source_line": 12,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:005",
+      "name": "中国基金会中心网",
+      "source_line": 13,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:006",
+      "name": "中国发展简报",
+      "source_line": 17,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:007",
+      "name": "公益时报",
+      "source_line": 18,
+      "status": "replacement_in_code",
+      "targets": [
+        {
+          "id": "gongyi-times",
+          "kind": "web_list",
+          "seed_enabled": true
+        },
+        {
+          "id": "web-gongyishibao-yaowen",
+          "kind": "web_list",
+          "seed_enabled": true
+        }
+      ],
+      "reason": "旧 RSS 入口由已有公益时报网页列表代码替代；不是 RSS 健康证明。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "gongyi-times",
+        "web-gongyishibao-yaowen"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:008",
+      "name": "慈善时报",
+      "source_line": 19,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:009",
+      "name": "南都公益基金会",
+      "source_line": 20,
+      "status": "replacement_in_code",
+      "targets": [
+        {
+          "id": "web-nandu-org-news",
+          "kind": "web_list",
+          "seed_enabled": true
+        }
+      ],
+      "reason": "同一南都公益基金会的明确机构动态列表；不按共享域名自动合并。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-nandu-org-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:010",
+      "name": "南都公益基金会·公众号汇总",
+      "source_line": 21,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:011",
+      "name": "中国公益研究院",
+      "source_line": 22,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:012",
+      "name": "公益慈善论坛",
+      "source_line": 23,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:013",
+      "name": "救助儿童会（国际）",
+      "source_line": 27,
+      "status": "replacement_in_code",
+      "targets": [
+        {
+          "id": "web-stc-global-news",
+          "kind": "web_list",
+          "seed_enabled": false
+        }
+      ],
+      "reason": "国际救助儿童会全球新闻已有暂停的选择器配置；仍需生产 Preview。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-stc-global-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:014",
+      "name": "救助儿童会中国",
+      "source_line": 28,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:015",
+      "name": "联合国儿童基金会中国",
+      "source_line": 29,
+      "status": "replacement_in_code",
+      "targets": [
+        {
+          "id": "web-unicef-cn-press",
+          "kind": "web_list",
+          "seed_enabled": false
+        }
+      ],
+      "reason": "两个同名同 URL 历史候选保留各自 ID，映射至同一暂停新闻配置。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-unicef-cn-press"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:016",
+      "name": "世界健康基金会中国",
+      "source_line": 30,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:017",
+      "name": "世界宣明会中国",
+      "source_line": 31,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:018",
+      "name": "微笑列车基金会中国",
+      "source_line": 32,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:019",
+      "name": "中国儿童少年基金会",
+      "source_line": 33,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cctf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:020",
+      "name": "中华少年儿童慈善救助基金会",
+      "source_line": 34,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cctf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:021",
+      "name": "中国妇女发展基金会",
+      "source_line": 35,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cwdf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:022",
+      "name": "中国宋庆龄基金会",
+      "source_line": 36,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:023",
+      "name": "腾讯公益",
+      "source_line": 40,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:024",
+      "name": "新浪公益",
+      "source_line": 41,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:025",
+      "name": "网易公益",
+      "source_line": 42,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:026",
+      "name": "搜狐公益",
+      "source_line": 43,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:027",
+      "name": "凤凰网公益",
+      "source_line": 44,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:028",
+      "name": "澎湃新闻·公益频道",
+      "source_line": 48,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-thepaper"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:029",
+      "name": "人民网·公益频道",
+      "source_line": 49,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:030",
+      "name": "新华网·公益",
+      "source_line": 50,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:031",
+      "name": "央视网·公益",
+      "source_line": 51,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:032",
+      "name": "中国新闻网·公益",
+      "source_line": 52,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:033",
+      "name": "公益",
+      "source_line": 56,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:034",
+      "name": "慈善",
+      "source_line": 57,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:035",
+      "name": "儿童救助",
+      "source_line": 58,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:036",
+      "name": "气候变化",
+      "source_line": 59,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:037",
+      "name": "NGO",
+      "source_line": 60,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:038",
+      "name": "社会组织",
+      "source_line": 61,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:039",
+      "name": "南都公益基金会",
+      "source_line": 62,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:040",
+      "name": "公益时报",
+      "source_line": 63,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:041",
+      "name": "中国发展简报",
+      "source_line": 64,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:042",
+      "name": "公益慈善",
+      "source_line": 68,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:043",
+      "name": "儿童救助",
+      "source_line": 69,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:044",
+      "name": "气候变化",
+      "source_line": 70,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:045",
+      "name": "扶贫",
+      "source_line": 71,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:046",
+      "name": "志愿者",
+      "source_line": 72,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:047",
+      "name": "公益基金会",
+      "source_line": 73,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:048",
+      "name": "联合国开发计划署中国",
+      "source_line": 77,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:049",
+      "name": "联合国儿童基金会中国",
+      "source_line": 78,
+      "status": "replacement_in_code",
+      "targets": [
+        {
+          "id": "web-unicef-cn-press",
+          "kind": "web_list",
+          "seed_enabled": false
+        }
+      ],
+      "reason": "两个同名同 URL 历史候选保留各自 ID，映射至同一暂停新闻配置。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-unicef-cn-press"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:050",
+      "name": "联合国妇女署中国",
+      "source_line": 79,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:051",
+      "name": "世界粮食计划署中国",
+      "source_line": 80,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:052",
+      "name": "世界卫生组织中国",
+      "source_line": 81,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "rss-who-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:053",
+      "name": "乐施会中国",
+      "source_line": 82,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:054",
+      "name": "美中贸易全国委员会AmCham",
+      "source_line": 83,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:055",
+      "name": "Devex",
+      "source_line": 87,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:056",
+      "name": "Philanthropy News Digest",
+      "source_line": 88,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:057",
+      "name": "GlobalGiving",
+      "source_line": 89,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:058",
+      "name": "BBC·国际",
+      "source_line": 90,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:059",
+      "name": "BBC·健康",
+      "source_line": 91,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:060",
+      "name": "BBC·科学环境",
+      "source_line": 92,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:061",
+      "name": "The Guardian·社会",
+      "source_line": 93,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:062",
+      "name": "The Guardian·环境",
+      "source_line": 94,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:063",
+      "name": "The Guardian·国际",
+      "source_line": 95,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:064",
+      "name": "Reuters·公益",
+      "source_line": 96,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:065",
+      "name": "Reuters·健康",
+      "source_line": 97,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:066",
+      "name": "Associated Press·社会",
+      "source_line": 98,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:067",
+      "name": "New Humanitarian",
+      "source_line": 99,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:068",
+      "name": "Oxfam International",
+      "source_line": 100,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [
+        "rss-oxfam"
+      ],
+      "host_hints": [
+        "rss-oxfam"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:069",
+      "name": "International Institute for Environment",
+      "source_line": 101,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:070",
+      "name": "Greenpeace International",
+      "source_line": 102,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:071",
+      "name": "USAID",
+      "source_line": 103,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:072",
+      "name": "DFID / UK Foreign Office",
+      "source_line": 104,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:073",
+      "name": "今日热榜·综合",
+      "source_line": 108,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [
+        "web-tophub-news"
+      ],
+      "host_hints": [
+        "web-tophub-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:074",
+      "name": "今日热榜·公益",
+      "source_line": 109,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-tophub-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:075",
+      "name": "今日热榜·社会",
+      "source_line": 110,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-tophub-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:076",
+      "name": "煎蛋·今日",
+      "source_line": 111,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:077",
+      "name": "抽屉新热榜",
+      "source_line": 112,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:078",
+      "name": "AnyKnew·热榜",
+      "source_line": 113,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:079",
+      "name": "萝卜日报·热榜",
+      "source_line": 114,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:080",
+      "name": "虎嗅·精选",
+      "source_line": 115,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:081",
+      "name": "36氪·创投",
+      "source_line": 116,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:082",
+      "name": "少数派·精选",
+      "source_line": 117,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:083",
+      "name": "News Minimalist",
+      "source_line": 121,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:084",
+      "name": "The Week",
+      "source_line": 122,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:085",
+      "name": "Philanthropy Today",
+      "source_line": 123,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:086",
+      "name": "Devex Morning Scan",
+      "source_line": 124,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:087",
+      "name": "Stanford Social Innovation Review",
+      "source_line": 125,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:088",
+      "name": "Lingxi360·公益资讯",
+      "source_line": 131,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:089",
+      "name": "AmCham·美中贸易全国委员会",
+      "source_line": 132,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:090",
+      "name": "中国社会保障学会",
+      "source_line": 136,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:091",
+      "name": "中国公益慈善研究院",
+      "source_line": 137,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:092",
+      "name": "中国乡村发展基金会",
+      "source_line": 138,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:093",
+      "name": "中国妇女发展基金会",
+      "source_line": 139,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cwdf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:094",
+      "name": "中国儿童少年基金会",
+      "source_line": 140,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cctf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:095",
+      "name": "中华少年儿童慈善救助基金会",
+      "source_line": 141,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cctf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:096",
+      "name": "中国残疾人福利基金会",
+      "source_line": 142,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cdpf-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:097",
+      "name": "壹基金",
+      "source_line": 143,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-onefoundation-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:098",
+      "name": "中国扶贫基金会",
+      "source_line": 144,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [
+        "web-cfpa-news"
+      ],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    },
+    {
+      "legacy_id": "newsmail:099",
+      "name": "直接在对应分类下追加，格式：`名称",
+      "source_line": 151,
+      "status": "retained_for_review",
+      "targets": [],
+      "reason": "历史候选保留，尚无逐条裁定；主机相同只作线索。",
+      "exact_endpoint_hints": [],
+      "host_hints": [],
+      "production_status": "unverified",
+      "collection_authorized_by_audit": false
+    }
+  ]
+}

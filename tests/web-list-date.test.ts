@@ -43,6 +43,23 @@ test("no date at all is null", () => {
   assert.equal(iso("yesterday"), null);
 });
 
+test("invalid calendar days and clock fields never roll into a different publication date", () => {
+  for (const value of ["2026-02-30", "2026年2月30日", "2026/04/31 09:00", "2026-02-30T09:00:00Z",
+    "2026-02-29T09:00:00+08:00", "2026-09-26 24:00", "2026-09-26 10:60", "02.30.2026"]) {
+    assert.equal(iso(value), null, value);
+  }
+  assert.equal(parseLooseDate("30/02/2026", "+08:00", true), null);
+  assert.equal(iso("2024-02-29T09:00:00+08:00"), "2024-02-29T01:00:00.000Z");
+  assert.equal(iso("2026年2月28日 23:59:59"), "2026-02-28T15:59:59.000Z");
+});
+
+test("a bad list date stays unknown instead of becoming a March item", () => {
+  const source = { id: "demo", config: { url: "https://example.org/news", itemSelector: "li", linkSelector: "a", publishedAtSelector: "time" } } as any;
+  const items = fromHtml('<li><a href="/news/1">公益项目进展完整标题</a><time>2026年2月30日</time></li>', source.config.url, source);
+  assert.equal(items.length, 1);
+  assert.equal(items[0]?.publishedAt ?? null, null);
+});
+
 test("a list can prefer the link title attribute when visible text is truncated", () => {
   const source = { id: "demo", config: {
     url: "https://example.org/news", itemSelector: "li", linkSelector: "a",

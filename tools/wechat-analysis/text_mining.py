@@ -193,6 +193,8 @@ def load_articles(txt_dir):
             'category': category,
             'is_repost': '「转」' in title or '转载' in title,
         })
+    if not records:
+        raise SystemExit('No valid YYYY-MM-DD_title.txt articles in input corpus')
     df = pd.DataFrame(records)
     df = df.sort_values('date').reset_index(drop=True)
     print("Loading complete: %d articles" % len(df))
@@ -317,7 +319,7 @@ def plot_overview(df):
     # ③ 月度发文热图（给更大空间）
     ax3 = fig.add_subplot(gs[1, 0:3])
     monthly = df.groupby(['year', 'month']).size().reset_index(name='count')
-    pivot = monthly.pivot(index='year', columns='month', values='count').fillna(0)
+    pivot = monthly.pivot(index='year', columns='month', values='count').reindex(columns=range(1, 13)).fillna(0)
     im = ax3.imshow(pivot.values, aspect='auto', cmap='YlOrRd', interpolation='nearest')
     ax3.set_xticks(range(12))
     ax3.set_xticklabels(['1月','2月','3月','4月','5月','6月',
@@ -552,7 +554,6 @@ def plot_category_wordclouds(df):
 # ── 图5: TF-IDF关键词热图 ────────────────────────────────────────────
 def plot_tfidf_heatmap(df):
     year_texts = df.groupby('year')['content_clean'].apply(lambda x: ' '.join(x)).reset_index()
-    year_texts = year_texts[year_texts['year'] >= 2018]
 
     vectorizer = TfidfVectorizer(
         tokenizer=tokenize, max_features=200, min_df=1,
@@ -1829,4 +1830,4 @@ body {{
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(html)
     print(f"  → HTML 报告已保存: {report_path}")
-    print(f"  → 完成！共生成 14 张图 + 1 份 HTML 报告")
+    print(f"  → 完成！共生成 {len([p for p in paths.values() if p])} 张图 + 1 份 HTML 报告")

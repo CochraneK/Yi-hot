@@ -20,7 +20,8 @@ python3 tools/wechat-analysis/prepare_jsonl.py \
 # 至少 30 篇有日期、有足够正文的文章才默认尝试生成多图
 /tmp/yihot-wechat-venv/bin/python tools/wechat-analysis/text_mining.py \
   --input /private/corpus/legacy-txt \
-  --output /private/reports/2026-11-wechat
+  --output /private/reports/2026-11-wechat \\
+  --config tools/wechat-analysis/config.example.json
 ```
 
 JSONL 单行示例（**虚构数据，非授权证据**）：
@@ -29,7 +30,7 @@ JSONL 单行示例（**虚构数据，非授权证据**）：
 {"id":"demo-001","title":"示例公益活动","published_at":"2026-11-01","body":"这是一条用于测试的虚构公益活动文章。","source_url":"https://example.org/demo-001","analysis_permitted":true}
 ```
 
-真实数据不得提交 Git 或上传公共 CI。本次 CI 只用合成数据检查适配器/边界与引擎语法，**没有证明旧 14 图对真实用户文章都能生成成功**。下一个验收需要在有授权的 50+ 篇、跨多个年份的语料上测试输出 PNG 数量、HTML 内容、中文字体、主题 NMF 数值边界、空词典、短文本与性能；仅测试通过才能称作功能完全替代，之后再讨论旧仓库归档。
+真实数据不得提交 Git 或上传公共 CI。CI 使用合成数据检查适配器与结构，并以独立 Python 虚拟环境尝试完整生成 12–14 图/HTML（无中文字体环境可跳过词云两图）；**这不证明旧 14 图对真实公众号文章都能成功生成**。下一个验收需要在有授权的 50+ 篇、跨多个年份的语料上测试输出 PNG 数量、HTML 内容、中文字体、主题 NMF 数值边界、空词典、短文本与性能；仅测试通过才能称作功能完全替代，之后再讨论旧仓库归档。
 
 ## 为什么不直接从 YiHot 新闻库生成
 

@@ -76,3 +76,15 @@ README sentence together. Deleting only the text is not a withdrawal; it is an u
 `CochraneK/charity-intelligence` remains a separate YIHOT-adjacent data/evidence backend. `CochraneK/NewsMail` is a legacy migration source and is intended to be archived after its unique assets are accounted for.
 
 This file is a provenance record, not a claim that every YIHOT file derives from AIHOT. File/module-level provenance should be added when code is imported or substantially adapted.
+
+
+## WeChat article analysis (offline, opt-in)
+
+The `tools/wechat-analysis/text_mining.py` 14-chart and HTML generator derives from
+`CochraneK/wechat-article-analysis` at commit
+`264d8648c3d610fde45048ccbede23a91ade99b5`. Original license: MIT;
+the full permission and warranty disclaimer is retained in
+`tools/wechat-analysis/LICENSE`. The adapted copy changes the input/output
+contract, omits repository-specific brand filters and adds portable font discovery.
+The source repository's datasets, images, article text, generated reports and
+personal artifacts are **not** relicensed or copied into YiHot by this notice.

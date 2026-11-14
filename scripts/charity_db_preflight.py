@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -36,7 +37,7 @@ def audit(path: str | Path) -> dict:
         raise ValueError("Expected an existing SQLite file")
     # mode=ro must fail rather than silently create a nonexistent database.
     # Do not use immutable=1: it may silently ignore a live WAL file.
-    with sqlite3.connect(file.as_uri() + "?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(file.as_uri() + "?mode=ro", uri=True)) as db:
         db.execute("PRAGMA query_only=ON")
         integrity_ok = db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         existing = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}

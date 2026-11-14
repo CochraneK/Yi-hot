@@ -79,5 +79,11 @@ export async function pushSelected(articleId: string, now = new Date()): Promise
 
   const dedupeKey = r.fact_id ? `selected:fact:${r.fact_id}` : `selected:article:${articleId}`;
   const targets = await deliverContent({ subjectKind: "selected", subjectId: articleId, dedupeKey, contentAt: r.discovered_at, card: card(r) });
-  return { status: targets.some((t) => t.status === "sent") ? "pushed" : "skipped", targets, reason: targets.length ? undefined : "no new target" };
+  // `held` is the daily cadence working as intended, not a miss: say so in the job outcome.
+  const held = targets.some((t) => t.status === "held");
+  return {
+    status: targets.some((t) => t.status === "sent") ? "pushed" : "skipped",
+    targets,
+    reason: held ? "held for the daily card" : targets.length ? undefined : "no new target",
+  };
 }

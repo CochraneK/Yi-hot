@@ -1040,6 +1040,37 @@ console.log(data.items);
 **一句话**：这台机器的瓶颈顺序是 **内存（Swap 已 1.5GB）> 磁盘（靠缓存撑着）> CPU（空闲）**。
 扩容优先 2核4GB；磁盘先清理再谈。
 
+### 10.1 2026-11-13 整机卡死（已复现原因，已加防护）
+
+时间线（北京时间）：
+
+| 时刻 | 事件 |
+| --- | --- |
+| 17:35–17:38 | `web-cdrf` / `web-jyb` / `web-ndcpa` / `web-caixin` / `web-tophub-news` / `search-found-han` 六个采集任务连续 `job timed out` |
+| 17:40 起 | 再没有任何 `publications` 入库，采集与分析同时停摆（`new` 归零，所以旧看门狗全程沉默） |
+| 22:00:43 | 内核 `global_oom` **连发 10 次**，被杀的是 worker 容器里的 `chromium`（3 次），journald 自身崩溃 |
+| 22:31 | 整机用户态卡死：TCP 能连，SSH 不给横幅、443 无 TLS 响应；ICMP 仍通 |
+| 11-14 09:53 | 控制台重启后恢复；09:54 pg-boss 补跑漏掉的热榜卡 |
+
+**根因**：2GB 内存被吃穿。worker 承载 `render: "browser"` 源（6 个启用），共享 headless chromium
+峰值可达 1GB+，而 `api` / `worker` / `db` / `web` **四个容器都没有内存上限**（`mem_limit=0`），
+于是内核做的是**全机 OOM**：它按全局挑选牺牲者，最后把 sshd 也饿死，只能重启。
+`apport`（Ubuntu 崩溃上报）在 chromium 反复崩溃时被唤醒，进一步放大内存压力。
+
+**已落地的三条防护**：
+
+1. `docker-compose.yml` 给四个容器加 `mem_limit`：db 640m、api 448m、worker 960m、web 192m。
+   有了上限，同样的峰值只会触发 **memcg OOM**——内核在 worker 的 cgroup 里单独杀 chromium，
+   其余服务照常运行，宿主机不会失联。
+2. 关闭 `apport`（`systemctl disable --now apport`）：服务器不需要崩溃上报，它只会在最紧张的时候抢内存。
+3. `worker-watchdog.sh` 增加**判据二：采集静默**。旧判据要求 `new > 0` 才动手，而"采集先死"时
+   新条目不再产生、`new` 归零，看门狗反而不触发——11-13 就是这样静默了 5 小时。
+   新增规则：`fetch_runs` 60 分钟内一次都没有（近 7 天正常间隔最长 15 分钟）即计一次，连续 3 次重启 worker；
+   容器启动 40 分钟内不判定，避免把"刚启动还没轮到采集"误判为卡死。
+
+**仍未解决**：内存总量没变。上面三条只是把"整机失联"降级成"单个容器被杀 + 一次自动重启"，
+真正的余量还是靠扩容到 2核4GB。同机的 `futureme` / `anydoor` / `werss` 也各占 100–500MB。
+
 短时只读探测：
 
 | 服务 | 实测 | 当前保守规划 |
@@ -1514,6 +1545,22 @@ SelectBench 用同一批标注样本比较模型，适合在更换精选/评分�
 这里控制已经登记的飞书等推送目标是否接收新内容。启用时会记录 `enabled_at`，启用之前的历史内容不会补推；停用后只停止新推送，不删除已有投递记录。
 
 页面开关只有在服务器相应环境变量和 webhook/应用凭据也配置正确时才会真正发送。开发和彩排环境即使显示启用，也可能被全局安全阀阻止。
+
+#### 推送节奏：`FEISHU_PUSH_MODE`（2026-11-13 起）
+
+精选进飞书群有三种节奏，改 env 后**必须重建 worker**（定时任务在 worker 里注册）：
+
+| 取值 | 行为 | 群里一天几条 |
+|---|---|---|
+| `each` | 每条精选一张卡，另受 `FEISHU_PUSH_MAX_PER_HOUR` 限制 | 最多 6/小时 |
+| `daily`（当前生产） | 逐条**不发**，在 `deliveries` 里攒成 `held`，按 `FEISHU_HOT_CRON` 出一张按热度排序的汇总卡 | 1 |
+| `off` | 只记录（`skipped`），不发送 | 0 |
+
+`daily` 的两个参数：`FEISHU_HOT_TOP`（卡片列前几条，默认 10，多余的记 `skipped/below today's top`）、`FEISHU_HOT_CRON`（默认 `30 20 * * *`，Asia/Shanghai）。积压超过 26 小时的条目不再补发，直接记 `skipped/held too long for the daily card` —— 漏了一天不值得补一张过期的榜。
+
+排查用的三条 SQL：`SELECT status, count(*) FROM deliveries GROUP BY 1;` 看有没有卡在 `held`；`SELECT response, count(*) FROM deliveries WHERE status='failed' GROUP BY 1;` 看失败原因；重发单条只在 `failed`/`unknown` 状态下有效（`resendDelivery`，发的是当初那条单卡）。
+
+**`{"code":19007,"msg":"Bot Not Enabled"}`** 是飞书侧拒绝：机器人在群里被移除或停用，不是限流、不是密钥过期。判定方法：直接 `curl -X POST` webhook 一条 `{"msg_type":"text","content":{"text":"ping"}}`，同样返回 19007 就证明是群设置问题，需要群主重新启用/添加自定义机器人；重新添加会生成**新的 webhook 地址**，旧地址永久失效，要同步更新 `.env` 并重建 api/worker。
 
 ### 设置：付费请求上限
 

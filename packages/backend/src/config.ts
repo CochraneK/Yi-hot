@@ -32,6 +32,15 @@ function bool(name: string, fallback: boolean): boolean {
   return value === "1" || value.toLowerCase() === "true";
 }
 
+/**
+ * Content-push cadence. An unknown value falls back to `each` (the documented default) rather than
+ * throwing: a typo in one variable must not stop the worker from booting.
+ */
+function feishuPushMode(): "each" | "daily" | "off" {
+  const value = (env.FEISHU_PUSH_MODE ?? "").trim().toLowerCase();
+  return value === "daily" || value === "off" ? value : "each";
+}
+
 
 export const config = {
   databaseUrl: str("DATABASE_URL", "postgres://127.0.0.1:5432/aihot"),
@@ -46,7 +55,17 @@ export const config = {
   weRssBaseUrl: env.WERSS_BASE_URL || null,
   allowPrivateNetworkFetch: bool("ALLOW_PRIVATE_NETWORK_FETCH", false),
   feishuContentPushEnabled: bool("FEISHU_CONTENT_PUSH_ENABLED", false),
-  /** Hard ceiling on cards one chat target receives per rolling hour; 0 disables the cap. */
+  /**
+   * How a newly selected item reaches a content group: `each` one card per item, `daily` hold it and
+   * post one ranked card a day (notify/deliver.ts sendHotDaily), `off` never send. A chat group is a
+   * place people read, not a firehose: the backlog sweep can select dozens within an hour.
+   */
+  feishuPushMode: feishuPushMode(),
+  /** How many items the daily card lists; the rest are counted, not sent. */
+  feishuHotTop: int("FEISHU_HOT_TOP", 10),
+  /** Cron (Asia/Shanghai) for the daily card, read by the worker's schedule registry. */
+  feishuHotCron: str("FEISHU_HOT_CRON", "30 20 * * *"),
+  /** Hard ceiling on cards one chat target receives per rolling hour; 0 disables the cap (`each` only). */
   feishuPushMaxPerHour: int("FEISHU_PUSH_MAX_PER_HOUR", 6),
   indexNowSubmitEnabled: bool("INDEXNOW_SUBMIT_ENABLED", false),
   /** IndexNow key (32 hex characters); without one nothing is submitted and no key file is served. */

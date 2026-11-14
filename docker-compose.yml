@@ -29,6 +29,10 @@ services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
+    # 2 GB box: an unbounded container is a host-wide OOM waiting to happen. With a limit the kernel
+    # kills inside the cgroup (memcg) and the other services keep running; without one it picks a
+    # victim globally and once took sshd down with it (2026-11-13 22:00).
+    mem_limit: 640m
     environment:
       POSTGRES_USER: aihot
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aihot}
@@ -54,6 +58,7 @@ services:
   api:
     <<: *app
     env_file: .env
+    mem_limit: 448m
     command: ["node", "apps/api/src/main.ts"]
     environment:
       <<: *app-env
@@ -67,6 +72,9 @@ services:
   worker:
     <<: *app
     env_file: .env
+    # Headroom for the shared headless chromium (render: "browser" sources). Capped so a runaway page
+    # gets OOM-killed alone instead of starving sshd and the database.
+    mem_limit: 960m
     environment:
       <<: *app-env
       DATABASE_URL: postgres://aihot:${POSTGRES_PASSWORD:-aihot}@db:5432/aihot
@@ -84,6 +92,7 @@ services:
 
   web:
     <<: *app
+    mem_limit: 192m
     command: ["node", "apps/web/server.ts"]
     environment:
       <<: *app-env

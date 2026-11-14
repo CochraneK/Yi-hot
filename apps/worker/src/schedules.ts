@@ -1,7 +1,7 @@
 // Cron-style schedules (Asia/Shanghai). Each run is recorded in job_runs; missed slots run once.
 import type { PgBoss } from "pg-boss";
 import { FEATURES } from "@aihot/industry/features";
-import { credential } from "@aihot/backend/config";
+import { credential, config } from "@aihot/backend/config";
 import { ensureQueue, recordRun } from "@aihot/backend/jobs/queue";
 import { sweepUnprocessed } from "@aihot/backend/jobs/content";
 import { translatePending } from "@aihot/backend/editorial/translate";
@@ -25,7 +25,7 @@ import { forwardPendingFeedback } from "@aihot/backend/operations/feedback";
 import { backupConfigured, runBackup } from "@aihot/backend/operations/backup";
 import { sourceHealthWeekly } from "@aihot/backend/operations/reports";
 import { markStalePendingReceipts } from "@aihot/backend/providers/receipts";
-import { markStaleDeliveries } from "@aihot/backend/notify/deliver";
+import { markStaleDeliveries, sendHotDaily } from "@aihot/backend/notify/deliver";
 
 interface Scheduled {
   name: string;
@@ -89,6 +89,11 @@ export const SCHEDULES: Scheduled[] = [
   { name: "ops.alerts", cron: "*/10 * * * *", run: () => checkAlerts() },
   // One message with the follow-ups that do not touch readers (nothing when there are none).
   { name: "ops.digest", cron: "0 9 * * *", missed: "once", run: () => sendDigest() },
+  // Content groups: with FEISHU_PUSH_MODE=daily, selected items wait here for one ranked card a day
+  // instead of one card per item (the backlog sweep can select dozens inside an hour).
+  ...(config.feishuPushMode === "daily"
+    ? [{ name: "notify.hot-daily", cron: config.feishuHotCron, missed: "once" as const, run: () => sendHotDaily() }]
+    : []),
   // Feedback that did not reach the internal Feishu chat when it was sent (off with FEISHU_INTERNAL_ENABLED).
   { name: "feedback.forward", cron: "*/10 * * * *", run: () => forwardPendingFeedback() },
   ...(backupConfigured() ? [{ name: "ops.backup", cron: "10 4 * * *", missed: "once" as const, run: () => runBackup() }] : []),

@@ -145,6 +145,8 @@ CATEGORY_RULES = {
     '转载': ['「转」','转载'],
 }
 
+TOPIC_GROUPS_OVERRIDE = None  # Optional six-topic, org-specific analytic view
+
 def classify_article(title, content=''):
     text = title + ' ' + content[:200]
     for cat, keywords in CATEGORY_RULES.items():
@@ -802,6 +804,9 @@ def plot_topic_trend(df):
         '健康中国': ['健康', '医疗', '卫生', '助残', '养老'],
     }
 
+    if TOPIC_GROUPS_OVERRIDE is not None:
+        topic_groups = TOPIC_GROUPS_OVERRIDE
+
     yearly_topic = {}
     for topic, keywords in topic_groups.items():
         yearly = {}
@@ -1202,6 +1207,7 @@ if __name__ == '__main__':
     parser.add_argument("--input", required=True, help="Authorized YYYY-MM-DD_title.txt directory; never point to a live inbox")
     parser.add_argument("--output", required=True, help="Private output directory outside the YiHot Git checkout")
     parser.add_argument("--min-articles", type=int, default=30, help="Minimum count for meaningful analysis")
+    parser.add_argument("--config", help="Optional private JSON configuration for per-channel categories and words")
     args = parser.parse_args()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
@@ -1211,6 +1217,39 @@ if __name__ == '__main__':
         parser.error("--input must be an existing directory")
     if args.min_articles < 6:
         parser.error("--min-articles must be at least 6 for topic analysis")
+    if args.config:
+        with open(args.config, encoding="utf-8") as f:
+            config = json.load(f)
+        allowed = {"brand_words", "custom_words", "extra_stopwords", "category_rules", "topic_groups"}
+        if not isinstance(config, dict) or set(config) - allowed:
+            parser.error("unknown or invalid config keys")
+        for key in ("brand_words", "custom_words", "extra_stopwords"):
+            if key in config:
+                values = config[key]
+                if (not isinstance(values, list) or len(values) > 500
+                        or any(not isinstance(v, str) or not v.strip() for v in values)):
+                    parser.error(f"invalid {key}")
+        for key in ("category_rules", "topic_groups"):
+            if key in config:
+                groups = config[key]
+                if (not isinstance(groups, dict) or not groups or len(groups) > 30
+                        or any(not isinstance(k, str) or not k.strip()
+                               or not isinstance(v, list) or not v
+                               or any(not isinstance(w, str) or not w.strip() for w in v)
+                               for k, v in groups.items())):
+                    parser.error(f"invalid {key}")
+                if key == "topic_groups" and len(groups) != 6:
+                    parser.error("topic_groups must contain exactly six groups (legacy 2x3 plot)")
+        BRAND_WORDS[:] = config.get("brand_words", [])
+        STOPWORDS.update(config.get("extra_stopwords", []))
+        for word in config.get("custom_words", []):
+            jieba.add_word(word)
+        if "category_rules" in config:
+            CATEGORY_RULES.clear()
+            CATEGORY_RULES.update(config["category_rules"])
+        if "topic_groups" in config:
+            TOPIC_GROUPS_OVERRIDE = config["topic_groups"]
+
     if os.path.commonpath([OUTPUT_DIR, REPO_ROOT]) == REPO_ROOT:
         parser.error("--output must be outside the YiHot Git checkout")
     if os.path.commonpath([OUTPUT_DIR, TXT_DIR]) == TXT_DIR:

@@ -56,6 +56,11 @@ jobs:
         run: python3 -m unittest discover -s tests -p test_switch_deepseek_flash.py
       - name: Charity SQLite read-only preflight tests (synthetic fixtures only)
         run: python3 -m unittest discover -s tests -p test_charity_db_preflight.py -v
+      - name: Offline charity organization preview and WeChat migration tests
+        run: |
+          python3 -m unittest discover -s tests -p test_charity_db_preview.py -v
+          python3 -m unittest discover -s tests -p test_wechat_analysis_migration.py -v
+          python3 -m py_compile scripts/charity_db_preview.py tools/wechat-analysis/prepare_jsonl.py tools/wechat-analysis/text_mining.py
       - name: Install
         run: npm ci --no-audit --no-fund
       - name: Production dependency audit (reports existing advisories, does not change lock)
@@ -142,3 +147,19 @@ jobs:
       - name: Stop
         if: always()
         run: docker compose down -v
+
+  wechat-render:
+    # Separate from app/Docker checks: Python NLP libraries never enter the YiHot runtime image.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install offline NLP analysis dependencies in throwaway venv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/charity-venv"
+          "$RUNNER_TEMP/charity-venv/bin/python" -m pip install --disable-pip-version-check -r tools/wechat-analysis/requirements.txt
+      - name: Render historical WeChat engine using only synthetic corpus
+        run: |
+          "$RUNNER_TEMP/charity-venv/bin/python" -m unittest discover -s tests -p test_wechat_analysis_render.py -v

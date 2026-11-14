@@ -58,6 +58,29 @@ class CharityDBPreviewTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "not found"):
                 preview(db_file, "missing")
 
+    def test_legacy_source_refs_supply_evidence_without_linking_a_shared_source(self):
+        # Source contract: schema_v2.py keeps source_ref on facts; collect_cszg.py writes
+        # evidence without an entity ID. Migration 0005 adds nullable entity columns later.
+        with tempfile.TemporaryDirectory() as td:
+            db_file = Path(td) / "legacy.sqlite"
+            self._fixture(db_file)
+            with sqlite3.connect(db_file) as db:
+                db.executescript("""
+                    CREATE TABLE org_qualifications (org_id TEXT, qual_type TEXT, source_ref TEXT);
+                    ALTER TABLE review_queue ADD COLUMN entity_type TEXT;
+                    UPDATE review_queue SET entity_type='organization';
+                """)
+                db.execute("INSERT INTO evidence VALUES (?,?,?,?,?)", ("registry1",None,None,"https://example.org/registry1","2026-10-02"))
+                db.execute("INSERT INTO evidence VALUES (?,?,?,?,?)", ("registry2",None,None,"https://example.org/registry2","2026-10-02"))
+                db.execute("INSERT INTO org_qualifications VALUES (?,?,?)", ("o1","registration","registry1"))
+                db.execute("INSERT INTO org_qualifications VALUES (?,?,?)", ("o2","registration","registry2"))
+                db.execute("INSERT INTO review_queue VALUES (?,?,?)", ("o1","open","source"))
+            before = hashlib.sha256(db_file.read_bytes()).hexdigest()
+            result = preview(db_file, "o1")
+            self.assertEqual({e["evidence_id"] for e in result["evidence_links"]}, {"e1", "registry1"})
+            self.assertEqual(result["identity_conflicts"]["open_review_rows"], 1)
+            self.assertEqual(hashlib.sha256(db_file.read_bytes()).hexdigest(), before)
+
     def test_nonexistent_db_never_created(self):
         with tempfile.TemporaryDirectory() as td:
             db_file = Path(td) / "not-created.sqlite"

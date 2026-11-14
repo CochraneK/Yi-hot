@@ -64,8 +64,9 @@ def preview(db_path: Path, org_id: str, max_links: int = 30) -> dict:
             ]
         open_reviews = 0
         if _table(db, "review_queue") and {"entity_id", "status"} <= _cols(db, "review_queue"):
+            scope = " AND entity_type='organization'" if "entity_type" in _cols(db, "review_queue") else ""
             open_reviews = db.execute(
-                "SELECT COUNT(*) FROM review_queue WHERE entity_id=? AND status='open'", (org_id,)
+                "SELECT COUNT(*) FROM review_queue WHERE entity_id=? AND status='open'" + scope, (org_id,)
             ).fetchone()[0]
         mentions = []
         if _table(db, "item_org_mentions") and "org_id" in _cols(db, "item_org_mentions"):
@@ -86,13 +87,27 @@ def preview(db_path: Path, org_id: str, max_links: int = 30) -> dict:
                     "review_status": "UNVERIFIED",
                 })
         evidence = []
-        if _table(db, "evidence") and {"entity_type", "entity_id", "url"} <= _cols(db, "evidence"):
-            for ev in db.execute(
-                "SELECT * FROM evidence WHERE entity_id=? AND entity_type='organization' LIMIT ?",
-                (org_id, max_links),
-            ):
-                evidence.append({k: ev[k] for k in ("evidence_id", "url", "retrieved_at", "evidence_level")
-                                 if k in ev.keys()})
+        if _table(db, "evidence") and "url" in _cols(db, "evidence"):
+            cols = _cols(db, "evidence")
+            clauses, params = [], []
+            if {"entity_type", "entity_id"} <= cols:
+                clauses.append("(entity_id=? AND entity_type='organization')")
+                params.append(org_id)
+            # Frozen v2 facts link via source_ref. Original registry evidence has no entity ID;
+            # migration 0005 only adds nullable entity columns, so direct lookup alone loses it.
+            if "evidence_id" in cols:
+                for table in ("org_qualifications", "annual_reports", "financials", "governance_snapshots",
+                              "audit_reports", "projects", "channels"):
+                    if _table(db, table) and {"org_id", "source_ref"} <= _cols(db, table):
+                        clauses.append(f'evidence_id IN (SELECT source_ref FROM "{table}" WHERE org_id=?)')
+                        params.append(org_id)
+            if clauses:
+                order = " ORDER BY evidence_id" if "evidence_id" in cols else ""
+                rows = db.execute("SELECT * FROM evidence WHERE (" + " OR ".join(clauses) + ")" + order + " LIMIT ?",
+                                  [*params, max_links])
+                for ev in rows:
+                    evidence.append({k: ev[k] for k in ("evidence_id", "url", "retrieved_at", "evidence_level")
+                                     if k in ev.keys()})
         reasons = []
         if code_collision:
             reasons.append("CREDIT_CODE_COLLISION")

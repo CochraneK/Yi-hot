@@ -19,6 +19,8 @@ python3 scripts/charity_db_preview.py \
 
 源文件不存在时工具报错，不会新建空 SQLite；读模式为 `mode=ro` + `query_only`；不会合并同信用代码的不同机构，也不把无名称/无证据的条目自动判为风险。测试采用合成 SQLite 记录，源码不包含用户的真实数据库。
 
+**旧 Schema 对照补充**：已核对旧仓库 `494cfcd2` 的 `schema_v2.py`、`collect_cszg.py` 和迁移 0005。早期登记证据通过资质、年报等事实表的 `source_ref` 指向 `evidence_id`，并无直接机构 ID；只查 `evidence.entity_id` 会漏项。预览现同时保留这条明确引用链和直接关联，不按共用域名/来源 URL 猜测归属。审核队列在有 `entity_type` 时仅统计 organization 项，避免串入同 ID 的资讯或信源审核。该合同回归仍用合成 SQLite 验证只读和机构间隔离。
+
 ## 阻塞归档的条件
 
 原仓库曾在 2026-10-19 记录 14,327 家机构、53 组同码多行、31 条资讯关联；**这些是历史快照，不是当前验收结果**。真实 `data/charity_intelligence.sqlite`、WAL、`data/raw/` 和备份未入 Git。

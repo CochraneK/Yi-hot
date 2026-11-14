@@ -2852,3 +2852,10 @@ python3 repair_issue_links.py --apply    # 改 url + 清空 body + revision+1
 NewsMail 的 14 个版本化文件与 99 个历史候选已建立逐项账本；5 条来源记录映射到已有代码配置，94 条保留为主仓库待复核候选。执行 `npm run newsmail:audit:check` 可离线复算，不采集、不发邮件、不接触生产库。候选未全部启用不妨碍减少仓库；旧调度停用、私有产物恢复、腾讯云替代路径三类运行证据仍须核验，当前没有归档旧仓库。详见 [NEWSMAIL_MIGRATION.md](docs/NEWSMAIL_MIGRATION.md)。
 
 列表日期现在拒绝 2 月 30 日等不存在的日历日期和 24:00/10:60 等不支持的时钟字段，避免自动滚动成另一天；未知日期沿用现有回退流程。此修复不自动重跑历史内容。邮件采集文档已与仓库每日 08:00 timer 对齐，邮件投递 timer 的每 30 分钟保持独立。
+
+
+## charity-intelligence SQLite 只读迁移预检（2026-11-14）
+
+旧 charity-intelligence 的真实 SQLite 主库不在 Git。先在旧运行电脑备份、完成完整性验证，再对**离线一致性备份**运行 `python3 scripts/charity_db_preflight.py --db <备份路径>`；脚本只读，不建库、不输出机构名/信用代码或原文，只给汇总行数、同码冲突与孤立关联、数据结构缺口。用 `python3 -m unittest discover -s tests -p test_charity_db_preflight.py -v` 验证 4 个合成测试场景。
+
+状态 `BLOCKED` 表示有确定阻断；`REVIEW_REQUIRED` 仍**不代表可导入**，机器标志 `migration_authorized` 始终为 false。同码多名不能自动视为更名或合并；正式导入前需要旧 ID 映射、人工冲突裁决、证据和版权/隐私检查、可逆导入测试及明确上线批准。操作细节、资产范围和回滚见 [CHARITY_DB_PRECHECK.md](docs/CHARITY_DB_PRECHECK.md)。此工具与腾讯云生产回执归档安全闸门 #21 相互独立，不能因本预检通过而恢复 `archive-db.py --delete`。

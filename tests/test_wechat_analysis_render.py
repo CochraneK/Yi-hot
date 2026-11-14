@@ -23,7 +23,9 @@ TOPICS = (
 
 
 class WeChatFullRenderTests(unittest.TestCase):
-    def test_report_and_12_to_14_charts(self):
+    def test_report_and_all_14_charts(self):
+        legacy_report = ENGINE.parent / "report.html"
+        previous = legacy_report.read_bytes() if legacy_report.exists() else None
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             corpus = root / "input"
@@ -44,10 +46,32 @@ class WeChatFullRenderTests(unittest.TestCase):
             report = output / "report.html"
             self.assertTrue(report.exists())
             self.assertIn("公众号", report.read_text(encoding="utf-8"))
-            self.assertGreaterEqual(len(list(output.glob("*.png"))), 12)
+            self.assertIn("不等同于原创", report.read_text(encoding="utf-8"))
+            self.assertNotIn("原创内容占", report.read_text(encoding="utf-8"))
+            self.assertEqual(len(list(output.glob("*.png"))), 14)
+            self.assertIn("data:image/png;base64,", report.read_text(encoding="utf-8"))
             summary = json.loads((output / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual(summary["total_articles"], 72)
             self.assertEqual(summary["years"], [2018, 2019, 2020, 2021, 2022, 2023])
+            self.assertEqual(legacy_report.read_bytes() if legacy_report.exists() else None, previous,
+                             "render must not write HTML into the checkout")
+
+    def test_output_symlink_cannot_redirect_results_into_checkout(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            corpus = root / "input"
+            corpus.mkdir()
+            alias = root / "output-link"
+            try:
+                alias.symlink_to(ROOT, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks unavailable")
+            p = subprocess.run(
+                [sys.executable, str(ENGINE), "--input", str(corpus), "--output", str(alias)],
+                capture_output=True, text=True, timeout=60,
+            )
+            self.assertEqual(p.returncode, 2)
+            self.assertIn("--output must be outside", p.stderr)
 
 
 if __name__ == "__main__":

@@ -1250,9 +1250,14 @@ if __name__ == '__main__':
         if "topic_groups" in config:
             TOPIC_GROUPS_OVERRIDE = config["topic_groups"]
 
-    if os.path.commonpath([OUTPUT_DIR, REPO_ROOT]) == REPO_ROOT:
+    def within(child, parent):
+        try:
+            return os.path.commonpath([child, parent]) == parent
+        except ValueError:  # Windows paths on different drives
+            return False
+    if within(OUTPUT_DIR, REPO_ROOT):
         parser.error("--output must be outside the YiHot Git checkout")
-    if os.path.commonpath([OUTPUT_DIR, TXT_DIR]) == TXT_DIR:
+    if within(OUTPUT_DIR, TXT_DIR):
         parser.error("--output must not be inside the input corpus")
     os.makedirs(OUTPUT_DIR, mode=0o700, exist_ok=True)
     if os.name == 'posix':

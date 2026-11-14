@@ -51,6 +51,7 @@ def find_chinese_font():
         '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
         '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc',
         '/System/Library/Fonts/PingFang.ttc',
+        os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'og-fonts', 'noto-sans-sc-400.ttf'),
     ]
     for f in candidates:
         if os.path.exists(f):
@@ -59,6 +60,7 @@ def find_chinese_font():
 
 FONT_PATH = find_chinese_font()
 if FONT_PATH:
+    fm.fontManager.addfont(FONT_PATH)
     prop = fm.FontProperties(fname=FONT_PATH)
     FONT_NAME = prop.get_name()
     plt.rcParams['font.family'] = FONT_NAME
@@ -871,7 +873,7 @@ def plot_stats_summary(df, all_tokens):
     stats = [
         ('总文章数', f'{len(df)} 篇', C_PRIMARY),
         ('活跃年份', f'{df["year"].nunique()} 年', C_ACCENT),
-        ('原创文章', f'{(~df["is_repost"]).sum()} 篇', C_TEAL),
+        ('未标转载', f'{(~df["is_repost"]).sum()} 篇', C_TEAL),
         ('词汇量', f'{len(set(all_tokens))} 个', C_AMBER),
     ]
 
@@ -1046,12 +1048,16 @@ def plot_article_length_analysis(df):
     years_sorted = sorted(df['year'].unique())
     data_by_year = [df[df['year']==y]['word_count'].clip(upper=6000).values for y in years_sorted]
 
-    bp = ax2.boxplot(data_by_year, labels=[str(y) for y in years_sorted],
+    # Set tick labels separately: old Matplotlib accepted labels=, new versions removed it.
+    # This works with the declared minimum too, without depending on the newer tick_labels= API.
+    bp = ax2.boxplot(data_by_year,
                      patch_artist=True, widths=0.6,
                      medianprops=dict(color=C_ACCENT, linewidth=2),
                      whiskerprops=dict(color='#AAB5C0', linewidth=1),
                      capprops=dict(color='#AAB5C0', linewidth=1),
                      flierprops=dict(marker='o', markerfacecolor=C_ACCENT, markersize=3, alpha=0.5))
+    ax2.set_xticks(range(1, len(years_sorted) + 1))
+    ax2.set_xticklabels([str(y) for y in years_sorted])
     for patch, color in zip(bp['boxes'], PALETTE[:len(years_sorted)]):
         patch.set_facecolor(color + '40')
         patch.set_edgecolor(color)
@@ -1210,9 +1216,9 @@ if __name__ == '__main__':
     parser.add_argument("--config", help="Optional private JSON configuration for per-channel categories and words")
     args = parser.parse_args()
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, '..', '..'))
-    TXT_DIR = os.path.abspath(args.input)
-    OUTPUT_DIR = os.path.abspath(args.output)
+    REPO_ROOT = os.path.realpath(os.path.join(SCRIPT_DIR, '..', '..'))
+    TXT_DIR = os.path.realpath(args.input)
+    OUTPUT_DIR = os.path.realpath(args.output)
     if not os.path.isdir(TXT_DIR):
         parser.error("--input must be an existing directory")
     if args.min_articles < 6:
@@ -1458,7 +1464,7 @@ if __name__ == '__main__':
 
     # 1. 总体概况
     analysis['overview'] = f"""本期分析涵盖 <strong>{total}</strong> 篇文章，时间跨度从 <strong>{date_min}</strong> 至 <strong>{date_max}</strong>，横跨 <strong>{n_years}</strong> 个年份。
-其中原创文章 <strong>{n_original}</strong> 篇（占 {orig_pct:.1f}%），转载文章 <strong>{n_repost}</strong> 篇（占 {repost_pct:.1f}%），
+其中标题未标转载的文章 <strong>{n_original}</strong> 篇（占 {orig_pct:.1f}%），转载文章 <strong>{n_repost}</strong> 篇（占 {repost_pct:.1f}%），
 平均每篇文章约 <strong>{avg_wc}</strong> 字，中位数为 <strong>{median_wc}</strong> 字。
 文章共涉及 <strong>{n_cats}</strong> 个类别，其中「<strong>{top_cat}</strong>」类文章最多，共 {top_cat_cnt} 篇（占 {top_cat_pct:.1f}%）。"""
 
@@ -1492,7 +1498,7 @@ Top 10 高频词为：{top10_str}。这些词汇反映了公众号的核心关�
     # 6. 主题演变
     analysis['topics'] = """基于 NMF（非负矩阵分解）的主题模型将全量文章归纳为若干隐含主题。
 每个子图展示了一个主题在各年份的占比变化，反映该主题热度的升降趋势。
-主题演变的分析有助于理解公众号内容焦点的历史变迁和未来走向。"""
+主题演变的分析有助于理解公众号输入样本中内容焦点的变化。"""
 
     # 7. 共现网络
     network_top = top10[:5]
@@ -1543,8 +1549,8 @@ Top 10 高频词为：{top10_str}。这些词汇反映了公众号的核心关�
     if top_rising:
         rising_str = safe_join(top_rising)
         analysis['new_words'] = f"""每年出现的"特色新词"反映了该年度的独特关注点。
-跨年度对比发现，近年出现频率上升显著的词汇包括：{rising_str}。
-这些词汇的增长轨迹可能预示着新兴话题或行业趋势。"""
+跨年度对比发现，样本后半段出现次数比前半段更多的词汇包括：{rising_str}。
+这些变化仅描述本次输入样本，不作为行业趋势预测。"""
     else:
         analysis['new_words'] = """每年出现的"特色新词"反映了该年度的独特关注点。
 这些词在该年首次出现且后续再次使用，是追踪内容演变的重要信号。"""
@@ -1555,12 +1561,12 @@ Top 10 高频词为：{top10_str}。这些词汇反映了公众号的核心关�
 <li>内容定位：公众号以「{top_cat}」（{top_cat_pct:.1f}%）为核心主题，同时覆盖 {n_cats-1} 个其他类别，内容多元化程度{'较高' if n_cats >= 5 else '适中'}。</li>
 <li>高频关键词：{top10_str}——这些词构成了公众号的语义核心。</li>
 <li>发文节奏：{peak_year}年产出最为活跃（{peak_count}篇），运营力度最强。</li>
-<li>原创比例：原创内容占 {orig_pct:.1f}%，{'以原创为主' if orig_pct > 60 else '转载与原创并存'}，体现了{'较强的内容生产' if orig_pct > 60 else '内容策展与原创混合'}能力。</li>
-<li>文章深度：平均 {avg_wc} 字/篇，{'偏好深度长文' if avg_wc >= 2000 else '以中等篇幅为主'}，{'字数差异较大，内容形式多样' if max_wc - min_wc > 5000 else '篇幅较为统一'}。</li>
+<li>转载标记：{orig_pct:.1f}% 的样本标题未标注转载；这不等同于原创，也不能据此判断版权或内容生产能力。</li>
+<li>文章篇幅：平均 {avg_wc} 字/篇，{'偏好深度长文' if avg_wc >= 2000 else '以中等篇幅为主'}，{'字数差异较大，内容形式多样' if max_wc - min_wc > 5000 else '篇幅较为统一'}。</li>
 """
     if top_rising:
         rising_names = '、'.join([w for w, _, _, _ in top_rising[:3]])
-        insight_text += f"<li>新兴趋势：近年「{rising_names}」等词汇关注度显著上升，值得持续关注。</li>\n"
+        insight_text += f"<li>新兴趋势：近年「{rising_names}」等词汇在输入样本中的出现次数更多；未进行统计显著性检验。</li>\n"
     insight_text += "</ul>"
 
     # ── 构建图表章节列表 ──────────────────────────────────────────────
@@ -1823,7 +1829,7 @@ body {{
     </div>
     <div class="kpi-card">
         <div class="val">{n_original}</div>
-        <div class="lbl">原创文章（{orig_pct:.0f}%）</div>
+        <div class="lbl">未标转载（{orig_pct:.0f}%）</div>
     </div>
     <div class="kpi-card">
         <div class="val">{avg_wc:,}</div>
@@ -1870,7 +1876,7 @@ body {{
 </body>
 </html>'''
 
-    report_path = os.path.join(SCRIPT_DIR, 'report.html')
+    report_path = os.path.join(OUTPUT_DIR, 'report.html')
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(html)
     print(f"  → HTML 报告已保存: {report_path}")

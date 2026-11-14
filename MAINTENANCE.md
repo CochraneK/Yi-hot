@@ -45,7 +45,7 @@ Yi‑Hot 是一个公益行业动态聚合站。它定时读取政府部门、�
 1. **免费 RSS / Atom**：媒体、机构官网的订阅源（主力）。
 2. **免费网页列表**：政府、基金会官网的栏目页（已跑通 61 个）。
 3. **微信公众号**：服务器上的 WeRSS 每 3 天扫码采集。
-4. **邮件简报**：QQ 邮箱每 30 分钟检查指定发件人（如爱德传一《慈善纪事简报》）。
+4. **邮件简报**：QQ 邮箱按仓库 timer 每天 08:00 检查指定发件人（服务器系统时区，生产以实际 timer 为准）（如爱德传一《慈善纪事简报》）。
 5. **网页搜索 API**（新增）：用 DeepSeek 网页搜索补公益事件发现，见第 9 题。
 
 ### 4. 怎么增加新的信息源？
@@ -157,7 +157,7 @@ Yi‑Hot 是一个公益行业动态聚合站。它定时读取政府部门、�
 - 「精选」栏目目前隐藏，但精选状态和卡片标签仍保留，用于总报、后台判断和以后恢复。
 - 日报每天 08:00 生成（站内不设导航入口，保留为历史存档，可作邮件版内容）；周报每周、月报每月生成。
 - 网站部署在腾讯云。采集、分析和发布都在服务器上运行，维护者不需要一直开着自己的电脑。
-- 微信公众号由服务器上的 WeRSS 辅助采集；QQ 邮箱中的指定简报由邮件采集服务每 30 分钟检查一次。
+- 微信公众号由服务器上的 WeRSS 辅助采集；QQ 邮箱中的指定简报按仓库邮件采集 timer 每天 08:00 检查一次（服务器系统时区，生产另核验）。
 
 ## 新维护者第一次接手
 
@@ -367,7 +367,7 @@ node --test apps/web/tests/*.test.ts
 | `aihot-worker-1` | 采集、分析、归组、发布、总报 | Docker |
 | `aihot-db-1` | PostgreSQL 数据库 | Docker volume |
 | `yihot-werss-werss-1` | 微信公众号 RSS | Docker |
-| `yihot-email-source.timer` | 每 30 分钟读取获准邮件来源 | systemd |
+| `yihot-email-source.timer` | 每天 08:00 读取获准邮件来源（系统时区，生产另核验） | systemd |
 | `yihot-email-delivery.timer` | 每 30 分钟发送确认信和总报 | systemd |
 
 ## 二、后台怎么用
@@ -868,7 +868,7 @@ ssh -N -L 18001:127.0.0.1:18001 <服务器用户>@<服务器地址>
 - `AmCham China Events <amchamevent@amchamchina.org>` 及其代发信封域，只保留公益、社会影响、ESG、可持续发展等相关活动；
 - 爱德传一基金会《慈善纪事简报》`aidechuany@batch.lingxi360.com`。
 
-采集器每 30 分钟用 IMAP `BODY.PEEK[]` 只读检查 QQ 邮箱，不标记已读、不移动、不删除。增加来源时应先登记发件地址和来源名称，再用历史样本试跑；不能吸收整个邮箱。
+采集器按仓库 timer 每天 08:00（服务器系统时区，生产另核验）用 IMAP `BODY.PEEK[]` 只读检查 QQ 邮箱，不标记已读、不移动、不删除。增加来源时应先登记发件地址和来源名称，再用历史样本试跑；不能吸收整个邮箱。
 
 可信的邮件 `Date` 头作为发布日期；缺失或时区不可靠时显示“收录”，不会猜日期。详见 [`docs/EMAIL_SOURCE_DEPLOY.md`](docs/EMAIL_SOURCE_DEPLOY.md)。
 
@@ -1620,7 +1620,7 @@ X 账号搜索？ → x_search（需要 SocialData 和预算）
 7. 观察定时器至少一个周期。
 
 **第 6 步有个坑，改之前先看这里**：服务器上真正执行的是 **`/opt/yihot-email/collect.py`**
-（`systemctl cat yihot-email-source.service` 里的 ExecStart 指向它，每 30 分钟跑一次）。
+（`systemctl cat yihot-email-source.service` 里的 ExecStart 指向它；仓库 timer 为每天 08:00，生产调度以实际 timer 为准）。
 `/opt/yihot/deploy/email-source/collect.py` 只是随仓库同步过去的一个拷贝，**改它不生效、也不报错**。
 同理，容器镜像里那份（`COPY . .` 带进去的）也没有任务在跑。所以每次改完：
 
@@ -2845,3 +2845,10 @@ python3 repair_issue_links.py --apply    # 改 url + 清空 body + revision+1
 - 页面里不再出现「原文11.1」这类重复标记：`curl -sL localhost/yihot/all | grep -o "原文[0-9.]*"` 无输出；
 - 详情页与事件页不受影响（仍按 `timeline_at` 与 `backfill` 判断）。
 
+
+
+## NewsMail 迁移对账与退役（2026-11-14 源码核验）
+
+NewsMail 的 14 个版本化文件与 99 个历史候选已建立逐项账本；5 条来源记录映射到已有代码配置，94 条保留为主仓库待复核候选。执行 `npm run newsmail:audit:check` 可离线复算，不采集、不发邮件、不接触生产库。候选未全部启用不妨碍减少仓库；旧调度停用、私有产物恢复、腾讯云替代路径三类运行证据仍须核验，当前没有归档旧仓库。详见 [NEWSMAIL_MIGRATION.md](docs/NEWSMAIL_MIGRATION.md)。
+
+列表日期现在拒绝 2 月 30 日等不存在的日历日期和 24:00/10:60 等不支持的时钟字段，避免自动滚动成另一天；未知日期沿用现有回退流程。此修复不自动重跑历史内容。邮件采集文档已与仓库每日 08:00 timer 对齐，邮件投递 timer 的每 30 分钟保持独立。

@@ -1,6 +1,7 @@
 import importlib.util
 import tempfile
 import unittest
+from unittest.mock import patch
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -10,6 +11,13 @@ spec.loader.exec_module(module)
 
 
 class ReportDeliveryTests(unittest.TestCase):
+    def setUp(self):
+        # Rendering may request an optional title image. These regression tests must use its
+        # text fallback rather than contact any site or depend on a network timeout.
+        network = patch.object(module, "urlopen", side_effect=AssertionError("offline test: network disabled"))
+        network.start()
+        self.addCleanup(network.stop)
+
     def report(self):
         return {"kind": "weekly", "key": "2026-W41", "title": "公益总报", "lead": {"title": "本周公益动态", "leadParagraph": "一周概览"}, "sections": [{"label": "儿童教育", "summary": "主题摘要", "items": [{"itemId": "a1", "title": "教师法修订", "summary": "保障教师权益", "available": True}]}]}
 

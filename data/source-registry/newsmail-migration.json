@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "source_repo": "CochraneK/NewsMail",
+  "source_revision": "c118b464e1d0806e35d5f940d3eb6ea3b8cd97db",
+  "assets": [
+    {
+      "path": ".gitignore",
+      "blob_sha": "cb34cc8efac6387ea16f4363bba0a074556508c9",
+      "decision": "superseded",
+      "targets": [
+        ".gitignore"
+      ],
+      "reason": "使用主仓库忽略规则，旧运行日志、配置和正文不导入 Git。"
+    },
+    {
+      "path": "README.md",
+      "blob_sha": "782ef83de09626771a7f0b00f002f7829d0f8cf2",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "旧产品说明保留于固定 Git 版本；维护入口收敛到 YiHot。"
+    },
+    {
+      "path": "README_EN.md",
+      "blob_sha": "19b630a162f0b7ea7648d168fe47266168c7f7d3",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "历史英文说明保留，不再复制一套运行说明。"
+    },
+    {
+      "path": "assets/architecture.svg",
+      "blob_sha": "1f22e67424311c2b1f75412ed540974c93a208e5",
+      "decision": "retained_in_history",
+      "targets": [
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "旧架构插图只作历史记录。"
+    },
+    {
+      "path": "config.example.py",
+      "blob_sha": "00085ab1fbe81d128694e726867fbad4776d17d2",
+      "decision": "superseded",
+      "targets": [
+        ".env.example",
+        "docs/EMAIL_SOURCE_DEPLOY.md"
+      ],
+      "reason": "Python 配置由 YiHot 环境配置与独立邮件凭据替代。"
+    },
+    {
+      "path": "info_sources.md",
+      "blob_sha": "df3d7d5d360e627710d626a56fdb12f2cf4dd791",
+      "decision": "preserved",
+      "targets": [
+        "data/source-registry/imports/newsmail-2026-10-08.json"
+      ],
+      "reason": "99 条候选保留来源行号；不把候选数当作启用数。"
+    },
+    {
+      "path": "scripts/dedup_store.py",
+      "blob_sha": "531fcd19f40ef36e8e3df66ba15622826f1db53b",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/content/materials.ts",
+        "deploy/email-delivery/send_reports.py"
+      ],
+      "reason": "使用规范 URL、内容及投递回执；不迁移标题前缀哈希或旧已发送标记。"
+    },
+    {
+      "path": "scripts/deploy_rssbridge.py",
+      "blob_sha": "644041efc443ee0a1f80ec97a7aa8020006584d6",
+      "decision": "dropped",
+      "targets": [
+        "docs/EMAIL_SOURCE_DEPLOY.md",
+        "docs/WERSS_DEPLOY.md"
+      ],
+      "reason": "不迁移会删除已有容器的部署脚本；现有邮件与公众号入口承担接入。"
+    },
+    {
+      "path": "scripts/fetch_news.py",
+      "blob_sha": "734835bc8ddedac139df25a2757475290c066960",
+      "decision": "adapted",
+      "targets": [
+        "packages/backend/src/sources/web-list.ts",
+        "packages/backend/src/sources/rss.ts",
+        "docs/legacy/NEWSMAIL-PARSER-AUDIT.md"
+      ],
+      "reason": "保留明确选择器与日期经验；缺失来源仍逐条待复核，不复制泛关键词爬虫。"
+    },
+    {
+      "path": "scripts/generate_report.py",
+      "blob_sha": "ef19f9baa010251e91f3323faabfdda83a0c714e",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/reports/compose.ts",
+        "deploy/email-delivery/send_reports.py"
+      ],
+      "reason": "共用同一份公开报告，不复制报告模板引擎。"
+    },
+    {
+      "path": "scripts/main.py",
+      "blob_sha": "54d26a2b2b44e0ce60bca53a8059eb06125a6799",
+      "decision": "superseded",
+      "targets": [
+        "apps/worker/src/main.ts",
+        "docs/NEWSMAIL_MIGRATION.md"
+      ],
+      "reason": "主仓库 worker 与邮件服务替代旧主循环；旧机器是否还有任务需现场核验。"
+    },
+    {
+      "path": "scripts/send_email.py",
+      "blob_sha": "80833ed95ab46fa43f6930fa4701cdf18e211b35",
+      "decision": "superseded",
+      "targets": [
+        "deploy/email-delivery/send_reports.py",
+        "packages/backend/src/newsletter/subscriptions.ts"
+      ],
+      "reason": "复用发送回执、确认及退订；不导入旧收件人或授权码。"
+    },
+    {
+      "path": "scripts/summary_report.py",
+      "blob_sha": "0377d03cc4b1b31ef1adf210b2fa0aa73e0cb12a",
+      "decision": "superseded",
+      "targets": [
+        "packages/backend/src/reports/compose.ts"
+      ],
+      "reason": "日/周/月共用 YiHot 出版与报告管线。"
+    },
+    {
+      "path": "scripts/utils.py",
+      "blob_sha": "cc21236432e072c8594e2cfcdd0f0a0bcc87fa2e",
+      "decision": "adapted",
+      "targets": [
+        "packages/backend/src/sources/web-list.ts",
+        "packages/backend/src/editorial/translate.ts"
+      ],
+      "reason": "迁移严格日期经验；匿名 MyMemory 翻译和用户目录缓存不迁入。"
+    }
+  ],
+  "source_routes": [
+    {
+      "legacy_ids": [
+        "newsmail:007"
+      ],
+      "target_ids": [
+        "gongyi-times",
+        "web-gongyishibao-yaowen"
+      ],
+      "reason": "旧 RSS 入口由已有公益时报网页列表代码替代；不是 RSS 健康证明。"
+    },
+    {
+      "legacy_ids": [
+        "newsmail:009"
+      ],
+      "target_ids": [
+        "web-nandu-org-news"
+      ],
+      "reason": "同一南都公益基金会的明确机构动态列表；不按共享域名自动合并。"
+    },
+    {
+      "legacy_ids": [
+        "newsmail:013"
+      ],
+      "target_ids": [
+        "web-stc-global-news"
+      ],
+      "reason": "国际救助儿童会全球新闻已有暂停的选择器配置；仍需生产 Preview。"
+    },
+    {
+      "legacy_ids": [
+        "newsmail:015",
+        "newsmail:049"
+      ],
+      "target_ids": [
+        "web-unicef-cn-press"
+      ],
+      "reason": "两个同名同 URL 历史候选保留各自 ID，映射至同一暂停新闻配置。"
+    }
+  ],
+  "operational_gates": [
+    {
+      "id": "old_schedules_stopped",
+      "status": "unverified",
+      "reason": "需在旧运行机器核验 cron、Windows 计划任务和外部 automation；仓库没有 workflow 不代表没有任务。"
+    },
+    {
+      "id": "private_runtime_backup_verified",
+      "status": "unverified",
+      "reason": "需核验旧 reports/logs、去重状态、配置与恢复；不把私有数据提交主仓库。"
+    },
+    {
+      "id": "production_replacements_verified",
+      "status": "unverified",
+      "reason": "腾讯云部署与真实邮件输入需对应运行证据；离线解析通过不代替生产验收。"
+    }
+  ]
+}

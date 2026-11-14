@@ -13,7 +13,19 @@ const JINA_PREFIX = "https://r.jina.ai/";
 /** A time followed by its zone: "10:00Z", "10:00:00+08:00", "10:00:00 +0000", "10:00:00 GMT". */
 const EXPLICIT_ZONE = /\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?\s*(?:Z|[+-]\d{2}:?\d{2}|GMT|UTC)\b/i;
 
+/** Date.parse normalizes February 30 into March; publication metadata must name a real day. */
+function validCalendar(y: string | number, mo: string | number, d: string | number, h: string | number = 0, mi: string | number = 0, s: string | number = 0): boolean {
+  const fields = [y, mo, d, h, mi, s].map(Number);
+  const [year, month, day, hour, minute, second] = fields as [number, number, number, number, number, number];
+  const at = new Date(0);
+  at.setUTCFullYear(year, month - 1, day);
+  at.setUTCHours(hour, minute, second, 0);
+  return fields.every(Number.isInteger) && at.getUTCFullYear() === year && at.getUTCMonth() + 1 === month &&
+    at.getUTCDate() === day && at.getUTCHours() === hour && at.getUTCMinutes() === minute && at.getUTCSeconds() === second;
+}
+
 function atOffset(y: string | number, mo: string | number, d: string | number, h: string | number, mi: string | number, s: string | number, utcOffset: string): Date | null {
+  if (!validCalendar(y, mo, d, h, mi, s)) return null;
   const p = (n: string | number) => String(n).padStart(2, "0");
   const t = Date.parse(`${y}-${p(mo)}-${p(d)}T${p(h)}:${p(mi)}:${p(s)}${utcOffset}`);
   return Number.isFinite(t) ? new Date(t) : null;
@@ -29,6 +41,9 @@ export function parseLooseDate(value: string | null | undefined, utcOffset = "+0
   // "Sep 26, 2026 at 10:30": "at" joins a date and its time like a space (English listings use it).
   const v = value.trim().replace(/(\d),?\s+at\s+(?=\d{1,2}:\d{2})/gi, "$1 ");
   if (!v) return null;
+  // Validate before the explicit-zone/ISO fast path, which also silently rolls invalid days forward.
+  const calendar = /(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?(?:(?:T|\s*)(\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(v);
+  if (calendar && !validCalendar(calendar[1]!, calendar[2]!, calendar[3]!, calendar[4] ?? 0, calendar[5] ?? 0, calendar[6] ?? 0)) return null;
   // "28/09/2026": day before month, the order Hong Kong / Macao listings print. Slash forms are
   // month-first everywhere else (and V8 reads them that way), so a source must opt into this.
   if (dayFirst) {

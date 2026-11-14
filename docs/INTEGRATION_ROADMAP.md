@@ -1,5 +1,7 @@
 # YiHot × NewsMail × charity-intelligence：统一公益情报平台
 
+> **当前整合入口**：[NEWSMAIL_MIGRATION.md](NEWSMAIL_MIGRATION.md)。以 YiHot 为维护主仓库，迁移后减少独立仓库；NewsMail 已有逐项代码对账与可复算工具，99 条候选继续在主仓库复核。下文“未配置邮件”“取消所有日报”等是历史决策，邮件订阅、投递和邮件信源已有代码；当前为 `dailyReports=false`、`dailyNewsletter=true`，部署状态另核验。
+
 > **Canonical integration decision · 2026-10-08**
 > **2026-10-13 产品决策**：取消自动日报及日报补刊，仅生成周报、月报，统一入口为「公益总报」。后续增加群发邮件功能已列入待办，当前未配置 SMTP、收件人或发送邮件。
 > **2026-10-12 补充决策**：项目所有者选择免费自托管 WeRSS；允许新增独立的公众号 RSS 采集服务，YiHot 仍是唯一选稿、归组和对外发布平台。下文“不引入长期 RSS 系统”的旧限制仅对此方案取消，实施见 [WERSS_DEPLOY.md](WERSS_DEPLOY.md)。
@@ -15,7 +17,7 @@
 
 - [x] **总报邮件订阅与投递**：复用 NewsMail 的 SMTP 经验与 TrendRadar 的多收件人配置思路，将 YiHot 已公开的周报、月报逐个发送给订阅者；以报告期号和订阅人防重，发送与采集分离，不建立第二套报告生成器。2026-10-18 已上线公开订阅页、48 小时双重确认、邮件内一键退订和标准 DSN 退信停发；新订阅只从下一期开始，不补发历史总报。
 - [x] **邮件信源连接器**：使用专用 QQ 邮箱，只读已确认的 newsletter 发件人，经既有 `/api/ingest/items` 鉴权入口接入 YiHot。以 IMAP UID、Message-ID 哈希和规范 URL 去重；退订、订阅管理和统计链接不入库，邮件发送时间不冒充原文发表时间。首次运行只立游标、不回灌历史邮件；部署及运维见 `EMAIL_SOURCE_DEPLOY.md`。运行时启用仍需配置独立 `INGEST_TOKEN`。
-- [ ] **AmCham 邮件入口**：官网及 [Glue Up 订阅页](https://amcham.glueup.cn/org/amcham-china/subscriptions/) 提供 newsletter。选定收件邮箱、完成订阅确认并拿到一封真实样本后再实现邮件连接器；无需新增模型调用来拆分链接和标签，选稿仍使用 YiHot 原有管线。网站解析受阻的现阶段已另用认证公众号接入，见 `PRODUCT_UPDATE_2026-10-13.md`。
+- [x] **AmCham 邮件入口代码**：`deploy/email-source/collect.py` 已支持 `email-amcham-events`，包含主题过滤和 Glue Up 跟踪链接规范化，离线样本回归可复算。QQ 真实收信、采集游标、入库和展示仍须生产证据，不把代码存在等同于运行正常。
 - [x] **爱德传一邮件入口**：规范名称为“爱德基金会传一慈善文化基金（爱德传一基金）”，目标刊物为《慈善纪事简报》，公众号 ID 为 `Chuanyi_2015`。QQ 邮箱实测识别 `aidechuany@batch.lingxi360.com` 历史样本 83 封，按整期简报接入；不把它误登记为独立基金会。WeRSS 已添加其认证公众号作为备用通道，微信读书 Cookie 失效后需重新扫码才会刷新。
 
 | 能力域 | 最优继承来源 | 未来唯一权威位置 | 不重复做什么 |

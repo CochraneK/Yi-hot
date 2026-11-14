@@ -56,6 +56,11 @@ jobs:
         run: python3 -m unittest discover -s tests -p test_switch_deepseek_flash.py
       - name: Charity SQLite read-only preflight tests (synthetic fixtures only)
         run: python3 -m unittest discover -s tests -p test_charity_db_preflight.py -v
+      - name: Offline charity organization preview and WeChat migration tests
+        run: |
+          python3 -m unittest discover -s tests -p test_charity_db_preview.py -v
+          python3 -m unittest discover -s tests -p test_wechat_analysis_migration.py -v
+          python3 -m py_compile scripts/charity_db_preview.py tools/wechat-analysis/prepare_jsonl.py tools/wechat-analysis/text_mining.py
       - name: Install
         run: npm ci --no-audit --no-fund
       - name: Production dependency audit (reports existing advisories, does not change lock)

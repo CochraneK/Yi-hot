@@ -2863,6 +2863,6 @@ NewsMail 的 14 个版本化文件与 99 个历史候选已建立逐项账本；
 
 ## 公益仓库收口：公众号分析与机构数据（2026-11-14）
 
-公众号分析器源自私有 `wechat-article-analysis@264d8648`，已引入 `tools/wechat-analysis/` 的 14 图/HTML 引擎及需要明确原文分析许可的 JSONL 适配器。**只能离线、由操作者显式指定输入和输出；不从 YiHot 自动抓取正文、不发邮件、不公开报告、不建立定时任务**。源码与许可、可执行命令、试验要求见 [WECHAT_ANALYSIS_MIGRATION.md](docs/WECHAT_ANALYSIS_MIGRATION.md)。当前 CI 仅做语法和合成数据安全检查，真实 14 图及 HTML 输出尚需授权语料验收，不得宣布来源仓库已归档。
+公众号分析器源自私有 `wechat-article-analysis@264d8648`，已引入 `tools/wechat-analysis/` 的 14 图/HTML 引擎及需要明确原文分析许可的 JSONL 适配器。**只能离线、由操作者显式指定输入和输出；不从 YiHot 自动抓取正文、不发邮件、不公开报告、不建立定时任务**。源码与许可、可执行命令、试验要求见 [WECHAT_ANALYSIS_MIGRATION.md](docs/WECHAT_ANALYSIS_MIGRATION.md)。CI 增加合成语料的完整绘图工作流（通过结果以 GitHub Actions 为准），真实机构文章及 HTML 呈现仍需授权语料验收，不得宣布来源仓库已归档。
 
 `charity-intelligence` 继续保留真实机构库与原始证据的私有归属；除只读汇总预检外，新增 `scripts/charity_db_preview.py` 可对离线备份单一 legacy org_id 输出私有候选档案、名称、资讯提及、证据引用和冲突状态。它不分配 canonical ID，也不授权生产导入或公开数据。必须先执行 `scripts/charity_db_preflight.py`，详见 [CHARITY_CONSOLIDATION_STATUS.md](docs/CHARITY_CONSOLIDATION_STATUS.md) 与 [CHARITY_DB_PRECHECK.md](docs/CHARITY_DB_PRECHECK.md)。这次没有改动服务器、数据库迁移、自动任务、报告邮件、Source enabled 状态或隐私政策；若需回滚可独立撤回工具/文档，线上安全闸门 #21 保持。

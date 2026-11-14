@@ -36,7 +36,8 @@ class WeChatFullRenderTests(unittest.TestCase):
                     body = ((topic + " 经验总结 证据核验 现场记录\n") * 10) + topic
                     (corpus / f"{year}-{month:02d}-01_{title}.txt").write_text(body, encoding="utf-8")
             p = subprocess.run(
-                [sys.executable, str(ENGINE), "--input", str(corpus), "--output", str(output)],
+                [sys.executable, str(ENGINE), "--input", str(corpus), "--output", str(output),
+                 "--config", str(ROOT / "tools" / "wechat-analysis" / "config.example.json")],
                 capture_output=True, text=True, timeout=330,
             )
             self.assertEqual(p.returncode, 0, p.stdout[-1500:] + "\n" + p.stderr[-2500:])

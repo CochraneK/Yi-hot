@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { Kicker } from "../../components/ui/Kicker";
 import { IconArrowUpRight, IconClock } from "../../components/icons";
 import { fullDateTime, relativeTime } from "../../lib/format";
-import { groupSites } from "./grouping";
+import { groupNeighborhoods } from "./grouping";
 
 /**
  * 邻域：一页纸的行业站目录。
@@ -16,12 +16,13 @@ import { groupSites } from "./grouping";
  * 顶条全是同一个品牌红，卡片之间没有任何可抓的差别，翻起来像同一个模块复制了十几遍。
  *
  * 卡片上到十几张之后又出现第二个问题：一页全是同构方块，只能逐张读名字才知道哪家是哪行。
- * 所以按 industry/peers.ts 的 group 分段，顶部给一排可跳转的标签。分组只是「归堆」，
+ * 所以先按同系/其他分两个区块，再按 industry/peers.ts 的 group 分段。分组只是「归堆」，
  * 不排序、不隐藏：同一组内仍是登记表顺序。
  */
 export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
   const { sites, totalItems, updatedAt } = data;
-  const groups = groupSites(sites);
+  const sections = groupNeighborhoods(sites);
+  const directionCount = new Set(sections.flatMap((section) => section.groups.map((group) => group.id))).size;
 
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-12">
@@ -30,17 +31,17 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
           这里收录不同领域的信息站和公开专题。可同步的站展示最近条目；仅浏览的站只提供官网入口，不假装有实时更新。选什么、怎么评由各站自己决定；
-          日报与周报里的「邻域」版块，就是从这些站摘编的。下面按方向归类，点页头的标签可以直接跳过去。
+          日报与周报里的「邻域」版块，会引用可同步站点的精选内容。下面先分同系与其他，再按行业方向归类。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
           <span>
             <span className="num">{sites.length}</span> 个站
           </span>
-          {groups.length > 1 && (
+          {directionCount > 1 && (
             <>
               <span className="text-ink-4">·</span>
               <span>
-                <span className="num">{groups.length}</span> 个方向
+                <span className="num">{directionCount}</span> 个方向
               </span>
             </>
           )}
@@ -57,16 +58,16 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
             </>
           )}
         </div>
-        {groups.length > 1 && (
-          <nav aria-label="按方向跳转" className="mt-3.5 flex flex-wrap gap-1.5">
-            {groups.map((g) => (
+        {sections.length > 1 && (
+          <nav aria-label="邻域类别" className="mt-3.5 flex flex-wrap gap-1.5">
+            {sections.map((section) => (
               <a
-                key={g.id}
-                href={`#g-${g.id}`}
-                className="inline-flex h-7 items-center gap-1 whitespace-nowrap rounded-full border border-line bg-surface px-2.5 text-[12px] text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
+                key={section.id}
+                href={`#family-${section.id}`}
+                className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3 text-[12.5px] text-ink-2 transition-colors hover:border-ink-4 hover:text-ink"
               >
-                {g.label}
-                <span className="num text-[11px] text-ink-4">{g.sites.length}</span>
+                {section.label}
+                <span className="num text-[11px] text-ink-4">{section.sites.length}</span>
               </a>
             ))}
           </nav>
@@ -74,22 +75,32 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
       </header>
 
       {sites.length === 0 ? (
-        <p className="py-16 text-center text-[14px] text-ink-4">暂时读不到任何一家，稍后再来看看。</p>
+        <p className="py-16 text-center text-[14px] text-ink-4">暂时没有可展示的站点。</p>
       ) : (
-        <div className="mt-3">
-          {groups.map((g) => (
-            <section key={g.id} id={`g-${g.id}`} className="scroll-mt-24 pt-7 first:pt-2">
-              {groups.length > 1 && (
-                <div className="mb-3 flex items-baseline gap-2 border-b border-line-soft pb-2">
-                  <h2 className="text-[14px] font-bold tracking-[-0.01em] text-ink">{g.label}</h2>
-                  <span className="num text-[11.5px] text-ink-4">{g.sites.length}</span>
-                  <span className="ml-auto truncate pl-3 text-[11.5px] text-ink-4">{g.note}</span>
-                </div>
-              )}
-              {/* 卡片尺寸固定，不随组内站数变：两站的组也按三列排，宁可空一格，也不让同一页出现两种卡宽。 */}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {g.sites.map((s) => (
-                  <PeerCard key={s.id} site={s} />
+        <div className="mt-4 space-y-11">
+          {sections.map((section) => (
+            <section key={section.id} id={`family-${section.id}`} className="scroll-mt-24">
+              <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-3">
+                <h2 className="text-[19px] font-bold tracking-[-0.02em] text-ink">{section.label}</h2>
+                <span className="num text-[12px] text-ink-4">{section.sites.length} 家</span>
+                <p className="w-full text-[12.5px] leading-relaxed text-ink-3">{section.note}</p>
+              </div>
+              <div className="space-y-7">
+                {section.groups.map((group) => (
+                  <section key={group.id} id={`g-${section.id}-${group.id}`} className="scroll-mt-24">
+                    {section.groups.length > 1 && (
+                      <div className="mb-3 flex items-baseline gap-2 border-b border-line-soft pb-2">
+                        <h3 className="text-[13px] font-semibold text-ink-2">{group.label}</h3>
+                        <span className="num text-[11px] text-ink-4">{group.sites.length}</span>
+                        <span className="ml-auto truncate pl-3 text-[11px] text-ink-4">{group.note}</span>
+                      </div>
+                    )}
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {group.sites.map((site) => (
+                        <PeerCard key={site.id} site={site} />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </section>
@@ -117,7 +128,7 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
         </span>
         <div className="min-w-0 flex-1">
           <a href={s.url} target="_blank" rel="noopener noreferrer" className="group inline-flex max-w-full items-center gap-1.5">
-            <h2 className="peer-link truncate text-[16px] font-bold leading-snug text-ink transition-colors">{s.name}</h2>
+            <h4 className="peer-link truncate text-[16px] font-bold leading-snug text-ink transition-colors">{s.name}</h4>
             <IconArrowUpRight size={13} className="shrink-0 text-ink-4 transition-colors group-hover:text-ink-2" />
           </a>
           <p className="mt-0.5 truncate text-[12.5px] text-ink-3">{s.note}</p>

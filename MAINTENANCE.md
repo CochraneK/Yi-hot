@@ -3133,3 +3133,7 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo 归入实用资源。综合聚合仅标「内容可能重合」（**不是已核实重复事实或抄袭认定**），无 RSS/API 的站显示「尚未接入同步」，抓取失败的已启用站保留卡片并标「同步暂不可用」，不再静默隐藏。付费深度服务、静态演示、单期快照、已关闭站点仍属候选信息；候选默认折叠。原 56 个身份和网址、RSS Seed、权限、日报轮换、模型预算均不改。
 
 详情与回滚：[正式邻域谱系分组及标记原则](docs/PEER_MARK_ONLY_FAMILIES_2026-11-16.md)。合并 PR 前核查类型检查、Web 测试、后端与 Docker CI；生产需重新构建服务并实际验收，不将 GitHub 合并视为腾讯云部署。
+
+### YiHot008 · 人工审核地理索引（2026-11-16，待部署/待数据审核）
+
+新增 `0052_geo_reviewed_places.sql`（`geo_places/geo_candidates/geo_review_audit`）及授权者手动审核 CLI `scripts/review-geo.ts`：现有结构分析写入私有 `pending` 地点候选，不自动确认、不触发新模型；人工验证具体原文证据和发生地归属后才可批准。公开 `/api/site/geo?place=<id>&page=<n>` 只返回匹配同一篇当前分析版本、`role=event`、已审核且经过 `publication` 公开/延迟释放门槛的新闻；城市页用「地名线索／已审核地点」显式区分。原「当地」启发式标签、示意地图未改为全量准确定位；腾讯云要先迁移数据库再部署新后端，审核目录和数据需真实人工建立。完整验收、回滚见 [`docs/GEO_REVIEWED_INDEX_2026-11-16.md`](docs/GEO_REVIEWED_INDEX_2026-11-16.md)，后续 Issue #52 仍在执行。

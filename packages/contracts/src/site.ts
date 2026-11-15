@@ -129,6 +129,16 @@ export interface TimelineResponse {
   generatedAt: string;
 }
 
+/** Only operator-reviewed event locations; unreviewed AI hints never appear here. */
+export interface GeoReviewedResponse {
+  placeId: string;
+  items: FeedItemSummary[];
+  page: number;
+  pageCount: number;
+  total: number;
+  generatedAt: string;
+}
+
 export interface PoolResponse {
   filters: TimelineFilters & { q: string | null; tab: "time" | "relevance" };
   items: FeedItemSummary[];

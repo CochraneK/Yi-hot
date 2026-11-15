@@ -1,9 +1,8 @@
 import type { PeerDirectory, PeerDirectoryEntry } from "@aihot/contracts/peers";
-import type { CSSProperties } from "react";
-import { Kicker } from "../../components/ui/Kicker";
-import { IconArrowUpRight, IconClock } from "../../components/icons";
+import { useState, type CSSProperties } from "react";
+import { IconArrowUpRight, IconClock, IconSearch } from "../../components/icons";
 import { fullDateTime, relativeTime } from "../../lib/format";
-import { groupNeighborhoods, type NeighborhoodSection, type PeerGroupView } from "./grouping";
+import { filterPeerSites, groupNeighborhoods, type NeighborhoodSection, type PeerGroupView } from "./grouping";
 
 /**
  * 邻域：一页纸的行业站目录。
@@ -21,58 +20,84 @@ import { groupNeighborhoods, type NeighborhoodSection, type PeerGroupView } from
  */
 export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
   const { sites, totalItems, updatedAt } = data;
-  const sections = groupNeighborhoods(sites);
-  const directionCount = new Set(sections.flatMap((section) => section.groups.map((group) => group.id))).size;
+  const [query, setQuery] = useState("");
+  const searching = query.trim().length > 0;
+  const filteredSites = filterPeerSites(sites, query);
+  const sections = groupNeighborhoods(filteredSites);
+  const official = sections.find(section => section.id === "official");
+  const directionCount = new Set(sites.map(site => site.group)).size;
 
   return (
-    <div className="mx-auto max-w-[var(--page-max-reading)] pb-12">
-      <header className="pb-4 pt-5 lg:pt-1">
-        <Kicker>邻域</Kicker>
-        <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
-        <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
-          正式邻域区分同系与其他，内容可能重合或同步暂不可用只做标记；数据库和机会入口放在实用资源，收费服务与静态作品列为候选信息。
-          RSS / API 优先，但未接入同步不等于没有信息价值。
+    <div className="mx-auto max-w-[1120px] pb-12">
+      <header className="pb-3 pt-5 lg:pt-1">
+        <h1 className="text-[27px] font-bold leading-[1.3] tracking-[-0.025em] text-ink lg:text-[30px]">邻域</h1>
+        <p className="mt-2 max-w-[56ch] text-[14px] leading-[1.75] text-ink-2">
+          发现不同领域的信息站与实用资源。按同系或行业寻找，重复与同步状态仅作提示。
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
-          <span>
-            <span className="num">{sites.length}</span> 个站
-          </span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
+          <span><span className="num">{sites.length}</span> 个站</span>
           {directionCount > 1 && (
             <>
               <span className="text-ink-4">·</span>
-              <span>
-                <span className="num">{directionCount}</span> 个方向
-              </span>
+              <span><span className="num">{directionCount}</span> 个方向</span>
             </>
           )}
-          <span className="text-ink-4">·</span>
-          <span>
+          <span className="hidden sm:inline">
+            <span className="mx-1.5 text-ink-4">·</span>
             <span className="num">{totalItems.toLocaleString("en-US")}</span> 条留档
           </span>
           {updatedAt && (
-            <>
-              <span className="text-ink-4">·</span>
-              <span title={fullDateTime(updatedAt)} className="text-ink-4">
-                最近同步 {relativeTime(updatedAt)}
-              </span>
-            </>
+            <span className="hidden text-ink-4 sm:inline" title={fullDateTime(updatedAt)}>
+              · 最近同步 {relativeTime(updatedAt)}
+            </span>
           )}
         </div>
-        {sections.length > 1 && (
-          <nav aria-label="邻域类别" className="mt-3.5 flex flex-wrap gap-1.5">
-            {sections.map((section) => (
-              <a
-                key={section.id}
-                href={`#tier-${section.id}`}
-                className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3 text-[12.5px] text-ink-2 transition-colors hover:border-ink-4 hover:text-ink"
-              >
-                {section.label}
-                <span className="num text-[11px] text-ink-4">{section.sites.length}</span>
-              </a>
-            ))}
-          </nav>
+        <label htmlFor="peer-search" className="sr-only">搜索站点或领域</label>
+        <div className="mt-4 flex h-11 items-center gap-2.5 rounded-xl border border-line-strong bg-surface px-3 text-ink-3 transition-colors focus-within:border-accent">
+          <IconSearch size={18} />
+          <input
+            id="peer-search"
+            type="search"
+            autoComplete="off"
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="搜索站点、领域或方向"
+            className="h-full min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-4 focus:outline-none"
+          />
+          {searching && (
+            <button type="button" onClick={() => setQuery("")}
+              className="min-h-10 shrink-0 rounded-lg px-2 text-[13px] text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              清除
+            </button>
+          )}
+        </div>
+        {searching && (
+          <p className="mt-2 text-[13px] text-ink-3" aria-live="polite">
+            找到 <span className="num">{filteredSites.length}</span> 个匹配站点
+          </p>
         )}
       </header>
+      {sections.length > 0 && (
+        <nav aria-label="快速跳转邻域分类"
+          className="sticky top-0 z-20 -mx-4 border-y border-line-soft bg-bg/95 px-4 py-1.5 backdrop-blur lg:static lg:mx-0 lg:mt-1 lg:border-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
+          <div className="flex gap-2 overflow-x-auto lg:flex-wrap">
+            {sections.map(section => (
+              <a key={section.id} href={`#tier-${section.id}`}
+                className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3.5 text-[13px] font-medium text-ink-2 transition-colors hover:border-ink-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                {section.label}
+                <span className="num text-[12px] text-ink-4">{section.sites.length}</span>
+              </a>
+            ))}
+            {official?.families?.map(family => (
+              <a key={family.id} href={`#family-${family.id}`}
+                className="inline-flex min-h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[13px] text-ink-3 transition-colors hover:bg-bg-sunk hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                {family.label}
+                <span className="num text-[12px] text-ink-4">{family.sites.length}</span>
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {sites.length === 0 ? (
         <p className="py-16 text-center text-[14px] text-ink-4">暂时没有可展示的站点。</p>

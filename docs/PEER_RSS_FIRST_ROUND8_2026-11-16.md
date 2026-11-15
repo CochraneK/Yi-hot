@@ -20,7 +20,7 @@
 | 新增 rss | ICNL | https://www.icnl.org/feed/ | 200, application/rss+xml；有 11 月 13 日非营利法律/政策条目 |
 | 新增 rss | UN News · SDGs | https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml | 200, application/rss+xml；有 11 月 12 日 SDG 相关条目 |
 | 新增 rss | UN Geneva | https://www.ungeneva.org/news-media/press-items-list/rss.xml | 200, application/rss+xml；有委员会与新闻材料 |
-| 新增 rss | GDACS | https://www.gdacs.org/xml/rss.xml | 200, application/xml；有 11 月 15 日地震/风暴等警报；含 GeoRSS 位置字段 |
+| 新增 rss | GDACS | https://www.gdacs.org/contentdata/xml/rss_homepage.xml | 200, application/xml；有 11 月 15 日地震/风暴等警报；含 GeoRSS 位置字段 |
 
 **与之前的区别：** 这一轮不是新增九个仅浏览链接，而是**五个新的可同步站，加四个已有 link→rss 转换**。名录计数 51 → **56（同系 33 / 其他 23，含原来关闭项）**，能读 RSS 的邻域数量增加 9 个。
 
@@ -50,3 +50,5 @@ GDACS 官方 GeoRSS 与开放 API 包含灾害地理坐标，适合独立构建�
 - 合并前须 `npm run typecheck`、`node --test tests/peers.test.ts`、Web 构建及浏览器回归、后端隔离 PG 与 Docker smoke；再由 CI 复核。
 - 如发现 RSS 被拒绝/只显示 HTML/版权要求不满足，回滚对应站点 `strategy` 与 Feed Seed，保持其他用户数据及主站配置原样。
 - GitHub 合并不等于腾讯云更新：部署需重建 API/worker，核查 `/peers` 实际 Feed、状态记录、异常指标和外网访问，不能仅用本地模拟宣布上线。
+
+补充精简策略：同日另核验 GDACS 全量 `/xml/rss.xml` (262 项，约 802 KB)、24 小时 `/contentdata/xml/rss_24h.xml` (97 项)、首页 `/contentdata/xml/rss_homepage.xml` (78 项)。为避免全球重复微型预警挤占邻域和每小时刷新流量，实际采用**首页 78 条**的 RSS，保留 GeoRSS 坐标；数据量是 2026-11-16 请求快照，不是固定上限。

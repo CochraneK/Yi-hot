@@ -9414,6 +9414,239 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": true
+    },
+    {
+      "id": "search-opportunity-events",
+      "name": "网页搜索·儿童公益会议与培训",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "儿童保护 研讨会 会议通知 报名",
+          "困境儿童 社会工作 培训 招生",
+          "儿童友好城市 论坛 会议 通知",
+          "site:ccc.org.cn 儿童 研讨会 通知"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "双色球",
+            "优惠券",
+            "抽奖",
+            "低价促销"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "工作机会",
+        "会议",
+        "培训"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "search-opportunity-funding",
+      "name": "网页搜索·儿童项目资助与采购",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "儿童 公益 项目资助 申报 征集",
+          "儿童保护 政府购买服务 采购公告",
+          "困境儿童 关爱服务 招标 预算",
+          "基金会 儿童 项目 合作伙伴招募",
+          "企业社会责任 儿童教育 合作征集"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "双色球",
+            "优惠券",
+            "抽奖",
+            "低价促销"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "工作机会",
+        "资助",
+        "采购"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "search-opportunity-partnership",
+      "name": "网页搜索·儿童公益合作伙伴征集",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "child protection call for expression of interest China",
+          "positive parenting psychosocial support partnership",
+          "儿童公益 联合项目 合作机构 征集",
+          "儿童保护 NGO 合作伙伴 征集 意向"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "双色球",
+            "优惠券",
+            "抽奖",
+            "低价促销"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "工作机会",
+        "合作",
+        "征集"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "search-opportunity-policy",
+      "name": "网页搜索·儿童政策实施与试点",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "困境儿童 保障 实施方案 任务分工",
+          "未成年人保护 征求意见 试点",
+          "流动儿童 关爱服务 购买服务",
+          "儿童心理健康 民政 教育 卫健 协作"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "双色球",
+            "优惠券",
+            "抽奖",
+            "低价促销"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "工作机会",
+        "政策",
+        "试点"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "search-opportunity-evidence",
+      "name": "网页搜索·儿童项目研究与评估",
+      "kind": "search",
+      "config": {
+        "queries": [
+          "left-behind children China intervention evaluation",
+          "inclusive early childhood education systematic review",
+          "violence against children prevention meta-analysis",
+          "child safeguarding training webinar"
+        ],
+        "count": 20,
+        "lookbackDays": 7,
+        "minAuthority": 2,
+        "ingestNoiseFilter": {
+          "dropMarkers": [
+            "彩票",
+            "双色球",
+            "优惠券",
+            "抽奖",
+            "低价促销"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "owner_entity_id": null,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "工作机会",
+        "研究",
+        "儿童"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-un-news-asia-pacific",
+      "name": "联合国新闻·亚太地区（英文）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://news.un.org/feed/subscribe/en/news/region/asia-pacific/feed/rss.xml",
+        "allowUrlPrefixes": [
+          "https://news.un.org/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 4
+        }
+      },
+      "tier": "T1",
+      "first_party": true,
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "国际",
+        "亚太",
+        "儿童权益",
+        "候选"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

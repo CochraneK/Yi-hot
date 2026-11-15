@@ -1,0 +1,170 @@
+{
+  "$comment": "YiHot opportunity discovery *review queue* only. Never send this file to seed/import-approved-sources, and never infer source authorization from the listed URL.",
+  "schema_version": 1,
+  "created_at": "2026-11-15",
+  "scope": "Child protection, grant/procurement opportunities, professional events, partnerships and evidence monitoring for YiHot.",
+  "automatic_import": false,
+  "sources_enabled_by_this_file": 0,
+  "already_registered": {
+    "rss-gov-cn": "China government policy RSS already staged/enabled in seed",
+    "web-unicef-innocenti-reports": "UNICEF research source already registered (seed disabled, runtime may differ)",
+    "rss-un-news": "UN Chinese news RSS exists (seed lacks explicit enabled=true, runtime may differ)",
+    "rss-who-news": "WHO news RSS exists; verify freshness rather than duplicate"
+  },
+  "candidates": [
+    {
+      "id": "candidate-opportunity-ccc-notices",
+      "name": "中国儿童中心·通知公告",
+      "homepage": "https://www.ccc.org.cn/col/col9/index.html",
+      "kind": "web_list",
+      "topic": "events_training",
+      "priority": "P0",
+      "evidence_status": "PUBLIC_PAGE_FOUND",
+      "collection_status": "review_required",
+      "enabled": false,
+      "needs": [
+        "official listing preview in YiHot",
+        "verify title/date/link selectors and source permission",
+        "route professional events separately from children's own course advertisements"
+      ],
+      "notes": "Official event notices have publication dates; not every course enrollment is relevant to NGO staff."
+    },
+    {
+      "id": "candidate-opportunity-cdb",
+      "name": "中国发展简报·公益资助招标会议活动培训",
+      "homepage": "https://www.chinadevelopmentbrief.org.cn/",
+      "kind": "web_list",
+      "topic": "grants_tenders_events",
+      "priority": "P0",
+      "evidence_status": "PUBLIC_SITE_FOUND",
+      "collection_status": "review_required",
+      "enabled": false,
+      "needs": [
+        "verify exact current opportunities subpage URLs",
+        "confirm robots/terms and distinguish reposts from original issuer",
+        "parse deadline and eligibility from original announcement"
+      ],
+      "notes": "Opportunity index/link paths must be verified before adding a web_list source."
+    },
+    {
+      "id": "candidate-opportunity-ccgp",
+      "name": "中国政府采购网·地方招标公告",
+      "homepage": "https://www.ccgp.gov.cn/cggg/dfgg/gkzb/",
+      "kind": "web_list_or_manual",
+      "topic": "procurement",
+      "priority": "P0",
+      "evidence_status": "PUBLIC_LISTING_FOUND",
+      "collection_status": "review_required",
+      "enabled": false,
+      "needs": [
+        "verify openly available page pagination and permitted access",
+        "do not automate CAPTCHA-protected intent search",
+        "separate procurement, grants, suppliers, and award notices",
+        "extract province, budget, procuring body, deadline and applicant eligibility"
+      ],
+      "notes": "No API or RSS assumed; intentional CAPTCHA routes must remain manual."
+    },
+    {
+      "id": "candidate-opportunity-unpp",
+      "name": "United Nations Partner Portal·Partnership Opportunities",
+      "homepage": "https://www.unpartnerportal.org/landing/opportunities/",
+      "kind": "web_list_or_manual",
+      "topic": "partnership_calls",
+      "priority": "P0",
+      "evidence_status": "PUBLIC_LISTING_FOUND",
+      "collection_status": "review_required",
+      "enabled": false,
+      "needs": [
+        "confirm public opportunities view and terms",
+        "do not automate login or download gated PDFs",
+        "verify country/agency/sectors/deadline/CSO eligibility",
+        "notify only for eligible partner organizations"
+      ],
+      "notes": "Public listing is not an open grant for any given NGO; submitting requires registration."
+    },
+    {
+      "id": "candidate-opportunity-pubmed",
+      "name": "PubMed·儿童干预研究检索订阅",
+      "homepage": "https://pubmed.ncbi.nlm.nih.gov/",
+      "kind": "generated_rss",
+      "topic": "evidence",
+      "priority": "P1",
+      "evidence_status": "OFFICIAL_RSS_BUILDER_CONFIRMED",
+      "collection_status": "needs_feed_generation",
+      "enabled": false,
+      "needs": [
+        "create official per-query RSS using PubMed Create RSS",
+        "record generated URL plus canonical query and original language",
+        "review article abstracts and access rights, never assume fulltext authorization"
+      ],
+      "suggested_queries": [
+        "(child protection OR violence against children) AND (intervention OR systematic review)",
+        "(parenting OR caregiver support) AND (child mental health) AND (meta-analysis OR randomized)",
+        "(inclusive early childhood education) AND (systematic review OR evaluation)",
+        "(left-behind children) AND (intervention OR evaluation)"
+      ],
+      "notes": "No synthetic PubMed RSS link is invented."
+    },
+    {
+      "id": "candidate-opportunity-reliefweb",
+      "name": "ReliefWeb·Training & Reports",
+      "homepage": "https://apidoc.reliefweb.int/",
+      "kind": "api",
+      "topic": "training_research_humanitarian",
+      "priority": "P1",
+      "evidence_status": "OFFICIAL_API_DOCUMENTATION",
+      "collection_status": "requires_approved_appname",
+      "enabled": false,
+      "needs": [
+        "request ReliefWeb approved appname",
+        "verify permitted API use and attribution",
+        "separate /v2/training from /v2/reports; date/registration/deadline as separate fields",
+        "filter by child protection/relevant regions"
+      ],
+      "notes": "Without approved appname do not insert a fake API URL into live sources."
+    },
+    {
+      "id": "candidate-opportunity-eu-funding",
+      "name": "EU Funding & Tenders Portal·Calls for Proposals",
+      "homepage": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/about",
+      "kind": "portal_subscription",
+      "topic": "funding_tenders",
+      "priority": "P2",
+      "evidence_status": "OFFICIAL_PORTAL_CONFIRMED",
+      "collection_status": "review_required",
+      "enabled": false,
+      "needs": [
+        "verify RSS or native subscription feed with real account/query",
+        "screen geography and legal-entity eligibility before recommendation",
+        "keep tender and grant opportunity types separate"
+      ],
+      "notes": "Portal supports discovery; no arbitrary feed URL created."
+    },
+    {
+      "id": "candidate-opportunity-google-alerts",
+      "name": "Google Alerts·专项站点关键词补漏",
+      "homepage": "https://www.google.com/alerts",
+      "kind": "generated_rss_or_email",
+      "topic": "discovery_fallback",
+      "priority": "P2",
+      "evidence_status": "EXTERNAL_SERVICE",
+      "collection_status": "requires_user_setup",
+      "enabled": false,
+      "needs": [
+        "create alert manually with intended search, deliver to controlled RSS/email if available",
+        "avoid duplicate domain search results",
+        "confirm output, freshness and privacy terms"
+      ],
+      "notes": "Not first-party evidence and not a substitute for official notice."
+    }
+  ],
+  "review_sequence": [
+    "existing-source lookup",
+    "permissions and authentication review",
+    "live source preview",
+    "date, deadline and eligibility extraction trial",
+    "manual editorial signoff",
+    "shadow-only, timeboxed trial",
+    "explicit source enable decision"
+  ]
+}

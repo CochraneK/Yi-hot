@@ -101,12 +101,21 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
 
       {sites.length === 0 ? (
         <p className="py-16 text-center text-[14px] text-ink-4">暂时没有可展示的站点。</p>
+      ) : filteredSites.length === 0 ? (
+        <div className="py-14 text-center">
+          <p className="text-[15px] font-medium text-ink">没有找到匹配的站点</p>
+          <p className="mt-2 text-[13px] text-ink-3">试试站名、行业关键词，或清除搜索。</p>
+          <button type="button" onClick={() => setQuery("")}
+            className="mt-4 min-h-11 rounded-full border border-line-strong bg-surface px-5 text-[13px] font-medium text-ink-2 hover:border-ink-4">
+            清除搜索
+          </button>
+        </div>
       ) : (
-        <div className="mt-4 space-y-11">
+        <div className="mt-5 space-y-9 lg:space-y-10">
           {sections.map((section) => (
             <section key={section.id} id={`tier-${section.id}`} className="scroll-mt-24">
               {section.id === "candidate" ? (
-                <details className="rounded-xl border border-line px-4 py-3">
+                <details open={searching ? true : undefined} className="rounded-xl border border-line px-4 py-3">
                   <summary className="cursor-pointer text-[17px] font-semibold text-ink">
                     候选信息 <span className="num ml-2 text-[12px] font-normal text-ink-4">{section.sites.length} 家</span>
                   </summary>
@@ -115,16 +124,16 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
                 </details>
               ) : (
                 <>
-                  <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-3">
+                  <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-3">
                     <h2 className="text-[19px] font-bold tracking-[-0.02em] text-ink">{section.label}</h2>
                     <span className="num text-[12px] text-ink-4">{section.sites.length} 家</span>
                     <p className="w-full text-[12.5px] leading-relaxed text-ink-3">{section.note}</p>
                   </div>
                   {section.id === "official" && section.families?.length ? (
-                    <div className="space-y-9">
+                    <div className="space-y-7">
                       {section.families.map((family) => (
                         <section key={family.id} id={`family-${family.id}`} className="scroll-mt-24">
-                          <div className="mb-4 flex items-baseline gap-2">
+                          <div className="mb-3 flex items-baseline gap-2">
                             <h3 className="text-[16px] font-bold text-ink">{family.label}</h3>
                             <span className="num text-[12px] text-ink-4">{family.sites.length} 家</span>
                           </div>
@@ -159,7 +168,7 @@ function PeerSectionGroups({
   scope?: "same" | "other";
 }) {
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.id} id={`g-${section.id}-${scope ? `${scope}-` : ""}${group.id}`} className="scroll-mt-24">
           {groups.length > 1 && (
@@ -169,7 +178,7 @@ function PeerSectionGroups({
               <span className="ml-auto truncate pl-3 text-[11px] text-ink-4">{group.note}</span>
             </div>
           )}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
             {group.sites.map((site) => <PeerCard key={site.id} site={site} />)}
           </div>
         </section>
@@ -179,10 +188,11 @@ function PeerSectionGroups({
 }
 
 function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
+  if (s.browseOnly) return <PeerLinkCard site={s} />;
   return (
     <article className="card card-hover peer-card flex min-w-0 flex-col overflow-hidden" style={{ "--peer": s.accent } as CSSProperties}>
       <span className="peer-mark h-[2px] w-full" style={{ background: "var(--peer)" }} aria-hidden="true" />
-      <div className="flex items-start gap-3 px-5 pb-3.5 pt-4">
+      <div className="flex items-start gap-3 px-4 pb-3 pt-3.5">
         <span
           className="peer-mark grid size-9 shrink-0 place-items-center rounded-[10px] text-[15px] font-black"
           style={{ background: "color-mix(in srgb, var(--peer) 12%, transparent)", color: "var(--peer)" }}
@@ -203,19 +213,11 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
         </div>
       </div>
 
-      <div className="border-t border-line-soft px-5 py-3.5">
-        {!s.browseOnly && s.ok === false && (
+      <div className="border-t border-line-soft px-4 py-3">
+        {s.ok === false && (
           <p className="mb-2 text-[12px] text-ink-4">同步暂不可用 · 可前往原站浏览</p>
         )}
-        {s.browseOnly ? (
-          <div className="space-y-2">
-            <p className="text-[12.5px] text-ink-4">{s.tier === "candidate" ? "候选信息 · 待复核" : "尚未接入同步 · 仅浏览"}</p>
-            <a href={s.url} target="_blank" rel="noopener noreferrer"
-              className="peer-link inline-flex items-center gap-1 text-[13.5px] font-medium text-ink-2">
-              查看站点 <IconArrowUpRight size={13} />
-            </a>
-          </div>
-        ) : s.latest ? (
+        {s.latest ? (
           <>
             {s.tier === "official" && s.freshness === "stale" && (
               <p className="mb-1.5 text-[12px] text-ink-4">近期无更新 · 以下为历史条目</p>
@@ -239,14 +241,46 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
         )}
       </div>
 
-      <div className="mt-auto flex items-center gap-1.5 border-t border-line-soft px-5 py-2.5 text-[11.5px] text-ink-4">
+      <div className="mt-auto flex items-center gap-1.5 border-t border-line-soft px-4 py-2.5 text-[12px] text-ink-4">
         <span>
-          {s.browseOnly ? "公开链接" : <><span className="num">{s.items}</span> 条在库</>}
+          <span className="num">{s.items}</span> 条在库
         </span>
-        <span className="ml-auto" title={!s.browseOnly && s.checkedAt ? fullDateTime(s.checkedAt) : undefined}>
-          {s.browseOnly ? "无需同步" : s.checkedAt ? `${relativeTime(s.checkedAt)}同步` : "尚未同步"}
+        <span className="ml-auto" title={s.checkedAt ? fullDateTime(s.checkedAt) : undefined}>
+          {s.checkedAt ? `${relativeTime(s.checkedAt)}同步` : "尚未同步"}
         </span>
       </div>
     </article>
+  );
+}
+
+/**
+ * 没有同步条目的站不需要三段式大卡片：整行直接打开原站。
+ * 保留站点身份色、解释与同步边界，但减少手机滚动长度。
+ */
+function PeerLinkCard({ site: s }: { site: PeerDirectoryEntry }) {
+  return (
+    <a
+      href={s.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${s.name}（打开原站）`}
+      className="peer-card group relative flex min-h-[92px] items-start gap-3 overflow-hidden rounded-xl border border-line bg-surface px-3.5 py-3 transition-colors hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      style={{ "--peer": s.accent } as CSSProperties}
+    >
+      <span className="peer-mark absolute inset-y-3 left-0 w-[3px] rounded-r-full" style={{ background: "var(--peer)" }} aria-hidden="true" />
+      <span className="peer-mark grid size-9 shrink-0 place-items-center rounded-[10px] text-[14px] font-bold"
+        style={{ background: "color-mix(in srgb, var(--peer) 12%, transparent)", color: "var(--peer)" }} aria-hidden="true">
+        {s.name.slice(0, 1)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-semibold leading-snug text-ink">{s.name}</span>
+        <span className="mt-0.5 block line-clamp-2 text-[12.5px] leading-[1.5] text-ink-3">{s.note}</span>
+        <span className="mt-1 block text-[12px] leading-normal text-ink-4">
+          {s.tier === "candidate" ? "候选信息 · 待复核" : "尚未接入同步"}
+          {s.overlapPossible && " · 内容可能重合"}
+        </span>
+      </span>
+      <IconArrowUpRight size={16} className="mt-1 shrink-0 text-ink-4 transition-colors group-hover:text-ink-2" />
+    </a>
   );
 }

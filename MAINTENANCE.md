@@ -3082,3 +3082,9 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 承接 PR #46 的两类邻域，新增 UN Partner Portal 合作征集、EU Funding & Tenders 资助与招标、国家自然科学基金项目指南，共 42 项登记（含原来关闭的站，非生产在线数）。三项均为 `family=other`、`strategy=link`，沿用“其他邻域”的既有分组，只提供官方浏览入口，不自动采集、不进入文章轮转、不新增 RSS Seed、模型费用或生产数据库变更。门户可浏览不意味着读者符合申请资格或公告仍在受理。
 
 同时修正邻域搜索/分享描述，不再把独立门户和数据库说成同框架站。核验日期、官方出处、测试、上线与回滚见 [第五轮记录](docs/PEER_OFFICIAL_OPPORTUNITIES_ROUND5_2026-11-15.md)。本地预览与 GitHub 合并均不能代替腾讯云实际部署验收。
+
+## 同系邻域继续探索：官网与模板仓库交叉核实（2026-11-15，第六轮）
+
+新增 AI Safety HOT、AIDC热点、EmbHot、MarketHOT、DesignRadar、MedHOT、ThinkHOT 七个经过官网致谢或公开定制仓库核实的同系浏览入口。名录从 42 到 **49 项（same 31 / other 18，含原有关闭项）**，不等于实时在线数。MedHOT 是页面日期为 11 月 5 日的静态快照；ThinkHOT 为 11 月 14 日快照，卡片文案明确其性质。七项均沿用 `strategy=link`，不抓取、不进入文章轮转、不增加 RSS Seed 或模型费用。
+
+本轮增加了对 `fork:false` 定制仓库的检索，发现 Fork 网络之外的行业版本；另保留教育、医疗器械、遥感、农业、关务等 11 个未验证公开内容/地址的候选。DesignRadar RSS 实测有 42 条；EvalHot 虽 HTTP 200 但 RSS 为 0 条，不能混为可同步内容。AIDC 的公开转载许可与网站技术开源分别判断。完整链接、验证方式、RSS 状态、未纳入原因、测试和回滚见 [第六轮发现记录](docs/PEER_SAME_FAMILY_DISCOVERY_ROUND6_2026-11-15.md)。GitHub 合并与腾讯云部署仍是两步，本轮不宣称生产生效。

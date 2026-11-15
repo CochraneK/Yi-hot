@@ -775,11 +775,11 @@ export const PEER_SITES: PeerSite[] = [
     family: "other",
     name: "GDACS · 全球灾害预警",
     url: "https://www.gdacs.org/",
-    note: "全球灾害预警与跨国救援事件，源端含 GeoRSS 地理字段",
+    note: "全球灾害预警与跨国救援事件，源端含 GeoRSS 地理字段，选择首页精简 Feed",
     group: "civic",
     accent: "#b27854",
     strategy: "rss",
-    feedPath: "/xml/rss.xml",
+    feedPath: "/contentdata/xml/rss_homepage.xml",
     enabled: true,
   },
 ];

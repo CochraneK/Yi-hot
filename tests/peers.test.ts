@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { interleavePicks, rotationOrder, sortWithinPeer } from "@aihot/backend/peers/select";
 import { peerFeedUrl, parseFeed, fetchPeer } from "@aihot/backend/peers/refresh";
+import { peerFreshness } from "@aihot/backend/peers/freshness";
 import { PEER_GROUPS, PEER_SITES } from "@aihot/industry/peers";
 import { readFileSync } from "node:fs";
 
@@ -450,4 +451,42 @@ test("GeoRSS 灾害事件保留标题、发布时间和来源链接，不把地�
   assert.match(items[0]?.itemUrl ?? "", /gdacs\.org\/report\.aspx/);
   assert.equal(items[0]?.summary, "Green notification and estimated impact.");
   // 当前 RawPeerItem 不含坐标字段；位置提取应在独立地图 PR 内处理、验证、授权。
+});
+
+test("候选信息不混入正式邻域，所有 56 站层级在唯一事实源明确", () => {
+  assert.equal(PEER_SITES.length, 56);
+  assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
+  const tiers = { official: 0, resource: 0, candidate: 0 };
+  for (const p of PEER_SITES) {
+    assert.ok(p.tier === "official" || p.tier === "resource" || p.tier === "candidate", p.id);
+    tiers[p.tier] += 1;
+  }
+  assert.deepEqual(tiers, { official: 32, resource: 14, candidate: 10 });
+  for (const id of ["aimfast", "fengxiang-demo", "medhot", "thinkhot", "newsiq", "ai4scihot",
+    "xocto", "horizon-uu", "sanyu-insights", "yingxiao"]) {
+    const p = PEER_SITES.find(p => p.id === id);
+    assert.ok(p, id);
+    assert.equal(p.tier, "candidate", id);
+    assert.ok(p.strategy === "link" || p.strategy === "none", id);
+  }
+  for (const id of ["openalex-research", "foundation-center", "nsfc-guidelines", "un-partner-portal", "gdacs"]) {
+    assert.equal(PEER_SITES.find(p => p.id === id)?.tier, "resource", id);
+  }
+  assert.equal(PEER_SITES.find(p => p.id === "markethot")?.tier, "official");
+  assert.equal(PEER_SITES.find(p => p.id === "math-education-hot")?.cadence, "weekly");
+});
+
+test("发布时间决定邻域新鲜度，重复抓取与静态资源不冒充更新", () => {
+  const daily = { tier: "official" as const, strategy: "rss" as const };
+  const weekly = { ...daily, cadence: "weekly" as const };
+  const now = new Date("2026-11-16T12:00:00.000Z");
+  assert.equal(peerFreshness(daily, "2026-11-15T00:00:00.000Z", now), "recent");
+  assert.equal(peerFreshness(daily, "2026-11-08T00:00:00.000Z", now), "stale");
+  assert.equal(peerFreshness(weekly, "2026-11-09T00:00:00.000Z", now), "recent");
+  assert.equal(peerFreshness(weekly, "2026-10-20T00:00:00.000Z", now), "stale");
+  assert.equal(peerFreshness(daily, null, now), "unknown");
+  assert.equal(peerFreshness(daily, "2026-11-20T00:00:00.000Z", now), "unknown");
+  assert.equal(peerFreshness({ ...daily, tier: "candidate" }, "2026-11-15", now), "reference");
+  assert.equal(peerFreshness({ ...daily, tier: "resource" }, "2026-09-01", now), "reference");
+  assert.equal(peerFreshness({ ...daily, strategy: "link" }, "2026-11-15", now), "reference");
 });

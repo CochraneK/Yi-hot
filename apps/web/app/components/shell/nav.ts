@@ -72,7 +72,12 @@ export const MORE_PATHS = ["/more", "/hot", "/starred", "/leaderboard", "/codex-
 
 export function tabIsActive(item: NavItem, pathname: string): boolean {
   if (item.end) return pathname === item.to;
-  if (item.to === "/more") return MORE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  if (item.to === "/more") {
+    // 底栏自己已经有入口的页面（热点、主题……）不该同时点亮「更多」：/hot 既在 TABBAR 里，
+    // 又曾列在 MORE_PATHS 里，两个 tab 一起变红。先看有没有更具体的 tab 命中，有就让给它。
+    const ownTab = TABBAR.some((t) => t.to !== "/more" && tabIsActive(t, pathname));
+    return !ownTab && MORE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  }
   if (item.to === "/weekly") return /^\/(daily|weekly|monthly)(\/|$)/.test(pathname);
   return pathname === item.to || pathname.startsWith(`${item.to}/`);
 }

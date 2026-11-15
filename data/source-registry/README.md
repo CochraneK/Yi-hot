@@ -35,3 +35,11 @@ npm run sources:audit
 ## 后续
 
 以 `../../docs/SOURCE_GOVERNANCE_DESIGN.md` 为设计规范，先复核 5–10 条高价值公益来源，再开发管理员一页式候选发现/授权与真实预览。不增加常驻 RSS/WeChat 容器；只复用已有 YiHot 原生 sources 管道。
+
+
+## 2026-11-15 · 儿童公益工作机会情报（Review Queue）
+
+- `opportunity-candidates-2026-11-15.json`：8 个经过公开线索核验的机会型来源（儿童中心、发展简报、政府采购、UNPP、PubMed、ReliefWeb、EU Funding、Google Alerts）。**候选不是 sources，不能直接导入或启用。** 每个项目保留官方入口、权限状态、订阅生成要求和核验步骤。
+- `../../industry/sources.json`：预置 5 个新搜索组共 21 条查询及 1 条联合国亚太新闻 RSS，6 个源均 `enabled=false` 且 `participation_mode=isolated`，不触发采集、付费分析或公开发布。
+- 行动建议、审核、回滚、去重、截止日/资格区分详见 [专项说明](../../docs/OPPORTUNITY_SOURCE_DISCOVERY_2026-11-15.md)。
+- 运行 `node --test tests/opportunity-source-candidates.test.mjs` 可离线核对上述防误启用规则；无需服务或密钥。

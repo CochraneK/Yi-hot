@@ -37,3 +37,6 @@ sources-export.tsv
 
 # 本地预览与一次性探针：邮件 HTML 预览、页面时间采样脚本，产物随时可重跑生成。
 /.preview/
+
+# playwright-cli 的会话日志与截图缓存，随时可重跑生成。
+/.playwright-cli/

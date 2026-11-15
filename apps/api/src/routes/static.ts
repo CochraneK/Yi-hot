@@ -7,7 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { SITE } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import { CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
-import { RETRIEVAL_BOTS, SCRAPER_BOTS, TRAINING_BOTS } from "@aihot/contracts/bot-policy";
+import { RETRIEVAL_BOTS, SCRIPT_CLIENT_BOTS, SEO_BOTS, TRAINING_BOTS } from "@aihot/contracts/bot-policy";
 import { REPO_ROOT, config } from "@aihot/backend/config";
 import { applyPublicHeaders, sendTextWithEtag } from "../http/respond.ts";
 import { sitemapXml } from "@aihot/backend/publication/sitemap";
@@ -57,7 +57,7 @@ async function sendFile(req: FastifyRequest, reply: FastifyReply, file: string, 
 }
 
 /**
- * robots.txt. 三组 UA 与 apps/web/server.ts 的 403 判定读同一份名单（@aihot/contracts/bot-policy），
+ * robots.txt. 四组 UA 与 apps/web/server.ts 的 403 判定读同一份名单（@aihot/contracts/bot-policy），
  * 声明和实际执行不会再分叉。分开写的代价上一版已经付过：这里禁了 ChatGPT-User，而 llms.txt 正在邀请
  * Agent 来读——门口写着欢迎，报上名就被拒。
  */
@@ -81,11 +81,9 @@ function robotsTxt(): string {
     "",
   ].join("\n");
 
-  // 训练型读不到 llms.txt：一份站点地图只对放进来的人有用。
-  const training = group("训练型：禁止把本站内容用作训练语料（应用层同样返回 403）。", TRAINING_BOTS, ["Disallow: /"]);
-
-  // 检索型是「用户当场提问」才来的，不是训练。接口全开，页面仍不给：结构化数据走 API 就够了。
-  const retrieval = group("检索型：用户提问时现抓，可以读接口，不要去啃页面。", RETRIEVAL_BOTS, [
+  // 两类程序客户端拿到同一份放行清单：接口全开，页面不给。结构化数据走 API 就够了，
+  // 而「程序调接口」本来就是本站的用途之一，不该在 403 上拦（频率由限流管）。
+  const machineSurfaces = [
     "Allow: /llms.txt",
     "Allow: /api/",
     "Allow: /feed",
@@ -93,11 +91,20 @@ function robotsTxt(): string {
     "Allow: /sitemap.xml",
     "Allow: /items/",
     "Disallow: /",
-  ]);
+  ];
 
-  const scrapers = group("SEO 审计与脚本库：与训练无关，同样是无节制的大规模抓取。", SCRAPER_BOTS, ["Disallow: /"]);
+  // 训练型读不到 llms.txt：一份站点地图只对放进来的人有用。
+  const training = group("训练型：禁止把本站内容用作训练语料（应用层同样返回 403）。", TRAINING_BOTS, ["Disallow: /"]);
 
-  return search + training + retrieval + scrapers;
+  // 检索型是「用户当场提问」才来的，不是训练。
+  const retrieval = group("检索型：用户提问时现抓，可以读接口，不要去啃页面。", RETRIEVAL_BOTS, machineSurfaces);
+
+  // 脚本客户端：Python / Go / Java 这类库。它们只是程序的默认 UA，不是滥用。
+  const scripts = group("脚本客户端：程序调 API 用，接口全开、页面不给。", SCRIPT_CLIENT_BOTS, machineSurfaces);
+
+  const seo = group("SEO 审计：只要 HTML 且抓得很凶，接口对他们没有意义。", SEO_BOTS, ["Disallow: /"]);
+
+  return search + training + retrieval + scripts + seo;
 }
 
 function manifest() {

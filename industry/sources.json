@@ -9882,6 +9882,152 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": false
+    },
+    {
+      "id": "rss-peer-gamehot",
+      "name": "GameHOT · 游戏产业（邻域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://gamehot.org/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "青少年",
+            "未成年人",
+            "学生",
+            "心理",
+            "数字素养",
+            "游戏成瘾",
+            "防沉迷",
+            "监管",
+            "游戏教育",
+            "文化",
+            "公益",
+            "无障碍",
+            "保护",
+            "伦理"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "促销优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "游戏产业",
+        "儿童数字权益"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-myhot-finance",
+      "name": "MyHOT · 市场与产业（邻域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://aihot.wscn.net/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "公益",
+            "社会责任",
+            "慈善",
+            "捐赠",
+            "教育",
+            "儿童",
+            "健康",
+            "CSR",
+            "基金会",
+            "人道",
+            "气候",
+            "社会影响",
+            "就业",
+            "政策",
+            "补贴",
+            "财政"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "促销优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "金融市场",
+        "公益筹资"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-ai-pulse-lab",
+      "name": "AI Pulse · 多源 AI 信号（邻域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://ai-pulse-lab.com/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "教育",
+            "公益",
+            "无障碍",
+            "辅助技术",
+            "社会影响",
+            "研究方法",
+            "隐私",
+            "伦理",
+            "职业",
+            "安全",
+            "监管",
+            "政策",
+            "医疗",
+            "心理",
+            "科学"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "促销优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "AI研究",
+        "跨界洞察"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

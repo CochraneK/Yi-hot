@@ -3046,3 +3046,12 @@ GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的�
 新 `PeerSite.strategy="link"` 专门表示**只链接公开网站，无抓取**；后台 `refreshPeers` 跳过，不写成功/失败状态，目录页明确显示「仅浏览 · 不自动同步文章」，可同步网站继续用已有 RSS/API 加载，不触发模型。没有新增独立导航或新模型容器。新增三个 `rss-peer-*` 在 `industry/sources.json` 中均 `enabled=false`，`isolated`，与邻域开关互不影响；只有经后台 Preview、版权/许可、重复源、成本审核后才能单个启用。旧有来源、模型预算、出版机制、腾讯云配置未改动。
 
 实施与排除候选、真实 URL、测试、回滚见 [完整调查](docs/PEER_NEIGHBORHOOD_EXPANSION_2026-11-15.md)。CI 需要 `node --test tests/peers.test.ts`、`npm run typecheck`、Docker/Web smoke 通过。GitHub 合并不等于生产环境已部署或新卡片已经在线展示。未确认的保险网站 `baoxian.news`（DNS 不可达）、KernelHOT（只有仓库/未确认独立站点）、3D 技术雷达（未确认公开网站）、与泛 AI 内容重复的 AIhot.space 暂不添加。回滚时**只撤销本轮 7 个 PeerSite 和 3 个 RSS 种子记录**，不要删除别家的缓存或改变其他来源。
+
+
+## 邻域第三轮扩展 · 游戏、市场与机会情报（2026-11-15）
+
+继续在 AIHOT 社区 #306、作品展示、Fork、GitHub 公共搜索、行业搜索与候选站官网/订阅反查后，发现并验证 6 家不在原有 25 家登记中的网站：**GameHOT**（游戏行业；`https://gamehot.org/feed.xml`）、**MyHOT**（市场与商业动态；`https://aihot.wscn.net/feed.xml`）、**AI Pulse**（AI 研究分析；`https://ai-pulse-lab.com/feed.xml`）均有当日公开 RSS，可按邻域默认轻量方式读取；**x-octo**（AI 创业/融资项目库）、**AimFast**（创业趋势，深度功能需登录）、**三禹智能·行业情报**（智慧水利/行业招投标）能公开访问但没有经过证实的可用 RSS，故按已经存在的 `strategy="link"`「仅浏览」展示，**没有后台抓取、收录计数、模型调用或报告轮换**。
+
+GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sources.json` 的技术 RSS Seed 从 **177** 条增至 **180** 条（新增 `rss-peer-gamehot`、`rss-peer-myhot-finance`、`rss-peer-ai-pulse-lab`，均 `enabled=false`、`isolated`、禁全文）。邻域的站点展示与 RSS 技术采集**仍是两个独立模块**，不要因目录启用就开启模型筛选或覆盖旧新闻。AI Pulse 跟现有 AI 快讯有同题重复，来源间不能视为独立证据；MyHOT、GameHOT 的文章也只作为所述站编辑过的内容。
+
+复核入口、验证过的 URL、排除原因、可复现搜索和验收/回滚记录： [PEER_DISCOVERY_ROUND3_2026-11-15.md](docs/PEER_DISCOVERY_ROUND3_2026-11-15.md)。必须通过 `node --test tests/peers.test.ts`、GitHub Actions 的类型检查/网页/后端/Docker 后合并。GitHub 合并并不意味着腾讯云 API/worker 已重建、生产数据库已同步或所有新卡片已显示最新文章。本轮不运行独立定时任务，不访问凭据，不更改主内容/预算/数据库迁移。回滚仅删除这次新增的 6 个 PeerSite 与 3 个 Seed RSS；不可删除他人并发更新、已有缓存与历史记录。

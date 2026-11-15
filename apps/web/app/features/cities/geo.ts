@@ -48,9 +48,9 @@ export const CITY_PLACES: readonly CityPlace[] = [
   p("xining", "西宁", "青海", "中国", "CN", 36.617, 101.778, ["Xining"]),
   p("yinchuan", "银川", "宁夏", "中国", "CN", 38.487, 106.230, ["Yinchuan"]),
   p("urumqi", "乌鲁木齐", "新疆", "中国", "CN", 43.825, 87.617, ["Urumqi", "Ürümqi"]),
-  p("hongkong", "香港", "香港", "中国", "CN", 22.319, 114.169, ["Hong Kong"]),
-  p("macau", "澳门", "澳门", "中国", "CN", 22.199, 113.544, ["Macau", "Macao"]),
-  p("taipei", "台北", "台湾", "中国", "CN", 25.033, 121.565, ["Taipei"]),
+  p("hongkong", "香港", "香港", "中国", "HK", 22.319, 114.169, ["Hong Kong"]),
+  p("macau", "澳门", "澳门", "中国", "MO", 22.199, 113.544, ["Macau", "Macao"]),
+  p("taipei", "台北", "台湾", "中国", "TW", 25.033, 121.565, ["Taipei"]),
   p("shenzhen", "深圳", "广东", "中国", "CN", 22.543, 114.058, ["Shenzhen"]),
   p("suzhou", "苏州", "江苏", "中国", "CN", 31.299, 120.585, ["Suzhou"]),
   p("ningbo", "宁波", "浙江", "中国", "CN", 29.868, 121.544, ["Ningbo"]),
@@ -124,7 +124,16 @@ export function localHeadline(article: { title: string; summary?: string | null 
   const place = placeById(readerCityId);
   // Only an explicit Chinese city name qualifies for the badge; English aliases may be ambiguous homonyms.
   if (!place || !hasTerm(article.title, place.name)) return false;
-  return CITY_PLACES.filter((p) => mentionsCity(article.title, p)).length === 1;
+  if (CITY_PLACES.filter((p) => mentionsCity(article.title, p)).length !== 1) return false;
+  // Institution names are not event locations: a place name must directly introduce an event action
+  // or follow an explicit location preposition. Suppress a competing province mention.
+  const competingRegion = new Set(CITY_PLACES.filter((p) => p.country === "中国" && p.region !== place.region).map((p) => p.region));
+  if ([...competingRegion].some((name) => hasTerm(article.title, name))) return false;
+  const index = article.title.indexOf(place.name);
+  const before = article.title.slice(Math.max(0, index - 3), index);
+  const after = article.title.slice(index + place.name.length).replace(/^[市省区县]/, "");
+  const actions = ["举行", "举办", "开展", "启动", "召开", "发生", "通报", "发布", "宣布", "新增", "启动", "：", ":"];
+  return before.endsWith("在") || before.endsWith("于") || after.startsWith("市在") || actions.some((verb) => after.startsWith(verb));
 }
 
 export function openStreetMapLink(place: CityPlace): string {

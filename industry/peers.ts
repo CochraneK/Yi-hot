@@ -105,6 +105,17 @@ export const PEER_SITES: PeerSite[] = [
     enabled: true,
   },
   {
+    // 2026-11-15 核实行业日报和招投标雷达，/feed.xml 为 404，仅浏览。
+    id: "sanyu-insights",
+    name: "三禹智能 · 行业情报",
+    url: "https://www.sanyusmart.com/insights/",
+    note: "智慧水利、行业 AI、招投标商机",
+    group: "public",
+    accent: "#648a62",
+    strategy: "link",
+    enabled: true,
+  },
+  {
     id: "qingyan",
     name: "青砚",
     url: "https://qingyannews.cn",
@@ -135,6 +146,50 @@ export const PEER_SITES: PeerSite[] = [
     group: "health",
     accent: "#5f7d2a",
     strategy: "api",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实 /feed.xml 有当日精选；/api/v1/items 返回 not_exported。
+    id: "gamehot",
+    name: "GameHOT",
+    url: "https://gamehot.org/",
+    note: "游戏产业、产品设计、发行运营与玩家反馈",
+    group: "biz",
+    accent: "#a05b57",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实 /feed.xml 有财经及产业精选，独立站而非 aihot.news。
+    id: "myhot-finance",
+    name: "MyHOT · 市场观察",
+    url: "https://aihot.wscn.net/",
+    note: "金融市场、产业政策与商业动态",
+    group: "biz",
+    accent: "#867449",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实公开产品/融资分析页，但 /feed.xml 为 404，仅浏览。
+    id: "xocto",
+    name: "x-octo · 机会库",
+    url: "https://xocto.vercel.app/",
+    note: "AI 产品研究、融资与创业机会（公开资料库）",
+    group: "biz",
+    accent: "#5d8572",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实公开趋势页，后台登录限制；/feed.xml、/rss.xml 为 404。
+    id: "aimfast",
+    name: "AimFast",
+    url: "https://www.aimfast.dev/",
+    note: "创业趋势与产品机会（深入分析需登录）",
+    group: "biz",
+    accent: "#4c8b91",
+    strategy: "link",
     enabled: true,
   },
   {
@@ -353,6 +408,17 @@ export const PEER_SITES: PeerSite[] = [
     group: "ai",
     accent: "#4e7290",
     strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实 /feed.xml 有当日多源研究条目；与已有 AI 热点站功能部分交叉。
+    id: "ai-pulse-lab",
+    name: "AI Pulse",
+    url: "https://ai-pulse-lab.com/",
+    note: "多源 AI 信号、研究分析与知识检索",
+    group: "ai",
+    accent: "#5c6b8d",
+    strategy: "rss",
     enabled: true,
   },
 ];

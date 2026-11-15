@@ -676,6 +676,30 @@ export const PEER_SITES: PeerSite[] = [
     strategy: "link",
     enabled: true,
   },
+  {
+    // 2026-11-15 README 明确基于 AIHOT 的静态发行版；认知/学习科学与 AI 数学教育周报。
+    id: "math-education-hot",
+    family: "same",
+    name: "数学教育 HOT",
+    url: "https://a0910580996-a11y.github.io/math-education-hot/",
+    note: "认知科学、学习科学与 AI 数学教育，静态周报",
+    group: "tech",
+    accent: "#668c70",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 作者 README/运行说明明确沿用 AIHOT，正式域名是 shendeng 而非仓库拼写。
+    id: "shendeng-ai",
+    family: "same",
+    name: "神灯AI热点",
+    url: "https://shendeng.news/",
+    note: "AI 综合动态与实用机会，本地采编后发布的静态阅读站",
+    group: "ai",
+    accent: "#46958a",
+    strategy: "link",
+    enabled: true,
+  },
 ];
 
 /** 每期条数：日报只是「顺带一看」，周月报可以铺开成一小版。 */

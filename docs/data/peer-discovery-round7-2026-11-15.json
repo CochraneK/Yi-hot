@@ -1,0 +1,489 @@
+{
+  "checkedAt": "2026-11-15",
+  "timeZone": "Asia/Singapore",
+  "baselineMain": "8bc764ec4e60c5638409771b8545597d330ecb64",
+  "scope": "Selected candidates from GitHub README searches, not an exhaustive repository or deployment census.",
+  "interpretation": "Default names and template-style README files do not prove that a project has no private customization. HTTP errors are observations from this environment, not proof of permanent shutdown. Only verified public entries are added to the directory.",
+  "verifiedFeeds": [
+    {
+      "peerId": "math-education-hot",
+      "url": "https://a0910580996-a11y.github.io/math-education-hot/feed.xml",
+      "httpStatus": 200,
+      "root": "rss",
+      "items": 12
+    },
+    {
+      "peerId": "shendeng-ai",
+      "url": "https://shendeng.news/feed.xml",
+      "httpStatus": 200,
+      "root": "rss",
+      "items": 50
+    }
+  ],
+  "repositories": [
+    {
+      "repo": "zseeu1/CVEHOT",
+      "url": "https://github.com/zseeu1/CVEHOT",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "018ef8a6b7ff30efcd4e2d347b5bdc29ddb2c84e"
+    },
+    {
+      "repo": "liuger/jobhot",
+      "url": "https://github.com/liuger/jobhot",
+      "homepage": "https://jobhot.vercel.app",
+      "siteName": "jobhot",
+      "status": "homepage_503",
+      "readmeSha": "615e0ad39d727040ddaaeea22a4e16d57d74119f"
+    },
+    {
+      "repo": "Vinwan/hothack",
+      "url": "https://github.com/Vinwan/hothack",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "73e91b623e1d5739320cafac6a245e6ce166aebc"
+    },
+    {
+      "repo": "kael-odin/starwave",
+      "url": "https://github.com/kael-odin/starwave",
+      "homepage": null,
+      "siteName": "星潮",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "c9ecb3acf6c76d964f224dbf5de8d3e28127f0bc"
+    },
+    {
+      "repo": "cctv549681/GEOHOT",
+      "url": "https://github.com/cctv549681/GEOHOT",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "91e8ba24609a8787f3e7782094f40f668437cb98"
+    },
+    {
+      "repo": "Pytorchlover/WujieHOT",
+      "url": "https://github.com/Pytorchlover/WujieHOT",
+      "homepage": null,
+      "siteName": "WujieHOT",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "9f8cddc4980ca2483bec7c6a67d3d272a1ac56af"
+    },
+    {
+      "repo": "soloprimus/aifocus.online",
+      "url": "https://github.com/soloprimus/aifocus.online",
+      "homepage": null,
+      "siteName": "AIFocus",
+      "status": "homepage_403",
+      "readmeSha": "8f067081835ebc2316cef96bbabaffb7f6543a73"
+    },
+    {
+      "repo": "krusemeng-alt/hot101",
+      "url": "https://github.com/krusemeng-alt/hot101",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "91e8ba24609a8787f3e7782094f40f668437cb98"
+    },
+    {
+      "repo": "littleweb/shengdeng.news",
+      "url": "https://github.com/littleweb/shengdeng.news",
+      "homepage": null,
+      "siteName": null,
+      "status": "public_entry_verified",
+      "readmeSha": "b869633c4b7b4a0a8ef41436126b4a2dd872ea79"
+    },
+    {
+      "repo": "JLRunRun/semiconductorNews",
+      "url": "https://github.com/JLRunRun/semiconductorNews",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "iismalltall/computer-vision",
+      "url": "https://github.com/iismalltall/computer-vision",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "tutumomo/AVHOT",
+      "url": "https://github.com/tutumomo/AVHOT",
+      "homepage": null,
+      "siteName": "AVHOT",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "zfwei/SocialHot",
+      "url": "https://github.com/zfwei/SocialHot",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "fca812fb2c1dbf0299a8219f25b8a39184bf94e9"
+    },
+    {
+      "repo": "ZOE51226/AIHot-in-heatpump",
+      "url": "https://github.com/ZOE51226/AIHot-in-heatpump",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "fca812fb2c1dbf0299a8219f25b8a39184bf94e9"
+    },
+    {
+      "repo": "hxhxixi-star/aduithot",
+      "url": "https://github.com/hxhxixi-star/aduithot",
+      "homepage": null,
+      "siteName": "EAGLE GSAI",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "yallophu/MedicalHotNews",
+      "url": "https://github.com/yallophu/MedicalHotNews",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "reisen-ww/AcadHot",
+      "url": "https://github.com/reisen-ww/AcadHot",
+      "homepage": null,
+      "siteName": "学术热点",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "d49a6db2e697595d9b77fbd2444690fcb454d66f"
+    },
+    {
+      "repo": "fangjun123/CBECHOT",
+      "url": "https://github.com/fangjun123/CBECHOT",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "BruceZhu33/medpulse",
+      "url": "https://github.com/BruceZhu33/medpulse",
+      "homepage": null,
+      "siteName": "器械脉搏 MedPulse",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "fca812fb2c1dbf0299a8219f25b8a39184bf94e9"
+    },
+    {
+      "repo": "renzhe1122/yanglao",
+      "url": "https://github.com/renzhe1122/yanglao",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "AIJIUCHENG/ONEHOT",
+      "url": "https://github.com/AIJIUCHENG/ONEHOT",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "chering14/Hotpoint",
+      "url": "https://github.com/chering14/Hotpoint",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "henryhzhang/riscv_cpu_news",
+      "url": "https://github.com/henryhzhang/riscv_cpu_news",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "LosNadie/Noise-Floor",
+      "url": "https://github.com/LosNadie/Noise-Floor",
+      "homepage": null,
+      "siteName": "Noise Floor",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "46f05ae9ea14eb294376155bf85951dccc95fcf2"
+    },
+    {
+      "repo": "a0910580996-a11y/math-education-hot",
+      "url": "https://github.com/a0910580996-a11y/math-education-hot",
+      "homepage": "https://a0910580996-a11y.github.io/math-education-hot/",
+      "siteName": "数学教育 HOT",
+      "status": "public_entry_verified",
+      "readmeSha": "2d7b2eb611e255e3dd5cc82d5c13d77c39a1fc33"
+    },
+    {
+      "repo": "stayhear0722-dev/3chot",
+      "url": "https://github.com/stayhear0722-dev/3chot",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "a6a45c6f25ff55b1d8ceeb9d2ee1cf5c12278d6e"
+    },
+    {
+      "repo": "derekwang85/smthHOT",
+      "url": "https://github.com/derekwang85/smthHOT",
+      "homepage": "https://aihot.news",
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "0b49da3b49e3f7df7ce8a71dbcf5cd05c06e3f28"
+    },
+    {
+      "repo": "Steven3358/oilHOT",
+      "url": "https://github.com/Steven3358/oilHOT",
+      "homepage": "https://aihot.news",
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "7e2589d34854b14dc4e79bfb9340b06de2d04695"
+    },
+    {
+      "repo": "WKWKWKWKWK-2737023/FilmHOT",
+      "url": "https://github.com/WKWKWKWKWK-2737023/FilmHOT",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "6449bbc9544a8fe556d54f39bff4452b61fdcdea"
+    },
+    {
+      "repo": "Jeason0228/DesignHot",
+      "url": "https://github.com/Jeason0228/DesignHot",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "6449bbc9544a8fe556d54f39bff4452b61fdcdea"
+    },
+    {
+      "repo": "ditoo2003/teslariahot",
+      "url": "https://github.com/ditoo2003/teslariahot",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "6449bbc9544a8fe556d54f39bff4452b61fdcdea"
+    },
+    {
+      "repo": "mackiewicz2026/consultant",
+      "url": "https://github.com/mackiewicz2026/consultant",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "6449bbc9544a8fe556d54f39bff4452b61fdcdea"
+    },
+    {
+      "repo": "PresonLV/commercial-vehicle-intelligence",
+      "url": "https://github.com/PresonLV/commercial-vehicle-intelligence",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "6449bbc9544a8fe556d54f39bff4452b61fdcdea"
+    },
+    {
+      "repo": "Waiken-K/crossborder-hot",
+      "url": "https://github.com/Waiken-K/crossborder-hot",
+      "homepage": null,
+      "siteName": "跨境热点",
+      "status": "custom_config_no_verified_public_url",
+      "readmeSha": "052ce4916e641e676616c3c6cecc6d9e97581e35"
+    },
+    {
+      "repo": "crchenrun/designday",
+      "url": "https://github.com/crchenrun/designday",
+      "homepage": null,
+      "siteName": "MyHOT",
+      "status": "default_site_name_no_verified_public_url",
+      "readmeSha": "55567caf504448da9ef24908200b6d43643590c4"
+    },
+    {
+      "repo": "sendking/MedicalAI",
+      "url": "https://github.com/sendking/MedicalAI",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "safe-fox/sechot",
+      "url": "https://github.com/safe-fox/sechot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "fca812fb2c1dbf0299a8219f25b8a39184bf94e9"
+    },
+    {
+      "repo": "Emberwhirl/UroHot",
+      "url": "https://github.com/Emberwhirl/UroHot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "chengyi-ai/Naver-AI-HOT",
+      "url": "https://github.com/chengyi-ai/Naver-AI-HOT",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "johnny818/robot-news",
+      "url": "https://github.com/johnny818/robot-news",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "nino0617-83/mtrhot",
+      "url": "https://github.com/nino0617-83/mtrhot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "mogubase/cape",
+      "url": "https://github.com/mogubase/cape",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "tinyMoment2046/PsyForest",
+      "url": "https://github.com/tinyMoment2046/PsyForest",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "asheleyshi-cell/CO2HOT",
+      "url": "https://github.com/asheleyshi-cell/CO2HOT",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "2668bfcdd2973ac08ec5f81d3dd16a55e79af248"
+    },
+    {
+      "repo": "FB208/BIDHOT",
+      "url": "https://github.com/FB208/BIDHOT",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "Winsaney/model-chip-radar",
+      "url": "https://github.com/Winsaney/model-chip-radar",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "xiqiuqiu/metallurgy-hot",
+      "url": "https://github.com/xiqiuqiu/metallurgy-hot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "lanhao-neo/aob.cc",
+      "url": "https://github.com/lanhao-neo/aob.cc",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "Claire26-code/industry-intelligence-agent",
+      "url": "https://github.com/Claire26-code/industry-intelligence-agent",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "robin2747722900-collab/culture-museum",
+      "url": "https://github.com/robin2747722900-collab/culture-museum",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "481438c3c5105c952fc7762dd3dc8f6a823333aa"
+    },
+    {
+      "repo": "liyuqi617/Evtol-news",
+      "url": "https://github.com/liyuqi617/Evtol-news",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "David0936/cimc-industry-hot",
+      "url": "https://github.com/David0936/cimc-industry-hot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "d58561263724a3abe9a47df7650972c2c1547952"
+    },
+    {
+      "repo": "nic-wang/sihot",
+      "url": "https://github.com/nic-wang/sihot",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "8de38f2ce9eea37bde0580b8c2a6405e9b7e5b9c"
+    },
+    {
+      "repo": "lord97j/JOBHOT",
+      "url": "https://github.com/lord97j/JOBHOT",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "38b95bec562936ee7c69a5915df13ed639f23843"
+    },
+    {
+      "repo": "CSY0663/AUTOMOBILE-NEWS",
+      "url": "https://github.com/CSY0663/AUTOMOBILE-NEWS",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "8de38f2ce9eea37bde0580b8c2a6405e9b7e5b9c"
+    },
+    {
+      "repo": "shengpandong22-create/SentinelIntel",
+      "url": "https://github.com/shengpandong22-create/SentinelIntel",
+      "homepage": null,
+      "siteName": null,
+      "status": "readme_only_no_verified_public_url",
+      "readmeSha": "6c7a4e2f2d2cf36bf9de33bef8359b4b0f321766"
+    },
+    {
+      "repo": "goodYY12/electrical-engineering-hotspot",
+      "url": "https://github.com/goodYY12/electrical-engineering-hotspot",
+      "homepage": "https://electroradar.vercel.app/",
+      "siteName": "ElectroRadar",
+      "status": "homepage_404",
+      "readmeSha": "7d145d6ad018f83df41a728afce265a96fa7cc26"
+    },
+    {
+      "repo": "littleweb/robot-taxi.news",
+      "url": "https://github.com/littleweb/robot-taxi.news",
+      "homepage": null,
+      "siteName": null,
+      "status": "homepage_503",
+      "readmeSha": "8b905eb856afc396582e189432598e844968973b"
+    }
+  ]
+}

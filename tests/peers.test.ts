@@ -338,7 +338,7 @@ test("所有邻域站点在唯一事实源中标有同系/其他归属，与行�
   assert.equal(same.length + other.length, PEER_SITES.length, "不允许漏标、第三类或隐式同系");
   assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
   assert.ok(same.length > 0 && other.length > 0);
-  assert.equal(PEER_SITES.length, 49, "保留 42 项基线及新增 7 个同系浏览入口");
+  assert.equal(PEER_SITES.length, 51, "保留 49 项基线及第七轮 2 个同系浏览入口");
   assert.equal(PEER_SITES.find(p => p.id === "urhot")?.family, "same",
     "URHOT README explicitly credits adaptation from AIHOT selection pipeline");
   assert.equal(PEER_SITES.find(p => p.id === "fai-lab")?.family, "same",
@@ -380,6 +380,32 @@ test("第六轮同系站只列浏览入口，不因可读或同源而自动抓�
     for (const id of ids) {
       const peer = PEER_SITES.find(p => p.id === id);
       assert.ok(peer, id);
+      assert.equal(peer.family, "same");
+      assert.equal(peer.strategy, "link");
+      assert.equal(peer.enabled, true);
+      assert.equal(peer.feedPath, undefined);
+      assert.ok(!sources.some((s: { id: string }) => s.id === `rss-peer-${id}`));
+      assert.deepEqual(await fetchPeer(peer), { via: "none", items: [], error: null });
+    }
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
+
+test("第七轮静态阅读站只提供入口，RSS 验证记录不自动变成抓取配置", async () => {
+  const urls = new Map([
+    ["math-education-hot", "https://a0910580996-a11y.github.io/math-education-hot/"],
+    ["shendeng-ai", "https://shendeng.news/"],
+  ]);
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const previous = globalThis.fetch;
+  globalThis.fetch = (() => { throw new Error("static browsing entries must not issue requests"); }) as typeof fetch;
+  try {
+    for (const [id, url] of urls) {
+      const peer = PEER_SITES.find(p => p.id === id);
+      assert.ok(peer, id);
+      assert.equal(peer.url, url);
       assert.equal(peer.family, "same");
       assert.equal(peer.strategy, "link");
       assert.equal(peer.enabled, true);

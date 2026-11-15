@@ -188,6 +188,20 @@ export function parseFeed(xml: string): RawPeerItem[] {
 
 const base = (u: string) => u.replace(/\/+$/, "");
 
+/** RSS feeds need not be /feed.xml: only allow a safe absolute path on the peer's own HTTPS host. */
+export function peerFeedUrl(peer: Pick<PeerSite, "url" | "feedPath">): string {
+  if (!peer.feedPath) return `${base(peer.url)}/feed.xml`;
+  if (!/^\/(?!\/)(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+$/.test(peer.feedPath) ||
+      peer.feedPath.split("/").some((segment) => segment === ".." || segment === ".")) {
+    throw new Error("Invalid peer RSS path");
+  }
+  const url = new URL(peer.feedPath, peer.url);
+  if (url.protocol !== "https:" || url.origin !== new URL(peer.url).origin) {
+    throw new Error("Peer feed must remain on the peer's HTTPS host");
+  }
+  return url.toString();
+}
+
 /** 单家站：按 strategy 走三级降级，返回第一个拿到内容的通道。 */
 export async function fetchPeer(peer: PeerSite): Promise<{ via: string; items: RawPeerItem[]; error: string | null }> {
   if (!peer.enabled || peer.strategy === "none") return { via: "none", items: [], error: null };
@@ -204,7 +218,7 @@ export async function fetchPeer(peer: PeerSite): Promise<{ via: string; items: R
       parse: (body) => parseDailyApi(JSON.parse(body)),
     });
   }
-  attempts.push({ via: "rss", url: `${base(peer.url)}/feed.xml`, parse: parseFeed });
+  attempts.push({ via: "rss", url: peerFeedUrl(peer), parse: parseFeed });
 
   const errors: string[] = [];
   for (const attempt of attempts) {

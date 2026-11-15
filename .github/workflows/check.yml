@@ -52,6 +52,8 @@ jobs:
         run: npm run changelog:check
       - name: Child-rights source expansion safety checks (offline)
         run: node --test tests/child-rights-source-coverage.test.mjs
+      - name: Child-charity opportunity candidates safety checks (offline)
+        run: node --test tests/opportunity-source-candidates.test.mjs
       - name: DeepSeek Flash switch utility tests (offline)
         run: python3 -m unittest discover -s tests -p test_switch_deepseek_flash.py
       - name: Charity SQLite read-only preflight tests (synthetic fixtures only)

@@ -25,6 +25,9 @@
 // 轮换（见 packages/backend/src/peers/select.ts 的 rotationOrder）。
 // 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
 /** 同系只用于有明确开源谱系/社区登记证据的站；其他包含独立项目及未核实来源。 */
+// 规则追加（2026-11-16）：内容重叠、同步失败/无公开 RSS/API 不自动降低正式邻域级别；
+// overlapPossible 仅标「可能重合」而非断言具体文章重复；抓取健康单独标注。
+// 付费深度服务、静态演示和单期快照仍可列入候选信息。
 export type PeerFamily = "same" | "other";
 /** 正式信息站 / 实用资源 / 候选信息，与同系/其他谱系正交。 */
 export type PeerTier = "official" | "resource" | "candidate";
@@ -36,6 +39,8 @@ export interface PeerSite {
   family: PeerFamily;
   /** 公开展示层：候选保留原站和审计记录，但不作为正式实时资讯推荐。 */
   tier: PeerTier;
+  /** 综合聚合可能与其他邻域报道同一事件，仅作阅读提示，未量化重复率。 */
+  overlapPossible?: boolean;
   /** 特定站的非日报更新节奏；没有填写时正式新闻站按 7 天时效核查。 */
   cadence?: "weekly";
   /** 站点首页；条目链接一律用条目自己的 URL，不用这个拼。 */
@@ -138,7 +143,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实行业日报和招投标雷达，/feed.xml 为 404，仅浏览。
     id: "sanyu-insights",
     family: "other",
-    tier: "candidate",
+    tier: "official",
     name: "三禹智能 · 行业情报",
     url: "https://www.sanyusmart.com/insights/",
     note: "智慧水利、行业 AI、招投标商机",
@@ -216,7 +221,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实公开产品/融资分析页，但 /feed.xml 为 404，仅浏览。
     id: "xocto",
     family: "other",
-    tier: "candidate",
+    tier: "resource",
     name: "x-octo · 机会库",
     url: "https://xocto.vercel.app/",
     note: "AI 产品研究、融资与创业机会（公开资料库）",
@@ -330,6 +335,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "dayacre",
     family: "same",
     tier: "official",
+    overlapPossible: true,
     name: "日耕 AI 熱點",
     url: "https://aihot.dayacre.com",
     note: "AI 动态的繁中版，台湾读者的用语与视角",
@@ -343,6 +349,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "foxnan",
     family: "same",
     tier: "official",
+    overlapPossible: true,
     name: "AI快讯",
     url: "https://hot.foxnan.com",
     note: "AI 新闻与每日动态",
@@ -356,6 +363,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "xabcnews",
     family: "same",
     tier: "official",
+    overlapPossible: true,
     name: "XABC News",
     url: "https://xabcnews.com",
     note: "AI、开发者与前沿科技的全网热点",
@@ -447,7 +455,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开材料/化学研究条目可读；/ai4scihot/feed.xml 返回 403。
     id: "ai4scihot",
     family: "same",
-    tier: "candidate",
+    tier: "official",
     name: "AI4SciHOT",
     url: "https://ai4scihot.8-220-189-127.sslip.io/ai4scihot",
     note: "AI for Science：材料、化学、物理与工业仿真",
@@ -461,7 +469,7 @@ export const PEER_SITES: PeerSite[] = [
     // 这是 UU AI Hub 专题，不是独立运行的「发射窗口」AIHOT 服务。
     id: "horizon-uu",
     family: "other",
-    tier: "candidate",
+    tier: "official",
     name: "发射窗口",
     url: "https://www.uuaihub.com/horizon",
     note: "商业航天、AI 芯片与机器人专题入口",
@@ -487,7 +495,8 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公共站可浏览，/feed.xml 与 /rss.xml 均为 404。
     id: "newsiq",
     family: "other",
-    tier: "candidate",
+    tier: "official",
+    overlapPossible: true,
     name: "NewsIQ · 讯析",
     url: "https://newsiq.xyz/",
     note: "新闻事件聚合与跨来源分析",
@@ -501,6 +510,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "ai-pulse-lab",
     family: "other",
     tier: "official",
+    overlapPossible: true,
     name: "AI Pulse",
     url: "https://ai-pulse-lab.com/",
     note: "多源 AI 信号、研究分析与知识检索",
@@ -767,6 +777,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "shendeng-ai",
     family: "same",
     tier: "official",
+    overlapPossible: true,
     name: "神灯AI热点",
     url: "https://shendeng.news/",
     note: "AI 综合动态与实用机会，本地采编后发布的静态阅读站",

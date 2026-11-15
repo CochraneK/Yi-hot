@@ -1,6 +1,6 @@
 // Names, dates and grouping for daily, weekly and monthly reports.
 import type { ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
-import { beijingWeekday } from "../../lib/format.ts";
+import { beijingDate, beijingWeekday } from "../../lib/format.ts";
 
 export const KINDS: ReportKind[] = ["weekly", "monthly"];
 export const KIND_PATH: Record<ReportKind, string> = { daily: "/daily", weekly: "/weekly", monthly: "/monthly" };
@@ -47,9 +47,11 @@ export function shortDay(iso: string): string {
   return `${pad(d.getUTCMonth() + 1)}.${pad(d.getUTCDate())}`;
 }
 
-/** Month-day label of a daily key: "9月26日". */
-export function dayLabel(key: string): string {
-  return `${Number(key.slice(5, 7))}月${Number(key.slice(8, 10))}日`;
+/** "9月26日" of a report key; a day of another year than `today` carries its year. */
+export function dayLabel(key: string, today: string = beijingDate(Date.now())): string {
+  const y = key.slice(0, 4);
+  const base = `${Number(key.slice(5, 7))}月${Number(key.slice(8, 10))}日`;
+  return y === today.slice(0, 4) ? base : `${y}年${base}`;
 }
 
 
@@ -102,7 +104,7 @@ export function archiveMark(kind: ReportKind, key: string): { big: string; small
 
 /** Short chip label for the phone switcher: "今天", "9月26日", "9月第2周", "8 月". */
 export function chipLabel(kind: ReportKind, key: string, index: ReportNavigationEntry[], today: string): string {
-  if (kind === "daily") return key === today ? "今天" : dayLabel(key);
+  if (kind === "daily") return key === today ? "今天" : dayLabel(key, today);
   if (kind === "monthly") return `${Number(key.slice(5, 7))} 月`;
   const group = archiveGroups("weekly", index).find((g) => g.entries.some((e) => e.key === key));
   const entry = group?.entries.find((e) => e.key === key);
@@ -145,9 +147,12 @@ export function metricItems(metrics: Record<string, number>): Array<{ value: num
   return METRICS.filter(([k]) => typeof metrics[k] === "number" && (k !== "modelsReleased" || metrics[k]! > 0)).map(([k, unit]) => ({ value: metrics[k]!, unit }));
 }
 
-/** "前一日 · 9月25日", "上一期 · 第 37 周", "下一期 · 7 月". */
-export function neighbourLabel(kind: ReportKind, key: string, direction: "prev" | "next"): string {
-  if (kind === "daily") return `${direction === "prev" ? "前一日" : "后一日"} · ${dayLabel(key)}`;
+/**
+ * "前一日 · 9月25日", "上一期 · 第 37 周", "下一期 · 7 月". A day of another year than `today` carries its year,
+ * so "前一日 · 2026年12月31日" is not read as this year's when the reader stands in January.
+ */
+export function neighbourLabel(kind: ReportKind, key: string, direction: "prev" | "next", today: string = beijingDate(Date.now())): string {
+  if (kind === "daily") return `${direction === "prev" ? "前一日" : "后一日"} · ${dayLabel(key, today)}`;
   const which = direction === "prev" ? "上一期" : "下一期";
   return kind === "weekly" ? `${which} · 第 ${Number(key.slice(6))} 周` : `${which} · ${Number(key.slice(5, 7))} 月`;
 }

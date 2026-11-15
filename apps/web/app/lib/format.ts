@@ -2,14 +2,23 @@ import { beijingDate, beijingTime, beijingWeekday } from "@aihot/contracts/time"
 
 export { beijingDate, beijingTime, beijingWeekday };
 
-export function dayLabel(date: string, today: string): string {
+/**
+ * "9月28日" of a calendar day; a day of another year than `today` carries its year ("2019年2月19日").
+ * The site keeps public items from 2018 on, so a month-day alone would be read as this year's.
+ */
+export function monthDay(date: string, today: string = beijingDate(Date.now())): string {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  const base = `${m}月${d}日`;
+  return y === Number(today.slice(0, 4)) ? base : `${y}年${base}`;
+}
+
+export function dayLabel(date: string, today: string): string {
+  const [, m, d] = date.split("-").map(Number) as [number, number, number];
   const base = `${m}月${d}日`;
   if (date === today) return `今天 · ${base}`;
   const diff = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / 86400000);
   if (diff === 1) return `昨天 · ${base}`;
-  if (y !== Number(today.slice(0, 4))) return `${y}年${base}`;
-  return base;
+  return monthDay(date, today);
 }
 
 export function relativeTime(iso: string, now = Date.now()): string {
@@ -89,10 +98,9 @@ export function monthDotDay(iso: string): string {
   return `${m}.${d}`;
 }
 
-/** "9月24日 10:51" (Beijing), for lists that span days. */
-export function monthDayTime(iso: string): string {
-  const [, m, d] = beijingDate(iso).split("-").map(Number) as [number, number, number];
-  return `${m}月${d}日 ${beijingTime(iso)}`;
+/** "9月24日 10:51" (Beijing), for lists that span days. A day of another year carries its year. */
+export function monthDayTime(iso: string, today: string = beijingDate(Date.now())): string {
+  return `${monthDay(beijingDate(iso), today)} ${beijingTime(iso)}`;
 }
 
 /** "X：Ethan Mollick (@emollick)" → "Ethan Mollick"; other sources keep their name. */

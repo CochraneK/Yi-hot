@@ -18,7 +18,7 @@
 
 公共读取只通过 `packages/backend/src/publication/geo.ts`。同时要求：
 1. `geo_candidates.review_status='verified'` 且 `role='event'`，`place_id` 精确匹配。
-2. `publications.analysis_id=geo_candidates.analysis_id` 且 `publications.revision=analyses.input_revision`，新闻的任何重分析或更新不能沿用旧审核。
+2. `publications.analysis_id=geo_candidates.analysis_id` 且 `articles.revision=analyses.input_revision`，新闻原文改版不能沿用旧审核。注意 `publications.revision` 是公开投影自己的版本计数，不等于文章原文版本。
 3. `publications.visibility='public'`、`eligible=true`，精选的 `visible_after` 发布时间门槛通过。
 4. 不返回待审核的模型原文、审核员身份或内部审核记录；不泄漏被撤回、尚未公开和非编辑池材料。
 

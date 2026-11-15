@@ -12,6 +12,7 @@ import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/g
 import { loadTopicTags } from "@aihot/backend/publication/topics";
 import { loadHotStrip } from "@aihot/backend/events/hot-read";
 import { loadRecords } from "@aihot/backend/records/read";
+import { loadPeerDirectory } from "@aihot/backend/peers/directory";
 import { loadChangelog, siteMeta } from "@aihot/backend/site/meta";
 import { loadContact, loadMakerAvatar } from "@aihot/backend/site/contact";
 import { loadSiteStats } from "@aihot/backend/site/stats";
@@ -29,6 +30,7 @@ import { looseQuery, sendJsonWithEtag, sendProblem } from "../http/respond.ts";
 type Handler = (req: FastifyRequest, reply: FastifyReply) => Promise<unknown>;
 
 const codexVersion = cached(() => codexResetVersion(), { freshMs: 5_000, maxStaleMs: 5_000 });
+const peerDirectory = cached(() => loadPeerDirectory(), { freshMs: 60_000, maxStaleMs: 300_000 });
 
 class BadRequest extends Error {}
 
@@ -202,6 +204,14 @@ export function registerSite(app: FastifyInstance) {
       });
       const { generatedAt: _g, ...content } = data;
       return sendJsonWithEtag(req, reply, data, { etagPrefix: "records", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
+    }));
+  }
+
+  // 「邻域」友情页：同框架姊妹站的目录，含各自最近一条。上游每小时刷新，缓存五分钟。
+  if (FEATURES.peerDirectory) {
+    app.get("/api/site/peers", siteHandler(async (req, reply) => {
+      const data = await peerDirectory.get();
+      return sendJsonWithEtag(req, reply, data, { etagPrefix: "peers", cacheControl: "public, max-age=300, s-maxage=300" });
     }));
   }
 

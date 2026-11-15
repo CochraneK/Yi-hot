@@ -147,6 +147,59 @@ function Story({ c, dated, className = "" }: { c: ReportCitation; dated: boolean
 }
 
 /**
+ * 「邻域」：姊妹站自己的条目。
+ *
+ * 和上面的版面有三处刻意不同：标题指向原站（本站没有这条内容，不套 /items 链接）、署名先给对端站名、
+ * 正文用对端写好的摘要与入选理由（我们不加一句评语）。排版沿用同一条发丝线，读起来仍是同一份报纸。
+ */
+function PeerPage({ block, no }: { block: NonNullable<ReportDetail["peers"]>; no: number }) {
+  return (
+    <SectionPage id="s-peers" no={no} label={block.label}>
+      {block.note && (
+        <p className="border-b border-line py-5 text-[15px] leading-[1.9] text-ink-2 @[560px]:text-justify">
+          <span className="mr-2 font-semibold text-accent">本版说明</span>
+          {block.note}
+        </p>
+      )}
+      <Rows items={block.items}>
+        {(p, cell) => (
+          <article key={p.key} className={`min-w-0 py-6 ${cell}`}>
+            <div className="flex items-center gap-2 text-[12px] text-ink-3">
+              <a href={p.peerUrl} target="_blank" rel="noopener noreferrer" className={`${LINK} min-w-0 text-ink-3`}>
+                <span className="truncate">{p.peerName}</span>
+                <IconArrowUpRight size={12} />
+              </a>
+              {p.category && <span className="truncate text-ink-4">· {p.category}</span>}
+              {p.publishedAt && <span className="num ml-auto shrink-0 text-ink-4">{shortDay(p.publishedAt)}</span>}
+            </div>
+            <h3 className="mt-2.5 text-[18px] font-bold leading-[1.5] tracking-[-0.01em] text-ink [overflow-wrap:anywhere] [text-wrap:pretty]">
+              <a href={p.url} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-accent">
+                {p.title}
+              </a>
+            </h3>
+            {p.summary && <p className="mt-2 line-clamp-3 text-[14.5px] leading-[1.8] text-ink-2 [overflow-wrap:anywhere]">{p.summary}</p>}
+            {p.reason && (
+              <p className="mt-2 line-clamp-2 text-[13px] leading-[1.7] text-ink-4 [overflow-wrap:anywhere]">
+                <span className="font-medium text-ink-3">为什么值得看　</span>
+                {p.reason}
+              </p>
+            )}
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 text-[12.5px] text-ink-3">
+              {p.sourceName && <span className="min-w-0 truncate">{shortSourceName(p.sourceName)}</span>}
+              {p.originalUrl && (
+                <a href={p.originalUrl} target="_blank" rel="noopener noreferrer" className={`${LINK} text-[12.5px] text-ink-3`}>
+                  原文 <IconArrowUpRight size={12} />
+                </a>
+              )}
+            </div>
+          </article>
+        )}
+      </Rows>
+    </SectionPage>
+  );
+}
+
+/**
  * Rows of two once the page is wide enough: both cells as tall as the taller, a hairline between them
  * and one rule under the row across the whole page, even under a single cell.
  */
@@ -232,7 +285,11 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const highlights = report.highlights.filter((h) => !leadStory || keyOf(h) !== keyOf(leadStory)).slice(0, 3);
   const inPage = new Set(pages.flatMap((p) => p.items.map((c) => c.itemId)).filter(Boolean));
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
-  const index = [...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 件` })), ...(report.flashes.length > 0 ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : [])];
+  const index = [
+    ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 件` })),
+    ...(report.flashes.length > 0 ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
+    ...(report.peers?.items.length ? [{ id: "s-peers", label: report.peers.label, n: `${report.peers.items.length} 条` }] : []),
+  ];
 
   return (
     <section aria-label="头版" className="grid @[880px]:grid-cols-[minmax(0,1fr)_300px] @[1040px]:grid-cols-[minmax(0,1fr)_340px]">
@@ -383,7 +440,8 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
     <article className="@container">
       <Masthead report={report} index={index} />
       {count === 0 && report.flashes.length === 0 ? (
-        <p className="py-16 text-center text-[14px] text-ink-4">本期没有入选内容。</p>
+        // 只有邻域、没有本站条目时不算「空刊」：邻域本身也是内容。
+        report.peers?.items.length ? null : <p className="py-16 text-center text-[14px] text-ink-4">本期没有入选内容。</p>
       ) : (
         <FrontPage report={report} pages={pages} leadStory={leadStory} count={count} />
       )}
@@ -420,6 +478,10 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
             ))}
           </ul>
         </SectionPage>
+      )}
+
+      {report.peers && report.peers.items.length > 0 && (
+        <PeerPage block={report.peers} no={pages.length + (report.flashes.length > 0 ? 2 : 1)} />
       )}
 
       <Neighbours report={report} index={index} />

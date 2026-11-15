@@ -2,7 +2,7 @@
 // but it is served from the same public read layer as v1, RSS and MCP.
 import type { CategoryKey, ChannelKey } from "./taxonomy.ts";
 
-export type SourceKind = "rss" | "web_list" | "json_list" | "x_search" | "mp_account" | "external";
+export type SourceKind = "rss" | "web_list" | "json_list" | "x_search" | "search" | "mp_account" | "external" | "peer";
 
 export interface SourceRef {
   id: string;
@@ -333,6 +333,33 @@ export interface ReportCitation {
   available: boolean;
 }
 
+/** 「邻域」里的一条：姊妹站自己的条目，链接回原站，我们只引用标题与摘要。 */
+export interface ReportPeerItem {
+  /** peerId:itemId，跨期去重用的稳定键。 */
+  key: string;
+  peerId: string;
+  peerName: string;
+  peerUrl: string;
+  title: string;
+  summary: string;
+  /** 对端写的入选理由，可能没有。 */
+  reason: string | null;
+  category: string | null;
+  /** 对端评分。只在同一家站内部可比，不要跨站比较。 */
+  score: number | null;
+  publishedAt: string | null;
+  /** 对端站内的条目页。 */
+  url: string;
+  sourceName: string | null;
+  originalUrl: string | null;
+}
+
+export interface ReportPeerBlock {
+  label: string;
+  note: string | null;
+  items: ReportPeerItem[];
+}
+
 export interface ReportDetail {
   kind: ReportKind;
   key: string;
@@ -349,6 +376,8 @@ export interface ReportDetail {
   /** Reading order: every section item once, labelled with its section. */
   stories: Array<ReportCitation & { label: string }>;
   flashes: ReportCitation[];
+  /** 邻域：姊妹站入选条目的引用。不是本报编辑判断，缺失时为 null。 */
+  peers: ReportPeerBlock | null;
   /**
    * The front page's picture: from the lead item (a daily's lead, a weekly or monthly's first highlight),
    * else from another public report of that event. Captioned with the story when it is not the lead's own.

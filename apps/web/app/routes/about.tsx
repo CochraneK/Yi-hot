@@ -60,6 +60,8 @@ const KIND_ORDER: Array<[string, string]> = [
   ["web_list", "网页"],
   ["mp_account", "公众号"],
   ["json_list", "接口"],
+  ["peer", "邻域"],
+  ["search", "搜索"],
 ];
 
 /**

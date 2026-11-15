@@ -5,6 +5,8 @@ import { z } from "zod";
 import { SITE } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import { CATEGORIES } from "@aihot/industry/taxonomy";
+import { PEER_SECTION } from "@aihot/industry/peers";
+import { peerDigest } from "../peers/digest.ts";
 import { promptText, promptVersion } from "../editorial/prompts.ts";
 import { modelFor } from "../editorial/models.ts";
 import { addDays, beijingDate, beijingMidnight, isoWeekLabel, isoWeekRange } from "@aihot/contracts/time";
@@ -189,12 +191,15 @@ export async function composeDaily(date: string, reason = "scheduled", opts: { a
   const ordered = sections.flatMap((s) => s.items).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   const model = await modelFor("report");
   const lead = ordered.length ? await writeLead("daily", date, ordered, model) : null;
+  // 「邻域」：姊妹站已经筛好的条目，读回来引用，没有模型调用。取不到就不出现，不影响本期。
+  const peers = await peerDigest("daily", date, start, end, new Set(ordered.map((e) => e.sourceUrl)));
   const content = {
     date,
     lead: lead?.lead ?? null,
     highlights: lead?.highlights ?? [],
     sections,
     flashes,
+    ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
     metrics: {
       totalEvents: ordered.length,
       sourcesCount: new Set(ordered.map((e) => e.sourceId)).size,
@@ -331,6 +336,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
       }
     }
   }
+  const peers = await peerDigest(kind, key, start, end, new Set(top.map((e) => e.sourceUrl)));
   const content = {
     kind,
     title: `公益总报 · ${kind === "weekly" ? "周报" : "月报"} · ${key}`,
@@ -340,6 +346,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     ...(headline ? { headline } : {}),
     overview,
     themes,
+    ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
     storyOrder: top.map((e) => e.itemId),
     metrics: {
       totalStories: new Set(themes.flatMap((t) => t.storyRefs.map((e) => e.itemId))).size,

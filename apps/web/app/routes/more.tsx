@@ -6,7 +6,7 @@ import type { loader as rootLoader } from "../root";
 import { useChangelogDot } from "../components/shell/Sidebar";
 import { pageMeta } from "../lib/seo";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
-import { IconBookmark, IconChart, IconChevronRight, IconHeart, IconHistory, IconMail, IconMessage, IconMoon, IconPlug, IconShield } from "../components/icons";
+import { IconBookmark, IconChart, IconChevronRight, IconHeart, IconHistory, IconMail, IconMessage, IconMoon, IconPlug, IconShield, IconUsers } from "../components/icons";
 
 /** Shared caches may keep this page for five minutes. */
 export function headers() {
@@ -22,11 +22,14 @@ type Row = { to: string; label: string; icon: ReactNode };
 /** 单一列表，顺序与桌面侧栏「更多」分组（components/shell/nav.ts）保持一致：
  *  关于 / 更新 / 反馈 / 监管(监察) / 收藏 / Agent。
  *  原来按「内容 / 偏好 / 关于」分三组，桌面两列时读起来是列优先，顺序会被打乱；这里并成一条。
- *  可选的行业模块（模型榜、Tibo 重置监控）只在对应开关打开时追加在 Agent 之后，不会插进这六项之间。 */
+ *  可选的行业模块（模型榜、Tibo 重置监控）只在对应开关打开时追加在 Agent 之后，不会插进这六项之间。
+ *  例外：桌面侧栏把「邻域」放在「内容」分组，但手机底栏只有五个位置，不放它就没有入口，
+ *  所以在这一页单独列一项（位置在反馈之后，与「更多」里其余入口并列）。 */
 const ROWS: Row[] = [
   { to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={18} /> },
   { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
   { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
+  ...(FEATURES.peerDirectory ? [{ to: "/peers", label: "邻域", icon: <IconUsers size={18} /> }] : []),
   ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
   { to: "/starred", label: "收藏", icon: <IconBookmark size={18} /> },
   { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },

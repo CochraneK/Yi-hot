@@ -1,6 +1,6 @@
 // Reports through the public read layer: website DTOs and the v1 shapes. Only real reports are
 // listed; a missing date is a 404, never another day. Withdrawn citations are marked, not shown.
-import type { ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
+import type { ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind, ReportPeerBlock } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { cached, type Cached } from "../lib/cache.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
@@ -229,6 +229,29 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
   const cover = picture && leadItem ? { ...picture, caption: kind === "daily" ? null : leadItem.title } : null;
   const headline = kind === "daily" ? null : periodicHeadline(c);
   const title = kind === "daily" ? `${withSubject("日报")} · ${key}` : String(c.title ?? (kind === "weekly" ? `${SITE.name} 周报 · ${key}` : `${SITE.name} 月报 · ${key}`));
+  // 「邻域」是存进 content 的引用快照：对端条目即使后来被删，本期报告也照原样留档，所以这里不查库。
+  const peerItems: any[] = Array.isArray(c.peers?.items) ? c.peers.items : [];
+  const peers: ReportPeerBlock | null = peerItems.length
+    ? {
+        label: String(c.peers?.label ?? "邻域"),
+        note: c.peers?.note ? String(c.peers.note) : null,
+        items: peerItems.map((i) => ({
+          key: String(i.key ?? ""),
+          peerId: String(i.peerId ?? ""),
+          peerName: String(i.peerName ?? ""),
+          peerUrl: String(i.peerUrl ?? ""),
+          title: String(i.title ?? ""),
+          summary: String(i.summary ?? ""),
+          reason: i.reason ? String(i.reason) : null,
+          category: i.category ? String(i.category) : null,
+          score: Number.isFinite(Number(i.score)) && i.score !== null ? Number(i.score) : null,
+          publishedAt: i.publishedAt ? String(i.publishedAt) : null,
+          url: String(i.url ?? ""),
+          sourceName: i.sourceName ? String(i.sourceName) : null,
+          originalUrl: i.originalUrl ? String(i.originalUrl) : null,
+        })),
+      }
+    : null;
   return {
     kind,
     key,
@@ -243,6 +266,7 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
     sections,
     stories,
     flashes: (c.flashes ?? []).map(cite),
+    peers,
     cover,
     metrics: c.metrics ?? {},
     readingMinutes: readingMinutes(text),
@@ -348,6 +372,22 @@ export async function v1Daily(date: string | "latest") {
         publishedAt: new Date(i.publishedAt ?? r.generated_at).toISOString(),
         attribution: attribution(i.itemId ? itemUrl(i.itemId) : url),
       })),
+      // 邻域的条目不是本站内容：没有站内 itemId，link 直接指向原站，署名给对端。
+      peers: Array.isArray(c.peers?.items) && c.peers.items.length
+        ? {
+            label: String(c.peers.label ?? "邻域"),
+            items: c.peers.items.map((i: any) => ({
+              title: String(i.title ?? ""),
+              summary: String(i.summary ?? ""),
+              reason: i.reason ? String(i.reason) : null,
+              score: i.score ?? null,
+              publishedAt: i.publishedAt ? String(i.publishedAt) : null,
+              source: { name: String(i.sourceName ?? i.peerName ?? "") },
+              links: { site: String(i.url ?? ""), original: i.originalUrl ? String(i.originalUrl) : null },
+              attribution: { name: String(i.peerName ?? ""), url: String(i.peerUrl ?? "") },
+            })),
+          }
+        : null,
     },
   };
 }

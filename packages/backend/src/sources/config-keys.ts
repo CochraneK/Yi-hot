@@ -28,9 +28,18 @@ const KEYS: Record<SourceRow["kind"], string[]> = {
   // 唯一有效的减费旋钮是隔 N 天跑一次（见 sources/search.ts 的轮转分桶）。
   // skipPrefilter：该源的查询词本身就是筛选器（指名的机构/省份），实测几百条从不 BLOCK，
   // 直接跳过预筛这一步（见 editorial/analyze.ts）。只给实测通关率 ≥97% 的源开。
-  search: [...COLLECTED, "queries", "count", "lookbackDays", "minAuthority", "minRerank", "needContent", "oriQuestion", "everyNDays", "skipPrefilter"],
+  // engine：deepseek（默认）| exa。exa 走 Exa 的免费额度，结果带完整时间戳、没有 authority；
+  // 它的相关度 score 是 0–1，所以单独用 minScore 过滤，不要复用 minRerank 的 0–3 尺度。
+  search: [
+    ...COLLECTED, "queries", "count", "lookbackDays", "minAuthority", "minRerank", "needContent", "oriQuestion", "everyNDays", "skipPrefilter",
+    "engine", "exaType", "exaCategory", "exaHighlights", "minScore",
+  ],
   // X accounts are mostly read in shards, which apply only these.
   x_search: ["_aihot", "ingestNoiseFilter", "itemUrlPrefixRewrite", "query", "searchType"],
+  // 姊妹站：条目来自「邻域」的 peer_items，不产生出网请求。窗口决定回看多少天存量；
+  // 是否属于本行业由 ingestNoiseFilter.requireMarkers 决定，本 kind 不实现站点解析类配置。
+  // url 只用来取站点图标（见 icons.ts 的 homeOf），不参与抓取。
+  peer: [...COLLECTED, "peerId", "windowDays", "url"],
   mp_account: ["wxid", "ghid", "nickname"],
   external: [],
 };
@@ -55,6 +64,9 @@ const VALUES: Record<string, string[]> = {
   adapter: ["mimo_home", "everyinfra_xhs", "everyinfra"],
   parseMode: ["html", "markdown", "docusaurus_changelog"],
   render: ["browser"],
+  // 拼错的引擎名会让源静默退回 deepseek（继续花 DeepSeek 的钱），所以只认这两个值。
+  engine: ["deepseek", "exa"],
+  exaType: ["auto", "lite", "fast", "instant", "deep"],
 };
 
 /** The config entries a source of this kind would ignore or cannot run, e.g. ["adapter=site_cards", "detail.titleFoo"]. */

@@ -1,14 +1,20 @@
-// 关键词搜索型信源：用 DeepSeek 网页搜索（/v1/tools/search）按查询词捞回结果列表。
+// 关键词搜索型信源：按查询词捞回结果列表，不依赖某个站点的栏目结构。
 //
-// 与列表页/热榜的根本区别：它不依赖某个站点的栏目结构，也不依赖热榜编辑器"恰好选中"了一条对口的
-// 新闻——查询词直接决定覆盖面。实测（2026-10-21，8 组儿童权益查询）149 条去重结果里 148 条是现有
-// 118 个源结构上拿不到的（民政部通知、检察院未保案例、法院判决、国务院妇儿工委办），authority≥3
-// 占 91%。代价是每条带 signed 的 date 只到日，所以本采集器出的发布时间一律按日级精度入库。
+// 与列表页/热榜的根本区别：查询词直接决定覆盖面。实测（2026-10-21，8 组儿童权益查询）149 条去重
+// 结果里 148 条是现有 118 个源结构上拿不到的（民政部通知、检察院未保案例、法院判决、国务院妇儿
+// 工委办），authority≥3 占 91%。
 //
-// 计费按「成功请求」而非结果条数：一次查询 ¥0.005，与 count=20 还是 50 无关。因此同一查询在同一天
-// 只真正请求一次（window 是幂等键的一部分），把 interval_minutes 设得比 24 小时短也不会多花钱。
+// **两条引擎**（config.engine，默认 deepseek）：
+//   - deepseek：DeepSeek /v1/tools/search，¥0.005/次，带 authority/rerank_score，date 只到日，
+//     所以按日级精度入库。
+//   - exa：Exa /search，Lite 约 $0.004/次（每月赠 $10 额度），publishedDate 是完整时间戳，
+//     没有 authority 概念。见 providers/exa.ts 的注释。
+//
+// 计费按「成功请求」而非结果条数。同一查询在同一天只真正请求一次（window 是幂等键的一部分），
+// 把 interval_minutes 设得比 24 小时短也不会多花钱。
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
 import { deepseekSearch, type SearchHit } from "../providers/deepseek-tools.ts";
+import { exaSearch, type ExaHit } from "../providers/exa.ts";
 import { BudgetExceededError } from "../providers/receipts.ts";
 import { dayInOffset } from "./web-list.ts";
 
@@ -76,6 +82,65 @@ function toCandidate(hit: SearchHit, receiptId: number, query: string): Candidat
   };
 }
 
+/** Exa 的 publishedDate 是完整 ISO 时间戳；缺失或不可解析时留 null，不猜。 */
+export function instantOf(value: string | null): Date | null {
+  if (!value) return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms) : null;
+}
+
+/**
+ * Exa 结果 → Candidate。与 toCandidate 的差别：
+ *   - 发布时间保留到时刻（不写 publishedAtPrecision，"datetime" 是默认精度）；
+ *   - 没有 authority 字段，raw 里只留 score 与站点名。
+ */
+function exaCandidate(hit: ExaHit, receiptId: number, query: string): Candidate {
+  const publishedAt = instantOf(hit.date);
+  const excerpt = (hit.snippet ?? hit.summary ?? "").slice(0, 2000) || null;
+  const body = hit.content ? hit.content.slice(0, 50_000) : null;
+  return {
+    url: hit.url,
+    title: hit.title,
+    author: hit.siteName,
+    publishedAt,
+    query,
+    excerpt,
+    bodyText: body,
+    bodyStatus: body ? "ok" : "pending",
+    raw: {
+      exa: {
+        score: hit.score,
+        siteName: hit.siteName,
+        date: hit.date,
+        receiptId,
+      },
+    },
+  };
+}
+
+/**
+ * 从查询词里取出 `after:` / `before:` 标记。DeepSeek 把时间窗拼进 query 字符串，Exa 只能用
+ * startPublishedDate / endPublishedDate 参数——同一个源换引擎时，写死的 after: 不该变成 Exa 的
+ * 关键词。返回值里 remaining 是剥掉标记后的查询，两个日期缺失为 undefined。
+ */
+export function splitDateMarkers(query: string, fallbackStart: string): { q: string; start?: string; end?: string } {
+  let q = query;
+  let start: string | undefined;
+  let end: string | undefined;
+  const after = /\s*after:(\d{4}-\d{2}-\d{2})/i.exec(q);
+  if (after) {
+    start = `${after[1]}T00:00:00.000Z`;
+    q = q.replace(after[0], "");
+  }
+  const before = /\s*before:(\d{4}-\d{2}-\d{2})/i.exec(q);
+  if (before) {
+    end = `${before[1]}T00:00:00.000Z`;
+    q = q.replace(before[0], "");
+  }
+  q = q.replace(/\s+/g, " ").trim();
+  return { q, start: start ?? `${fallbackStart}T00:00:00.000Z`, end };
+}
+
 /** 稳定的小哈希：只用来把一个源固定分到「隔 N 天里的第几天」，不参与任何内容判断。 */
 function hash32(s: string): number {
   let h = 2166136261;
@@ -102,6 +167,14 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
   const minRerank = Number(source.config.minRerank ?? 0);
   const needContent = source.config.needContent === true;
   const oriQuestion = typeof source.config.oriQuestion === "string" ? source.config.oriQuestion : undefined;
+  // 引擎：默认 deepseek（存量源一行不用改）。exa 只在显式配置后启用。
+  const engine = source.config.engine === "exa" ? ("exa" as const) : ("deepseek" as const);
+  const exaType = typeof source.config.exaType === "string" ? source.config.exaType : "auto";
+  const exaCategory = typeof source.config.exaCategory === "string" ? source.config.exaCategory : undefined;
+  const exaHighlights = source.config.exaHighlights === true;
+  // Exa 的 score 是 0–1 相关度，与 DeepSeek 的 rerank_score（0–3）不是同一把尺子，
+  // 所以给它单独一个阈值（默认 0 = 不过滤），不要复用 minRerank。
+  const minScore = Number(source.config.minScore ?? 0);
 
   const window = bjDay();
   const since = minusDays(window, lookbackDays);
@@ -127,28 +200,59 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
   let budgetError: BudgetExceededError | null = null;
 
   for (const q of queries) {
-    const query = /(^|\s)(after|before):/i.test(q) ? q : `${q} after:${since}`;
     const stat = { q: q.slice(0, 200), hits: 0, kept: 0, fresh: 0 };
     try {
-      const res = await deepseekSearch({ query, count, needContent, oriQuestion, window: `${window}:${since}`, subject: source.id });
-      rawHits += res.hits.length;
-      stat.hits = res.hits.length;
-      for (const hit of res.hits) {
-        // authority / rerank 缺失或 -1（未知）时不据此丢弃：字段没给不等于结果不对口，
-        // 对口与否交给后面的评分步骤判断。
-        if (hit.authority !== null && hit.authority >= 0 && hit.authority < minAuthority) {
-          droppedByAuthority += 1;
-          continue;
+      if (engine === "exa") {
+        // Exa 不认 after:/before: 标记，转成 startPublishedDate / endPublishedDate 参数。
+        const { q: plain, start, end } = splitDateMarkers(q, since);
+        const res = await exaSearch({
+          query: plain,
+          count,
+          type: exaType,
+          category: exaCategory,
+          startPublishedDate: start,
+          endPublishedDate: end,
+          needContent,
+          highlights: exaHighlights,
+          window: `${window}:${since}`,
+          subject: source.id,
+        });
+        rawHits += res.hits.length;
+        stat.hits = res.hits.length;
+        for (const hit of res.hits) {
+          // Exa 没有 authority 字段，minAuthority 对它不生效；只有 score 低于 minScore 才丢。
+          if (hit.score !== null && hit.score < minScore) {
+            droppedByRerank += 1;
+            continue;
+          }
+          if (seen.has(hit.url)) continue;
+          seen.add(hit.url);
+          stat.kept += 1;
+          stat.fresh += 1;
+          candidates.push(exaCandidate(hit, res.receiptId, stat.q));
         }
-        if (hit.rerankScore !== null && hit.rerankScore < minRerank) {
-          droppedByRerank += 1;
-          continue;
+      } else {
+        const query = /(^|\s)(after|before):/i.test(q) ? q : `${q} after:${since}`;
+        const res = await deepseekSearch({ query, count, needContent, oriQuestion, window: `${window}:${since}`, subject: source.id });
+        rawHits += res.hits.length;
+        stat.hits = res.hits.length;
+        for (const hit of res.hits) {
+          // authority / rerank 缺失或 -1（未知）时不据此丢弃：字段没给不等于结果不对口，
+          // 对口与否交给后面的评分步骤判断。
+          if (hit.authority !== null && hit.authority >= 0 && hit.authority < minAuthority) {
+            droppedByAuthority += 1;
+            continue;
+          }
+          if (hit.rerankScore !== null && hit.rerankScore < minRerank) {
+            droppedByRerank += 1;
+            continue;
+          }
+          if (seen.has(hit.url)) continue;
+          seen.add(hit.url);
+          stat.kept += 1;
+          stat.fresh += 1;
+          candidates.push(toCandidate(hit, res.receiptId, stat.q));
         }
-        if (seen.has(hit.url)) continue;
-        seen.add(hit.url);
-        stat.kept += 1;
-        stat.fresh += 1;
-        candidates.push(toCandidate(hit, res.receiptId, stat.q));
       }
     } catch (error) {
       // 预算耗尽不是「这个源坏了」：已拿到的结果照样入库，剩下的查询等配额恢复。
@@ -170,6 +274,7 @@ export async function fetchSearch(source: SourceRow): Promise<SearchRead> {
   return {
     candidates,
     detail: {
+      engine,
       queries: queries.length,
       rawHits,
       droppedByAuthority,

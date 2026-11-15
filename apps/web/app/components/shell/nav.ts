@@ -3,7 +3,7 @@ import { withSubject } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import type { ReactNode } from "react";
 import {
-  IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMenu, IconMessage, IconPlug, IconShield,
+  IconBolt, IconBookmark, IconChart, IconDoc, IconFlame, IconGrid, IconHeart, IconHistory, IconList, IconMenu, IconMessage, IconPlug, IconShield, IconUsers,
 } from "../icons";
 
 export interface NavItem {
@@ -25,6 +25,7 @@ export const SIDEBAR: Array<{ title: string; items: NavItem[] }> = [
       { to: "/all", label: "动态", icon: IconList },
       { to: "/hot", label: "热点", icon: IconFlame },
       { to: "/topics", label: "主题", icon: IconGrid },
+      ...(FEATURES.peerDirectory ? [{ to: "/peers", label: "邻域", icon: IconUsers }] : []),
     ],
   },
   // The optional AI-only modules (industry/features.ts).
@@ -67,7 +68,7 @@ export const TABBAR: NavItem[] = [
 ];
 
 /** Pages reached from the mobile "更多" tab keep that tab highlighted. */
-export const MORE_PATHS = ["/more", "/hot", "/starred", "/leaderboard", "/codex-reset", "/records", "/agent", "/about", "/changelog", "/feedback", "/terms", "/privacy", "/subscribe"];
+export const MORE_PATHS = ["/more", "/hot", "/starred", "/leaderboard", "/codex-reset", "/records", "/agent", "/about", "/changelog", "/feedback", "/terms", "/privacy", "/subscribe", "/peers"];
 
 export function tabIsActive(item: NavItem, pathname: string): boolean {
   if (item.end) return pathname === item.to;

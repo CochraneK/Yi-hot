@@ -11,6 +11,7 @@ import { allowed, dayInOffset, externalLink, fetchDetail, fetchWebList, type Det
 import { unsupportedConfig } from "./config-keys.ts";
 import { fetchJsonList } from "./json-list.ts";
 import { fetchSearch } from "./search.ts";
+import { fetchPeer } from "./peer.ts";
 import { everyInfraWechatArticle, everyInfraXhsNote } from "../providers/everyinfra.ts";
 import { fetchXSearch, planXShards, readXSearch, shardHandle, shardQuery, SHARDABLE_SQL, tweetToCandidate, type XBacklog, type XRead } from "./x.ts";
 import { FetchError, type Candidate, type SourceRow } from "./types.ts";
@@ -187,6 +188,12 @@ export async function collectSource(sourceId: string, opts: { force?: boolean } 
       const s = await fetchSearch(source);
       candidates = s.candidates;
       detail = s.detail;
+    }
+    else if (source.kind === "peer") {
+      // 姊妹站：读「邻域」已经抓回来的条目，不产生任何出网请求（见 sources/peer.ts）。
+      const p = await fetchPeer(source);
+      candidates = p.candidates;
+      detail = p.detail;
     }
     else {
       const x = await fetchXSearch(source);

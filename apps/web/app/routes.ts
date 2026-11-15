@@ -20,6 +20,7 @@ export default [
   route("topics/group/:group", "routes/topics-group.tsx", { id: "topics-group" }),
   route("topics/:slug", "routes/topic.tsx", { id: "topic" }),
   route("topics/:slug/page/:page", "routes/topic.tsx", { id: "topic-page" }),
+  route("peers", "routes/peers.tsx"),
   route("records", "routes/records.tsx"),
   route("records/page/:page", "routes/records.tsx", { id: "records-page" }),
   route("about", "routes/about.tsx"),

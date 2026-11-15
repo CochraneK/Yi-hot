@@ -842,6 +842,29 @@ WHERE s.id = 'web-thepaper' ORDER BY f.started_at DESC LIMIT 10;
 
 “候选信源”包含 NewsMail、charity-intelligence 等项目留下的历史线索，不等于全部可以一键启用。有些地址失效、有些已被当前来源覆盖、有些会返回验证码或 403。
 
+### 邻域：姊妹站作为信源（`kind: "peer"`）
+
+同框架做出来的行业站（心理、环保、职场、机器人、影视、数学…）既能作为「邻域」版块的摘编来源，
+也能作为**信源**进主流水线，让它们的条目跟本站候选一样参与评分。登记表在 `industry/peers.ts`，
+每站一条 `peer` 源（`peer-psyhot`、`peer-qingyan` …），配 `config.peerId` 指回登记表。
+
+- **不联网**。`sources/peer.ts` 只读 `peer_items`（由 `peers/refresh.ts` 每小时抓回来的）
+  ，所以这些源没有出网失败，`fetch_runs` 里永远是 `ok`。
+- **必须先有条目**。`peer_items` 为空时这些源 `found=0`，属正常，不是故障。
+- **闸门是 `ingestNoiseFilter.requireMarkers`**：标题或摘要至少命中一个词才进流水线，
+  其余在花分析费之前丢掉。实测 290 条存量里只有 8 条通过（psyhot 6 / filmtech 1 / ai4math 1）。
+- **词表别写太短**。`学前` 会命中「数学**学前**提」、`园` 会命中「Disney 乐园」——
+  短词一律补成词组（`学前教育`）。
+- 改 `peerId` / 词表：先改 `industry/sources.json`，同步后再
+  `UPDATE sources SET config = ... WHERE id = 'peer-xxx'`（`seed.ts` 是 `ON CONFLICT DO NOTHING`，不会覆盖）。
+- 新增一家：往 `industry/peers.ts` 加登记项 → `sources.json` 加一条 `peer` 源 → 不用跑迁移，
+  直接 seed + 重启 worker。
+- 与「邻域」版块会重复：报告编排时 `peerDigest(..., excludeUrls)` 已排除本期正文用过的原文链接。
+
+站点上对应 `/peers` 友情页（`apps/api` 的 `/api/site/peers` → `features/peers/PeerDirectoryPage.tsx`），
+卡片显示方向、最近一条、留档条数与同步时间；最近一次抓取失败的站会暂时从页面消失，恢复后自动回来。
+开关是 `industry/features.ts` 的 `peerDirectory`。
+
 ### 微信公众号
 
 WeRSS 在服务器运行，管理端只监听 `127.0.0.1:18001`。重新扫码或管理账号时，从本机建立 SSH 隧道：
@@ -2427,8 +2450,40 @@ weibo-search-unattended-children → failed  Budget for everyinfra exhausted (st
 在 tophub 的 420 条热榜里，唯一真对口的一条（河北邯郸父亲猥亵 12 岁女儿获刑）**只给了一个 360
 搜索页链接**，而有原文链接的 114 条当天 0 命中。
 
-`kind: "search"` 用的是 DeepSeek 网页搜索（`POST /v1/tools/search`，与模型调用同一把 key）。
+`kind: "search"` 默认用 DeepSeek 网页搜索（`POST /v1/tools/search`，与模型调用同一把 key）。
 覆盖面由 `queries` 决定，不依赖任何站点的栏目。
+
+**2026-11-14 补：同一 kind 现在有两条引擎，用 `config.engine` 选。** 存量源不写这一项就是
+`deepseek`，行为与以前完全一致。加第二条的理由是成本：DeepSeek 搜索是近两周第二大支出项
+（¥17.5 / 14 天，仅次于模型），而 Exa 每月赠 $10 额度（Lite $4/1000 次 ≈ 2,500 次/月），
+把一部分查询搬过去能把这块支出压下来。
+
+| | `engine: "deepseek"`（默认） | `engine: "exa"` |
+| --- | --- | --- |
+| 接口 | `POST /v1/tools/search` | `POST https://api.exa.ai/search` |
+| 计价 | ¥0.005/次（成功请求） | Lite $0.004/次、Auto $0.007/次；免费 $10/月 |
+| 记账 service | `deepseek-tools` | `exa`（美元，与人民币的账单分开） |
+| 预算行 | 10/60/40 | 6/20/60 |
+| 时间精度 | `date`（只到日，见下文第 3 条） | **完整时间戳**，不需要日级折算 |
+| 相关性字段 | `authority`（0–4）+ `rerank_score`（0–3） | 只有 `score`（0–1） |
+| 日期窗口 | 拼进查询：`after:YYYY-MM-DD` | 参数：`startPublishedDate` / `endPublishedDate` |
+
+Exa 引擎的实测与限制：
+
+- **默认不取正文，也不取 highlights**。Exa 的 `contents.text` / `contents.highlights` /
+  `contents.summary` 各按 **$1/1000 页**额外计费；一次 10 条结果若默认带 highlights，费用约为
+  搜索本身的 2.5 倍，免费额度会被吃掉得快三倍。需要时才开 `needContent` / `exaHighlights`。
+- **`after:` / `before:` 会自动转成参数**：`splitDateMarkers()` 把标记从查询词里剥掉再送 Exa，
+  所以同一个源换引擎不必改 `queries`。Exa 不认 `site:` / `lang:` 之外的 DeepSeek 语法；需要限定
+  站点时用 `includeDomains`（当前未开放为配置项，真有需要再加）。
+- **`minAuthority` / `minRerank` 对 Exa 不生效**，它没有这两个字段；过滤用 `minScore`（0–1）。
+  两把尺子不能混：DeepSeek 的 `rerank_score` 是 0–3，Exa 的 `score` 是 0–1。
+- **额度是美元余额，不是请求数**。用尽后返回 402，`paidRequest` 会把它记成 provider 停用而不是
+  源故障；`budgets.exa` 的 60 次/天 ≈ 1,800 次/月 × $0.004 = $7.2，留 28% 余量给 contents。
+- 出网走 `egress` 代理（`EGRESS_PROXY_URL`），不是 `direct`——它在境外。
+
+把某个现有源迁到 Exa 的操作只有一步：`config.engine` 改成 `"exa"`。反悔就删掉这个键。
+
 
 首跑实测（`search-child-rights`，8 组查询，`count=20`、`lookbackDays=7`）：
 
@@ -2451,12 +2506,19 @@ weibo-search-unattended-children → failed  Budget for everyinfra exhausted (st
 | `minRerank` | 默认 0。`rerank_score` 门槛，≥1.5 为强相关 |
 | `needContent` | 默认 false。true 时搜索结果**随附每条正文**，仍然只算一次请求，比逐篇 Fetch 划算得多 |
 | `oriQuestion` | 可选，把原始问题一起送过去改善检索 |
+| `engine` | `deepseek`（默认）或 `exa`。拼错会被 `config-keys.ts` 拒绝，不会静默退回 |
+| `exaType` | 仅 exa：`auto`（默认）/ `lite`（最便宜）/ `fast` / `instant` / `deep` |
+| `exaCategory` | 仅 exa：类目过滤，新闻场景写 `news` |
+| `exaHighlights` | 仅 exa：默认 false。true 时取匹配段落作 snippet，**按 $1/1000 页额外计费** |
+| `minScore` | 仅 exa：默认 0（不过滤）。Exa 相关度是 0–1，**不要**拿 `minRerank` 的 0–3 尺度套 |
 
 ### 三条必须知道的约定
 
 1. **计费按「成功请求」**：¥5 / 1000 次 = ¥0.005/次，只有 HTTP 200 且结果非空才收费，空结果与失败免费。
    由 `providers/deepseek-tools.ts` 在响应里写 `cost.amount`，单价取 `service_prices` 的
    `('deepseek-tools','')` 行；查不到行时退回官方价常量，避免"花了钱却显示未扣费"。
+   **exa 引擎不同**：它记在 `('exa','')` 行、货币 USD，且优先用响应里的 `costDollars.total`
+   记 `basis='actual'`（真实花费），只有响应没带价格才退回按次估算。
 2. **日级幂等**：幂等键含北京日期（`window`），同一查询**同一天只真正请求一次**，后续调度复用
    已保存的响应且不再计费。所以 `interval_minutes` 设 360 也不会多花钱；`adaptIntervals` 对
    `kind='search'` 固定为 360。

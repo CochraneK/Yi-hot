@@ -8,6 +8,7 @@ import { translatePending } from "@aihot/backend/editorial/translate";
 import { adaptIntervals, scheduleDueSources } from "@aihot/backend/sources/collect";
 import { scheduleMpReconcile } from "@aihot/backend/sources/mp";
 import { refreshSourceIcons } from "@aihot/backend/sources/icons";
+import { refreshPeers } from "@aihot/backend/peers/refresh";
 import { computeHotRanking, snapshotHeat } from "@aihot/backend/events/hot";
 import { refreshStoryStatuses } from "@aihot/backend/events/digest";
 import { linkRelatedStories } from "@aihot/backend/events/group";
@@ -42,6 +43,9 @@ export const SCHEDULES: Scheduled[] = [
   { name: "content.translate", cron: "*/5 * * * *", run: () => translatePending() },
   { name: "hot.rank", cron: "*/5 * * * *", run: () => computeHotRanking() },
   { name: "hot.snapshot", cron: "2 * * * *", run: () => snapshotHeat() },
+  // 「邻域」：读姊妹站已经筛好的条目，只存索引不存正文，没有模型调用。整点后才跑，避开采集高峰；
+  // 07:25 这一轮是 08:00 日报之前最后一次，保证当天的邻域是新的。
+  { name: "peers.refresh", cron: "25 * * * *", run: refreshPeers },
   { name: "stories.status", cron: "7 * * * *", run: refreshStoryStatuses },
   { name: "stories.links", cron: "12 * * * *", run: linkRelatedStories },
   ...(FEATURES.dailyReports || FEATURES.dailyNewsletter ? [{ name: "reports.daily", cron: "0 8 * * *", missed: "once" as const, run: () => composeDaily(beijingDate(Date.now())) }] : []),

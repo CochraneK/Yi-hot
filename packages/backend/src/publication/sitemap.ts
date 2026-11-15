@@ -46,6 +46,7 @@ async function build(): Promise<string> {
     { loc: "/monthly", changefreq: "monthly", priority: 0.6 },
     { loc: "/topics", changefreq: "daily", priority: 0.7 },
     ...(FEATURES.regulatoryRecords ? [{ loc: "/records", lastmod: now, changefreq: "daily", priority: 0.7 }] : []),
+    ...(FEATURES.peerDirectory ? [{ loc: "/peers", lastmod: now, changefreq: "daily", priority: 0.5 }] : []),
     { loc: "/agent", lastmod: now, changefreq: "weekly", priority: 0.7 },
     { loc: "/about", changefreq: "monthly", priority: 0.5 },
     { loc: "/terms", changefreq: "monthly", priority: 0.4 },

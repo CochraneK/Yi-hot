@@ -1,0 +1,127 @@
+// 「邻域」版块的姊妹站登记表。
+//
+// 这些都是用同一套 AIHOT 框架做出来的行业站（不是我们的信源）。它们的 /api/v1 是公开的长期接口，
+// 条目在它们那边已经过编辑系统筛选、打分、写过入选理由，所以这里**不调用任何模型**：读回来直接用。
+//
+// 三条准入（2026-11-15 逐站实测，`curl -m 15`）：
+//   1. 必须有机器可读出口（标准 /api/v1 接口，或至少 RSS）；
+//   2. 条目能拿到 标题 + 摘要 + 一个可回溯的链接；
+//   3. 站点活着。
+// 只有 2 没有 1 的站留在表里但 strategy 标记为 "none"，避免每天空跑；恢复出口时改一个字段即可。
+//
+// 数组顺序是**同分时的默认顺序**，也是周报/月报（名额多）的呈现顺序：先和公益读者最近的
+// （心理精神医学、环保双碳），再到科技、商业、学术。
+// 日报只有 3 个名额，若固定按这个顺序取，第 4 家以后永远轮不上，所以日报按「近期最少出现」
+// 轮换（见 packages/backend/src/peers/select.ts 的 rotationOrder）。
+// 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
+export interface PeerSite {
+  id: string;
+  name: string;
+  /** 站点首页；条目链接一律用条目自己的 URL，不用这个拼。 */
+  url: string;
+  /** 一句话方向，显示在版块里，让读者知道这是哪个领域。 */
+  note: string;
+  /**
+   * api  = 有标准 /api/v1 接口（优先 items，退回 dailies）
+   * rss  = 只有 RSS
+   * none = 目前没有任何机器可读出口
+   */
+  strategy: "api" | "rss" | "none";
+  enabled: boolean;
+}
+
+/** 姊妹站清单。enabled=false 的仍显示在后台状态里，便于知道「为什么这一家没内容」。 */
+export const PEER_SITES: PeerSite[] = [
+  {
+    id: "psyhot",
+    name: "PsyHOT",
+    url: "https://psyhot.cn",
+    note: "心理学与精神医学，学界与业界双视角",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "qingyan",
+    name: "青砚",
+    url: "https://qingyannews.cn",
+    note: "环保与双碳",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "innews",
+    name: "大厂观察",
+    url: "https://innews.site",
+    note: "互联网大厂动态与职场信息",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "sevenailab",
+    name: "品牌AI外刊",
+    url: "https://news.sevenailab.com",
+    note: "海外品牌营销与 AI 带来的变化",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    id: "robohot",
+    name: "RoboHot",
+    url: "https://robohot.news",
+    note: "机器人产业，面向研发者与准备入行的人",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "mediastack",
+    name: "MediaStack",
+    url: "https://mediastack.work",
+    note: "音视频技术情报",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "filmtech",
+    name: "FilmTechNews",
+    url: "https://filmtech.lumenghe.com",
+    note: "影视技术日报",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    id: "ai4math",
+    name: "AI4Math Radar",
+    url: "https://charlie-wang-03.github.io/ai4math-radar/",
+    note: "AI for Mathematics 研究动态",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 域名 2026-11-15 实测已失效：news.blues19.com 与 apex blues19.com 都无 A 记录。
+    // 仍然保留在表里并继续探测（DNS 失败只需 1ms），站主恢复解析后自动接上。
+    id: "blues19",
+    name: "拾玖跨境资讯",
+    url: "https://news.blues19.com",
+    note: "跨境电商，按平台政策与运营重建了主题体系",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    // 实测 /feed.xml、/rss.xml、/api/v1/* 全 404（Next.js 站，接口未导出）。
+    id: "yingxiao",
+    name: "营销通鉴 · 平台动态",
+    url: "https://yingxiaoclub.com/news",
+    note: "营销平台的规则变化与新功能早报",
+    strategy: "none",
+    enabled: false,
+  },
+];
+
+/** 每期条数：日报只是「顺带一看」，周月报可以铺开成一小版。 */
+export const PEER_LIMITS = { daily: 3, weekly: 8, monthly: 15 } as const;
+
+/** 版块名与导读文案。改这里不用改渲染代码。 */
+export const PEER_SECTION = {
+  label: "邻域",
+  note: "以下条目来自同框架的姊妹站，由它们各自的编辑系统筛选，不是本报的判断；标题可直达原站，署名与原文链接一并保留。",
+} as const;

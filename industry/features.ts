@@ -13,4 +13,6 @@ export const FEATURES = {
   codexResetMonitor: false,
   /** 监管记录：民政部行政处罚与全国社会组织活动异常名录 / 严重违法失信名单公告（/records）。每天同步一次。 */
   regulatoryRecords: true,
+  /** 邻域：同框架姊妹站的目录页（/peers），也是日报/周报/月报里「邻域」版块的数据来源。 */
+  peerDirectory: true,
 } as const;

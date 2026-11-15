@@ -3055,3 +3055,14 @@ GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的�
 GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sources.json` 的技术 RSS Seed 从 **177** 条增至 **180** 条（新增 `rss-peer-gamehot`、`rss-peer-myhot-finance`、`rss-peer-ai-pulse-lab`，均 `enabled=false`、`isolated`、禁全文）。邻域的站点展示与 RSS 技术采集**仍是两个独立模块**，不要因目录启用就开启模型筛选或覆盖旧新闻。AI Pulse 跟现有 AI 快讯有同题重复，来源间不能视为独立证据；MyHOT、GameHOT 的文章也只作为所述站编辑过的内容。
 
 复核入口、验证过的 URL、排除原因、可复现搜索和验收/回滚记录： [PEER_DISCOVERY_ROUND3_2026-11-15.md](docs/PEER_DISCOVERY_ROUND3_2026-11-15.md)。必须通过 `node --test tests/peers.test.ts`、GitHub Actions 的类型检查/网页/后端/Docker 后合并。GitHub 合并并不意味着腾讯云 API/worker 已重建、生产数据库已同步或所有新卡片已显示最新文章。本轮不运行独立定时任务，不访问凭据，不更改主内容/预算/数据库迁移。回滚仅删除这次新增的 6 个 PeerSite 与 3 个 Seed RSS；不可删除他人并发更新、已有缓存与历史记录。
+
+
+## 邻域第四轮：公益、法律政策、科研、岗位、资金和公共采购（2026-11-15）
+
+这一轮从公益与科研等垂直搜索、机构官网和官方 RSS/Atom 实际可读性核验，新增 **8 家**公开资源入口：`中国发展简报`（公益招聘/会议/资助）、`基金会中心网`（基金会透明度/研究）、`China Law Translate`（非官方法规翻译及修法分析）、`ReliefWeb Jobs`（国际公益/人道援助岗位）、`Funding Radar`（科研资助机会及资格预筛）、`OpenAlex`（文献/机构检索）、`Open Contracting Partnership`（公开采购及治理研究）、`Our World in Data`（公共卫生、教育、贫困等开放研究数据）。归入原「公共与环境」「技术与安全」「商业与职场」组，不创建新的一级栏目。这里并非全部 AIHOT 同框架站，`PEER_SECTION.note` 已修订避免误导。邻域由 31 家增至 **39 家**。
+
+明确分开：仅经验证有可读官方订阅的 `China Law Translate /feed/`、`Open Contracting /feed/`、`Our World in Data /atom.xml` 使用「邻域」`rss` 同步；另 5 家（包括 CDB、ReliefWeb Jobs 等）属于 `strategy=link` 的可浏览网站，不会被后台轮询或写入 `peer_status`。独立 `industry/sources.json` 仅给这 3 条新 Feed 登记技术 RSS Seed，**全部 `enabled=false`，`isolated`、禁全文、回溯上限 4**。GitHub Seed 从 180 条增至 **183 条**，不向公益动态注入更多跨域资讯，不因「邻域」被打开而增加模型调用。
+
+技术修复：`packages/backend/src/peers/refresh.ts` 现在支持经过校验的 `/feed/` 尾斜杠，并为 Atom 多链接选择 `rel=alternate` 的文章地址，避免误用 Feed 自引用链接；向后兼容旧 `/feed.xml`。新增 `tests/peers.test.ts` 的独立来源开关、域名路径校验和 Atom 测试。相关网站地址、验证日期、搜索方法、停用和回滚详见 [第四轮专项审查](docs/PEER_DISCOVERY_PUBLIC_INTELLIGENCE_ROUND4_2026-11-15.md)。
+
+发布纪律：GitHub PR 与 CI 通过后才考虑合并；合并不等于腾讯云已更新，部署后必须核实 `/peers` 新卡片及抓取状态。任何涉及法律、资金、采购、就业资格的建议必须核对原发布者；非官方法规翻译不是正式法律文本，公共采购异常不是腐败证据。不要绕过登录、验证码或内容许可。回滚本轮新增 8 个 PeerSite、3 个关闭的 Seed 及 Parser 兼容改动，保留原有数据、其他 Agent 提交和全部用户状态。

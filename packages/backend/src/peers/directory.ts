@@ -9,6 +9,7 @@
 
 import { sql } from "../db.ts";
 import { PEER_SITES } from "@aihot/industry/peers";
+import { peerFreshness } from "./freshness.ts";
 import type { PeerDirectory, PeerDirectoryEntry } from "@aihot/contracts/peers";
 
 interface StatusRow {
@@ -43,7 +44,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
       SELECT DISTINCT ON (peer_id) peer_id, title, coalesce(nullif(original_url, ''), item_url) AS url,
              published_at, score, category
       FROM peer_items
-      ORDER BY peer_id, coalesce(published_at, fetched_at) DESC`,
+      ORDER BY peer_id, published_at DESC NULLS LAST, fetched_at DESC`,
   ]);
 
   const status = new Map(statuses.map((s) => [s.peer_id, s]));
@@ -59,7 +60,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
     if (p.strategy === "link") {
       sites.push({
         id: p.id, name: p.name, url: p.url, note: p.note,
-        group: p.group, family: p.family, accent: p.accent, browseOnly: true,
+        group: p.group, family: p.family, tier: p.tier, freshness: "reference", accent: p.accent, browseOnly: true,
         ok: null, checkedAt: null, items: 0, latest: null,
       });
       continue;
@@ -75,6 +76,8 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
       note: p.note,
       group: p.group,
       family: p.family,
+      tier: p.tier,
+      freshness: peerFreshness(p, l?.published_at ?? null),
       accent: p.accent,
       browseOnly: false,
       ok: st ? st.ok : null,

@@ -26,12 +26,18 @@
 // 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
 /** 同系只用于有明确开源谱系/社区登记证据的站；其他包含独立项目及未核实来源。 */
 export type PeerFamily = "same" | "other";
+/** 正式信息站 / 实用资源 / 候选信息，与同系/其他谱系正交。 */
+export type PeerTier = "official" | "resource" | "candidate";
 
 export interface PeerSite {
   id: string;
   name: string;
   /** 展示归属：同系邻域 / 其他邻域，与行业 group 正交。 */
   family: PeerFamily;
+  /** 公开展示层：候选保留原站和审计记录，但不作为正式实时资讯推荐。 */
+  tier: PeerTier;
+  /** 特定站的非日报更新节奏；没有填写时正式新闻站按 7 天时效核查。 */
+  cadence?: "weekly";
   /** 站点首页；条目链接一律用条目自己的 URL，不用这个拼。 */
   url: string;
   /** 一句话方向，显示在版块里，让读者知道这是哪个领域。 */
@@ -105,6 +111,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "psyhot",
     family: "same",
+    tier: "official",
     name: "PsyHOT",
     url: "https://psyhot.cn",
     note: "心理学与精神医学，学界与业界双视角",
@@ -117,6 +124,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实：真实 RSS 在 /ai-ux-research-hot/rss.xml；/URHOT/ 已失效。
     id: "urhot",
     family: "same",
+    tier: "official",
     name: "URHOT",
     url: "https://huangzhenhao90.github.io/ai-ux-research-hot/",
     note: "AI × 用户研究，HCI 方法、工具与设计研究",
@@ -130,6 +138,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实行业日报和招投标雷达，/feed.xml 为 404，仅浏览。
     id: "sanyu-insights",
     family: "other",
+    tier: "candidate",
     name: "三禹智能 · 行业情报",
     url: "https://www.sanyusmart.com/insights/",
     note: "智慧水利、行业 AI、招投标商机",
@@ -141,6 +150,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "qingyan",
     family: "same",
+    tier: "official",
     name: "青砚",
     url: "https://qingyannews.cn",
     note: "环保与双碳",
@@ -154,6 +164,7 @@ export const PEER_SITES: PeerSite[] = [
     // feed.xml 可用。城轨是名录里第一个公共基础设施方向。
     id: "metrohot",
     family: "same",
+    tier: "official",
     name: "MetroHot",
     url: "https://metrohot.oohforce.com",
     note: "城市轨道交通，地铁运营、TOD 开发与站点商业",
@@ -166,6 +177,7 @@ export const PEER_SITES: PeerSite[] = [
     // #306 登记，2026-11-15 实测 /api/v1/items 标准、feed.xml 可用。
     id: "bioinfosoul",
     family: "same",
+    tier: "official",
     name: "生信之灵",
     url: "https://bioinfosoul.com",
     note: "生信与 AI 制药，科研进展与临床审批",
@@ -178,6 +190,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实 /feed.xml 有当日精选；/api/v1/items 返回 not_exported。
     id: "gamehot",
     family: "same",
+    tier: "official",
     name: "GameHOT",
     url: "https://gamehot.org/",
     note: "游戏产业、产品设计、发行运营与玩家反馈",
@@ -190,6 +203,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实 /feed.xml 有财经及产业精选，独立站而非 aihot.news。
     id: "myhot-finance",
     family: "same",
+    tier: "official",
     name: "MyHOT · 市场观察",
     url: "https://aihot.wscn.net/",
     note: "金融市场、产业政策与商业动态",
@@ -202,6 +216,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实公开产品/融资分析页，但 /feed.xml 为 404，仅浏览。
     id: "xocto",
     family: "other",
+    tier: "candidate",
     name: "x-octo · 机会库",
     url: "https://xocto.vercel.app/",
     note: "AI 产品研究、融资与创业机会（公开资料库）",
@@ -214,9 +229,10 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实公开趋势页，后台登录限制；/feed.xml、/rss.xml 为 404。
     id: "aimfast",
     family: "other",
+    tier: "candidate",
     name: "AimFast",
     url: "https://www.aimfast.dev/",
-    note: "创业趋势与产品机会（深入分析需登录）",
+    note: "创业趋势与产品机会，深度分析需付费（候选信息）",
     group: "market",
     accent: "#4c8b91",
     strategy: "link",
@@ -225,6 +241,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "innews",
     family: "same",
+    tier: "official",
     name: "大厂观察",
     url: "https://innews.site",
     note: "互联网大厂动态与职场信息",
@@ -236,6 +253,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "sevenailab",
     family: "same",
+    tier: "official",
     name: "品牌AI外刊",
     url: "https://news.sevenailab.com",
     note: "海外品牌营销与 AI 带来的变化",
@@ -248,6 +266,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实：/robot-hot/feed.xml 可读；/robot-hot/rss.xml 不存在。
     id: "aiman-robot-hot",
     family: "other",
+    tier: "official",
     name: "聚身之家",
     url: "https://www.aiman.world/robot-hot/",
     note: "具身智能，机器人产业、研究与产品证据",
@@ -260,6 +279,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "robohot",
     family: "same",
+    tier: "official",
     name: "RoboHot",
     url: "https://robohot.news",
     note: "机器人产业，面向研发者与准备入行的人",
@@ -271,6 +291,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "mediastack",
     family: "same",
+    tier: "official",
     name: "MediaStack",
     url: "https://mediastack.work",
     note: "音视频技术情报",
@@ -282,6 +303,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "filmtech",
     family: "same",
+    tier: "official",
     name: "FilmTechNews",
     url: "https://filmtech.lumenghe.com",
     note: "影视技术日报",
@@ -293,6 +315,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     id: "ai4math",
     family: "same",
+    tier: "official",
     name: "AI4Math Radar",
     url: "https://charlie-wang-03.github.io/ai4math-radar/",
     note: "AI for Mathematics 研究动态",
@@ -306,6 +329,7 @@ export const PEER_SITES: PeerSite[] = [
     // 名录里第一家用繁体中文写作的站，条目里会出现「輝達」「軟體」这类译名。
     id: "dayacre",
     family: "same",
+    tier: "official",
     name: "日耕 AI 熱點",
     url: "https://aihot.dayacre.com",
     note: "AI 动态的繁中版，台湾读者的用语与视角",
@@ -318,6 +342,7 @@ export const PEER_SITES: PeerSite[] = [
     // #254 登记，2026-11-15 实测 /api/v1/items 标准。
     id: "foxnan",
     family: "same",
+    tier: "official",
     name: "AI快讯",
     url: "https://hot.foxnan.com",
     note: "AI 新闻与每日动态",
@@ -330,6 +355,7 @@ export const PEER_SITES: PeerSite[] = [
     // #98 登记，只有 Atom feed（/api/v1/* 全 404），feed 的 entry link 直接是原文地址。
     id: "xabcnews",
     family: "same",
+    tier: "official",
     name: "XABC News",
     url: "https://xabcnews.com",
     note: "AI、开发者与前沿科技的全网热点",
@@ -342,6 +368,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 实测 /api/v1/items 标准，方向是漏洞情报。
     id: "vulnhot",
     family: "same",
+    tier: "official",
     name: "VulnHOT",
     url: "https://vulnhot.com",
     note: "漏洞情报与安全事件",
@@ -355,6 +382,7 @@ export const PEER_SITES: PeerSite[] = [
     // 仍然保留在表里并继续探测（DNS 失败只需 1ms），站主恢复解析后自动接上。
     id: "blues19",
     family: "same",
+    tier: "official",
     name: "拾玖跨境资讯",
     url: "https://news.blues19.com",
     note: "跨境电商，按平台政策与运营重建了主题体系",
@@ -367,6 +395,7 @@ export const PEER_SITES: PeerSite[] = [
     // 实测 /feed.xml、/rss.xml、/api/v1/* 全 404（Next.js 站，接口未导出）。
     id: "yingxiao",
     family: "same",
+    tier: "candidate",
     name: "营销通鉴 · 平台动态",
     url: "https://yingxiaoclub.com/news",
     note: "营销平台的规则变化与新功能早报",
@@ -379,6 +408,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 实测主页与 /feed.xml，汽车新闻有实际更新时间。
     id: "autohot",
     family: "same",
+    tier: "official",
     name: "AutoHot",
     url: "https://www.autohot.top/",
     note: "汽车产业、新车型、出行技术与政策",
@@ -391,6 +421,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 实测主页与 /feed.xml，住房/物业有近期政策信息。
     id: "huifangyun",
     family: "same",
+    tier: "official",
     name: "汇房云资讯",
     url: "https://info.huifangyun.com/",
     note: "房地产、物业监管、住房与社区服务",
@@ -403,6 +434,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 实测 /feed.xml 和 /api/v1/items 返回实际文章。
     id: "fai-lab",
     family: "same",
+    tier: "official",
     name: "FAI 实验室",
     url: "https://fai.fashion/",
     note: "AI 工具、设计与内容生产，也有通用 AI 资讯",
@@ -415,6 +447,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开材料/化学研究条目可读；/ai4scihot/feed.xml 返回 403。
     id: "ai4scihot",
     family: "same",
+    tier: "candidate",
     name: "AI4SciHOT",
     url: "https://ai4scihot.8-220-189-127.sslip.io/ai4scihot",
     note: "AI for Science：材料、化学、物理与工业仿真",
@@ -428,6 +461,7 @@ export const PEER_SITES: PeerSite[] = [
     // 这是 UU AI Hub 专题，不是独立运行的「发射窗口」AIHOT 服务。
     id: "horizon-uu",
     family: "other",
+    tier: "candidate",
     name: "发射窗口",
     url: "https://www.uuaihub.com/horizon",
     note: "商业航天、AI 芯片与机器人专题入口",
@@ -440,6 +474,7 @@ export const PEER_SITES: PeerSite[] = [
     // AIHOT Show and tell #333，2026-11-15 实测：仅为静态演示页。
     id: "fengxiang-demo",
     family: "same",
+    tier: "candidate",
     name: "风向",
     url: "https://fightkk7.github.io/fengxiang/",
     note: "企业服务与 SaaS 资讯（静态产品演示）",
@@ -452,6 +487,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公共站可浏览，/feed.xml 与 /rss.xml 均为 404。
     id: "newsiq",
     family: "other",
+    tier: "candidate",
     name: "NewsIQ · 讯析",
     url: "https://newsiq.xyz/",
     note: "新闻事件聚合与跨来源分析",
@@ -464,6 +500,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 核实 /feed.xml 有当日多源研究条目；与已有 AI 热点站功能部分交叉。
     id: "ai-pulse-lab",
     family: "other",
+    tier: "official",
     name: "AI Pulse",
     url: "https://ai-pulse-lab.com/",
     note: "多源 AI 信号、研究分析与知识检索",
@@ -476,6 +513,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网有 NGO 招聘与公益资源；/feed.xml 和 /rss.xml 均未提供可用内容
     id: "cdb-ngo",
     family: "other",
+    tier: "resource",
     name: "中国发展简报",
     url: "https://www.chinadevelopmentbrief.org.cn/",
     note: "公益招聘、资助招标、机构动态与专业培训",
@@ -488,6 +526,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 新闻公开可读；近期条目到 2026-06；没有经核实的稳定 RSS，不能声称每日更新
     id: "foundation-center",
     family: "other",
+    tier: "resource",
     name: "基金会中心网",
     url: "https://foundationcenter.org.cn/news",
     note: "基金会信息披露、慈善数据与合规研究",
@@ -500,6 +539,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网及 WordPress /feed/ 实测有 2026-11 更新；政策解释非官方版本
     id: "china-law-translate",
     family: "other",
+    tier: "resource",
     name: "China Law Translate",
     url: "https://www.chinalawtranslate.com/",
     note: "中国法律政策的非官方翻译、修法跟踪与分析",
@@ -513,6 +553,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官方 Jobs 列表公开可浏览；/rss.xml 是全站 Updates，不是职位专区 RSS
     id: "reliefweb-jobs",
     family: "other",
+    tier: "resource",
     name: "ReliefWeb · 职位",
     url: "https://reliefweb.int/jobs",
     note: "国际公益、人道援助岗位、咨询与合作征集",
@@ -526,6 +567,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网展示多国有效征集和资格筛选；/feed.xml 404，官方申请资格与截止日仍需逐条复核
     id: "funding-radar",
     family: "other",
+    tier: "resource",
     name: "Funding Radar",
     url: "https://fundingradar.eu/",
     note: "跨国科研项目资助征集与申请资格预筛",
@@ -538,6 +580,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开科研检索与机构关系数据可读；不是经过质量评分的研究证据摘要
     id: "openalex-research",
     family: "other",
+    tier: "resource",
     name: "OpenAlex",
     url: "https://openalex.org/",
     note: "全球科研文献、机构、作者与研究关联检索",
@@ -550,6 +593,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网及 /feed/ 有 11 月政府采购透明度文章；监督线索不等于违法事实
     id: "open-contracting",
     family: "other",
+    tier: "resource",
     name: "Open Contracting",
     url: "https://www.open-contracting.org/",
     note: "公共采购透明度、开放合同数据与治理案例",
@@ -563,6 +607,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开 Atom /atom.xml 含最近研究条目和日期，统计指标不等于地方因果推断
     id: "our-world-in-data",
     family: "other",
+    tier: "resource",
     name: "Our World in Data",
     url: "https://ourworldindata.org/",
     note: "公共卫生、教育、贫困与环境的开放数据和研究",
@@ -576,6 +621,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官方公开合作征集页有国家、机构、领域及截止日列；申请须登录。
     id: "un-partner-portal",
     family: "other",
+    tier: "resource",
     name: "UN Partner Portal · 合作征集",
     url: "https://www.unpartnerportal.org/landing/opportunities/",
     note: "联合国机构合作征集，按国家、领域与申请条件查找",
@@ -588,6 +634,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 欧委会官方门户，公共查询与登录申请分开；未核实查询专属 RSS。
     id: "eu-funding-tenders",
     family: "other",
+    tier: "resource",
     name: "EU Funding & Tenders · 资助与招标",
     url: "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home",
     note: "欧盟项目征集、招标与伙伴查找，资格以具体公告为准",
@@ -600,6 +647,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 基金委项目指南官方列表可读；列表通知不等于当前仍在受理。
     id: "nsfc-guidelines",
     family: "other",
+    tier: "resource",
     name: "国家自然科学基金 · 项目指南",
     url: "https://www.nsfc.gov.cn/p1/3381/2824/zntg.html",
     note: "科研资助指南、申请通知与专项征集，回原公告核对条件",
@@ -612,6 +660,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网关于页页脚明确标注基于 AIHOT 开源框架。
     id: "aisafetyhot",
     family: "same",
+    tier: "official",
     name: "AI Safety HOT",
     url: "https://aisafetyhot.com/",
     note: "AI 安全研究、事件与治理，论文和新闻分开浏览",
@@ -624,6 +673,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网使用规则第六节明确二次开发关系；公开转载须取得同意。
     id: "aidchot",
     family: "same",
+    tier: "official",
     name: "AIDC热点",
     url: "https://aidchot.com/",
     note: "AI 数据中心、算力政策与机电运维",
@@ -636,6 +686,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网关于页明确由 AIHOT 开源框架驱动。
     id: "embhot",
     family: "same",
+    tier: "official",
     name: "EmbHot",
     url: "https://embhot.zhcmqtt.top/",
     note: "嵌入式、具身智能、外骨骼与复合材料",
@@ -648,6 +699,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 官网关于页及页脚注明 Powered by AIHOT。
     id: "markethot",
     family: "same",
+    tier: "official",
     name: "MarketHOT",
     url: "https://www.markethot.news/",
     note: "美股公司事件、宏观与行业动态，中英阅读",
@@ -660,6 +712,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 实测 RSS 200 有精选；已从仅浏览升级为邻域 RSS。
     id: "designradar",
     family: "same",
+    tier: "official",
     name: "DesignRadar · 设计雷达",
     url: "https://designradar.vercel.app/",
     note: "设计行业精选与 AI 生成界面的评测观察",
@@ -672,6 +725,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开仓库 README 明确医学版关系；GitHub Pages 静态快照非实时服务。
     id: "medhot",
     family: "same",
+    tier: "candidate",
     name: "MedHOT",
     url: "https://mrf3247.github.io/medhot/",
     note: "全球医学动态的静态快照，当前页面日期为 2026-11-05",
@@ -684,6 +738,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开仓库 README 明确社科版关系；读取到 2026-11-14 页面。
     id: "thinkhot",
     family: "same",
+    tier: "candidate",
     name: "ThinkHOT",
     url: "https://mrf3247.github.io/thinkhot/",
     note: "人文社科与思想动态的静态快照，含心智、语言与历史",
@@ -696,6 +751,8 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 周报 RSS 200；静态周报发布，不等于逐日更新。
     id: "math-education-hot",
     family: "same",
+    tier: "official",
+    cadence: "weekly",
     name: "数学教育 HOT",
     url: "https://a0910580996-a11y.github.io/math-education-hot/",
     note: "认知科学、学习科学与 AI 数学教育，静态周报",
@@ -709,6 +766,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 RSS 200 可读；正式域名 shendeng，仓库拼写不同。
     id: "shendeng-ai",
     family: "same",
+    tier: "official",
     name: "神灯AI热点",
     url: "https://shendeng.news/",
     note: "AI 综合动态与实用机会，本地采编后发布的静态阅读站",
@@ -721,6 +779,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
     id: "unicef-data",
     family: "other",
+    tier: "resource",
     name: "UNICEF Data · 儿童数据",
     url: "https://data.unicef.org/",
     note: "儿童教育、健康、保护和贫困的官方统计与研究",
@@ -734,6 +793,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
     id: "icnl",
     family: "other",
+    tier: "resource",
     name: "ICNL · 非营利法律",
     url: "https://www.icnl.org/",
     note: "非营利组织法律、公民空间与公益政策研究",
@@ -747,6 +807,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
     id: "un-news-sdgs",
     family: "other",
+    tier: "official",
     name: "联合国新闻 · 可持续发展",
     url: "https://news.un.org/en/",
     note: "联合国可持续发展目标与人道、教育、气候进展",
@@ -760,6 +821,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
     id: "un-geneva-news",
     family: "other",
+    tier: "official",
     name: "联合国日内瓦 · 新闻",
     url: "https://www.ungeneva.org/en/news-media",
     note: "联合国人权、公共事务、委员会会议与新闻资料",
@@ -773,6 +835,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
     id: "gdacs",
     family: "other",
+    tier: "resource",
     name: "GDACS · 全球灾害预警",
     url: "https://www.gdacs.org/",
     note: "全球灾害预警与跨国救援事件，源端含 GeoRSS 地理字段，选择首页精简 Feed",
@@ -790,5 +853,5 @@ export const PEER_LIMITS = { daily: 3, weekly: 8, monthly: 15 } as const;
 /** 版块名与导读文案。改这里不用改渲染代码。 */
 export const PEER_SECTION = {
   label: "邻域",
-  note: "邻域汇集不同领域的公开信息站、研究数据库和行业工具。可同步文章来自原站，其他仅提供浏览入口；任何观点、数据与建议均需回到原始来源核实。",
+  note: "正式邻域优先提供持续更新的 RSS/API，实用资源提供数据库与机会入口，候选信息供复核；所有内容请回到原始来源核实。",
 } as const;

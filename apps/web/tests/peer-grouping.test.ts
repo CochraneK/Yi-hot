@@ -63,38 +63,40 @@ test("全部未归类时只有一组「其他」", () => {
   assert.equal(groups[0].label, "其他");
 });
 
-test("顶层固定先同系邻域后其他邻域，原有行业方向保留且不会丢站", () => {
+test("三层顺序固定，原有行业分组和同系归属均保留", () => {
   const entries: PeerDirectoryEntry[] = [
-    { ...site("o1", "product"), family: "other" },
-    { ...site("s1", "market"), family: "same" },
-    { ...site("s2", "health"), family: "same" },
-    { ...site("o2", "civic"), family: "other" },
-    { ...site("s3", "market"), family: "same" },
+    { ...site("o1", "product"), family: "other", tier: "official" },
+    { ...site("s1", "market"), family: "same", tier: "official" },
+    { ...site("s2", "health"), family: "same", tier: "official" },
+    { ...site("r1", "civic"), family: "other", tier: "resource", browseOnly: true },
+    { ...site("r2", "research"), family: "other", tier: "resource", browseOnly: false },
+    { ...site("c1", "growth"), family: "same", tier: "candidate", browseOnly: true },
+    { ...site("c2", "market"), family: "other", tier: "candidate" },
   ];
   const sections = groupNeighborhoods(entries);
-  assert.deepEqual(sections.map((s) => s.label), ["同系邻域", "其他邻域"]);
-  assert.deepEqual(sections.map((s) => s.id), ["same", "other"]);
-  assert.deepEqual(sections[0]?.groups.map((g) => g.id), ["health", "market"]);
-  assert.deepEqual(sections[0]?.groups.find((g) => g.id === "market")?.sites.map((s) => s.id), ["s1", "s3"]);
-  assert.deepEqual(sections[1]?.groups.map((g) => g.id), ["civic", "product"]);
-  const flattened = sections.flatMap((section) => section.groups.flatMap((group) => group.sites.map((s) => s.id)));
-  assert.equal(new Set(flattened).size, entries.length);
-  assert.deepEqual([...flattened].sort(), entries.map((e) => e.id).sort());
+  assert.deepEqual(sections.map(s => s.label), ["正式邻域", "实用资源", "候选信息"]);
+  assert.deepEqual(sections.map(s => s.id), ["official", "resource", "candidate"]);
+  assert.deepEqual(sections[0]?.groups.map(g => g.id), ["health", "product", "market"]);
+  assert.deepEqual(sections[1]?.groups.map(g => g.id), ["civic", "research"]);
+  assert.deepEqual(sections[2]?.groups.map(g => g.id), ["market", "growth"]);
+  assert.equal(sections[0]?.sites.find(s => s.id === "s1")?.family, "same");
+  const all = sections.flatMap(section => section.sites.map(s => s.id));
+  assert.equal(new Set(all).size, entries.length);
+  assert.deepEqual([...all].sort(), entries.map(e => e.id).sort());
 });
 
-test("旧 API 无 family / 非法 family 时不丢卡、不错误归入同系", () => {
-  const legacy = site("legacy", "news");
-  const invalid = { ...site("unknown", "growth"), family: "unexpected" as "other" };
+test("旧 API 未提供 tier 或无效 tier 时落候选信息，不误标为正式邻域", () => {
+  const legacy = { ...site("legacy", "news"), family: "same" as const };
+  const invalid = { ...site("invalid", "growth"), tier: "invalid" as "candidate" };
   const sections = groupNeighborhoods([legacy, invalid]);
   assert.equal(sections.length, 1);
-  assert.equal(sections[0]?.id, "other");
-  assert.deepEqual(sections[0]?.sites.map((s) => s.id), ["legacy", "unknown"]);
+  assert.equal(sections[0]?.id, "candidate");
+  assert.deepEqual(sections[0]?.sites.map(s => s.id), ["legacy", "invalid"]);
 });
 
-test("空的顶层类别不展示，两块复用行业分组兜底", () => {
-  const sections = groupNeighborhoods([{ ...site("s1", "missing"), family: "same" }]);
+test("空类别不显示，未知行业保留兜底", () => {
+  const sections = groupNeighborhoods([{ ...site("x", "not-a-group"), tier: "candidate" }]);
   assert.equal(sections.length, 1);
-  assert.equal(sections[0]?.id, "same");
   assert.equal(sections[0]?.groups[0]?.id, "other");
-  assert.equal(groupNeighborhoods([]).length, 0);
+  assert.deepEqual(groupNeighborhoods([]), []);
 });

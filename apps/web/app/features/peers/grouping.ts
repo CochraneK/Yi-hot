@@ -40,9 +40,9 @@ export function groupSites(sites: PeerDirectoryEntry[]): PeerGroupView[] {
   return views;
 }
 
-/** 邻域一级分类；保留现有行业分组作为第二层，不新增页面或数据库结构。 */
+/** 使用价值分层。family 与 tier 正交，原行业 group 不变。 */
 export interface NeighborhoodSection {
-  id: "same" | "other";
+  id: "official" | "resource" | "candidate";
   label: string;
   note: string;
   sites: PeerDirectoryEntry[];
@@ -51,12 +51,13 @@ export interface NeighborhoodSection {
 
 export function groupNeighborhoods(sites: PeerDirectoryEntry[]): NeighborhoodSection[] {
   const kinds: Array<Pick<NeighborhoodSection, "id" | "label" | "note">> = [
-    { id: "same", label: "同系邻域", note: "同一套信息精选体系的行业站点，内容和判断由各站独立维护；日报与周报的「邻域」只从这些站摘编。" },
-    { id: "other", label: "其他邻域", note: "独立信息站、科研数据库与实用工具，只作方向参考，不参与摘编；也包含来源关系尚待核实的站点。" },
+    { id: "official", label: "正式邻域", note: "持续提供行业资讯，优先 RSS / API；同系与其他来源照常保留。" },
+    { id: "resource", label: "实用资源", note: "官方机会、科研数据库与专业资料，不要求按新闻节奏更新。" },
+    { id: "candidate", label: "候选信息", note: "有收费限制、静态快照、内容重合或尚未验证持续同步的线索，不作为实时新闻推荐。" },
   ];
-  return kinds.flatMap((kind) => {
-    // 老版 API 缺 family 时归入“其他”，绝不丢卡或错误宣称同系。
-    const entries = sites.filter((site) => (site.family === "same" ? "same" : "other") === kind.id);
+  return kinds.flatMap(kind => {
+    const entries = sites.filter(s =>
+      (s.tier === "official" || s.tier === "resource" ? s.tier : "candidate") === kind.id);
     return entries.length ? [{ ...kind, sites: entries, groups: groupSites(entries) }] : [];
   });
 }

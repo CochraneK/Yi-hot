@@ -342,6 +342,16 @@
   }
 }
 
+/* 邻域卡片：每张用这家站自己的颜色。--peer 由组件内联设置（industry/peers.ts 的 accent），
+   顶条与首字徽标走 .peer-mark，标题悬停走 .peer-link。
+   深色主题把色块统一提亮一档：#2f6390 这类中明度站在 #1a2226 上几乎看不出来。 */
+.peer-card .peer-link:hover {
+  color: var(--peer);
+}
+[data-theme="dark"] .peer-mark {
+  filter: brightness(1.3) saturate(0.92);
+}
+
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }

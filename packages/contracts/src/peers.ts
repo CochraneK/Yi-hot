@@ -10,6 +10,8 @@ export interface PeerDirectoryEntry {
   url: string;
   /** 一句话方向。来自 industry/peers.ts，改文案不用改页面。 */
   note: string;
+  /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */
+  accent: string;
   /** 最近一次抓取是否成功；从没抓过是 null（不是失败）。 */
   ok: boolean | null;
   /** 最近一次抓取时间，ISO 串。 */

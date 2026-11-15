@@ -9,8 +9,11 @@
 //   3. 站点活着。
 // 只有 2 没有 1 的站留在表里但 strategy 标记为 "none"，避免每天空跑；恢复出口时改一个字段即可。
 //
+// 名录来源不只自己找：上游 GitHub Discussions 的 #306（用 AIHOT 做了站？在这里登记一下）和
+// #284 的「社区改造清单（16 个站）」是主要线索。补站前先按上面三条实测，别只看名单。
+//
 // 数组顺序是**同分时的默认顺序**，也是周报/月报（名额多）的呈现顺序：先和公益读者最近的
-// （心理精神医学、环保双碳），再到科技、商业、学术。
+// （心理精神医学、环保双碳、医药生信），再到科技、商业、安全。
 // 日报只有 3 个名额，若固定按这个顺序取，第 4 家以后永远轮不上，所以日报按「近期最少出现」
 // 轮换（见 packages/backend/src/peers/select.ts 的 rotationOrder）。
 // 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
@@ -21,6 +24,16 @@ export interface PeerSite {
   url: string;
   /** 一句话方向，显示在版块里，让读者知道这是哪个领域。 */
   note: string;
+  /**
+   * 这家站的身份色，用在目录页的顶条与首字徽标上。
+   *
+   * 为什么要有：十几张卡片顶条全是同一个品牌红时，卡片之间没有任何可抓的差别，看上去像
+   * 同一个模块重复了十几遍。每站一色之后，读者第二次来能靠颜色认站，不用逐张读名字。
+   * 取色规则：色相沿环均匀铺开、饱和度压在 45% 上下、明度 40–48%，这样十几色并排还是一套，
+   * 不会花；深色主题由 app.css 的 .peer-accent 统一提亮，不用在这里维护第二套值。
+   * 新站选了跟邻居太近的颜色，比没色更糟——先看一圈现有色相再定。
+   */
+  accent: string;
   /**
    * api  = 有标准 /api/v1 接口（优先 items，退回 dailies）
    * rss  = 只有 RSS
@@ -37,6 +50,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "PsyHOT",
     url: "https://psyhot.cn",
     note: "心理学与精神医学，学界与业界双视角",
+    accent: "#4a5a9c",
     strategy: "api",
     enabled: true,
   },
@@ -45,6 +59,17 @@ export const PEER_SITES: PeerSite[] = [
     name: "青砚",
     url: "https://qingyannews.cn",
     note: "环保与双碳",
+    accent: "#2f7a55",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    // #306 登记，2026-11-15 实测 /api/v1/items 标准、feed.xml 可用。
+    id: "bioinfosoul",
+    name: "生信之灵",
+    url: "https://bioinfosoul.com",
+    note: "生信与 AI 制药，科研进展与临床审批",
+    accent: "#5f7d2a",
     strategy: "api",
     enabled: true,
   },
@@ -53,6 +78,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "大厂观察",
     url: "https://innews.site",
     note: "互联网大厂动态与职场信息",
+    accent: "#b2562c",
     strategy: "api",
     enabled: true,
   },
@@ -61,6 +87,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "品牌AI外刊",
     url: "https://news.sevenailab.com",
     note: "海外品牌营销与 AI 带来的变化",
+    accent: "#744a8e",
     strategy: "rss",
     enabled: true,
   },
@@ -69,6 +96,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "RoboHot",
     url: "https://robohot.news",
     note: "机器人产业，面向研发者与准备入行的人",
+    accent: "#2a7480",
     strategy: "api",
     enabled: true,
   },
@@ -77,6 +105,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "MediaStack",
     url: "https://mediastack.work",
     note: "音视频技术情报",
+    accent: "#2f6390",
     strategy: "api",
     enabled: true,
   },
@@ -85,6 +114,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "FilmTechNews",
     url: "https://filmtech.lumenghe.com",
     note: "影视技术日报",
+    accent: "#8f3a44",
     strategy: "api",
     enabled: true,
   },
@@ -93,7 +123,38 @@ export const PEER_SITES: PeerSite[] = [
     name: "AI4Math Radar",
     url: "https://charlie-wang-03.github.io/ai4math-radar/",
     note: "AI for Mathematics 研究动态",
+    accent: "#3f7a3f",
     strategy: "rss",
+    enabled: true,
+  },
+  {
+    // #254 登记，2026-11-15 实测 /api/v1/items 标准。
+    id: "foxnan",
+    name: "AI快讯",
+    url: "https://hot.foxnan.com",
+    note: "AI 新闻与每日动态",
+    accent: "#2f7fa8",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    // #98 登记，只有 Atom feed（/api/v1/* 全 404），feed 的 entry link 直接是原文地址。
+    id: "xabcnews",
+    name: "XABC News",
+    url: "https://xabcnews.com",
+    note: "AI、开发者与前沿科技的全网热点",
+    accent: "#8a6a2a",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 实测 /api/v1/items 标准，方向是漏洞情报。
+    id: "vulnhot",
+    name: "VulnHOT",
+    url: "https://vulnhot.com",
+    note: "漏洞情报与安全事件",
+    accent: "#8c3a72",
+    strategy: "api",
     enabled: true,
   },
   {
@@ -103,6 +164,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "拾玖跨境资讯",
     url: "https://news.blues19.com",
     note: "跨境电商，按平台政策与运营重建了主题体系",
+    accent: "#5a4a9e",
     strategy: "api",
     enabled: true,
   },
@@ -112,6 +174,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "营销通鉴 · 平台动态",
     url: "https://yingxiaoclub.com/news",
     note: "营销平台的规则变化与新功能早报",
+    accent: "#7a7a72",
     strategy: "none",
     enabled: false,
   },

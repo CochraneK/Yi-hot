@@ -62,6 +62,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
       name: p.name,
       url: p.url,
       note: p.note,
+      accent: p.accent,
       ok: st ? st.ok : null,
       checkedAt: st ? st.checked_at.toISOString() : null,
       items: counts.get(p.id) ?? 0,

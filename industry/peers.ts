@@ -421,6 +421,97 @@ export const PEER_SITES: PeerSite[] = [
     strategy: "rss",
     enabled: true,
   },
+  {
+    // 2026-11-15 官网有 NGO 招聘与公益资源；/feed.xml 和 /rss.xml 均未提供可用内容
+    id: "cdb-ngo",
+    name: "中国发展简报",
+    url: "https://www.chinadevelopmentbrief.org.cn/",
+    note: "公益招聘、资助招标、机构动态与专业培训",
+    group: "public",
+    accent: "#4b7a67",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 新闻公开可读；近期条目到 2026-06；没有经核实的稳定 RSS，不能声称每日更新
+    id: "foundation-center",
+    name: "基金会中心网",
+    url: "https://foundationcenter.org.cn/news",
+    note: "基金会信息披露、慈善数据与合规研究",
+    group: "public",
+    accent: "#627993",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网及 WordPress /feed/ 实测有 2026-11 更新；政策解释非官方版本
+    id: "china-law-translate",
+    name: "China Law Translate",
+    url: "https://www.chinalawtranslate.com/",
+    note: "中国法律政策的非官方翻译、修法跟踪与分析",
+    group: "public",
+    accent: "#8b624c",
+    strategy: "rss",
+    feedPath: "/feed/",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官方 Jobs 列表公开可浏览；/rss.xml 是全站 Updates，不是职位专区 RSS
+    id: "reliefweb-jobs",
+    name: "ReliefWeb · 职位",
+    url: "https://reliefweb.int/jobs",
+    note: "国际公益、人道援助岗位、咨询与合作征集",
+    group: "biz",
+    accent: "#486f8b",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网展示多国有效征集和资格筛选；/feed.xml 404，官方申请资格与截止日仍需逐条复核
+    id: "funding-radar",
+    name: "Funding Radar",
+    url: "https://fundingradar.eu/",
+    note: "跨国科研项目资助征集与申请资格预筛",
+    group: "tech",
+    accent: "#617f54",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开科研检索与机构关系数据可读；不是经过质量评分的研究证据摘要
+    id: "openalex-research",
+    name: "OpenAlex",
+    url: "https://openalex.org/",
+    note: "全球科研文献、机构、作者与研究关联检索",
+    group: "tech",
+    accent: "#537d9c",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网及 /feed/ 有 11 月政府采购透明度文章；监督线索不等于违法事实
+    id: "open-contracting",
+    name: "Open Contracting",
+    url: "https://www.open-contracting.org/",
+    note: "公共采购透明度、开放合同数据与治理案例",
+    group: "public",
+    accent: "#967c45",
+    strategy: "rss",
+    feedPath: "/feed/",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开 Atom /atom.xml 含最近研究条目和日期，统计指标不等于地方因果推断
+    id: "our-world-in-data",
+    name: "Our World in Data",
+    url: "https://ourworldindata.org/",
+    note: "公共卫生、教育、贫困与环境的开放数据和研究",
+    group: "public",
+    accent: "#70799a",
+    strategy: "rss",
+    feedPath: "/atom.xml",
+    enabled: true,
+  },
 ];
 
 /** 每期条数：日报只是「顺带一看」，周月报可以铺开成一小版。 */
@@ -429,5 +520,5 @@ export const PEER_LIMITS = { daily: 3, weekly: 8, monthly: 15 } as const;
 /** 版块名与导读文案。改这里不用改渲染代码。 */
 export const PEER_SECTION = {
   label: "邻域",
-  note: "以下条目来自同框架的姊妹站，由它们各自的编辑系统筛选，不是本报的判断；标题可直达原站，署名与原文链接一并保留。",
+  note: "邻域汇集不同领域的公开信息站、研究数据库和行业工具。可同步文章来自原站，其他仅提供浏览入口；任何观点、数据与建议均需回到原始来源核实。",
 } as const;

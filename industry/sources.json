@@ -10028,6 +10028,151 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": false
+    },
+    {
+      "id": "rss-peer-china-law-translate",
+      "name": "China Law Translate · 非官方法规观察（跨域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.chinalawtranslate.com/feed/",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "child",
+            "children",
+            "minor",
+            "nonprofit",
+            "charity",
+            "welfare",
+            "education",
+            "social work",
+            "health",
+            "mental",
+            "privacy",
+            "civil society",
+            "public participation",
+            "public interest",
+            "rights",
+            "儿童",
+            "未成年"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "政策法规",
+        "未成年人保护"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-open-contracting",
+      "name": "Open Contracting · 公共采购透明度（跨域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.open-contracting.org/feed/",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "child",
+            "education",
+            "health",
+            "nonprofit",
+            "ngo",
+            "social",
+            "procurement",
+            "government",
+            "transparency",
+            "corruption",
+            "accountability",
+            "risk",
+            "open data",
+            "public spending"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "公共采购",
+        "社会治理"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-our-world-in-data",
+      "name": "Our World in Data · 开放研究数据（跨域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://ourworldindata.org/atom.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "child",
+            "children",
+            "education",
+            "health",
+            "mental",
+            "poverty",
+            "inequality",
+            "population",
+            "disability",
+            "nutrition",
+            "climate",
+            "humanitarian",
+            "evidence",
+            "wellbeing",
+            "policy"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "科学研究",
+        "公共政策证据"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

@@ -247,7 +247,7 @@ test("本轮 3 个新 RSS 邻域源与关闭的独立技术信源一一对应", 
     assert.ok(src.config._aihot.initialBackfillLimit <= 4);
     assert.ok(src.config.ingestNoiseFilter.requireMarkers.length >= 12);
   }
-  assert.equal(PEER_SITES.length, 31, "新增站点不应覆盖其他 Agent 的邻域登记");
+  assert.ok(PEER_SITES.length >= 39, "新增站点不应覆盖其他 Agent 的邻域登记");
 });
 
 test("研究、项目与行业工作台仅浏览站不执行第三方抓取", async () => {
@@ -263,4 +263,71 @@ test("研究、项目与行业工作台仅浏览站不执行第三方抓取", as
     assert.ok(!sources.some((x: {id: string}) => x.id === `rss-peer-${id}`));
     assert.deepEqual(await fetchPeer(p), { via: "none", items: [], error: null });
   }
+});
+
+test("公共领域 8 家新邻域可访问的站点配置遵循 RSS/仅浏览两套边界", async () => {
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const live = [
+    ["china-law-translate", "rss-peer-china-law-translate", "https://www.chinalawtranslate.com/feed/"],
+    ["open-contracting", "rss-peer-open-contracting", "https://www.open-contracting.org/feed/"],
+    ["our-world-in-data", "rss-peer-our-world-in-data", "https://ourworldindata.org/atom.xml"],
+  ];
+  for (const [peerId, rssId, url] of live) {
+    const peer = PEER_SITES.find(p => p.id === peerId);
+    const seed = sources.find((s: {id: string}) => s.id === rssId);
+    assert.ok(peer, peerId);
+    assert.equal(peer.enabled, true);
+    assert.equal(peer.strategy, "rss");
+    assert.equal(peerFeedUrl(peer), url);
+    assert.ok(seed, rssId);
+    assert.equal(seed.kind, "rss");
+    assert.equal(seed.config.feedUrl, url);
+    assert.equal(seed.enabled, false, "技术 RSS 应默认关闭，不能混入主新闻付费流程");
+    assert.equal(seed.participation_mode, "isolated");
+    assert.equal(seed.site_fulltext, false);
+    assert.equal(seed.syndicate_fulltext, false);
+    assert.ok(seed.config._aihot.initialBackfillLimit <= 4);
+  }
+  for (const id of ["cdb-ngo", "foundation-center", "reliefweb-jobs", "funding-radar", "openalex-research"]) {
+    const peer = PEER_SITES.find(p => p.id === id);
+    assert.ok(peer, id);
+    assert.equal(peer.enabled, true);
+    assert.equal(peer.strategy, "link");
+    assert.ok(peer.url.startsWith("https://"));
+    assert.deepEqual(await fetchPeer(peer), { via: "none", items: [], error: null });
+    assert.ok(!sources.some((s: {id: string}) => s.id === `rss-peer-${id}`));
+  }
+  assert.equal(new Set(PEER_SITES.map(x => x.id)).size, PEER_SITES.length);
+  assert.equal(new Set(sources.map((x: {id: string}) => x.id)).size, sources.length);
+});
+
+test("同源 HTTPS 允许 /feed/ 与 /atom.xml，但保持路径校验", () => {
+  const host = "https://www.chinalawtranslate.com/";
+  assert.equal(peerFeedUrl({ url: host, feedPath: "/feed/" }),
+    "https://www.chinalawtranslate.com/feed/");
+  assert.equal(peerFeedUrl({ url: "https://ourworldindata.org/", feedPath: "/atom.xml" }),
+    "https://ourworldindata.org/atom.xml");
+  for (const path of ["//evil/", "/foo/../", "/foo//bar", "/feed/?url=evil", "/feed/#top"]) {
+    assert.throws(() => peerFeedUrl({ url: host, feedPath: path }), path);
+  }
+});
+
+test("Atom feed with self+alternate links retains the article, not self API URL", () => {
+  const atom = `<?xml version="1.0" encoding="utf-8"?>
+  <feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Our World in Data</title>
+    <entry>
+      <id>https://ourworldindata.org/article-01</id>
+      <title>New evidence about children's education</title>
+      <link rel="self" href="https://ourworldindata.org/atom.xml?article=01"/>
+      <link rel="alternate" type="text/html" href="https://ourworldindata.org/article-01"/>
+      <updated>2026-11-02T12:00:00Z</updated>
+      <summary type="html">Research data and explanations</summary>
+    </entry>
+  </feed>`;
+  const parsed = parseFeed(atom);
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0]?.itemUrl, "https://ourworldindata.org/article-01");
+  assert.match(parsed[0]?.title || "", /children/);
+  assert.equal(parsed[0]?.publishedAt, "2026-11-02T12:00:00.000Z");
 });

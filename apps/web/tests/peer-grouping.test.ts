@@ -145,7 +145,7 @@ test("空查询保持原顺序和引用，多个关键词必须同时匹配", ()
   ];
   assert.equal(filterPeerSites(entries, ""), entries);
   assert.equal(filterPeerSites(entries, " \t "), entries);
-  assert.deepEqual(filterPeerSites(entries, "MENTAL 心理").map(e => e.id), ["first"]);
+  assert.deepEqual(filterPeerSites(entries, "MENTAL AI").map(e => e.id), ["first"]);
   assert.deepEqual(filterPeerSites(entries, "AI 产业").map(e => e.id), ["second"]);
   assert.deepEqual(filterPeerSites(entries, "没找到"), []);
   assert.deepEqual(filterPeerSites(entries, "AI").map(e => e.id), ["first", "second"]);

@@ -3094,3 +3094,10 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 新增「数学教育 HOT」与「神灯AI热点」两个同系浏览入口，登记从 49 到 **51 项（same 33 / other 18，含原有关闭项）**。前者是认知科学、学习科学与 AI 数学教育的静态周报，最新索引为 11 月 9 日；后者为本地采编后导出的 AI 综合阅读站。两站 RSS 均在本日实际读取并解析（12 / 50 条），但本轮只记录地址，目录继续 `strategy=link`，不新增采集 Seed、文章轮转或模型费用。神灯正式域名是 `shendeng.news`，与仓库 `shengdeng.news` 拼写不同，不应擅自纠正。
 
 本轮去重保存 58 条候选核验记录，区分明确改造、默认配置、未核实地址与 HTTP 失败；jobhot / RoboTaxi 503、ElectroRadar 404、AIFocus 403 均未计为可用站，不凭仓库名虚增行业覆盖。证据、RSS 地址、候选与回滚见 [第七轮记录](docs/PEER_SAME_FAMILY_DISCOVERY_ROUND7_2026-11-15.md) 及其机器清单。保留既有用户配置，生产同步仍需单独部署验收。
+
+
+## 邻域第八轮：RSS 优先治理（2026-11-16）
+
+用户确认长期产品规则：**能进 RSS 的尽量进 RSS，减少只供浏览、无法结构化获取的邻域卡片**。本轮实际读取九个 RSS 端点后，将 DesignRadar、数学教育 HOT、神灯AI热点、ReliefWeb Jobs 四家由 `link` 改为 `rss`；新增 UNICEF Data、ICNL、联合国 SDG 新闻、联合国日内瓦新闻、GDACS 五个 `rss` 邻域。名录 51→**56 项（same 33 / other 23，含关闭项）**；独立主站 RSS Seed 183→**192 条（新增 9 条，全部 disabled、isolated、禁全文）**。邻域 RSS 同步不经过模型，主站 Seed 默认关闭，不产生新的主新闻模型处理成本。
+
+候选未证实具体 Feed 的 UNGM/CORDIS/GDELT 不直接进入目录。GDACS 源端 GeoRSS 可供后续新闻地图研究，但本轮未处理坐标或 IP 定位。真实 XML 端点、日期、验证方法、版权、测试、部署和回滚详见 [第八轮 RSS 优先台账](docs/PEER_RSS_FIRST_ROUND8_2026-11-16.md)。GitHub 合并、CI 全绿与腾讯云生产环境刷新仍须分别核实。

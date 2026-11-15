@@ -10553,7 +10553,7 @@
       "name": "GDACS · 全球灾害预警 · 邻域 RSS（待审）",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://www.gdacs.org/xml/rss.xml",
+        "feedUrl": "https://www.gdacs.org/contentdata/xml/rss_homepage.xml",
         "ingestNoiseFilter": {
           "requireMarkers": [
             "humanitarian",

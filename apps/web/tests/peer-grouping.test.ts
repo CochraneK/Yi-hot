@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { PeerDirectoryEntry } from "@aihot/contracts/peers";
-import { groupSites } from "../app/features/peers/grouping.ts";
+import { groupNeighborhoods, groupSites } from "../app/features/peers/grouping.ts";
 
 function site(id: string, group: string): PeerDirectoryEntry {
   return {
@@ -61,4 +61,40 @@ test("全部未归类时只有一组「其他」", () => {
   const groups = groupSites([site("x", ""), site("y", "")]);
   assert.equal(groups.length, 1);
   assert.equal(groups[0].label, "其他");
+});
+
+test("顶层固定先同系邻域后其他邻域，原有行业方向保留且不会丢站", () => {
+  const entries: PeerDirectoryEntry[] = [
+    { ...site("o1", "tech"), family: "other" },
+    { ...site("s1", "biz"), family: "same" },
+    { ...site("s2", "health"), family: "same" },
+    { ...site("o2", "public"), family: "other" },
+    { ...site("s3", "biz"), family: "same" },
+  ];
+  const sections = groupNeighborhoods(entries);
+  assert.deepEqual(sections.map((s) => s.label), ["同系邻域", "其他邻域"]);
+  assert.deepEqual(sections.map((s) => s.id), ["same", "other"]);
+  assert.deepEqual(sections[0]?.groups.map((g) => g.id), ["health", "biz"]);
+  assert.deepEqual(sections[0]?.groups.find((g) => g.id === "biz")?.sites.map((s) => s.id), ["s1", "s3"]);
+  assert.deepEqual(sections[1]?.groups.map((g) => g.id), ["public", "tech"]);
+  const flattened = sections.flatMap((section) => section.groups.flatMap((group) => group.sites.map((s) => s.id)));
+  assert.equal(new Set(flattened).size, entries.length);
+  assert.deepEqual([...flattened].sort(), entries.map((e) => e.id).sort());
+});
+
+test("旧 API 无 family / 非法 family 时不丢卡、不错误归入同系", () => {
+  const legacy = site("legacy", "ai");
+  const invalid = { ...site("unknown", "biz"), family: "unexpected" as "other" };
+  const sections = groupNeighborhoods([legacy, invalid]);
+  assert.equal(sections.length, 1);
+  assert.equal(sections[0]?.id, "other");
+  assert.deepEqual(sections[0]?.sites.map((s) => s.id), ["legacy", "unknown"]);
+});
+
+test("空的顶层类别不展示，两块复用行业分组兜底", () => {
+  const sections = groupNeighborhoods([{ ...site("s1", "missing"), family: "same" }]);
+  assert.equal(sections.length, 1);
+  assert.equal(sections[0]?.id, "same");
+  assert.equal(sections[0]?.groups[0]?.id, "other");
+  assert.equal(groupNeighborhoods([]).length, 0);
 });

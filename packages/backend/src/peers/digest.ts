@@ -26,6 +26,15 @@ const SLACK_DAYS: Record<ReportKind, number> = { daily: 2, weekly: 3, monthly: 5
 /** 回看期数：日报看前 9 期（约 3 天的名额），周报前 3 期，月报前 1 期。 */
 const RECENT_ISSUES: Record<ReportKind, number> = { daily: 9, weekly: 3, monthly: 1 };
 
+/**
+ * 「邻域」版块只摘同系站（PeerFamily = "same"）。
+ *
+ * 别的框架、机构或团队自建的站（family="other"）虽然也列在目录页上、也会被抓下来，
+ * 但它们不是这套编辑系统的一部分：摘进来等于替别人做选稿判断，还会把名额从真正的
+ * 姊妹站手里挤掉。目录页把两类分开展示，报告里就只留同系——两处口径必须一致。
+ */
+const SAME_FAMILY_IDS = PEER_SITES.filter((p) => p.family === "same").map((p) => p.id);
+
 interface Row {
   peer_id: string;
   item_id: string;
@@ -85,6 +94,7 @@ export async function peerDigest(kind: ReportKind, key: string, start: Date, end
         FROM peer_items
         WHERE coalesce(published_at, fetched_at) >= ${from}
           AND coalesce(published_at, fetched_at) < ${end}
+          AND peer_id = ANY(${SAME_FAMILY_IDS})
         ORDER BY peer_id, score DESC NULLS LAST, coalesce(published_at, fetched_at) DESC`,
       recentIssues(kind, key),
     ]);
@@ -114,7 +124,7 @@ export async function peerDigest(kind: ReportKind, key: string, start: Date, end
       groups.set(r.peer_id, list);
     }
     // 出场顺序：近期被引用次数少的先上，同次数按登记顺序。这样名额少的时候不会总是同几家。
-    const order = rotationOrder(PEER_SITES.map((p) => p.id), recent.count);
+    const order = rotationOrder(SAME_FAMILY_IDS, recent.count);
     return interleavePicks(groups, order, limit, recent.used);
   } catch (error) {
     console.error("[peers] 取稿失败，本期不出邻域", error);

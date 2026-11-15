@@ -30,8 +30,8 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <Kicker>邻域</Kicker>
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
-          这里收录不同领域的信息站和公开专题。可同步的站展示最近条目；仅浏览的站只提供官网入口，不假装有实时更新。选什么、怎么评由各站自己决定；
-          日报与周报里的「邻域」版块，会引用可同步站点的精选内容。下面先分同系与其他，再按行业方向归类。
+          这里收录不同领域的信息站和公开专题。可同步的站展示最近条目；仅浏览的站只提供官网入口，不假装有实时更新。选什么、怎么评由各站自己决定。
+          下面先分同系与其他：只有同系邻域会进日报与周报的「邻域」版块，其他邻域只作方向参考。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
           <span>

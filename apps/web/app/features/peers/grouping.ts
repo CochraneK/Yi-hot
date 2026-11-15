@@ -51,8 +51,8 @@ export interface NeighborhoodSection {
 
 export function groupNeighborhoods(sites: PeerDirectoryEntry[]): NeighborhoodSection[] {
   const kinds: Array<Pick<NeighborhoodSection, "id" | "label" | "note">> = [
-    { id: "same", label: "同系邻域", note: "相近信息精选体系的行业站点，内容和判断由各站独立维护。" },
-    { id: "other", label: "其他邻域", note: "独立信息站、科研数据库与实用工具；也包含来源关系尚待核实的站点。" },
+    { id: "same", label: "同系邻域", note: "同一套信息精选体系的行业站点，内容和判断由各站独立维护；日报与周报的「邻域」只从这些站摘编。" },
+    { id: "other", label: "其他邻域", note: "独立信息站、科研数据库与实用工具，只作方向参考，不参与摘编；也包含来源关系尚待核实的站点。" },
   ];
   return kinds.flatMap((kind) => {
     // 老版 API 缺 family 时归入“其他”，绝不丢卡或错误宣称同系。

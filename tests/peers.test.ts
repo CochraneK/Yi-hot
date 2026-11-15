@@ -405,7 +405,7 @@ test("第八轮 RSS 优先：9 条实测 Feed 与独立停用 Seed 一一对应"
     ["icnl", "https://www.icnl.org/feed/"],
     ["un-news-sdgs", "https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml"],
     ["un-geneva-news", "https://www.ungeneva.org/news-media/press-items-list/rss.xml"],
-    ["gdacs", "https://www.gdacs.org/xml/rss.xml"],
+    ["gdacs", "https://www.gdacs.org/contentdata/xml/rss_homepage.xml"],
   ];
   const seeds = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
   assert.equal(PEER_SITES.length, 56);

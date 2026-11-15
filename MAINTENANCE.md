@@ -3066,3 +3066,12 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 技术修复：`packages/backend/src/peers/refresh.ts` 现在支持经过校验的 `/feed/` 尾斜杠，并为 Atom 多链接选择 `rel=alternate` 的文章地址，避免误用 Feed 自引用链接；向后兼容旧 `/feed.xml`。新增 `tests/peers.test.ts` 的独立来源开关、域名路径校验和 Atom 测试。相关网站地址、验证日期、搜索方法、停用和回滚详见 [第四轮专项审查](docs/PEER_DISCOVERY_PUBLIC_INTELLIGENCE_ROUND4_2026-11-15.md)。
 
 发布纪律：GitHub PR 与 CI 通过后才考虑合并；合并不等于腾讯云已更新，部署后必须核实 `/peers` 新卡片及抓取状态。任何涉及法律、资金、采购、就业资格的建议必须核对原发布者；非官方法规翻译不是正式法律文本，公共采购异常不是腐败证据。不要绕过登录、验证码或内容许可。回滚本轮新增 8 个 PeerSite、3 个关闭的 Seed 及 Parser 兼容改动，保留原有数据、其他 Agent 提交和全部用户状态。
+
+
+## 邻域拆为「同系邻域 / 其他邻域」（2026-11-15）
+
+按照用户要求，将公开邻域目录 `/peers` 的顶层改为**「同系邻域」与「其他邻域」**，不在页面使用“AIHOT 衍生”标签；原有五类行业方向作为各块的二级分组，卡片样式和“仅浏览”状态不变，页头只保留两个一级跳转链接。唯一分类事实源为 `industry/peers.ts` 新增的 `PeerSite.family: same|other`，**39 家都显式归类**，目前 same 24 / other 15（含一条原本关闭的站点，页面实际显示数以 API 为准）。同系是技术/流程谱系，不是内容准确性评级；没有可验证归属的站一律放“其他”，并允许之后复核纠正。
+
+`packages/backend/src/peers/directory.ts` 将 `family` 随卡片透传；`packages/contracts/src/peers.ts` 加可选字段兼容旧 API。网页 `apps/web/app/features/peers/grouping.ts` 的 `groupNeighborhoods` 复用已有 `groupSites`，旧数据缺少 `family` 时归“其他”避免丢失。新增 `apps/web/tests/peer-grouping.test.ts` 与 `tests/peers.test.ts` 的分类、空分组、兼容性回归。详细语义、证据、上线验收和回滚见 [PEER_NEIGHBORHOOD_TWO_FAMILIES_2026-11-15.md](docs/PEER_NEIGHBORHOOD_TWO_FAMILIES_2026-11-15.md)。
+
+本次无数据库迁移、采集规则变更、RSS 开关、主新闻发布变更、额外模型费用或腾讯云操作。须 GitHub CI 全绿、无并发冲突后再合并；Git 合并不等于生产部署，部署后需人工打开 `/peers` 检查一级标题、两个跳转及手机卡片布局。回滚可恢复旧 `groupSites` 渲染并移除 `family` 显示，数据无需删改。

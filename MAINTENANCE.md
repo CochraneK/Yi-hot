@@ -3028,3 +3028,12 @@ GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的�
 `data/source-registry/opportunity-candidates-2026-11-15.json` 另列 8 个待审入口，包括中国儿童中心、中国发展简报、政府采购、UNPP、PubMed、ReliefWeb、EU Funding 与 Google Alerts；**这份台账绝不能用现有 source seed 或批准导入程序批量启用**。官方网页不是 RSS；PubMed RSS 必须在检索后由官网实际生成，ReliefWeb API 需要批准 appname。对于需要验证码、登录或访问权限的服务不能绕过。
 
 复算验证：`node --test tests/opportunity-source-candidates.test.mjs` 和 `npm run sources:audit:check`，GitHub CI 也会在无网络的合成检查中跑前者。上线前依次完成采集权益、原始发布时间、报名/投标截止日期、申请主体资格、去重、用户工作价值和模型成本验证，灰度期间只保留内部候选而不公开。完整操作、文档来源和回滚方案见 [OPPORTUNITY_SOURCE_DISCOVERY_2026-11-15.md](docs/OPPORTUNITY_SOURCE_DISCOVERY_2026-11-15.md)。本次没有部署腾讯云、操作数据库、配置自动推送或改变生产计费。若要撤销只需移除这 6 个新 ID、候选台账与测试/说明。既有生产归档安全闸门 #21 不变。
+
+
+## 邻域与 RSS 来源分层扩展（2026-11-15）
+
+本轮从既有社区站、Fork 搜索线索与公开站点中筛选出两家真实可读的跨行业站：**URHOT（AI×用户研究）** `https://huangzhenhao90.github.io/ai-ux-research-hot/`、**聚身之家（机器人产业）** `https://www.aiman.world/robot-hot/`。这两家在 `industry/peers.ts` 作为**邻域目录**启用，仅通过既有 `peer_items` 缓存更新，不走下游模型分析；同时在 `industry/sources.json` 另登记两个 **`kind=rss`** 的隔离源 `rss-peer-urhot` / `rss-peer-aiman-robot-hot`，**全部 `enabled=false`**。RSS 可能触发另一路模型分析、增加成本，因此不能因为邻域目录启用就同步启用 RSS 信源。
+
+实测有效订阅地址为 `https://huangzhenhao90.github.io/ai-ux-research-hot/rss.xml` 和 `https://www.aiman.world/robot-hot/feed.xml`，都不是默认根目录 `/feed.xml`。邻域抓取器在 `PeerSite.feedPath` 显式允许同源 HTTPS 路径，严格拒绝跨主机路径等输入；现有站保持原来默认 RSS 行为。完整网址验证、未采纳候选（AIhot.space 同质化、NewsIQ 暂无可读 feed）、测试、上线与回滚见 [PEER_DISCOVERY_DUAL_RSS_2026-11-15.md](docs/PEER_DISCOVERY_DUAL_RSS_2026-11-15.md)。
+
+验收：`node --test tests/peers.test.ts`、`npm run typecheck`、GitHub CI；部署后现场核对 `/peers` 两张卡片与后台 `peer_status`，RSS 若需采集先在后台单源 Preview、审核授权与成本后独立开启。本次 GitHub 修改不等于腾讯云已重建容器，也不包含任何 DB 迁移、定时任务开关、密钥或付费配置变更。回滚仅撤销两条邻域对象和两条 RSS seed，并恢复抓取器代码；不要误删现有 peer 缓存或用户历史数据。

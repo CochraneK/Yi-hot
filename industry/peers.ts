@@ -47,6 +47,8 @@ export interface PeerSite {
    * none = 目前没有任何机器可读出口
    */
   strategy: "api" | "rss" | "none";
+  /** RSS-only sites may use /rss.xml or a subdirectory instead of /feed.xml. */
+  feedPath?: string;
   /** 目录页的分组（见下方 PEER_GROUPS）。加站时挑一个已有组，别为一家站新开一组。 */
   group: PeerGroupId;
   enabled: boolean;
@@ -87,6 +89,18 @@ export const PEER_SITES: PeerSite[] = [
     group: "health",
     accent: "#4a5a9c",
     strategy: "api",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实：真实 RSS 在 /ai-ux-research-hot/rss.xml；/URHOT/ 已失效。
+    id: "urhot",
+    name: "URHOT",
+    url: "https://huangzhenhao90.github.io/ai-ux-research-hot/",
+    note: "AI × 用户研究，HCI 方法、工具与设计研究",
+    group: "tech",
+    accent: "#775a83",
+    strategy: "rss",
+    feedPath: "/ai-ux-research-hot/rss.xml",
     enabled: true,
   },
   {
@@ -140,6 +154,18 @@ export const PEER_SITES: PeerSite[] = [
     group: "biz",
     accent: "#744a8e",
     strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 核实：/robot-hot/feed.xml 可读；/robot-hot/rss.xml 不存在。
+    id: "aiman-robot-hot",
+    name: "聚身之家",
+    url: "https://www.aiman.world/robot-hot/",
+    note: "具身智能，机器人产业、研究与产品证据",
+    group: "tech",
+    accent: "#397680",
+    strategy: "rss",
+    feedPath: "/robot-hot/feed.xml",
     enabled: true,
   },
   {

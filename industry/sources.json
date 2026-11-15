@@ -9647,6 +9647,103 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": false
+    },
+    {
+      "id": "rss-peer-urhot",
+      "name": "URHOT·AI 与用户研究（候选 RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://huangzhenhao90.github.io/ai-ux-research-hot/rss.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "青少年",
+            "公益",
+            "无障碍",
+            "可及性",
+            "教育",
+            "公共服务",
+            "心理健康",
+            "心理",
+            "用户研究",
+            "质性研究",
+            "调查",
+            "访谈",
+            "临床",
+            "助残"
+          ],
+          "dropMarkers": [
+            "抽奖",
+            "彩票开奖",
+            "优惠券",
+            "博彩"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "邻域RSS",
+        "用户研究",
+        "HCI"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-aiman-robot-hot",
+      "name": "聚身之家·具身智能行业（候选 RSS）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.aiman.world/robot-hot/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "青少年",
+            "公益",
+            "无障碍",
+            "康复",
+            "辅助",
+            "医疗",
+            "照护",
+            "教育",
+            "社会工作",
+            "养老",
+            "残障",
+            "救援",
+            "医院"
+          ],
+          "dropMarkers": [
+            "抽奖",
+            "彩票开奖",
+            "优惠券",
+            "博彩"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 720,
+      "tags": [
+        "邻域RSS",
+        "机器人",
+        "行业研究"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

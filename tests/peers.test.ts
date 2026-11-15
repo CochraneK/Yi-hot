@@ -331,3 +331,22 @@ test("Atom feed with self+alternate links retains the article, not self API URL"
   assert.match(parsed[0]?.title || "", /children/);
   assert.equal(parsed[0]?.publishedAt, "2026-11-02T12:00:00.000Z");
 });
+
+test("所有邻域站点在唯一事实源中标有同系/其他归属，与行业分类正交", () => {
+  const same = PEER_SITES.filter(p => p.family === "same");
+  const other = PEER_SITES.filter(p => p.family === "other");
+  assert.equal(same.length + other.length, PEER_SITES.length, "不允许漏标、第三类或隐式同系");
+  assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
+  assert.ok(same.length > 0 && other.length > 0);
+  assert.equal(PEER_SITES.length, 39, "归类不应改变现有登记数量");
+  assert.equal(PEER_SITES.find(p => p.id === "urhot")?.family, "same",
+    "URHOT README explicitly credits adaptation from AIHOT selection pipeline");
+  assert.equal(PEER_SITES.find(p => p.id === "fai-lab")?.family, "same",
+    "FAI About publicly identifies the original open-source framework");
+  for (const id of ["cdb-ngo", "openalex-research", "foundation-center", "our-world-in-data"]) {
+    assert.equal(PEER_SITES.find(p => p.id === id)?.family, "other", id);
+  }
+  for (const p of PEER_SITES) {
+    assert.ok(["health", "public", "tech", "ai", "biz"].includes(p.group), p.id);
+  }
+});

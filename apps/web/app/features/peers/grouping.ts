@@ -40,6 +40,23 @@ export function groupSites(sites: PeerDirectoryEntry[]): PeerGroupView[] {
   return views;
 }
 
+/** 
+ * 页面级查找：兼容站名、方向说明、行业标签以及同系/其他属性。
+ * 不做网络搜索，不修改目录顺序，也不改变分类和采集策略。
+ */
+export function filterPeerSites(sites: PeerDirectoryEntry[], query: string): PeerDirectoryEntry[] {
+  const words = query.normalize("NFKC").trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return sites;
+  const groups = new Map<string, string>(PEER_GROUPS.map(g => [g.id, `${g.label} ${g.note}`]));
+  return sites.filter(site => {
+    const family = site.family === "same" ? "同系邻域" : "其他邻域";
+    const tier = site.tier === "resource" ? "实用资源" : site.tier === "candidate" ? "候选信息" : "正式邻域";
+    const haystack = [site.name, site.note, groups.get(site.group) ?? "", family, tier]
+      .join(" ").normalize("NFKC").toLocaleLowerCase();
+    return words.every(word => haystack.includes(word));
+  });
+}
+
 /** 使用价值分层。family 与 tier 正交，原行业 group 不变。 */
 export interface NeighborhoodFamily {
   id: "same" | "other";

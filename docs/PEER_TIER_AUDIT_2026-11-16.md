@@ -46,7 +46,7 @@
 
 1. GitHub CI：类型检查、`node --test tests/peers.test.ts`、Web build、Web Tests、PostgreSQL、Docker smoke；检查网站桌面和手机 UI。
 2. 目录：三层顺序、候选折叠、正式卡片保留同系/其他、RSS 和 API 维持不变、官方资源不会被标为实时日报。
-3. 上线：生产需重建 API/worker/web，确认 /peers 结构、52?（实际按 enabled）记录是否可见，以及无私人数据暴露；本 PR 不声称腾讯云已部署。
+3. 上线：生产需重建 API/worker/web，确认 /peers 结构、当前启用条目是否可见，以及无私人数据暴露；本 PR 不声称腾讯云已部署。
 4. 回滚：撤销 tier 和页面分类、时间提示，原 56 项登记、ID、历史缓存不删。
 
 下次定期检查建议加入新鲜度分布、实际新增文章数量与跨站原文 URL/事件重复率，并根据数据而非名称调整是否留在正式区。

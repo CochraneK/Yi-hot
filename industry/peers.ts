@@ -47,8 +47,35 @@ export interface PeerSite {
    * none = 目前没有任何机器可读出口
    */
   strategy: "api" | "rss" | "none";
+  /** 目录页的分组（见下方 PEER_GROUPS）。加站时挑一个已有组，别为一家站新开一组。 */
+  group: PeerGroupId;
   enabled: boolean;
 }
+
+/**
+ * 目录页的分组。
+ *
+ * 为什么要有：卡片从 10 张涨到 16 张之后，一页扫下来全是同构的方块，读者只能逐张读名字才知道
+ * 这家是干什么的。分组之后一眼能看出「这一屏都是技术方向」。
+ *
+ * 组的顺序就是页面的呈现顺序，沿用 PEER_SITES 的取舍：先和公益读者最近的（健康、公共），
+ * 再到技术、通用 AI 资讯、商业。**组只增不改名**——改标签不需要动代码，但一次改名会让老读者
+ * 找不到原来的位置。
+ *
+ * 一条硬约束：不要为了一家站单开一个组。一个组里只有一张卡时，分组反而比不分组更空。
+ */
+export type PeerGroupId = "health" | "public" | "tech" | "ai" | "biz";
+
+export const PEER_GROUPS: { id: PeerGroupId; label: string; note: string }[] = [
+  { id: "health", label: "健康与生命", note: "心理、精神医学与生物医药" },
+  { id: "public", label: "公共与环境", note: "环境、城市与公共事务" },
+  { id: "tech", label: "技术与安全", note: "工程、研究与漏洞情报" },
+  { id: "ai", label: "综合 AI 资讯", note: "不限行业，什么都谈" },
+  { id: "biz", label: "商业与职场", note: "公司、营销与跨境" },
+];
+
+/** 分不出来的时候统一落在这里，页面不会因为某个站漏填 group 就整块消失。 */
+export const PEER_GROUP_FALLBACK = { id: "other", label: "其他", note: "还没归类" } as const;
 
 /** 姊妹站清单。enabled=false 的仍显示在后台状态里，便于知道「为什么这一家没内容」。 */
 export const PEER_SITES: PeerSite[] = [
@@ -57,6 +84,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "PsyHOT",
     url: "https://psyhot.cn",
     note: "心理学与精神医学，学界与业界双视角",
+    group: "health",
     accent: "#4a5a9c",
     strategy: "api",
     enabled: true,
@@ -66,6 +94,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "青砚",
     url: "https://qingyannews.cn",
     note: "环保与双碳",
+    group: "public",
     accent: "#2f7a55",
     strategy: "api",
     enabled: true,
@@ -77,6 +106,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "MetroHot",
     url: "https://metrohot.oohforce.com",
     note: "城市轨道交通，地铁运营、TOD 开发与站点商业",
+    group: "public",
     accent: "#4a8a7a",
     strategy: "api",
     enabled: true,
@@ -87,6 +117,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "生信之灵",
     url: "https://bioinfosoul.com",
     note: "生信与 AI 制药，科研进展与临床审批",
+    group: "health",
     accent: "#5f7d2a",
     strategy: "api",
     enabled: true,
@@ -96,6 +127,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "大厂观察",
     url: "https://innews.site",
     note: "互联网大厂动态与职场信息",
+    group: "biz",
     accent: "#b2562c",
     strategy: "api",
     enabled: true,
@@ -105,6 +137,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "品牌AI外刊",
     url: "https://news.sevenailab.com",
     note: "海外品牌营销与 AI 带来的变化",
+    group: "biz",
     accent: "#744a8e",
     strategy: "rss",
     enabled: true,
@@ -114,6 +147,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "RoboHot",
     url: "https://robohot.news",
     note: "机器人产业，面向研发者与准备入行的人",
+    group: "tech",
     accent: "#2a7480",
     strategy: "api",
     enabled: true,
@@ -123,6 +157,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "MediaStack",
     url: "https://mediastack.work",
     note: "音视频技术情报",
+    group: "tech",
     accent: "#2f6390",
     strategy: "api",
     enabled: true,
@@ -132,6 +167,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "FilmTechNews",
     url: "https://filmtech.lumenghe.com",
     note: "影视技术日报",
+    group: "tech",
     accent: "#8f3a44",
     strategy: "api",
     enabled: true,
@@ -141,6 +177,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "AI4Math Radar",
     url: "https://charlie-wang-03.github.io/ai4math-radar/",
     note: "AI for Mathematics 研究动态",
+    group: "tech",
     accent: "#3f7a3f",
     strategy: "rss",
     enabled: true,
@@ -152,6 +189,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "日耕 AI 熱點",
     url: "https://aihot.dayacre.com",
     note: "AI 动态的繁中版，台湾读者的用语与视角",
+    group: "ai",
     accent: "#9a5a9a",
     strategy: "api",
     enabled: true,
@@ -162,6 +200,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "AI快讯",
     url: "https://hot.foxnan.com",
     note: "AI 新闻与每日动态",
+    group: "ai",
     accent: "#2f7fa8",
     strategy: "api",
     enabled: true,
@@ -172,6 +211,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "XABC News",
     url: "https://xabcnews.com",
     note: "AI、开发者与前沿科技的全网热点",
+    group: "ai",
     accent: "#8a6a2a",
     strategy: "rss",
     enabled: true,
@@ -182,6 +222,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "VulnHOT",
     url: "https://vulnhot.com",
     note: "漏洞情报与安全事件",
+    group: "tech",
     accent: "#8c3a72",
     strategy: "api",
     enabled: true,
@@ -193,6 +234,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "拾玖跨境资讯",
     url: "https://news.blues19.com",
     note: "跨境电商，按平台政策与运营重建了主题体系",
+    group: "biz",
     accent: "#5a4a9e",
     strategy: "api",
     enabled: true,
@@ -203,6 +245,7 @@ export const PEER_SITES: PeerSite[] = [
     name: "营销通鉴 · 平台动态",
     url: "https://yingxiaoclub.com/news",
     note: "营销平台的规则变化与新功能早报",
+    group: "biz",
     accent: "#7a7a72",
     strategy: "none",
     enabled: false,

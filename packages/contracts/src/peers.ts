@@ -10,6 +10,8 @@ export interface PeerDirectoryEntry {
   url: string;
   /** 一句话方向。来自 industry/peers.ts，改文案不用改页面。 */
   note: string;
+  /** 分组 id（industry/peers.ts 的 PeerGroupId）。页面拿它归堆，标签与顺序也来自那边。 */
+  group: string;
   /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */
   accent: string;
   /** 最近一次抓取是否成功；从没抓过是 null（不是失败）。 */

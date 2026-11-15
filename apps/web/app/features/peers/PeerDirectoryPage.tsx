@@ -99,7 +99,8 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
                 </>
               )}
             </section>
-          ))}        </div>
+          ))}
+        </div>
       )}
 
       <p className="mt-6 text-[12px] leading-[1.9] text-ink-4">

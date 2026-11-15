@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { SITE } from "@aihot/industry/site";
 import { FEATURES } from "@aihot/industry/features";
 import { CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
+import { RETRIEVAL_BOTS, SCRAPER_BOTS, TRAINING_BOTS } from "@aihot/contracts/bot-policy";
 import { REPO_ROOT, config } from "@aihot/backend/config";
 import { applyPublicHeaders, sendTextWithEtag } from "../http/respond.ts";
 import { sitemapXml } from "@aihot/backend/publication/sitemap";
@@ -55,12 +56,22 @@ async function sendFile(req: FastifyRequest, reply: FastifyReply, file: string, 
   return reply.send(entry.body);
 }
 
+/**
+ * robots.txt. 三组 UA 与 apps/web/server.ts 的 403 判定读同一份名单（@aihot/contracts/bot-policy），
+ * 声明和实际执行不会再分叉。分开写的代价上一版已经付过：这里禁了 ChatGPT-User，而 llms.txt 正在邀请
+ * Agent 来读——门口写着欢迎，报上名就被拒。
+ */
 function robotsTxt(): string {
-  const base = [
+  const group = (comment: string, agents: readonly string[], rules: string[]) =>
+    [`# ${comment}`, ...agents.map((agent) => `User-agent: ${agent}`), ...rules, ""].join("\n");
+
+  // 普通搜索引擎：正文照常收录，只把后台、私人和反垃圾页面藏起来——接口返回 JSON，进索引没有意义。
+  const search = [
     "User-agent: *",
+    // 内容对搜索与 AI 检索开放，但明确不作为训练语料；与下面三组 UA 表达的是同一件事。
+    "Content-Signal: search=yes, ai-input=yes, ai-train=no",
     "Allow: /",
     "",
-    // 仅对爬虫隐藏后台、私人和反垃圾页面；公开 API 与内容照常可被收录。
     "Disallow: /api/",
     "Disallow: /admin/",
     "Disallow: /starred",
@@ -69,34 +80,24 @@ function robotsTxt(): string {
     `Sitemap: ${config.siteUrl}/sitemap.xml`,
     "",
   ].join("\n");
-  // AI 训练 / 大规模抓取型爬虫：无论是否遵守 robots 协议，在应用层一律 403（见 web/server.ts）。
-  // 这里再写一遍，让“礼貌”的同类爬虫也能从 robots 层面自我收敛。
-  const aiBlock = [
-    "# AI 训练 / 大规模抓取爬虫：禁止收录本站内容",
-    "User-agent: GPTBot",
-    "User-agent: ChatGPT-User",
-    "User-agent: ClaudeBot",
-    "User-agent: anthropic-ai",
-    "User-agent: Claude-Web",
-    "User-agent: Google-Extended",
-    "User-agent: CCBot",
-    "User-agent: Bytespider",
-    "User-agent: omgilibot",
-    "User-agent: Omgili",
-    "User-agent: Applebot-Extended",
-    "User-agent: Diffbot",
-    "User-agent: PetalBot",
-    "User-agent: MJ12bot",
-    "User-agent: SemrushBot",
-    "User-agent: AhrefsBot",
-    "User-agent: DotBot",
-    "User-agent: DataForSeoBot",
-    "User-agent: BLEXBot",
-    "User-agent: Scrapy",
+
+  // 训练型读不到 llms.txt：一份站点地图只对放进来的人有用。
+  const training = group("训练型：禁止把本站内容用作训练语料（应用层同样返回 403）。", TRAINING_BOTS, ["Disallow: /"]);
+
+  // 检索型是「用户当场提问」才来的，不是训练。接口全开，页面仍不给：结构化数据走 API 就够了。
+  const retrieval = group("检索型：用户提问时现抓，可以读接口，不要去啃页面。", RETRIEVAL_BOTS, [
+    "Allow: /llms.txt",
+    "Allow: /api/",
+    "Allow: /feed",
+    "Allow: /openapi-v1.json",
+    "Allow: /sitemap.xml",
+    "Allow: /items/",
     "Disallow: /",
-    "",
-  ].join("\n");
-  return base + aiBlock;
+  ]);
+
+  const scrapers = group("SEO 审计与脚本库：与训练无关，同样是无节制的大规模抓取。", SCRAPER_BOTS, ["Disallow: /"]);
+
+  return search + training + retrieval + scrapers;
 }
 
 function manifest() {

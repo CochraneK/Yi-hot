@@ -8,6 +8,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createRequestListener } from "@react-router/node";
 import { isApiOwned, resolveRedirect } from "@aihot/contracts/http-policy";
+import { botBlocked } from "@aihot/contracts/bot-policy";
 
 const PORT = Number(process.env.WEB_PORT || process.env.PORT || 3000);
 const HOST = process.env.WEB_HOST || "127.0.0.1";
@@ -177,11 +178,10 @@ function pageCache(req: import("node:http").IncomingMessage, res: import("node:h
 const PREFIX = "/yihot";
 
 /**
- * AI 训练 / 抓取型爬虫的 User-Agent 特征。命中即在应用边缘返回 403，既不进入 SSR 也不会代理给 API。
- * 常规搜索引擎（Googlebot / Bingbot / Baiduspider 等）不在此列，仍可正常收录。robots.txt（由 API 提供）
- * 已声明禁止这些 UA；这里是不守规矩者的强制兜底。要收紧/放宽，改这一个正则即可。
+ * 爬虫名单与判定在 @aihot/contracts/bot-policy：robots.txt 的声明和这里的 403 读同一份，
+ * 两边不会再各写一遍然后对不上（上一版把 ChatGPT-User 也拒了，而 llms.txt 正在邀请 Agent 来读）。
+ * 常规搜索引擎（Googlebot / Bingbot / Baiduspider）不在名单里，照常收录。
  */
-const AI_CRAWLER_RE = /(?:gptbot|chatgpt-user|claudebot|anthropic-ai|claude-web|google-extended|ccbot|bytespider|omgilibot|omgili|applebot-extended|diffbot|petalbot|mj12bot|semrushbot|ahrefsbot|dotbot|dataforseobot|blexbot|scrapy|python-requests|python-urllib|go-http-client|java\/|okhttp|apache-httpclient|headlesschrome|phantomjs)/i;
 
 /** Optional second app on the same public IP, via an isolated Docker-only network.
  * Never expose the FutureMe container directly or reuse the YiHot API namespace.
@@ -207,20 +207,34 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   const pathname = qi >= 0 ? raw.slice(0, qi) : raw;
   const search = qi >= 0 ? raw.slice(qi) : "";
 
-  // 反爬：在请求进入路由 / 代理之前拦截已知 AI 训练与抓取型爬虫。robots.txt 自身放行，便于其读取策略。
-  const ua = req.headers["user-agent"] ?? "";
-  const isRobots = pathname === "/robots.txt" || pathname === PREFIX + "/robots.txt";
-  if (!isRobots && AI_CRAWLER_RE.test(ua)) {
-    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
-    res.end("Access denied");
-    return;
-  }
+  // 安全响应头：写在最前面，让 80 与 443、页面与接口拿到同一份。此前只有 443 的 Caddy 补过三个头，
+  // 而 canonical 现在写的正是 http——走 80 就一个都没有。两个入口必须一致，所以这一层归应用。
+  // 不加 script-src：SSR 页依赖内联的 hydration 脚本，收紧了直接白屏；这里只锁嵌入与设备能力。
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
+  res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
 
   // What the app sees: the path with the prefix stripped. Api-owned resources (api/, feed, icons,
   // sitemaps) stay reachable at the root too — browser fetches and api-generated absolute links hit
   // them there — so they are matched before anything below is moved under the prefix.
   const prefixed = pathname === PREFIX || pathname.startsWith(PREFIX + "/");
   const internal = prefixed ? (pathname.slice(PREFIX.length) || "/") : pathname;
+  /** 机器接口：API、feed、llms.txt、openapi、sitemap。检索型爬虫只在这里放行。 */
+  const agentSurface = isApiOwned(internal);
+
+  // 反训练的第二个信号：robots 是「请别来」，这个是「来了也别当训练语料」。只落在页面上——
+  // 接口本来就是给 Agent 用的，给 JSON 贴 noai 只会自相矛盾。
+  if (!agentSurface) res.setHeader("X-Robots-Tag", "noai, noimageai");
+
+  // 反爬：在请求进入路由 / 代理之前拦截。robots.txt 对所有 UA 放行，否则对方读不到「不许来」这句声明本身。
+  const ua = req.headers["user-agent"] ?? "";
+  if (internal !== "/robots.txt" && botBlocked(ua, agentSurface)) {
+    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+    res.end("Access denied");
+    return;
+  }
 
   // 「项目入口」的图标。门户页（portal.html）声明它，443 上的 Caddy 不单独接管，
   // 让这条路径落到兜底反代——80 与 443 于是共用这一份，不会出现两边不一致。

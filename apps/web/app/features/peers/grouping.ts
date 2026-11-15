@@ -41,23 +41,43 @@ export function groupSites(sites: PeerDirectoryEntry[]): PeerGroupView[] {
 }
 
 /** 使用价值分层。family 与 tier 正交，原行业 group 不变。 */
+export interface NeighborhoodFamily {
+  id: "same" | "other";
+  label: string;
+  sites: PeerDirectoryEntry[];
+  groups: PeerGroupView[];
+}
+
 export interface NeighborhoodSection {
   id: "official" | "resource" | "candidate";
   label: string;
   note: string;
   sites: PeerDirectoryEntry[];
   groups: PeerGroupView[];
+  /** 正式邻域下先按技术谱系，再按行业；其他两层不重复分类。 */
+  families?: NeighborhoodFamily[];
 }
 
 export function groupNeighborhoods(sites: PeerDirectoryEntry[]): NeighborhoodSection[] {
   const kinds: Array<Pick<NeighborhoodSection, "id" | "label" | "note">> = [
-    { id: "official", label: "正式邻域", note: "持续提供行业资讯，优先 RSS / API；同系与其他来源照常保留。" },
+    { id: "official", label: "正式邻域", note: "收录有独立领域价值的行业资讯，按同系与其他分区。同步情况和内容可能重叠仅作提示。" },
     { id: "resource", label: "实用资源", note: "官方机会、科研数据库与专业资料，不要求按新闻节奏更新。" },
-    { id: "candidate", label: "候选信息", note: "有收费限制、静态快照、内容重合或尚未验证持续同步的线索，不作为实时新闻推荐。" },
+    { id: "candidate", label: "候选信息", note: "核心内容需付费、产品演示、静态快照或已关闭的站点；重复内容和同步状态不影响收录资格。" },
   ];
   return kinds.flatMap(kind => {
     const entries = sites.filter(s =>
       (s.tier === "official" || s.tier === "resource" ? s.tier : "candidate") === kind.id);
-    return entries.length ? [{ ...kind, sites: entries, groups: groupSites(entries) }] : [];
+
+    if (!entries.length) return [];
+    const families: NeighborhoodFamily[] | undefined = kind.id === "official"
+      ? ([
+          { id: "same" as const, label: "同系邻域" },
+          { id: "other" as const, label: "其他邻域" },
+        ].flatMap(family => {
+          const matching = entries.filter(site => (site.family === "same" ? "same" : "other") === family.id);
+          return matching.length ? [{ ...family, sites: matching, groups: groupSites(matching) }] : [];
+        }))
+      : undefined;
+    return [{ ...kind, sites: entries, groups: groupSites(entries), families }];
   });
 }

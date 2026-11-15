@@ -59,7 +59,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
     if (p.strategy === "link") {
       sites.push({
         id: p.id, name: p.name, url: p.url, note: p.note,
-        group: p.group, accent: p.accent, browseOnly: true,
+        group: p.group, family: p.family, accent: p.accent, browseOnly: true,
         ok: null, checkedAt: null, items: 0, latest: null,
       });
       continue;
@@ -74,6 +74,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
       url: p.url,
       note: p.note,
       group: p.group,
+      family: p.family,
       accent: p.accent,
       browseOnly: false,
       ok: st ? st.ok : null,

@@ -11,11 +11,13 @@ export async function loadVerifiedGeoPool(placeId: string, wantedPage = 1, now =
   const page = Math.min(Math.max(Math.floor(wantedPage) || 1, 1), MAX_PAGES);
   const offset = (page - 1) * PAGE_SIZE;
   const cap = PAGE_SIZE * MAX_PAGES;
-  // A publication must still reference the same analysis/revision as the *approved* evidence.
+  // A publication must reference the approved analysis, whose input revision must still
+  // match the *article* revision (publications.revision is a different projection counter).
   // There is intentionally no search over analyses.output or geo_candidates pending rows.
   const permitted = sql`${listedCondition(now)} AND p.eligible AND EXISTS (
     SELECT 1 FROM geo_candidates gc JOIN analyses an ON an.id = gc.analysis_id
-    WHERE gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id AND an.input_revision = p.revision
+    JOIN articles ar ON ar.id = gc.article_id
+    WHERE gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id AND an.input_revision = ar.revision
       AND gc.review_status = 'verified' AND gc.role = 'event' AND gc.place_id = ${placeId}
   )`;
   const [rows, totals] = await Promise.all([

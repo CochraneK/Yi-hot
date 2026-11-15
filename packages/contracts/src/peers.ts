@@ -14,6 +14,8 @@ export interface PeerDirectoryEntry {
   group: string;
   /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */
   accent: string;
+  /** 仅提供公开站点入口；不请求第三方 RSS/API，也不会出现在日报轮转。 */
+  browseOnly?: boolean;
   /** 最近一次抓取是否成功；从没抓过是 null（不是失败）。 */
   ok: boolean | null;
   /** 最近一次抓取时间，ISO 串。 */

@@ -1,13 +1,13 @@
-// 「邻域」版块的姊妹站登记表。
+// 「邻域」跨行业站点目录，不等于 YiHot 主站的信息源。
+// 有些来自 AIHOT 框架，也有单独的专题/演示站，不能宣称全部使用相同技术栈。
 //
-// 这些都是用同一套 AIHOT 框架做出来的行业站（不是我们的信源）。它们的 /api/v1 是公开的长期接口，
-// 条目在它们那边已经过编辑系统筛选、打分、写过入选理由，所以这里**不调用任何模型**：读回来直接用。
-//
-// 三条准入（2026-11-15 逐站实测，`curl -m 15`）：
-//   1. 必须有机器可读出口（标准 /api/v1 接口，或至少 RSS）；
-//   2. 条目能拿到 标题 + 摘要 + 一个可回溯的链接；
-//   3. 站点活着。
-// 只有 2 没有 1 的站留在表里但 strategy 标记为 "none"，避免每天空跑；恢复出口时改一个字段即可。
+// 两条准入路径（2026-11-15 公开网站实测）：
+//   1. 可同步：网页在线、API 或 RSS 可读，至少能拿到标题/摘要/原始链接；
+//      只读已由对方编辑过的索引，**不因邻域展示增加 YiHot 的模型调用**。
+//   2. 仅浏览：有明确领域、网页可打开，但 RSS/API 不可用或暂未公开；
+//      strategy="link"，只展示可点击官网，不冒充已同步、也不做后台抓取。
+// 无法访问的网站保留为 strategy="none" + enabled=false，不进入公开目录。
+// 与独立的 industry/sources.json RSS 技术信源严格分层，那里新源默认停用。
 //
 // 名录来源不只自己找：上游 GitHub Discussions 的 #306（用 AIHOT 做了站？在这里登记一下）和
 // #284 的「社区改造清单（16 个站）」是主要线索。补站前先按上面三条实测，别只看名单。
@@ -44,9 +44,10 @@ export interface PeerSite {
   /**
    * api  = 有标准 /api/v1 接口（优先 items，退回 dailies）
    * rss  = 只有 RSS
-   * none = 目前没有任何机器可读出口
+   * link = 网页可访问但没有可验证的 API/RSS；只列友情链接，不自动同步
+   * none = 目前无可用出口，不展示
    */
-  strategy: "api" | "rss" | "none";
+  strategy: "api" | "rss" | "link" | "none";
   /** RSS-only sites may use /rss.xml or a subdirectory instead of /feed.xml. */
   feedPath?: string;
   /** 目录页的分组（见下方 PEER_GROUPS）。加站时挑一个已有组，别为一家站新开一组。 */
@@ -275,6 +276,84 @@ export const PEER_SITES: PeerSite[] = [
     accent: "#7a7a72",
     strategy: "none",
     enabled: false,
+  },
+  {
+    // 2026-11-15 实测主页与 /feed.xml，汽车新闻有实际更新时间。
+    id: "autohot",
+    name: "AutoHot",
+    url: "https://www.autohot.top/",
+    note: "汽车产业、新车型、出行技术与政策",
+    group: "public",
+    accent: "#526fa2",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 实测主页与 /feed.xml，住房/物业有近期政策信息。
+    id: "huifangyun",
+    name: "汇房云资讯",
+    url: "https://info.huifangyun.com/",
+    note: "房地产、物业监管、住房与社区服务",
+    group: "public",
+    accent: "#907248",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 实测 /feed.xml 和 /api/v1/items 返回实际文章。
+    id: "fai-lab",
+    name: "FAI 实验室",
+    url: "https://fai.fashion/",
+    note: "AI 工具、设计与内容生产，也有通用 AI 资讯",
+    group: "tech",
+    accent: "#7a6177",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开材料/化学研究条目可读；/ai4scihot/feed.xml 返回 403。
+    id: "ai4scihot",
+    name: "AI4SciHOT",
+    url: "https://ai4scihot.8-220-189-127.sslip.io/ai4scihot",
+    note: "AI for Science：材料、化学、物理与工业仿真",
+    group: "tech",
+    accent: "#5c7b65",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开专题可浏览；/feed.xml 和 /horizon/feed.xml 为 404。
+    // 这是 UU AI Hub 专题，不是独立运行的「发射窗口」AIHOT 服务。
+    id: "horizon-uu",
+    name: "发射窗口",
+    url: "https://www.uuaihub.com/horizon",
+    note: "商业航天、AI 芯片与机器人专题入口",
+    group: "tech",
+    accent: "#8b704b",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // AIHOT Show and tell #333，2026-11-15 实测：仅为静态演示页。
+    id: "fengxiang-demo",
+    name: "风向",
+    url: "https://fightkk7.github.io/fengxiang/",
+    note: "企业服务与 SaaS 资讯（静态产品演示）",
+    group: "biz",
+    accent: "#96724d",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公共站可浏览，/feed.xml 与 /rss.xml 均为 404。
+    id: "newsiq",
+    name: "NewsIQ · 讯析",
+    url: "https://newsiq.xyz/",
+    note: "新闻事件聚合与跨来源分析",
+    group: "ai",
+    accent: "#4e7290",
+    strategy: "link",
+    enabled: true,
   },
 ];
 

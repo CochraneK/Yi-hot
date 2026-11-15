@@ -9744,6 +9744,144 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": false
+    },
+    {
+      "id": "rss-peer-autohot",
+      "name": "AutoHot·汽车产业（跨领域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.autohot.top/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "青少年",
+            "校车",
+            "残障",
+            "无障碍",
+            "交通安全",
+            "安全座椅",
+            "道路安全",
+            "公共交通",
+            "应急",
+            "环保",
+            "教育",
+            "公共政策"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "促销优惠券",
+            "博彩广告"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "汽车产业",
+        "候选"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-huifangyun",
+      "name": "汇房云资讯·房地产物业（跨领域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://info.huifangyun.com/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "社区",
+            "公益",
+            "无障碍",
+            "残障",
+            "困境",
+            "保障性住房",
+            "公共服务",
+            "养老",
+            "助残",
+            "民政",
+            "服务设施",
+            "社区治理"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "促销优惠券",
+            "博彩广告"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "社区服务",
+        "候选"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-fai-lab",
+      "name": "FAI 实验室·AI 工具与内容生产（跨领域候选）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://fai.fashion/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "儿童",
+            "公益",
+            "教育",
+            "健康",
+            "用户研究",
+            "无障碍",
+            "研究方法",
+            "捐赠",
+            "社会服务",
+            "心理",
+            "残障",
+            "辅助技术",
+            "公众参与"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "促销优惠券",
+            "博彩广告"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 10
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "AI工具",
+        "候选"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

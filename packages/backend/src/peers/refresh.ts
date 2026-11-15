@@ -204,7 +204,7 @@ export function peerFeedUrl(peer: Pick<PeerSite, "url" | "feedPath">): string {
 
 /** 单家站：按 strategy 走三级降级，返回第一个拿到内容的通道。 */
 export async function fetchPeer(peer: PeerSite): Promise<{ via: string; items: RawPeerItem[]; error: string | null }> {
-  if (!peer.enabled || peer.strategy === "none") return { via: "none", items: [], error: null };
+  if (!peer.enabled || peer.strategy === "none" || peer.strategy === "link") return { via: "none", items: [], error: null };
   const attempts: Array<{ via: string; url: string; parse: (body: string) => RawPeerItem[] }> = [];
   if (peer.strategy === "api") {
     attempts.push({
@@ -246,7 +246,7 @@ export async function refreshPeers(): Promise<{ peers: number; ok: number; items
   let ok = 0;
   let written = 0;
   for (const peer of PEER_SITES) {
-    if (!peer.enabled) continue;
+    if (!peer.enabled || peer.strategy === "link" || peer.strategy === "none") continue;
     const result = await fetchPeer(peer);
     if (result.items.length > 0) ok += 1;
     try {
@@ -297,7 +297,7 @@ export async function refreshPeers(): Promise<{ peers: number; ok: number; items
     }
   }
   await sql`DELETE FROM peer_items WHERE fetched_at < now() - interval '120 days'`;
-  return { peers: PEER_SITES.filter((p) => p.enabled && p.strategy !== "none").length, ok, items: written };
+  return { peers: PEER_SITES.filter((p) => p.enabled && p.strategy !== "none" && p.strategy !== "link").length, ok, items: written };
 }
 
 /** 后台查看用：每家站最近一次的结果。 */

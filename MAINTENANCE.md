@@ -3037,3 +3037,12 @@ GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的�
 实测有效订阅地址为 `https://huangzhenhao90.github.io/ai-ux-research-hot/rss.xml` 和 `https://www.aiman.world/robot-hot/feed.xml`，都不是默认根目录 `/feed.xml`。邻域抓取器在 `PeerSite.feedPath` 显式允许同源 HTTPS 路径，严格拒绝跨主机路径等输入；现有站保持原来默认 RSS 行为。完整网址验证、未采纳候选（AIhot.space 同质化、NewsIQ 暂无可读 feed）、测试、上线与回滚见 [PEER_DISCOVERY_DUAL_RSS_2026-11-15.md](docs/PEER_DISCOVERY_DUAL_RSS_2026-11-15.md)。
 
 验收：`node --test tests/peers.test.ts`、`npm run typecheck`、GitHub CI；部署后现场核对 `/peers` 两张卡片与后台 `peer_status`，RSS 若需采集先在后台单源 Preview、审核授权与成本后独立开启。本次 GitHub 修改不等于腾讯云已重建容器，也不包含任何 DB 迁移、定时任务开关、密钥或付费配置变更。回滚仅撤销两条邻域对象和两条 RSS seed，并恢复抓取器代码；不要误删现有 peer 缓存或用户历史数据。
+
+
+## 邻域继续扩展：可同步与仅浏览分开（2026-11-15）
+
+在 [前一轮两站扩展](docs/PEER_DISCOVERY_DUAL_RSS_2026-11-15.md) 基础上，系统复查 AIHOT 社区作品、Fork 登记、其他垂直信息站的实际网页和 RSS：GitHub 邻域登记从 18 家扩为 **25 家**（含一条原有 disabled/none）；`industry/sources.json` 从 174 增至 **177** 条。新增可同步三家：AutoHot 汽车 `https://www.autohot.top/feed.xml`、汇房云资讯 `https://info.huifangyun.com/feed.xml`、FAI 实验室 `https://fai.fashion/feed.xml`，公开 RSS 均于本日验证可读。新增四家「仅浏览」：AI4SciHOT（材料与 AI4Science）、UU AI Hub 发射窗口（商业航天专题）、风向（SaaS 产品**静态演示**）、NewsIQ（事件分析）；均未证实有可用 RSS，不得伪造。
+
+新 `PeerSite.strategy="link"` 专门表示**只链接公开网站，无抓取**；后台 `refreshPeers` 跳过，不写成功/失败状态，目录页明确显示「仅浏览 · 不自动同步文章」，可同步网站继续用已有 RSS/API 加载，不触发模型。没有新增独立导航或新模型容器。新增三个 `rss-peer-*` 在 `industry/sources.json` 中均 `enabled=false`，`isolated`，与邻域开关互不影响；只有经后台 Preview、版权/许可、重复源、成本审核后才能单个启用。旧有来源、模型预算、出版机制、腾讯云配置未改动。
+
+实施与排除候选、真实 URL、测试、回滚见 [完整调查](docs/PEER_NEIGHBORHOOD_EXPANSION_2026-11-15.md)。CI 需要 `node --test tests/peers.test.ts`、`npm run typecheck`、Docker/Web smoke 通过。GitHub 合并不等于生产环境已部署或新卡片已经在线展示。未确认的保险网站 `baoxian.news`（DNS 不可达）、KernelHOT（只有仓库/未确认独立站点）、3D 技术雷达（未确认公开网站）、与泛 AI 内容重复的 AIhot.space 暂不添加。回滚时**只撤销本轮 7 个 PeerSite 和 3 个 RSS 种子记录**，不要删除别家的缓存或改变其他来源。

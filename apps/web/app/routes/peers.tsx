@@ -23,7 +23,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta() {
   return pageMeta({
     title: "邻域",
-    description: "同一套框架做出来的其他行业站：心理、环保、职场、机器人、影视、数学。点标题直达原站。",
+    description: "同系邻域与其他邻域：跨行业信息站、科研数据库和公共资源入口，按方向浏览，点标题直达原站。",
     path: "/peers",
   });
 }

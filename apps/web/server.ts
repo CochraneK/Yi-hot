@@ -207,14 +207,22 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   const pathname = qi >= 0 ? raw.slice(0, qi) : raw;
   const search = qi >= 0 ? raw.slice(qi) : "";
 
-  // 安全响应头：写在最前面，让 80 与 443、页面与接口拿到同一份。此前只有 443 的 Caddy 补过三个头，
-  // 而 canonical 现在写的正是 http——走 80 就一个都没有。两个入口必须一致，所以这一层归应用。
-  // 不加 script-src：SSR 页依赖内联的 hydration 脚本，收紧了直接白屏；这里只锁嵌入与设备能力。
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  // 安全响应头：让 80 与 443 拿到同一份。此前只有 443 的 Caddy 补过三个头，而 canonical 现在
+  // 写的正是 http——走 80 就一个都没有。
+  //
+  // 但这里必须分路：443 的 Caddy（/home/ubuntu/futureme 的 Caddyfile）用的是追加语义，不是覆盖，
+  // 应用再设一遍就成了 "nosniff, nosniff"——浏览器按整串比较，等于把这条规则废掉。实测如此。
+  // 所以 TLS 边缘来的请求交给 Caddy，直连 80 的由这里补；取值与它逐字一致。
+  // 哪天想让应用当唯一来源，在那边 header 前加 `?`（仅当不存在时才设）即可。
+  const viaTlsEdge = String(req.headers["x-forwarded-proto"] ?? "").toLowerCase() === "https";
+  if (!viaTlsEdge) {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("Permissions-Policy", "camera=(self), microphone=(self)");
+  }
+  // Caddy 不管这两个，两条路都从这里出，不会重复。
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
-  res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
 
   // What the app sees: the path with the prefix stripped. Api-owned resources (api/, feed, icons,
   // sitemaps) stay reachable at the root too — browser fetches and api-generated absolute links hit

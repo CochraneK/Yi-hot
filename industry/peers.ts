@@ -1,7 +1,7 @@
 // 「邻域」跨行业站点目录，不等于 YiHot 主站的信息源。
 // 有些来自 AIHOT 框架，也有单独的专题/演示站，不能宣称全部使用相同技术栈。
 //
-// 两条准入路径（2026-11-15 公开网站实测）：
+// 准入原则（2026-11-16）：RSS/API 优先；只有链接的资源原则上停在候选池，\n// 除非它是明确重要且暂无结构化替代的权威入口。可同步 ≠ 可以加入主站新闻。\n// 两条已有准入路径（2026-11-15 公开网站实测）：
 //   1. 可同步：网页在线、API 或 RSS 可读，至少能拿到标题/摘要/原始链接；
 //      只读已由对方编辑过的索引，**不因邻域展示增加 YiHot 的模型调用**。
 //   2. 仅浏览：有明确领域、网页可打开，但 RSS/API 不可用或暂未公开；
@@ -518,7 +518,8 @@ export const PEER_SITES: PeerSite[] = [
     note: "国际公益、人道援助岗位、咨询与合作征集",
     group: "nonprofit",
     accent: "#486f8b",
-    strategy: "link",
+    strategy: "rss",
+    feedPath: "/jobs/rss.xml",
     enabled: true,
   },
   {
@@ -656,7 +657,7 @@ export const PEER_SITES: PeerSite[] = [
     enabled: true,
   },
   {
-    // 2026-11-15 公开仓库 README 明确行业定制关系；RSS 实测可读但本轮只列入口。
+    // 2026-11-16 实测 RSS 200 有精选；已从仅浏览升级为邻域 RSS。
     id: "designradar",
     family: "same",
     name: "DesignRadar · 设计雷达",
@@ -664,7 +665,7 @@ export const PEER_SITES: PeerSite[] = [
     note: "设计行业精选与 AI 生成界面的评测观察",
     group: "product",
     accent: "#9c637d",
-    strategy: "link",
+    strategy: "rss",
     enabled: true,
   },
   {
@@ -692,7 +693,7 @@ export const PEER_SITES: PeerSite[] = [
     enabled: true,
   },
   {
-    // 2026-11-15 README 明确基于 AIHOT 的静态发行版；认知/学习科学与 AI 数学教育周报。
+    // 2026-11-16 周报 RSS 200；静态周报发布，不等于逐日更新。
     id: "math-education-hot",
     family: "same",
     name: "数学教育 HOT",
@@ -700,11 +701,12 @@ export const PEER_SITES: PeerSite[] = [
     note: "认知科学、学习科学与 AI 数学教育，静态周报",
     group: "research",
     accent: "#668c70",
-    strategy: "link",
+    strategy: "rss",
+    feedPath: "/math-education-hot/feed.xml",
     enabled: true,
   },
   {
-    // 2026-11-15 作者 README/运行说明明确沿用 AIHOT，正式域名是 shendeng 而非仓库拼写。
+    // 2026-11-16 RSS 200 可读；正式域名 shendeng，仓库拼写不同。
     id: "shendeng-ai",
     family: "same",
     name: "神灯AI热点",
@@ -712,7 +714,72 @@ export const PEER_SITES: PeerSite[] = [
     note: "AI 综合动态与实用机会，本地采编后发布的静态阅读站",
     group: "news",
     accent: "#46958a",
-    strategy: "link",
+    strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
+    id: "unicef-data",
+    family: "other",
+    name: "UNICEF Data · 儿童数据",
+    url: "https://data.unicef.org/",
+    note: "儿童教育、健康、保护和贫困的官方统计与研究",
+    group: "health",
+    accent: "#4a86a5",
+    strategy: "rss",
+    feedPath: "/feed/",
+    enabled: true,
+  },
+  {
+    // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
+    id: "icnl",
+    family: "other",
+    name: "ICNL · 非营利法律",
+    url: "https://www.icnl.org/",
+    note: "非营利组织法律、公民空间与公益政策研究",
+    group: "civic",
+    accent: "#80658f",
+    strategy: "rss",
+    feedPath: "/feed/",
+    enabled: true,
+  },
+  {
+    // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
+    id: "un-news-sdgs",
+    family: "other",
+    name: "联合国新闻 · 可持续发展",
+    url: "https://news.un.org/en/",
+    note: "联合国可持续发展目标与人道、教育、气候进展",
+    group: "nonprofit",
+    accent: "#45869b",
+    strategy: "rss",
+    feedPath: "/feed/subscribe/en/news/topic/sdgs/feed/rss.xml",
+    enabled: true,
+  },
+  {
+    // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
+    id: "un-geneva-news",
+    family: "other",
+    name: "联合国日内瓦 · 新闻",
+    url: "https://www.ungeneva.org/en/news-media",
+    note: "联合国人权、公共事务、委员会会议与新闻资料",
+    group: "civic",
+    accent: "#7385a4",
+    strategy: "rss",
+    feedPath: "/news-media/press-items-list/rss.xml",
+    enabled: true,
+  },
+  {
+    // 2026-11-16 独立核对官网与 RSS 端点，返回 200 及含日期/链接的条目；非同系站。
+    id: "gdacs",
+    family: "other",
+    name: "GDACS · 全球灾害预警",
+    url: "https://www.gdacs.org/",
+    note: "全球灾害预警与跨国救援事件，源端含 GeoRSS 地理字段",
+    group: "civic",
+    accent: "#b27854",
+    strategy: "rss",
+    feedPath: "/xml/rss.xml",
     enabled: true,
   },
 ];

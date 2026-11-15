@@ -556,6 +556,42 @@ export const PEER_SITES: PeerSite[] = [
     feedPath: "/atom.xml",
     enabled: true,
   },
+  {
+    // 2026-11-15 官方公开合作征集页有国家、机构、领域及截止日列；申请须登录。
+    id: "un-partner-portal",
+    family: "other",
+    name: "UN Partner Portal · 合作征集",
+    url: "https://www.unpartnerportal.org/landing/opportunities/",
+    note: "联合国机构合作征集，按国家、领域与申请条件查找",
+    group: "public",
+    accent: "#4a869c",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 欧委会官方门户，公共查询与登录申请分开；未核实查询专属 RSS。
+    id: "eu-funding-tenders",
+    family: "other",
+    name: "EU Funding & Tenders · 资助与招标",
+    url: "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home",
+    note: "欧盟项目征集、招标与伙伴查找，资格以具体公告为准",
+    group: "public",
+    accent: "#576c9e",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 基金委项目指南官方列表可读；列表通知不等于当前仍在受理。
+    id: "nsfc-guidelines",
+    family: "other",
+    name: "国家自然科学基金 · 项目指南",
+    url: "https://www.nsfc.gov.cn/p1/3381/2824/zntg.html",
+    note: "科研资助指南、申请通知与专项征集，回原公告核对条件",
+    group: "tech",
+    accent: "#94744c",
+    strategy: "link",
+    enabled: true,
+  },
 ];
 
 /** 每期条数：日报只是「顺带一看」，周月报可以铺开成一小版。 */

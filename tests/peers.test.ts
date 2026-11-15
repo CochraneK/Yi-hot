@@ -338,7 +338,7 @@ test("所有邻域站点在唯一事实源中标有同系/其他归属，与行�
   assert.equal(same.length + other.length, PEER_SITES.length, "不允许漏标、第三类或隐式同系");
   assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
   assert.ok(same.length > 0 && other.length > 0);
-  assert.equal(PEER_SITES.length, 39, "归类不应改变现有登记数量");
+  assert.equal(PEER_SITES.length, 42, "保留 39 项基线及新增 3 个官方入口");
   assert.equal(PEER_SITES.find(p => p.id === "urhot")?.family, "same",
     "URHOT README explicitly credits adaptation from AIHOT selection pipeline");
   assert.equal(PEER_SITES.find(p => p.id === "fai-lab")?.family, "same",
@@ -348,5 +348,24 @@ test("所有邻域站点在唯一事实源中标有同系/其他归属，与行�
   }
   for (const p of PEER_SITES) {
     assert.ok(["health", "public", "tech", "ai", "biz"].includes(p.group), p.id);
+  }
+});
+
+test("官方合作与资助入口仅供浏览，不触发采集或占用日报轮转", async () => {
+  const ids = ["un-partner-portal", "eu-funding-tenders", "nsfc-guidelines"];
+  const previous = globalThis.fetch;
+  globalThis.fetch = (() => { throw new Error("browse-only portal must not request a feed or API"); }) as typeof fetch;
+  try {
+    for (const id of ids) {
+      const peer = PEER_SITES.find(p => p.id === id);
+      assert.ok(peer, id);
+      assert.equal(peer.family, "other");
+      assert.equal(peer.strategy, "link");
+      assert.equal(peer.enabled, true);
+      assert.equal(peer.feedPath, undefined);
+      assert.deepEqual(await fetchPeer(peer), { via: "none", items: [], error: null });
+    }
+  } finally {
+    globalThis.fetch = previous;
   }
 });

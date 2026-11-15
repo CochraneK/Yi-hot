@@ -3075,3 +3075,10 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 `packages/backend/src/peers/directory.ts` 将 `family` 随卡片透传；`packages/contracts/src/peers.ts` 加可选字段兼容旧 API。网页 `apps/web/app/features/peers/grouping.ts` 的 `groupNeighborhoods` 复用已有 `groupSites`，旧数据缺少 `family` 时归“其他”避免丢失。新增 `apps/web/tests/peer-grouping.test.ts` 与 `tests/peers.test.ts` 的分类、空分组、兼容性回归。详细语义、证据、上线验收和回滚见 [PEER_NEIGHBORHOOD_TWO_FAMILIES_2026-11-15.md](docs/PEER_NEIGHBORHOOD_TWO_FAMILIES_2026-11-15.md)。
 
 本次无数据库迁移、采集规则变更、RSS 开关、主新闻发布变更、额外模型费用或腾讯云操作。须 GitHub CI 全绿、无并发冲突后再合并；Git 合并不等于生产部署，部署后需人工打开 `/peers` 检查一级标题、两个跳转及手机卡片布局。回滚可恢复旧 `groupSites` 渲染并移除 `family` 显示，数据无需删改。
+
+
+## 邻域第五轮：官方合作与科研申请入口（2026-11-15）
+
+承接 PR #46 的两类邻域，新增 UN Partner Portal 合作征集、EU Funding & Tenders 资助与招标、国家自然科学基金项目指南，共 42 项登记（含原来关闭的站，非生产在线数）。三项均为 `family=other`、`strategy=link`，沿用“其他邻域”的既有分组，只提供官方浏览入口，不自动采集、不进入文章轮转、不新增 RSS Seed、模型费用或生产数据库变更。门户可浏览不意味着读者符合申请资格或公告仍在受理。
+
+同时修正邻域搜索/分享描述，不再把独立门户和数据库说成同框架站。核验日期、官方出处、测试、上线与回滚见 [第五轮记录](docs/PEER_OFFICIAL_OPPORTUNITIES_ROUND5_2026-11-15.md)。本地预览与 GitHub 合并均不能代替腾讯云实际部署验收。

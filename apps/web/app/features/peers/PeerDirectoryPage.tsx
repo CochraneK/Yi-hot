@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { Kicker } from "../../components/ui/Kicker";
 import { IconArrowUpRight, IconClock } from "../../components/icons";
 import { fullDateTime, relativeTime } from "../../lib/format";
-import { groupNeighborhoods } from "./grouping";
+import { groupNeighborhoods, type NeighborhoodSection } from "./grouping";
 
 /**
  * 邻域：一页纸的行业站目录。
@@ -16,7 +16,7 @@ import { groupNeighborhoods } from "./grouping";
  * 顶条全是同一个品牌红，卡片之间没有任何可抓的差别，翻起来像同一个模块复制了十几遍。
  *
  * 卡片上到十几张之后又出现第二个问题：一页全是同构方块，只能逐张读名字才知道哪家是哪行。
- * 所以先按同系/其他分两个区块，再按 industry/peers.ts 的 group 分段。分组只是「归堆」，
+ * 所以先按资讯/资源/候选分三层，再按 industry/peers.ts 的 group 分段。分组只是「归堆」，
  * 不排序、不隐藏：同一组内仍是登记表顺序。
  */
 export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
@@ -30,8 +30,8 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <Kicker>邻域</Kicker>
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
-          这里收录不同领域的信息站和公开专题。可同步的站展示最近条目；仅浏览的站只提供官网入口，不假装有实时更新。选什么、怎么评由各站自己决定。
-          下面先分同系与其他：只有同系邻域会进日报与周报的「邻域」版块，其他邻域只作方向参考。
+          正式邻域优先持续更新的 RSS / API；数据库与机会入口放在实用资源，收费服务和静态项目放入候选信息。
+          同系与其他仍标记技术谱系，日报与周报遵循独立的选稿条件。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
           <span>
@@ -63,7 +63,7 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
             {sections.map((section) => (
               <a
                 key={section.id}
-                href={`#family-${section.id}`}
+                href={`#tier-${section.id}`}
                 className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3 text-[12.5px] text-ink-2 transition-colors hover:border-ink-4 hover:text-ink"
               >
                 {section.label}
@@ -79,38 +79,53 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
       ) : (
         <div className="mt-4 space-y-11">
           {sections.map((section) => (
-            <section key={section.id} id={`family-${section.id}`} className="scroll-mt-24">
-              <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-3">
-                <h2 className="text-[19px] font-bold tracking-[-0.02em] text-ink">{section.label}</h2>
-                <span className="num text-[12px] text-ink-4">{section.sites.length} 家</span>
-                <p className="w-full text-[12.5px] leading-relaxed text-ink-3">{section.note}</p>
-              </div>
-              <div className="space-y-7">
-                {section.groups.map((group) => (
-                  <section key={group.id} id={`g-${section.id}-${group.id}`} className="scroll-mt-24">
-                    {section.groups.length > 1 && (
-                      <div className="mb-3 flex items-baseline gap-2 border-b border-line-soft pb-2">
-                        <h3 className="text-[13px] font-semibold text-ink-2">{group.label}</h3>
-                        <span className="num text-[11px] text-ink-4">{group.sites.length}</span>
-                        <span className="ml-auto truncate pl-3 text-[11px] text-ink-4">{group.note}</span>
-                      </div>
-                    )}
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      {group.sites.map((site) => (
-                        <PeerCard key={site.id} site={site} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
+            <section key={section.id} id={`tier-${section.id}`} className="scroll-mt-24">
+              {section.id === "candidate" ? (
+                <details className="rounded-xl border border-line px-4 py-3">
+                  <summary className="cursor-pointer text-[17px] font-semibold text-ink">
+                    候选信息 <span className="num ml-2 text-[12px] font-normal text-ink-4">{section.sites.length} 家</span>
+                  </summary>
+                  <p className="mt-2 text-[12.5px] leading-relaxed text-ink-3">{section.note}</p>
+                  <div className="mt-5"><PeerSectionGroups section={section} /></div>
+                </details>
+              ) : (
+                <>
+                  <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line pb-3">
+                    <h2 className="text-[19px] font-bold tracking-[-0.02em] text-ink">{section.label}</h2>
+                    <span className="num text-[12px] text-ink-4">{section.sites.length} 家</span>
+                    <p className="w-full text-[12.5px] leading-relaxed text-ink-3">{section.note}</p>
+                  </div>
+                  <PeerSectionGroups section={section} />
+                </>
+              )}
             </section>
-          ))}
-        </div>
+          ))}        </div>
       )}
 
       <p className="mt-6 text-[12px] leading-[1.9] text-ink-4">
-        站点链接直达原站；可同步的条目保留原始归属。不提供 RSS/API 的站仅作为公开链接，不参与自动抓取或日报。
+        站点链接直达原站；可同步的条目保留原始归属。仅浏览的站不会自动采集，近期无更新以原文日期判断，不代表站点已经停运。
       </p>
+    </div>
+  );
+}
+
+function PeerSectionGroups({ section }: { section: NeighborhoodSection }) {
+  return (
+    <div className="space-y-7">
+      {section.groups.map((group) => (
+        <section key={group.id} id={`g-${section.id}-${group.id}`} className="scroll-mt-24">
+          {section.groups.length > 1 && (
+            <div className="mb-3 flex items-baseline gap-2 border-b border-line-soft pb-2">
+              <h3 className="text-[13px] font-semibold text-ink-2">{group.label}</h3>
+              <span className="num text-[11px] text-ink-4">{group.sites.length}</span>
+              <span className="ml-auto truncate pl-3 text-[11px] text-ink-4">{group.note}</span>
+            </div>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {group.sites.map((site) => <PeerCard key={site.id} site={site} />)}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
@@ -132,13 +147,16 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
             <IconArrowUpRight size={13} className="shrink-0 text-ink-4 transition-colors group-hover:text-ink-2" />
           </a>
           <p className="mt-0.5 truncate text-[12.5px] text-ink-3">{s.note}</p>
+          {s.tier === "official" && (
+            <span className="mt-1 inline-block text-[11px] text-ink-4">{s.family === "same" ? "同系邻域" : "其他邻域"}</span>
+          )}
         </div>
       </div>
 
       <div className="border-t border-line-soft px-5 py-3.5">
         {s.browseOnly ? (
           <div className="space-y-2">
-            <p className="text-[12.5px] text-ink-4">仅浏览 · 不自动同步文章</p>
+            <p className="text-[12.5px] text-ink-4">{s.tier === "candidate" ? "候选信息 · 待复核" : "仅浏览 · 不自动同步文章"}</p>
             <a href={s.url} target="_blank" rel="noopener noreferrer"
               className="peer-link inline-flex items-center gap-1 text-[13.5px] font-medium text-ink-2">
               查看站点 <IconArrowUpRight size={13} />
@@ -146,6 +164,9 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
           </div>
         ) : s.latest ? (
           <>
+            {s.tier === "official" && s.freshness === "stale" && (
+              <p className="mb-1.5 text-[12px] text-ink-4">近期无更新 · 以下为历史条目</p>
+            )}
             <a
               href={s.latest.url}
               target="_blank"

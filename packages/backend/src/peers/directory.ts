@@ -52,6 +52,18 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
 
   const sites: PeerDirectoryEntry[] = [];
   for (const p of PEER_SITES) {
+    if (!p.enabled) continue;
+    if (p.strategy === "none") continue;
+    // Browsable links have no RSS/API. Do not infer failures or show fictitious article counts.
+    // Keep a normal clickable directory card without joining peer_items or peer_status.
+    if (p.strategy === "link") {
+      sites.push({
+        id: p.id, name: p.name, url: p.url, note: p.note,
+        group: p.group, accent: p.accent, browseOnly: true,
+        ok: null, checkedAt: null, items: 0, latest: null,
+      });
+      continue;
+    }
     const st = status.get(p.id) ?? null;
     // 明确读不到的（最近一次失败）不上页面；从没查过的仍列出来，卡片上写「尚未同步」。
     if (st && !st.ok) continue;
@@ -64,6 +76,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
       note: p.note,
       group: p.group,
       accent: p.accent,
+      browseOnly: false,
       ok: st ? st.ok : null,
       checkedAt: st ? st.checked_at.toISOString() : null,
       items: counts.get(p.id) ?? 0,

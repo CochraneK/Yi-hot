@@ -3148,3 +3148,7 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 - **卡片**：仅浏览站改为紧凑的整卡原站链接（带身份色、站名、领域描述和「尚未接入同步／候选／可能重合」等提示），原有可同步站继续以新闻标题链接为主；抓取失败、内容过时等提示不改变。电脑阅读区上限设为 1120px，优化分组间距。
 - **验证**：Web 测试新增搜索词标准化、多词匹配、行业标签、三层/谱系完整性和候选搜索回归；GitHub CI 应通过 typecheck、Web build、Web tests、backend tests、PostgreSQL/Docker smoke。本次 UI 不涉及数据库、API 合同、RSS 种子、版权许可、模型费用或生产采集开关。
 - **生产与回滚**：合并主分支后需由部署者独立更新腾讯云 Web 镜像并在 375px 手机与 1366px 桌面检查搜索、悬浮导航、卡片与深色模式，不能把 GitHub CI 当成生产视觉验收；回滚本次 `PeerDirectoryPage.tsx` 与 `grouping.ts` 修改即可，不需要数据回迁。
+
+### YiHot009 · 已保存 AI 地点候选免费回填（2026-11-16，需手工执行）
+
+新增 `scripts/backfill-geo-candidates.ts`：从当前公开新闻对应的 `analyses.output.geography` 将**已存在**的 AI 地点候选经原文证据再校验后写回 `geo_candidates` 的 `pending` 审核队列，默认 dry-run，`--apply` 才会写入，单批 1–200，游标使用 `--after=<analysis-id>`；幂等，不修改或批准已审核候选，**不调用模型、不触发全库重新分析**。需先上线 0052 migration，真实生产任务须授权人员执行并记录结果。详见 [`docs/GEO_OFFLINE_BACKFILL_2026-11-16.md`](docs/GEO_OFFLINE_BACKFILL_2026-11-16.md)。

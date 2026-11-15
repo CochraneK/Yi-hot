@@ -162,8 +162,13 @@ export function parseFeed(xml: string): RawPeerItem[] {
   const out: RawPeerItem[] = [];
   for (const raw of entries) {
     const title = text(raw?.title).trim();
-    const link = raw?.link && typeof raw.link === "object" ? text((raw.link as any)["@href"] ?? raw.link) : text(raw?.link);
-    const url = link.trim() || text(raw?.guid);
+    // Atom may publish multiple <link> tags (e.g. rel="self" and rel="alternate").
+    // Prefer the human-readable article URL rather than a feed/self API endpoint.
+    const links = Array.isArray(raw?.link) ? raw.link : [raw?.link];
+    const chosen = links.find((l: any) => l && typeof l === "object" &&
+      (!l["@rel"] || l["@rel"] === "alternate") && l["@href"]) ?? links[0];
+    const link = chosen && typeof chosen === "object" ? text(chosen["@href"] ?? chosen) : text(chosen);
+    const url = link.trim() || text(raw?.guid ?? raw?.id);
     if (!title || !url) continue;
     const body = text(raw?.description ?? raw?.summary ?? raw?.content);
     // 同框架的 RSS 在摘要尾部带一行「🔗 原文」；先把那个地址取出来，再连行一起剥掉，
@@ -191,7 +196,7 @@ const base = (u: string) => u.replace(/\/+$/, "");
 /** RSS feeds need not be /feed.xml: only allow a safe absolute path on the peer's own HTTPS host. */
 export function peerFeedUrl(peer: Pick<PeerSite, "url" | "feedPath">): string {
   if (!peer.feedPath) return `${base(peer.url)}/feed.xml`;
-  if (!/^\/(?!\/)(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+$/.test(peer.feedPath) ||
+  if (!/^\/(?!\/)(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+\/?$/.test(peer.feedPath) ||
       peer.feedPath.split("/").some((segment) => segment === ".." || segment === ".")) {
     throw new Error("Invalid peer RSS path");
   }

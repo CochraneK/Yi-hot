@@ -6,6 +6,7 @@ import { siteUrl } from "./links.ts";
 import { sql } from "../db.ts";
 import { MCP_TOOLS } from "@aihot/contracts/mcp";
 import { SKILL_PATH, SKILL_VERSION } from "@aihot/contracts/skill";
+import { rateLimitSummary } from "@aihot/contracts/rate-limit";
 
 /** Discovery only needs to know whether an entry exists, not count its entire history. */
 export async function loadLlmsAvailability() {
@@ -55,6 +56,11 @@ export function llmsTxt(opts: { hasDailies: boolean; hasWeekly: boolean; hasMont
   lines.push(`- [Agent 指南](${u("/agent")}): Agent Skill / MCP / RSS / REST API 接入说明`);
   lines.push(`- [使用规则](${u("/terms")})`);
   lines.push(`- [隐私说明](${u("/privacy")})`, "");
+  lines.push("## 调用额度", "");
+  lines.push("匿名只读不等于无限调用：每个来源地址按分钟记账，超出即返回 429。", "");
+  lines.push(...rateLimitSummary());
+  lines.push("- 429 的响应体是 `application/problem+json`，带 `Retry-After`（秒）、`RateLimit-Limit` 与 `RateLimit-Reset`；按它退避，不要立刻重试");
+  lines.push("- 页面与站内渲染不计入额度，普通阅读不受影响", "");
   lines.push("## 网站主要页面", "");
   lines.push(`- [首页 · 精选](${u("/")}): 每日精选动态`);
   lines.push(`- [热点榜](${u("/hot")}): 过去 48 小时内被多个独立信源共同讨论的事件`);

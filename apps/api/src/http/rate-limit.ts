@@ -1,44 +1,17 @@
 // 公开机器接口的每地址限流。页面不在范围内：HTML 由 web 进程渲染并自带缓存，不从这里出。
+// 额度表在 @aihot/contracts/rate-limit —— /llms.txt 念的是同一份，不存在「文档写 180、实际 60」。
 //
 // 为什么放在 api 层而不是 web 或反代层：api 是真正的数据出口，而且它没有发布端口，只接受
 // web 转发；web 已把访客地址裁定好写进 X-Forwarded-For，所以这里的 req.ip 只能是那个值，
 // 伪造不进来。反代层（Caddy，属于另一个项目）改不了，web 层又要同时服务 SSR 与静态资源。
-//
-// 额度按「一个正常的自动化调用方用不完、一台机器狂抓会撞墙」来定。不是防 DDoS——那要靠上游，
-// 这里只保证单个来源拿不走整站。
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { isPrivateAddress } from "@aihot/contracts/net";
+import { rateRuleFor, type RateRule } from "@aihot/contracts/rate-limit";
 import { sendProblem } from "./respond.ts";
-
-export interface RateRule {
-  /** 写进 429 文案与日志的名字。 */
-  readonly scope: string;
-  /** 一个窗口内允许的请求数。 */
-  readonly limit: number;
-  readonly windowMs: number;
-}
-
-const MINUTE = 60_000;
-
-/**
- * 分档而不是一刀切：MCP 每次调用可能触发一次搜索，markdown 会导出整篇正文，两者都比读一页
- * 列表重得多。feed 与 sitemap 读者是爬虫与 RSS 客户端，刷新有节律，给得比列表紧一点。
- */
-const RULES: ReadonlyArray<{ test: (path: string) => boolean; rule: RateRule }> = [
-  { test: (p) => p === "/api/mcp" || p === "/api/mcp/", rule: { scope: "MCP", limit: 60, windowMs: MINUTE } },
-  { test: (p) => p === "/api/v1" || p.startsWith("/api/v1/"), rule: { scope: "API", limit: 180, windowMs: MINUTE } },
-  { test: (p) => p === "/feed.xml" || p.startsWith("/feed/") || p === "/sitemap.xml", rule: { scope: "feed", limit: 60, windowMs: MINUTE } },
-  { test: (p) => /^\/items\/[^/]+\/markdown$/.test(p), rule: { scope: "markdown", limit: 30, windowMs: MINUTE } },
-];
-
-export function rateRuleFor(pathname: string): RateRule | null {
-  for (const entry of RULES) if (entry.test(pathname)) return entry.rule;
-  return null;
-}
 
 const buckets = new Map<string, number[]>();
 /**
- * 上限存在的意义不是省内存，而是「被海量不同来源打时不要被自己的防护拖死」：每条记录只是一个
+ * 上限的意义不是省内存，而是「被海量不同来源打时不要被自己的防护拖死」：每条记录只是一个
  * 时间戳数组，正常情况下几千个键、几百 KB。超了按插入顺序淘汰最老的四分之一。
  */
 const MAX_BUCKETS = 20_000;

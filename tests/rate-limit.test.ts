@@ -7,10 +7,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import Fastify from "fastify";
 import { isPrivateAddress, lastForwardedAddress } from "@aihot/contracts/net";
+import { rateLimitSummary, rateRuleFor } from "@aihot/contracts/rate-limit";
 import {
   consume,
   rateLimitKeyCount,
-  rateRuleFor,
   registerRateLimit,
   resetRateLimit,
 } from "../apps/api/src/http/rate-limit.ts";
@@ -46,6 +46,16 @@ test("滑动窗口：额度逐条滑出，不是每分钟整点清零", () => {
   assert.equal(third.retryAfter, 40, "窗口要等最早那条滑出，即 t0+60s");
   // 到 t0+60.001s，第一条过期，重新有额度。
   assert.equal(consume("k", rule, t0 + 60_001).ok, true);
+});
+
+test("llms.txt 念的额度与执行的是同一份表", () => {
+  const lines = rateLimitSummary();
+  assert.equal(lines.length, 4);
+  // 每一行都必须带上表里的真实数字：文档写 180、实际放 60，是没有任何报错的那类错。
+  assert.ok(lines.some((l) => l.includes("/api/v1/*") && l.includes("180")));
+  assert.ok(lines.some((l) => l.includes("/api/mcp") && l.includes("60")));
+  assert.ok(lines.some((l) => l.includes("/items/{id}/markdown") && l.includes("30")));
+  for (const line of lines) assert.match(line, /每分钟 \d+ 次/, `每行都要有具体次数：${line}`);
 });
 
 test("不同键各自记账，互不牵连", () => {

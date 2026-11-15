@@ -219,3 +219,48 @@ test("现有 RSS/Atom 解析支持新增跨行业来源的摘要而不制造已�
   assert.match(entries[0]!.summary, /不代表法律意见/);
   assert.ok(entries[0]!.publishedAt?.startsWith("2026-11-13"));
 });
+
+test("本轮 3 个新 RSS 邻域源与关闭的独立技术信源一一对应", () => {
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const expected = [
+    ["gamehot", "rss-peer-gamehot", "https://gamehot.org/feed.xml"],
+    ["myhot-finance", "rss-peer-myhot-finance", "https://aihot.wscn.net/feed.xml"],
+    ["ai-pulse-lab", "rss-peer-ai-pulse-lab", "https://ai-pulse-lab.com/feed.xml"],
+  ];
+  const peers = new Set(PEER_SITES.map(x => x.id));
+  assert.equal(peers.size, PEER_SITES.length, "邻域站点 ID 不可重复");
+  assert.equal(new Set(sources.map((x: {id: string}) => x.id)).size, sources.length, "信源 ID 不可重复");
+  for (const [peerId, sourceId, expectedFeed] of expected) {
+    const p = PEER_SITES.find(x => x.id === peerId);
+    const src = sources.find((x: {id: string}) => x.id === sourceId);
+    assert.ok(p, peerId);
+    assert.equal(p.strategy, "rss");
+    assert.equal(p.enabled, true);
+    assert.equal(peerFeedUrl(p), expectedFeed);
+    assert.ok(src, sourceId);
+    assert.equal(src.kind, "rss");
+    assert.equal(src.config.feedUrl, expectedFeed);
+    assert.equal(src.enabled, false, "新增跨行业 RSS 不能自动启用");
+    assert.equal(src.participation_mode, "isolated");
+    assert.equal(src.site_fulltext, false);
+    assert.equal(src.syndicate_fulltext, false);
+    assert.ok(src.config._aihot.initialBackfillLimit <= 4);
+    assert.ok(src.config.ingestNoiseFilter.requireMarkers.length >= 12);
+  }
+  assert.equal(PEER_SITES.length, 31, "新增站点不应覆盖其他 Agent 的邻域登记");
+});
+
+test("研究、项目与行业工作台仅浏览站不执行第三方抓取", async () => {
+  const justLink = ["xocto", "aimfast", "sanyu-insights"];
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  for (const id of justLink) {
+    const p = PEER_SITES.find(x => x.id === id);
+    assert.ok(p, id);
+    assert.equal(p.strategy, "link");
+    assert.equal(p.enabled, true);
+    assert.ok(p.url.startsWith("https://"));
+    assert.equal(p.feedPath, undefined);
+    assert.ok(!sources.some((x: {id: string}) => x.id === `rss-peer-${id}`));
+    assert.deepEqual(await fetchPeer(p), { via: "none", items: [], error: null });
+  }
+});

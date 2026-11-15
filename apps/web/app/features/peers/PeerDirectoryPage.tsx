@@ -29,7 +29,7 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <Kicker>邻域</Kicker>
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
-          这些站有相近的行业精选模式，涵盖不同研究与产业领域。选什么、怎么评由它们各自的编辑系统决定，不由本站判断；
+          这里收录不同领域的信息站和公开专题。可同步的站展示最近条目；仅浏览的站只提供官网入口，不假装有实时更新。选什么、怎么评由各站自己决定；
           日报与周报里的「邻域」版块，就是从这些站摘编的。下面按方向归类，点页头的标签可以直接跳过去。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
@@ -98,7 +98,7 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
       )}
 
       <p className="mt-6 text-[12px] leading-[1.9] text-ink-4">
-        链接一律直达各站原页，标题不改写、归属不转移。若某家长期读不到，它会从这里暂时消失，恢复后自动回来。
+        站点链接直达原站；可同步的条目保留原始归属。不提供 RSS/API 的站仅作为公开链接，不参与自动抓取或日报。
       </p>
     </div>
   );
@@ -125,7 +125,15 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
       </div>
 
       <div className="border-t border-line-soft px-5 py-3.5">
-        {s.latest ? (
+        {s.browseOnly ? (
+          <div className="space-y-2">
+            <p className="text-[12.5px] text-ink-4">仅浏览 · 不自动同步文章</p>
+            <a href={s.url} target="_blank" rel="noopener noreferrer"
+              className="peer-link inline-flex items-center gap-1 text-[13.5px] font-medium text-ink-2">
+              查看站点 <IconArrowUpRight size={13} />
+            </a>
+          </div>
+        ) : s.latest ? (
           <>
             <a
               href={s.latest.url}
@@ -148,10 +156,10 @@ function PeerCard({ site: s }: { site: PeerDirectoryEntry }) {
 
       <div className="mt-auto flex items-center gap-1.5 border-t border-line-soft px-5 py-2.5 text-[11.5px] text-ink-4">
         <span>
-          <span className="num">{s.items}</span> 条在库
+          {s.browseOnly ? "公开链接" : <><span className="num">{s.items}</span> 条在库</>}
         </span>
-        <span className="ml-auto" title={s.checkedAt ? fullDateTime(s.checkedAt) : undefined}>
-          {s.checkedAt ? `${relativeTime(s.checkedAt)}同步` : "尚未同步"}
+        <span className="ml-auto" title={!s.browseOnly && s.checkedAt ? fullDateTime(s.checkedAt) : undefined}>
+          {s.browseOnly ? "无需同步" : s.checkedAt ? `${relativeTime(s.checkedAt)}同步` : "尚未同步"}
         </span>
       </div>
     </article>

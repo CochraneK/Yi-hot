@@ -2989,6 +2989,17 @@ NewsMail 的 14 个版本化文件与 99 个历史候选已建立逐项账本；
 状态 `BLOCKED` 表示有确定阻断；`REVIEW_REQUIRED` 仍**不代表可导入**，机器标志 `migration_authorized` 始终为 false。同码多名不能自动视为更名或合并；正式导入前需要旧 ID 映射、人工冲突裁决、证据和版权/隐私检查、可逆导入测试及明确上线批准。操作细节、资产范围和回滚见 [CHARITY_DB_PRECHECK.md](docs/CHARITY_DB_PRECHECK.md)。此工具与腾讯云生产回执归档安全闸门 #21 相互独立，不能因本预检通过而恢复 `archive-db.py --delete`。
 
 
+## 公益仓库收口：公众号分析与机构数据（2026-11-14）
+
+公众号分析器源自私有 `wechat-article-analysis@264d8648`，已引入 `tools/wechat-analysis/` 的 14 图/HTML 引擎及需要明确原文分析许可的 JSONL 适配器。**只能离线、由操作者显式指定输入和输出；不从 YiHot 自动抓取正文、不发邮件、不公开报告、不建立定时任务**。源码与许可、可执行命令、试验要求见 [WECHAT_ANALYSIS_MIGRATION.md](docs/WECHAT_ANALYSIS_MIGRATION.md)。CI 增加合成语料的完整绘图工作流（通过结果以 GitHub Actions 为准），真实机构文章及 HTML 呈现仍需授权语料验收，不得宣布来源仓库已归档。
+
+`charity-intelligence` 继续保留真实机构库与原始证据的私有归属；除只读汇总预检外，新增 `scripts/charity_db_preview.py` 可对离线备份单一 legacy org_id 输出私有候选档案、名称、资讯提及、证据引用和冲突状态。它不分配 canonical ID，也不授权生产导入或公开数据。必须先执行 `scripts/charity_db_preflight.py`，详见 [CHARITY_CONSOLIDATION_STATUS.md](docs/CHARITY_CONSOLIDATION_STATUS.md) 与 [CHARITY_DB_PRECHECK.md](docs/CHARITY_DB_PRECHECK.md)。这次没有改动服务器、数据库迁移、自动任务、报告邮件、Source enabled 状态或隐私政策；若需回滚可独立撤回工具/文档，线上安全闸门 #21 保持。
+
+### 公众号分析完整渲染验收补充（2026-11-14）
+
+PR #36 的合成语料验收现要求全部 14 张 PNG 和 HTML 内嵌图片。第 12 图箱线图使用独立刻度设置以兼容 Matplotlib 新旧接口；缺系统字体时复用仓库 OFL Noto Sans SC，HTML 与图片统一写入显式私有输出目录；输出路径解析符号链接后再检查 Git 边界。生成器仍是手动离线工具，真实机构库、文章和线上部署没有因此验收。详见 [WECHAT_ANALYSIS_MIGRATION.md](docs/WECHAT_ANALYSIS_MIGRATION.md)。
+
+
 ## 儿童公益工作机会搜索与 RSS 候选（2026-11-15）
 
 GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的独立工作机会采集配置（5 个搜索组 21 条关键词 + 1 个联合国亚太 RSS）；新源在 `participation_mode=isolated`，暂不加入公开新闻或邮件，不开模付费也不会自动抓取。未修改已有 166 个源的开关、关键词或省份配置。新增机会源不会继承普通新闻中对“招聘、招标、报名、征稿、培训”等词的排除规则；但保留抽奖、彩票类噪声排除。

@@ -24,9 +24,14 @@
 // 日报只有 3 个名额，若固定按这个顺序取，第 4 家以后永远轮不上，所以日报按「近期最少出现」
 // 轮换（见 packages/backend/src/peers/select.ts 的 rotationOrder）。
 // 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
+/** 同系只用于有明确开源谱系/社区登记证据的站；其他包含独立项目及未核实来源。 */
+export type PeerFamily = "same" | "other";
+
 export interface PeerSite {
   id: string;
   name: string;
+  /** 展示归属：同系邻域 / 其他邻域，与行业 group 正交。 */
+  family: PeerFamily;
   /** 站点首页；条目链接一律用条目自己的 URL，不用这个拼。 */
   url: string;
   /** 一句话方向，显示在版块里，让读者知道这是哪个领域。 */
@@ -84,6 +89,7 @@ export const PEER_GROUP_FALLBACK = { id: "other", label: "其他", note: "还没
 export const PEER_SITES: PeerSite[] = [
   {
     id: "psyhot",
+    family: "same",
     name: "PsyHOT",
     url: "https://psyhot.cn",
     note: "心理学与精神医学，学界与业界双视角",
@@ -95,6 +101,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实：真实 RSS 在 /ai-ux-research-hot/rss.xml；/URHOT/ 已失效。
     id: "urhot",
+    family: "same",
     name: "URHOT",
     url: "https://huangzhenhao90.github.io/ai-ux-research-hot/",
     note: "AI × 用户研究，HCI 方法、工具与设计研究",
@@ -107,6 +114,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实行业日报和招投标雷达，/feed.xml 为 404，仅浏览。
     id: "sanyu-insights",
+    family: "other",
     name: "三禹智能 · 行业情报",
     url: "https://www.sanyusmart.com/insights/",
     note: "智慧水利、行业 AI、招投标商机",
@@ -117,6 +125,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "qingyan",
+    family: "same",
     name: "青砚",
     url: "https://qingyannews.cn",
     note: "环保与双碳",
@@ -129,6 +138,7 @@ export const PEER_SITES: PeerSite[] = [
     // 扫 fork 的 site/site.ts 找到（nidao003/AIHOT-metro），2026-11-15 实测 /api/v1/items 标准、
     // feed.xml 可用。城轨是名录里第一个公共基础设施方向。
     id: "metrohot",
+    family: "same",
     name: "MetroHot",
     url: "https://metrohot.oohforce.com",
     note: "城市轨道交通，地铁运营、TOD 开发与站点商业",
@@ -140,6 +150,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // #306 登记，2026-11-15 实测 /api/v1/items 标准、feed.xml 可用。
     id: "bioinfosoul",
+    family: "same",
     name: "生信之灵",
     url: "https://bioinfosoul.com",
     note: "生信与 AI 制药，科研进展与临床审批",
@@ -151,6 +162,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实 /feed.xml 有当日精选；/api/v1/items 返回 not_exported。
     id: "gamehot",
+    family: "same",
     name: "GameHOT",
     url: "https://gamehot.org/",
     note: "游戏产业、产品设计、发行运营与玩家反馈",
@@ -162,6 +174,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实 /feed.xml 有财经及产业精选，独立站而非 aihot.news。
     id: "myhot-finance",
+    family: "same",
     name: "MyHOT · 市场观察",
     url: "https://aihot.wscn.net/",
     note: "金融市场、产业政策与商业动态",
@@ -173,6 +186,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实公开产品/融资分析页，但 /feed.xml 为 404，仅浏览。
     id: "xocto",
+    family: "other",
     name: "x-octo · 机会库",
     url: "https://xocto.vercel.app/",
     note: "AI 产品研究、融资与创业机会（公开资料库）",
@@ -184,6 +198,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实公开趋势页，后台登录限制；/feed.xml、/rss.xml 为 404。
     id: "aimfast",
+    family: "other",
     name: "AimFast",
     url: "https://www.aimfast.dev/",
     note: "创业趋势与产品机会（深入分析需登录）",
@@ -194,6 +209,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "innews",
+    family: "same",
     name: "大厂观察",
     url: "https://innews.site",
     note: "互联网大厂动态与职场信息",
@@ -204,6 +220,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "sevenailab",
+    family: "same",
     name: "品牌AI外刊",
     url: "https://news.sevenailab.com",
     note: "海外品牌营销与 AI 带来的变化",
@@ -215,6 +232,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实：/robot-hot/feed.xml 可读；/robot-hot/rss.xml 不存在。
     id: "aiman-robot-hot",
+    family: "other",
     name: "聚身之家",
     url: "https://www.aiman.world/robot-hot/",
     note: "具身智能，机器人产业、研究与产品证据",
@@ -226,6 +244,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "robohot",
+    family: "same",
     name: "RoboHot",
     url: "https://robohot.news",
     note: "机器人产业，面向研发者与准备入行的人",
@@ -236,6 +255,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "mediastack",
+    family: "same",
     name: "MediaStack",
     url: "https://mediastack.work",
     note: "音视频技术情报",
@@ -246,6 +266,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "filmtech",
+    family: "same",
     name: "FilmTechNews",
     url: "https://filmtech.lumenghe.com",
     note: "影视技术日报",
@@ -256,6 +277,7 @@ export const PEER_SITES: PeerSite[] = [
   },
   {
     id: "ai4math",
+    family: "same",
     name: "AI4Math Radar",
     url: "https://charlie-wang-03.github.io/ai4math-radar/",
     note: "AI for Mathematics 研究动态",
@@ -268,6 +290,7 @@ export const PEER_SITES: PeerSite[] = [
     // 扫 fork 的 site/site.ts 找到（TJJAom/AIHOT），2026-11-15 实测 /api/v1/items 标准。
     // 名录里第一家用繁体中文写作的站，条目里会出现「輝達」「軟體」这类译名。
     id: "dayacre",
+    family: "same",
     name: "日耕 AI 熱點",
     url: "https://aihot.dayacre.com",
     note: "AI 动态的繁中版，台湾读者的用语与视角",
@@ -279,6 +302,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // #254 登记，2026-11-15 实测 /api/v1/items 标准。
     id: "foxnan",
+    family: "same",
     name: "AI快讯",
     url: "https://hot.foxnan.com",
     note: "AI 新闻与每日动态",
@@ -290,6 +314,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // #98 登记，只有 Atom feed（/api/v1/* 全 404），feed 的 entry link 直接是原文地址。
     id: "xabcnews",
+    family: "same",
     name: "XABC News",
     url: "https://xabcnews.com",
     note: "AI、开发者与前沿科技的全网热点",
@@ -301,6 +326,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 实测 /api/v1/items 标准，方向是漏洞情报。
     id: "vulnhot",
+    family: "same",
     name: "VulnHOT",
     url: "https://vulnhot.com",
     note: "漏洞情报与安全事件",
@@ -313,6 +339,7 @@ export const PEER_SITES: PeerSite[] = [
     // 域名 2026-11-15 实测已失效：news.blues19.com 与 apex blues19.com 都无 A 记录。
     // 仍然保留在表里并继续探测（DNS 失败只需 1ms），站主恢复解析后自动接上。
     id: "blues19",
+    family: "same",
     name: "拾玖跨境资讯",
     url: "https://news.blues19.com",
     note: "跨境电商，按平台政策与运营重建了主题体系",
@@ -324,6 +351,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 实测 /feed.xml、/rss.xml、/api/v1/* 全 404（Next.js 站，接口未导出）。
     id: "yingxiao",
+    family: "same",
     name: "营销通鉴 · 平台动态",
     url: "https://yingxiaoclub.com/news",
     note: "营销平台的规则变化与新功能早报",
@@ -335,6 +363,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 实测主页与 /feed.xml，汽车新闻有实际更新时间。
     id: "autohot",
+    family: "same",
     name: "AutoHot",
     url: "https://www.autohot.top/",
     note: "汽车产业、新车型、出行技术与政策",
@@ -346,6 +375,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 实测主页与 /feed.xml，住房/物业有近期政策信息。
     id: "huifangyun",
+    family: "same",
     name: "汇房云资讯",
     url: "https://info.huifangyun.com/",
     note: "房地产、物业监管、住房与社区服务",
@@ -357,6 +387,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 实测 /feed.xml 和 /api/v1/items 返回实际文章。
     id: "fai-lab",
+    family: "same",
     name: "FAI 实验室",
     url: "https://fai.fashion/",
     note: "AI 工具、设计与内容生产，也有通用 AI 资讯",
@@ -368,6 +399,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 公开材料/化学研究条目可读；/ai4scihot/feed.xml 返回 403。
     id: "ai4scihot",
+    family: "same",
     name: "AI4SciHOT",
     url: "https://ai4scihot.8-220-189-127.sslip.io/ai4scihot",
     note: "AI for Science：材料、化学、物理与工业仿真",
@@ -380,6 +412,7 @@ export const PEER_SITES: PeerSite[] = [
     // 2026-11-15 公开专题可浏览；/feed.xml 和 /horizon/feed.xml 为 404。
     // 这是 UU AI Hub 专题，不是独立运行的「发射窗口」AIHOT 服务。
     id: "horizon-uu",
+    family: "other",
     name: "发射窗口",
     url: "https://www.uuaihub.com/horizon",
     note: "商业航天、AI 芯片与机器人专题入口",
@@ -391,6 +424,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // AIHOT Show and tell #333，2026-11-15 实测：仅为静态演示页。
     id: "fengxiang-demo",
+    family: "same",
     name: "风向",
     url: "https://fightkk7.github.io/fengxiang/",
     note: "企业服务与 SaaS 资讯（静态产品演示）",
@@ -402,6 +436,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 公共站可浏览，/feed.xml 与 /rss.xml 均为 404。
     id: "newsiq",
+    family: "other",
     name: "NewsIQ · 讯析",
     url: "https://newsiq.xyz/",
     note: "新闻事件聚合与跨来源分析",
@@ -413,6 +448,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 核实 /feed.xml 有当日多源研究条目；与已有 AI 热点站功能部分交叉。
     id: "ai-pulse-lab",
+    family: "other",
     name: "AI Pulse",
     url: "https://ai-pulse-lab.com/",
     note: "多源 AI 信号、研究分析与知识检索",
@@ -424,6 +460,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 官网有 NGO 招聘与公益资源；/feed.xml 和 /rss.xml 均未提供可用内容
     id: "cdb-ngo",
+    family: "other",
     name: "中国发展简报",
     url: "https://www.chinadevelopmentbrief.org.cn/",
     note: "公益招聘、资助招标、机构动态与专业培训",
@@ -435,6 +472,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 新闻公开可读；近期条目到 2026-06；没有经核实的稳定 RSS，不能声称每日更新
     id: "foundation-center",
+    family: "other",
     name: "基金会中心网",
     url: "https://foundationcenter.org.cn/news",
     note: "基金会信息披露、慈善数据与合规研究",
@@ -446,6 +484,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 官网及 WordPress /feed/ 实测有 2026-11 更新；政策解释非官方版本
     id: "china-law-translate",
+    family: "other",
     name: "China Law Translate",
     url: "https://www.chinalawtranslate.com/",
     note: "中国法律政策的非官方翻译、修法跟踪与分析",
@@ -458,6 +497,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 官方 Jobs 列表公开可浏览；/rss.xml 是全站 Updates，不是职位专区 RSS
     id: "reliefweb-jobs",
+    family: "other",
     name: "ReliefWeb · 职位",
     url: "https://reliefweb.int/jobs",
     note: "国际公益、人道援助岗位、咨询与合作征集",
@@ -469,6 +509,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 官网展示多国有效征集和资格筛选；/feed.xml 404，官方申请资格与截止日仍需逐条复核
     id: "funding-radar",
+    family: "other",
     name: "Funding Radar",
     url: "https://fundingradar.eu/",
     note: "跨国科研项目资助征集与申请资格预筛",
@@ -480,6 +521,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 公开科研检索与机构关系数据可读；不是经过质量评分的研究证据摘要
     id: "openalex-research",
+    family: "other",
     name: "OpenAlex",
     url: "https://openalex.org/",
     note: "全球科研文献、机构、作者与研究关联检索",
@@ -491,6 +533,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 官网及 /feed/ 有 11 月政府采购透明度文章；监督线索不等于违法事实
     id: "open-contracting",
+    family: "other",
     name: "Open Contracting",
     url: "https://www.open-contracting.org/",
     note: "公共采购透明度、开放合同数据与治理案例",
@@ -503,6 +546,7 @@ export const PEER_SITES: PeerSite[] = [
   {
     // 2026-11-15 公开 Atom /atom.xml 含最近研究条目和日期，统计指标不等于地方因果推断
     id: "our-world-in-data",
+    family: "other",
     name: "Our World in Data",
     url: "https://ourworldindata.org/",
     note: "公共卫生、教育、贫困与环境的开放数据和研究",

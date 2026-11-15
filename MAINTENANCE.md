@@ -3088,3 +3088,9 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 新增 AI Safety HOT、AIDC热点、EmbHot、MarketHOT、DesignRadar、MedHOT、ThinkHOT 七个经过官网致谢或公开定制仓库核实的同系浏览入口。名录从 42 到 **49 项（same 31 / other 18，含原有关闭项）**，不等于实时在线数。MedHOT 是页面日期为 11 月 5 日的静态快照；ThinkHOT 为 11 月 14 日快照，卡片文案明确其性质。七项均沿用 `strategy=link`，不抓取、不进入文章轮转、不增加 RSS Seed 或模型费用。
 
 本轮增加了对 `fork:false` 定制仓库的检索，发现 Fork 网络之外的行业版本；另保留教育、医疗器械、遥感、农业、关务等 11 个未验证公开内容/地址的候选。DesignRadar RSS 实测有 42 条；EvalHot 虽 HTTP 200 但 RSS 为 0 条，不能混为可同步内容。AIDC 的公开转载许可与网站技术开源分别判断。完整链接、验证方式、RSS 状态、未纳入原因、测试和回滚见 [第六轮发现记录](docs/PEER_SAME_FAMILY_DISCOVERY_ROUND6_2026-11-15.md)。GitHub 合并与腾讯云部署仍是两步，本轮不宣称生产生效。
+
+## 同系邻域第七轮：数学教育与静态采编站（2026-11-15）
+
+新增「数学教育 HOT」与「神灯AI热点」两个同系浏览入口，登记从 49 到 **51 项（same 33 / other 18，含原有关闭项）**。前者是认知科学、学习科学与 AI 数学教育的静态周报，最新索引为 11 月 9 日；后者为本地采编后导出的 AI 综合阅读站。两站 RSS 均在本日实际读取并解析（12 / 50 条），但本轮只记录地址，目录继续 `strategy=link`，不新增采集 Seed、文章轮转或模型费用。神灯正式域名是 `shendeng.news`，与仓库 `shengdeng.news` 拼写不同，不应擅自纠正。
+
+本轮去重保存 58 条候选核验记录，区分明确改造、默认配置、未核实地址与 HTTP 失败；jobhot / RoboTaxi 503、ElectroRadar 404、AIFocus 403 均未计为可用站，不凭仓库名虚增行业覆盖。证据、RSS 地址、候选与回滚见 [第七轮记录](docs/PEER_SAME_FAMILY_DISCOVERY_ROUND7_2026-11-15.md) 及其机器清单。保留既有用户配置，生产同步仍需单独部署验收。

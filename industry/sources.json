@@ -10175,6 +10175,424 @@
       "site_fulltext": false,
       "syndicate_fulltext": false,
       "enabled": false
+    },
+    {
+      "id": "rss-peer-designradar",
+      "name": "DesignRadar · 设计雷达 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://designradar.vercel.app/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "child",
+            "nonprofit",
+            "social impact",
+            "education",
+            "health",
+            "accessibility",
+            "privacy",
+            "ethics",
+            "public good",
+            "公益",
+            "儿童",
+            "无障碍",
+            "教育",
+            "社会影响"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-math-education-hot",
+      "name": "数学教育 HOT · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://a0910580996-a11y.github.io/math-education-hot/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "education",
+            "student",
+            "learning",
+            "school",
+            "cognition",
+            "disability",
+            "teaching",
+            "equity",
+            "儿童",
+            "教育",
+            "学习",
+            "认知",
+            "教学",
+            "公平"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-shendeng-ai",
+      "name": "神灯AI热点 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://shendeng.news/feed.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "education",
+            "health",
+            "charity",
+            "nonprofit",
+            "policy",
+            "accessibility",
+            "privacy",
+            "safety",
+            "公益",
+            "儿童",
+            "教育",
+            "医疗",
+            "隐私",
+            "政策"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-reliefweb-jobs",
+      "name": "ReliefWeb · 公益岗位 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://reliefweb.int/jobs/rss.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "child protection",
+            "education",
+            "health",
+            "WASH",
+            "nutrition",
+            "gender",
+            "social",
+            "humanitarian",
+            "development",
+            "psychosocial",
+            "youth",
+            "NGO"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-unicef-data",
+      "name": "UNICEF Data · 儿童数据 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://data.unicef.org/feed/",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "child",
+            "education",
+            "health",
+            "nutrition",
+            "poverty",
+            "mental",
+            "disability",
+            "protection",
+            "climate",
+            "inequality",
+            "adolescent",
+            "welfare"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-icnl",
+      "name": "ICNL · 非营利法律 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.icnl.org/feed/",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "nonprofit",
+            "NGO",
+            "charity",
+            "civil society",
+            "civic space",
+            "child",
+            "rights",
+            "education",
+            "advocacy",
+            "social",
+            "philanthropy",
+            "humanitarian"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-un-news-sdgs",
+      "name": "联合国新闻 · 可持续发展 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "child",
+            "education",
+            "health",
+            "poverty",
+            "equality",
+            "climate",
+            "social",
+            "humanitarian",
+            "nutrition",
+            "protection",
+            "SDG",
+            "development"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-un-geneva-news",
+      "name": "联合国日内瓦 · 新闻 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.ungeneva.org/news-media/press-items-list/rss.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "children",
+            "child",
+            "rights",
+            "education",
+            "health",
+            "disability",
+            "humanitarian",
+            "civil society",
+            "sustainable",
+            "poverty",
+            "protection",
+            "refugee"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 14
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "rss-peer-gdacs",
+      "name": "GDACS · 全球灾害预警 · 邻域 RSS（待审）",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.gdacs.org/xml/rss.xml",
+        "ingestNoiseFilter": {
+          "requireMarkers": [
+            "humanitarian",
+            "flood",
+            "earthquake",
+            "cyclone",
+            "storm",
+            "drought",
+            "population",
+            "affected",
+            "emergency",
+            "disaster",
+            "wildfire",
+            "risk",
+            "relief"
+          ],
+          "dropMarkers": [
+            "彩票",
+            "博彩广告",
+            "优惠券"
+          ]
+        },
+        "_aihot": {
+          "initialBackfillLimit": 4,
+          "ingestMaxAgeDays": 3
+        }
+      },
+      "tier": "T2",
+      "first_party": false,
+      "participation_mode": "isolated",
+      "interval_minutes": 1440,
+      "tags": [
+        "邻域RSS",
+        "跨领域候选",
+        "待许可与相关性审核"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

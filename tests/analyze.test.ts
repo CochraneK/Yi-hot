@@ -147,6 +147,11 @@ test("the existing structure call stores grounded geography candidates without a
   assert.ok(Number.isInteger(r.output.geography.receiptId));
   assert.deepEqual(r.output.geography.candidates.map((v: { place: string; role: string }) => [v.place, v.role]),
     [["四川凉山", "event"], ["北京", "publisher"]], "unquoted 火星 location was rejected");
+  const stored = await sql<{ place_text: string; role: string; review_status: string; analysis_id: number }[]>`
+    SELECT place_text, role, review_status, analysis_id FROM geo_candidates WHERE article_id = ${id} ORDER BY id`;
+  assert.deepEqual(stored.map((v) => [v.place_text, v.role, v.review_status]),
+    [["四川凉山", "event", "pending"], ["北京", "publisher", "pending"]], "same structure call persisted unverified candidates");
+  assert.ok(stored.every((v) => Number.isSafeInteger(v.analysis_id)));
 });
 
 test("an item that reaches the threshold is written like a selected one; below it is translated", async () => {

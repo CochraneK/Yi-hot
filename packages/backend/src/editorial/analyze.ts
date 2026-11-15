@@ -527,6 +527,15 @@ export async function analyzeArticle(articleId: string, opts: StepOpts = {}): Pr
         ${out.score}, ${out.selected}, ${tx.json(detail as never)})
       RETURNING id`;
     for (const id of receiptIds) await completeReceipt(tx, id);
+    // Persist *unverified* location hints with the exact analysis version. The public map
+    // never reads these until an operator resolves a place and explicitly verifies the role.
+    // Stale analysis results cannot create current candidates; reruns remain append-only.
+    if (!stale && out.geoCandidates.length) for (const candidate of out.geoCandidates) {
+      await tx`
+        INSERT INTO geo_candidates (article_id, analysis_id, place_text, role, evidence)
+        VALUES (${articleId}, ${row!.id}, ${candidate.place}, ${candidate.role}, ${candidate.evidence})
+        ON CONFLICT (analysis_id, place_text, role, evidence) DO NOTHING`;
+    }
     if (!stale) {
       await tx`UPDATE articles SET processing_state = ${out.relevance === "block" ? "blocked" : "analyzed"}, processing_error = NULL WHERE id = ${articleId}`;
     }

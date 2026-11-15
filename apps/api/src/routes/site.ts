@@ -6,6 +6,7 @@ import { isCategoryKey, isChannelKey, type CategoryKey, type ChannelKey } from "
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
+import { loadVerifiedGeoPool } from "@aihot/backend/publication/geo";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
 import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/groups";
@@ -112,6 +113,18 @@ export function registerSite(app: FastifyInstance) {
     const data = await loadPool({ ...filters, q: search, tab, page });
     const { generatedAt: _, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "pool", cacheControl: "public, max-age=60, s-maxage=60", etagOf: content });
+  }));
+
+  // Only verified event relationships reach readers. The place id is a canonical catalog key,
+  // not a visitor IP or arbitrary free-text query. Public release/withdrawal gates apply.
+  app.get("/api/site/geo", siteHandler(async (req, reply) => {
+    const q = looseQuery(req);
+    const place = q.place?.trim() ?? "";
+    if (!/^[a-z0-9][a-z0-9-]{1,79}$/.test(place)) throw new BadRequest("invalid place id");
+    const page = Math.min(Math.max(Number(q.page) || 1, 1), 50);
+    const data = await loadVerifiedGeoPool(place, page);
+    const { generatedAt: _g, ...content } = data;
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geo", cacheControl: "public, max-age=60, s-maxage=60", etagOf: content });
   }));
 
   app.get("/api/site/items/:id", siteHandler(async (req, reply) => {

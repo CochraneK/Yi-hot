@@ -39,3 +39,24 @@ export function groupSites(sites: PeerDirectoryEntry[]): PeerGroupView[] {
   }
   return views;
 }
+
+/** 邻域一级分类；保留现有行业分组作为第二层，不新增页面或数据库结构。 */
+export interface NeighborhoodSection {
+  id: "same" | "other";
+  label: string;
+  note: string;
+  sites: PeerDirectoryEntry[];
+  groups: PeerGroupView[];
+}
+
+export function groupNeighborhoods(sites: PeerDirectoryEntry[]): NeighborhoodSection[] {
+  const kinds: Array<Pick<NeighborhoodSection, "id" | "label" | "note">> = [
+    { id: "same", label: "同系邻域", note: "相近信息精选体系的行业站点，内容和判断由各站独立维护。" },
+    { id: "other", label: "其他邻域", note: "独立信息站、科研数据库与实用工具；也包含来源关系尚待核实的站点。" },
+  ];
+  return kinds.flatMap((kind) => {
+    // 老版 API 缺 family 时归入“其他”，绝不丢卡或错误宣称同系。
+    const entries = sites.filter((site) => (site.family === "same" ? "same" : "other") === kind.id);
+    return entries.length ? [{ ...kind, sites: entries, groups: groupSites(entries) }] : [];
+  });
+}

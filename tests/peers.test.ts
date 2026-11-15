@@ -7,6 +7,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { interleavePicks, rotationOrder, sortWithinPeer } from "@aihot/backend/peers/select";
+import { peerFeedUrl, parseFeed } from "@aihot/backend/peers/refresh";
+import { PEER_SITES } from "@aihot/industry/peers";
+import { readFileSync } from "node:fs";
 
 const item = (peerId: string, n: number, score: number | null, publishedAt: string | null = null) => ({
   key: `${peerId}:${n}`,
@@ -96,4 +99,63 @@ test("登记表里没有的站不丢内容，排到最后", () => {
   ]);
   const picks = interleavePicks(groups, ["known"], 2);
   assert.deepEqual(picks.map((p) => p.peerId), ["known", "newcomer"]);
+});
+
+test("邻域和 RSS 来源是两个模块：同站共享经过核实的 Feed 地址，但配置/开关独立", () => {
+  const seed = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const expected = [
+    ["urhot", "rss-peer-urhot", "https://huangzhenhao90.github.io/ai-ux-research-hot/rss.xml"],
+    ["aiman-robot-hot", "rss-peer-aiman-robot-hot", "https://www.aiman.world/robot-hot/feed.xml"],
+  ];
+  assert.equal(new Set(PEER_SITES.map(x => x.id)).size, PEER_SITES.length, "duplicate peer IDs");
+  for (const [peerId, sourceId, url] of expected) {
+    const peer = PEER_SITES.find(x => x.id === peerId);
+    const source = seed.find((x: { id: string }) => x.id === sourceId);
+    assert.ok(peer, peerId);
+    assert.equal(peer.enabled, true, "visible as a cross-industry directory site");
+    assert.equal(peer.strategy, "rss");
+    assert.equal(peerFeedUrl(peer), url);
+    assert.ok(source, sourceId);
+    assert.equal(source.kind, "rss");
+    assert.equal(source.config.feedUrl, url);
+    assert.equal(source.enabled, false, "cross-sector RSS cannot silently start public ingestion");
+    assert.equal(source.participation_mode, "isolated");
+    assert.equal(source.site_fulltext, false);
+    assert.equal(source.syndicate_fulltext, false);
+    assert.ok(source.config.ingestNoiseFilter.requireMarkers.length > 5);
+    assert.ok(source.config._aihot.initialBackfillLimit <= 4);
+  }
+  assert.equal(peerFeedUrl({ url: "https://example.org/foo/" }), "https://example.org/foo/feed.xml");
+});
+
+test("邻域 RSS 自定义路径只能留在站点的 HTTPS 主机", () => {
+  for (const path of [
+    "//evil.example/secret", "/foo/../bar", "/foo/./bar", "/ok?redirect=evil",
+    "/ok#fragment", "https://evil.example/rss.xml", "/foo/%2e%2e/rss.xml",
+  ]) {
+    assert.throws(() => peerFeedUrl({ url: "https://example.org", feedPath: path }), path);
+  }
+  assert.equal(peerFeedUrl({ url: "https://example.org/site/", feedPath: "/site/rss.xml" }),
+    "https://example.org/site/rss.xml");
+});
+
+test("已核实来源的两种 RSS 格式都能解析并保留时间、引用链接", () => {
+  const urhot = `<?xml version="1.0"?><rss version="2.0"><channel><title>URHOT</title><item>
+    <title>研究在环</title><link>https://www.nngroup.com/articles/research-in-the-loop/</link>
+    <description><![CDATA[一项用户研究方法讨论]]></description><pubDate>Fri, 13 Nov 2026 18:00:00 GMT</pubDate>
+  </item></channel></rss>`;
+  const aiman = `<?xml version="1.0"?><rss version="2.0"><channel><title>聚身之家</title><item>
+    <title><![CDATA[机器人研究项目]]></title><link>https://www.aiman.world/robot-hot/items/abc</link>
+    <guid>abc</guid><pubDate>Fri, 13 Nov 2026 05:00:00 GMT</pubDate>
+    <description><![CDATA[原始研究的公开摘要]]></description>
+  </item></channel></rss>`;
+  const u = parseFeed(urhot), a = parseFeed(aiman);
+  assert.equal(u.length, 1);
+  assert.equal(a.length, 1);
+  assert.match(u[0]!.title, /研究在环/);
+  assert.match(a[0]!.title, /机器人研究/);
+  assert.equal(u[0]!.itemUrl, "https://www.nngroup.com/articles/research-in-the-loop/");
+  assert.equal(a[0]!.itemUrl, "https://www.aiman.world/robot-hot/items/abc");
+  assert.ok(u[0]!.publishedAt?.startsWith("2026-11-13"));
+  assert.ok(a[0]!.publishedAt?.startsWith("2026-11-13"));
 });

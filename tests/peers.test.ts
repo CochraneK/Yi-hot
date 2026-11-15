@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { interleavePicks, rotationOrder, sortWithinPeer } from "@aihot/backend/peers/select";
-import { peerFeedUrl, parseFeed } from "@aihot/backend/peers/refresh";
+import { peerFeedUrl, parseFeed, fetchPeer } from "@aihot/backend/peers/refresh";
 import { PEER_SITES } from "@aihot/industry/peers";
 import { readFileSync } from "node:fs";
 
@@ -158,4 +158,64 @@ test("已核实来源的两种 RSS 格式都能解析并保留时间、引用链
   assert.equal(a[0]!.itemUrl, "https://www.aiman.world/robot-hot/items/abc");
   assert.ok(u[0]!.publishedAt?.startsWith("2026-11-13"));
   assert.ok(a[0]!.publishedAt?.startsWith("2026-11-13"));
+});
+
+test("新增 3 个可同步邻域网站与独立关闭的 RSS 一一对应", () => {
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const cases = [
+    ["autohot", "rss-peer-autohot", "https://www.autohot.top/feed.xml"],
+    ["huifangyun", "rss-peer-huifangyun", "https://info.huifangyun.com/feed.xml"],
+    ["fai-lab", "rss-peer-fai-lab", "https://fai.fashion/feed.xml"],
+  ];
+  assert.equal(new Set(PEER_SITES.map(x => x.id)).size, PEER_SITES.length);
+  assert.equal(new Set(sources.map((x: {id: string}) => x.id)).size, sources.length);
+  for (const [peerId, sourceId, expectedFeed] of cases) {
+    const peer = PEER_SITES.find(x => x.id === peerId);
+    const source = sources.find((x: {id: string}) => x.id === sourceId);
+    assert.ok(peer, peerId);
+    assert.equal(peer.enabled, true);
+    assert.equal(peer.strategy, "rss");
+    assert.equal(peerFeedUrl(peer), expectedFeed);
+    assert.ok(source, sourceId);
+    assert.equal(source.kind, "rss");
+    assert.equal(source.enabled, false, "RSS collection must require explicit separate review");
+    assert.equal(source.participation_mode, "isolated");
+    assert.equal(source.config.feedUrl, expectedFeed);
+    assert.equal(source.site_fulltext, false);
+    assert.equal(source.syndicate_fulltext, false);
+    assert.ok(source.config.ingestNoiseFilter.requireMarkers.length > 8);
+    assert.ok(source.config._aihot.initialBackfillLimit <= 4);
+  }
+});
+
+test("仅浏览的 4 个邻域链接不发外部请求，也不伪装 RSS 或独立证据", async () => {
+  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  const candidates = ["ai4scihot", "horizon-uu", "fengxiang-demo", "newsiq"];
+  for (const id of candidates) {
+    const peer = PEER_SITES.find(x => x.id === id);
+    assert.ok(peer, id);
+    assert.equal(peer.enabled, true);
+    assert.equal(peer.strategy, "link");
+    assert.ok(peer.url.startsWith("https://"));
+    assert.equal(peer.feedPath, undefined, id);
+    assert.ok(!sources.some((x: {id: string}) => x.id === `rss-peer-${id}`));
+    const result = await fetchPeer(peer);
+    assert.deepEqual(result, { via: "none", items: [], error: null });
+  }
+  assert.ok(PEER_SITES.some(x => x.strategy === "none" && !x.enabled),
+    "disabled/unavailable sites must remain distinct from readable link-only sites");
+});
+
+test("现有 RSS/Atom 解析支持新增跨行业来源的摘要而不制造已验证事实", () => {
+  const xml = `<?xml version="1.0"?><rss version="2.0"><channel><title>Vertical RSS</title>
+  <item><title><![CDATA[2026年物业服务合规通知]]></title>
+  <link>https://info.huifangyun.com/items/example</link>
+  <pubDate>Fri, 13 Nov 2026 05:00:00 GMT</pubDate>
+  <description><![CDATA[一份政策新闻的摘要，不代表法律意见。]]></description>
+  </item></channel></rss>`;
+  const entries = parseFeed(xml);
+  assert.equal(entries.length, 1);
+  assert.match(entries[0]!.title, /物业服务/);
+  assert.match(entries[0]!.summary, /不代表法律意见/);
+  assert.ok(entries[0]!.publishedAt?.startsWith("2026-11-13"));
 });

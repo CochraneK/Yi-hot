@@ -80,6 +80,12 @@ test("三层顺序固定，原有行业分组和同系归属均保留", () => {
   assert.deepEqual(sections[1]?.groups.map(g => g.id), ["civic", "research"]);
   assert.deepEqual(sections[2]?.groups.map(g => g.id), ["market", "growth"]);
   assert.equal(sections[0]?.sites.find(s => s.id === "s1")?.family, "same");
+  assert.deepEqual(sections[0]?.families?.map(f => f.id), ["same", "other"]);
+  assert.deepEqual(sections[0]?.families?.[0]?.sites.map(s => s.id), ["s1", "s2"]);
+  assert.deepEqual(sections[0]?.families?.[1]?.sites.map(s => s.id), ["o1"]);
+  assert.deepEqual(sections[0]?.families?.[0]?.groups.map(g => g.id), ["health", "market"]);
+  assert.equal(sections[1]?.families, undefined, "资源不需要再按同系分级");
+  assert.equal(sections[2]?.families, undefined, "候选不需要再按同系分级");
   const all = sections.flatMap(section => section.sites.map(s => s.id));
   assert.equal(new Set(all).size, entries.length);
   assert.deepEqual([...all].sort(), entries.map(e => e.id).sort());
@@ -99,4 +105,20 @@ test("空类别不显示，未知行业保留兜底", () => {
   assert.equal(sections.length, 1);
   assert.equal(sections[0]?.groups[0]?.id, "other");
   assert.deepEqual(groupNeighborhoods([]), []);
+});
+
+test("可能重合、没有同步接口和同步失败的正式邻域仍保留归属与可见性", () => {
+  const sources: PeerDirectoryEntry[] = [
+    { ...site("overlap", "news"), family: "other", tier: "official", overlapPossible: true, browseOnly: true },
+    { ...site("sync-error", "health"), family: "same", tier: "official", ok: false, browseOnly: false },
+    { ...site("source-only", "market"), family: "same", tier: "official", browseOnly: true },
+  ];
+  const sections = groupNeighborhoods(sources);
+  assert.equal(sections.length, 1);
+  assert.equal(sections[0]?.id, "official");
+  assert.equal(sections[0]?.sites.length, 3);
+  assert.equal(sections[0]?.families?.[0]?.sites.length, 2);
+  assert.equal(sections[0]?.families?.[1]?.sites.length, 1);
+  assert.equal(sections[0]?.families?.[1]?.sites[0]?.overlapPossible, true);
+  assert.equal(sections[0]?.families?.[0]?.sites.find(x => x.id === "sync-error")?.ok, false);
 });

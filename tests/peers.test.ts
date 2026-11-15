@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { interleavePicks, rotationOrder, sortWithinPeer } from "@aihot/backend/peers/select";
 import { peerFeedUrl, parseFeed, fetchPeer } from "@aihot/backend/peers/refresh";
-import { PEER_SITES } from "@aihot/industry/peers";
+import { PEER_GROUPS, PEER_SITES } from "@aihot/industry/peers";
 import { readFileSync } from "node:fs";
 
 const item = (peerId: string, n: number, score: number | null, publishedAt: string | null = null) => ({
@@ -346,8 +346,10 @@ test("所有邻域站点在唯一事实源中标有同系/其他归属，与行�
   for (const id of ["cdb-ngo", "openalex-research", "foundation-center", "our-world-in-data"]) {
     assert.equal(PEER_SITES.find(p => p.id === id)?.family, "other", id);
   }
+  // 分组 id 只认 PEER_GROUPS 里声明过的：改分组时漏改这一处会静默落进「其他」，靠这条拦下。
+  const groupIds = new Set<string>(PEER_GROUPS.map(g => g.id));
   for (const p of PEER_SITES) {
-    assert.ok(["health", "public", "tech", "ai", "biz"].includes(p.group), p.id);
+    assert.ok(groupIds.has(p.group), p.id);
   }
 });
 

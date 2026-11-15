@@ -12,6 +12,8 @@ export interface PeerDirectoryEntry {
   note: string;
   /** 分组 id（industry/peers.ts 的 PeerGroupId）。页面拿它归堆，标签与顺序也来自那边。 */
   group: string;
+  /** 同系邻域 / 其他邻域。旧数据未提供时前端归入“其他邻域”，不丢站。 */
+  family?: "same" | "other";
   /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */
   accent: string;
   /** 仅提供公开站点入口；不请求第三方 RSS/API，也不会出现在日报轮转。 */

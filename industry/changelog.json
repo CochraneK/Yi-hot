@@ -1,9 +1,9 @@
 {
-  "latestVersion": "2026-11-15T22:00",
+  "latestVersion": "2026-11-15T21:50",
   "releases": [
     {
       "date": "2026-11-15",
-      "time": "22:00",
+      "time": "21:50",
       "kind": "更新",
       "title": "邻域页按方向归了类",
       "body": [

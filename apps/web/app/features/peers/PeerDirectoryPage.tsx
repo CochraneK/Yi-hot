@@ -30,7 +30,7 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
           这些站和本站用的是同一套框架，做的是别的行业。选什么、怎么评由它们各自的编辑系统决定，不由本站判断；
-          日报与周报里的「邻域」版块，就是从这些站摘编的。下面按方向分组，同一行的站看的是同一件事。
+          日报与周报里的「邻域」版块，就是从这些站摘编的。下面按方向归类，点页头的标签可以直接跳过去。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">
           <span>
@@ -86,7 +86,8 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
                   <span className="ml-auto truncate pl-3 text-[11.5px] text-ink-4">{g.note}</span>
                 </div>
               )}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {/* 只有两三张卡的组排三列会空出一整格，看着像加载失败；满三张才上三列。 */}
+              <div className={`grid gap-3 sm:grid-cols-2 ${g.sites.length >= 3 ? "xl:grid-cols-3" : ""}`}>
                 {g.sites.map((s) => (
                   <PeerCard key={s.id} site={s} />
                 ))}

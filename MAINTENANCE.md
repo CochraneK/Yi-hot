@@ -2682,6 +2682,11 @@ ssh yihot "sudo docker exec aihot-api-1 curl -s http://127.0.0.1:3001/api/site/c
 第 4 步别只看接口：`/api/site/changelog` 有 5 分钟 `s-maxage`，页面自身也有 `s-maxage=300`，
 但那是 CDN/共享缓存层的事；直连源站应立刻看到新条目。若接口新、页面旧，先怀疑缓存而不是数据。
 
+**`docker cp` 只活在这一个容器里。** 镜像里 `COPY` 进去的仍是上一次 build 的版本，所以之后任何一次
+`up -d --no-deps --force-recreate`（发布新代码时必做）都会把日志**静默退回**——页面不报错，只是刚写的
+条目凭空消失，`latestVersion` 也一起回退，侧栏红点跟着熄灭。改完当天务必补一次 `docker compose build api`，
+让镜像、宿主、运行中的容器三处内容一致；核验可以用 `docker run --rm --entrypoint sh aihot-app -c "grep -c 邻域 industry/changelog.json"`。
+
 ### 本次补录了什么（2026-10-20 19:00 之后一直没记）
 
 10-20 深夜到 10-22 中午共 24 小时里改了大量东西，但日志停在 10-20 19:00。补了 8 条：

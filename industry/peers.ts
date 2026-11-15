@@ -47,6 +47,8 @@ export interface PeerSite {
    * none = 目前没有任何机器可读出口
    */
   strategy: "api" | "rss" | "none";
+  /** RSS-only sites may publish on /rss.xml or in a subdirectory instead of /feed.xml. */
+  feedPath?: string;
   enabled: boolean;
 }
 
@@ -59,6 +61,17 @@ export const PEER_SITES: PeerSite[] = [
     note: "心理学与精神医学，学界与业界双视角",
     accent: "#4a5a9c",
     strategy: "api",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 复核：/ai-ux-research-hot/rss.xml 有真实 2026-11 条目；旧 /URHOT/ 是 404。
+    id: "urhot",
+    name: "URHOT",
+    url: "https://huangzhenhao90.github.io/ai-ux-research-hot/",
+    note: "AI × 用户研究，HCI 方法、工具与设计研究",
+    accent: "#775a83",
+    strategy: "rss",
+    feedPath: "/ai-ux-research-hot/rss.xml",
     enabled: true,
   },
   {
@@ -107,6 +120,18 @@ export const PEER_SITES: PeerSite[] = [
     note: "海外品牌营销与 AI 带来的变化",
     accent: "#744a8e",
     strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 复核：聚身之家位于 /robot-hot；/robot-hot/feed.xml 已更新；
+    // /robot-hot/rss.xml 和 /api/v1/items 不存在，不要按根 /feed.xml 猜地址。
+    id: "aiman-robot-hot",
+    name: "聚身之家",
+    url: "https://www.aiman.world/robot-hot/",
+    note: "具身智能，机器人产业、研究与产品证据",
+    accent: "#397680",
+    strategy: "rss",
+    feedPath: "/robot-hot/feed.xml",
     enabled: true,
   },
   {

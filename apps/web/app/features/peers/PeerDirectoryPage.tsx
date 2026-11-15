@@ -86,8 +86,8 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
                   <span className="ml-auto truncate pl-3 text-[11.5px] text-ink-4">{g.note}</span>
                 </div>
               )}
-              {/* 只有两三张卡的组排三列会空出一整格，看着像加载失败；满三张才上三列。 */}
-              <div className={`grid gap-3 sm:grid-cols-2 ${g.sites.length >= 3 ? "xl:grid-cols-3" : ""}`}>
+              {/* 卡片尺寸固定，不随组内站数变：两站的组也按三列排，宁可空一格，也不让同一页出现两种卡宽。 */}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {g.sites.map((s) => (
                   <PeerCard key={s.id} site={s} />
                 ))}

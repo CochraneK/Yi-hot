@@ -24,6 +24,10 @@ test("headline place is local when uniquely mentioned; no match means no badge",
   assert.equal(localHeadline({ title: "广州举行公益论坛" }, "guangzhou"), true);
   assert.equal(localHeadline({ title: "广州举行公益论坛" }, "beijing"), false);
   assert.equal(localHeadline({ title: "公益论坛" }, null), false);
+  assert.equal(localHeadline({ title: "北京某机构在四川开展公益活动" }, "beijing"), false);
+  assert.equal(localHeadline({ title: "北京大学发布援助倡议" }, "beijing"), false);
+  assert.equal(localHeadline({ title: "在北京举办公益论坛" }, "beijing"), true);
+  assert.equal(placeByIpResult("Hong Kong", "Hong Kong", "HK")?.id, "hongkong");
 });
 
 test("English aliases use word boundaries, not arbitrary substrings", () => {

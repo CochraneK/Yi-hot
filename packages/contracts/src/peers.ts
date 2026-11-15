@@ -14,6 +14,10 @@ export interface PeerDirectoryEntry {
   group: string;
   /** 同系邻域 / 其他邻域。旧数据未提供时前端归入“其他邻域”，不丢站。 */
   family?: "same" | "other";
+  /** 展示层，独立于开源谱系、采集策略。 */
+  tier?: "official" | "resource" | "candidate";
+  /** 最近内容相对当前时间的状态，并非接口健康检查。 */
+  freshness?: "recent" | "stale" | "unknown" | "reference";
   /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */
   accent: string;
   /** 仅提供公开站点入口；不请求第三方 RSS/API，也不会出现在日报轮转。 */

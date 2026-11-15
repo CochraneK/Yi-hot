@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { PeerDirectoryEntry } from "@aihot/contracts/peers";
-import { groupNeighborhoods, groupSites } from "../app/features/peers/grouping.ts";
+import { filterPeerSites, groupNeighborhoods, groupSites } from "../app/features/peers/grouping.ts";
 
 function site(id: string, group: string): PeerDirectoryEntry {
   return {
@@ -121,4 +121,47 @@ test("可能重合、没有同步接口和同步失败的正式邻域仍保留�
   assert.equal(sections[0]?.families?.[1]?.sites.length, 1);
   assert.equal(sections[0]?.families?.[1]?.sites[0]?.overlapPossible, true);
   assert.equal(sections[0]?.families?.[0]?.sites.find(x => x.id === "sync-error")?.ok, false);
+});
+
+test("站点搜索兼容大小写、Unicode 全半角、领域名称与谱系", () => {
+  const entries: PeerDirectoryEntry[] = [
+    { ...site("psyhot", "health"), name: "PsyHOT", note: "精神医学", tier: "official", family: "same" },
+    { ...site("research", "research"), name: "研究观察", note: "机器人与机器学习", tier: "official", family: "other" },
+    { ...site("funding", "nonprofit"), name: "资助平台", note: "项目机会", tier: "resource", family: "other" },
+  ];
+  assert.deepEqual(filterPeerSites(entries, "  PSYhot ").map(e => e.id), ["psyhot"]);
+  assert.deepEqual(filterPeerSites(entries, "Ｐｓｙｈｏｔ").map(e => e.id), ["psyhot"]);
+  assert.deepEqual(filterPeerSites(entries, "精神医学").map(e => e.id), ["psyhot"]);
+  assert.deepEqual(filterPeerSites(entries, "研究与工程").map(e => e.id), ["research"]);
+  assert.deepEqual(filterPeerSites(entries, "同系邻域").map(e => e.id), ["psyhot"]);
+  assert.deepEqual(filterPeerSites(entries, "实用资源").map(e => e.id), ["funding"]);
+});
+
+test("空查询保持原顺序和引用，多个关键词必须同时匹配", () => {
+  const entries: PeerDirectoryEntry[] = [
+    { ...site("first", "health"), name: "Mental AI", note: "心理健康", tier: "official" },
+    { ...site("second", "market"), name: "AI Market", note: "行业观察", tier: "official" },
+    { ...site("third", "health"), name: "Mental Health", note: "公共服务", tier: "official" },
+  ];
+  assert.equal(filterPeerSites(entries, ""), entries);
+  assert.equal(filterPeerSites(entries, " \t "), entries);
+  assert.deepEqual(filterPeerSites(entries, "MENTAL 心理").map(e => e.id), ["first"]);
+  assert.deepEqual(filterPeerSites(entries, "AI 产业").map(e => e.id), []);
+  assert.deepEqual(filterPeerSites(entries, "没找到"), []);
+  assert.deepEqual(filterPeerSites(entries, "AI").map(e => e.id), ["first", "second"]);
+});
+
+test("过滤后仍保留三层、同系/其他与行业分组，候选可被准确搜索", () => {
+  const entries: PeerDirectoryEntry[] = [
+    { ...site("a", "news"), name: "Psy News", family: "same", tier: "official" },
+    { ...site("b", "news"), name: "Psy Digest", family: "other", tier: "official" },
+    { ...site("c", "research"), name: "Psy Index", family: "other", tier: "resource" },
+    { ...site("d", "market"), name: "Psy Demo", family: "same", tier: "candidate", browseOnly: true },
+  ];
+  const sections = groupNeighborhoods(filterPeerSites(entries, "psy"));
+  assert.deepEqual(sections.map(s => s.id), ["official", "resource", "candidate"]);
+  assert.deepEqual(sections[0]?.families?.map(f => f.id), ["same", "other"]);
+  assert.deepEqual(sections[0]?.families?.map(f => f.sites.length), [1, 1]);
+  assert.equal(sections[2]?.sites[0]?.id, "d");
+  assert.deepEqual(groupNeighborhoods(filterPeerSites(entries, "Psy Demo")).map(s => s.id), ["candidate"]);
 });

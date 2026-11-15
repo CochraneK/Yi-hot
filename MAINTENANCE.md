@@ -2973,3 +2973,12 @@ NewsMail 的 14 个版本化文件与 99 个历史候选已建立逐项账本；
 旧 charity-intelligence 的真实 SQLite 主库不在 Git。先在旧运行电脑备份、完成完整性验证，再对**离线一致性备份**运行 `python3 scripts/charity_db_preflight.py --db <备份路径>`；脚本只读，不建库、不输出机构名/信用代码或原文，只给汇总行数、同码冲突与孤立关联、数据结构缺口。用 `python3 -m unittest discover -s tests -p test_charity_db_preflight.py -v` 验证 4 个合成测试场景。
 
 状态 `BLOCKED` 表示有确定阻断；`REVIEW_REQUIRED` 仍**不代表可导入**，机器标志 `migration_authorized` 始终为 false。同码多名不能自动视为更名或合并；正式导入前需要旧 ID 映射、人工冲突裁决、证据和版权/隐私检查、可逆导入测试及明确上线批准。操作细节、资产范围和回滚见 [CHARITY_DB_PRECHECK.md](docs/CHARITY_DB_PRECHECK.md)。此工具与腾讯云生产回执归档安全闸门 #21 相互独立，不能因本预检通过而恢复 `archive-db.py --delete`。
+
+
+## 儿童公益工作机会搜索与 RSS 候选（2026-11-15）
+
+GitHub `industry/sources.json` 基线 166 条，新增 6 条**全部关闭**的独立工作机会采集配置（5 个搜索组 21 条关键词 + 1 个联合国亚太 RSS）；新源在 `participation_mode=isolated`，暂不加入公开新闻或邮件，不开模付费也不会自动抓取。未修改已有 166 个源的开关、关键词或省份配置。新增机会源不会继承普通新闻中对“招聘、招标、报名、征稿、培训”等词的排除规则；但保留抽奖、彩票类噪声排除。
+
+`data/source-registry/opportunity-candidates-2026-11-15.json` 另列 8 个待审入口，包括中国儿童中心、中国发展简报、政府采购、UNPP、PubMed、ReliefWeb、EU Funding 与 Google Alerts；**这份台账绝不能用现有 source seed 或批准导入程序批量启用**。官方网页不是 RSS；PubMed RSS 必须在检索后由官网实际生成，ReliefWeb API 需要批准 appname。对于需要验证码、登录或访问权限的服务不能绕过。
+
+复算验证：`node --test tests/opportunity-source-candidates.test.mjs` 和 `npm run sources:audit:check`，GitHub CI 也会在无网络的合成检查中跑前者。上线前依次完成采集权益、原始发布时间、报名/投标截止日期、申请主体资格、去重、用户工作价值和模型成本验证，灰度期间只保留内部候选而不公开。完整操作、文档来源和回滚方案见 [OPPORTUNITY_SOURCE_DISCOVERY_2026-11-15.md](docs/OPPORTUNITY_SOURCE_DISCOVERY_2026-11-15.md)。本次没有部署腾讯云、操作数据库、配置自动推送或改变生产计费。若要撤销只需移除这 6 个新 ID、候选台账与测试/说明。既有生产归档安全闸门 #21 不变。

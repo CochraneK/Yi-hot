@@ -16,6 +16,8 @@ export interface PeerDirectoryEntry {
   family?: "same" | "other";
   /** 展示层，独立于开源谱系、采集策略。 */
   tier?: "official" | "resource" | "candidate";
+  /** 仅提示不同新闻聚合可能报道同一事件；未经样本验证不宣称重复事实。 */
+  overlapPossible?: boolean;
   /** 最近内容相对当前时间的状态，并非接口健康检查。 */
   freshness?: "recent" | "stale" | "unknown" | "reference";
   /** 这家站的身份色（#rrggbb）。目录页的顶条与首字徽标用它，站与站之间靠颜色区分。 */

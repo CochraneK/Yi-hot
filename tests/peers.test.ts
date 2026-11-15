@@ -288,7 +288,7 @@ test("公共领域 8 家新邻域可访问的站点配置遵循 RSS/仅浏览两
     assert.equal(seed.syndicate_fulltext, false);
     assert.ok(seed.config._aihot.initialBackfillLimit <= 4);
   }
-  for (const id of ["cdb-ngo", "foundation-center", "reliefweb-jobs", "funding-radar", "openalex-research"]) {
+  for (const id of ["cdb-ngo", "foundation-center", "funding-radar", "openalex-research"]) {
     const peer = PEER_SITES.find(p => p.id === id);
     assert.ok(peer, id);
     assert.equal(peer.enabled, true);
@@ -338,7 +338,7 @@ test("所有邻域站点在唯一事实源中标有同系/其他归属，与行�
   assert.equal(same.length + other.length, PEER_SITES.length, "不允许漏标、第三类或隐式同系");
   assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
   assert.ok(same.length > 0 && other.length > 0);
-  assert.equal(PEER_SITES.length, 51, "保留 49 项基线及第七轮 2 个同系浏览入口");
+  assert.equal(PEER_SITES.length, 56, "保留七轮基线 51 项及第八轮 5 个 RSS 邻域");
   assert.equal(PEER_SITES.find(p => p.id === "urhot")?.family, "same",
     "URHOT README explicitly credits adaptation from AIHOT selection pipeline");
   assert.equal(PEER_SITES.find(p => p.id === "fai-lab")?.family, "same",
@@ -374,7 +374,7 @@ test("官方合作与资助入口仅供浏览，不触发采集或占用日报�
 
 
 test("第六轮同系站只列浏览入口，不因可读或同源而自动抓取", async () => {
-  const ids = ["aisafetyhot", "aidchot", "embhot", "markethot", "designradar", "medhot", "thinkhot"];
+  const ids = ["aisafetyhot", "aidchot", "embhot", "markethot", "medhot", "thinkhot"];
   const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
   const previous = globalThis.fetch;
   globalThis.fetch = (() => { throw new Error("same-family links must not fetch third-party content"); }) as typeof fetch;
@@ -395,27 +395,59 @@ test("第六轮同系站只列浏览入口，不因可读或同源而自动抓�
 });
 
 
-test("第七轮静态阅读站只提供入口，RSS 验证记录不自动变成抓取配置", async () => {
-  const urls = new Map([
-    ["math-education-hot", "https://a0910580996-a11y.github.io/math-education-hot/"],
-    ["shendeng-ai", "https://shendeng.news/"],
-  ]);
-  const sources = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
-  const previous = globalThis.fetch;
-  globalThis.fetch = (() => { throw new Error("static browsing entries must not issue requests"); }) as typeof fetch;
-  try {
-    for (const [id, url] of urls) {
-      const peer = PEER_SITES.find(p => p.id === id);
-      assert.ok(peer, id);
-      assert.equal(peer.url, url);
-      assert.equal(peer.family, "same");
-      assert.equal(peer.strategy, "link");
-      assert.equal(peer.enabled, true);
-      assert.equal(peer.feedPath, undefined);
-      assert.ok(!sources.some((s: { id: string }) => s.id === `rss-peer-${id}`));
-      assert.deepEqual(await fetchPeer(peer), { via: "none", items: [], error: null });
-    }
-  } finally {
-    globalThis.fetch = previous;
+test("第八轮 RSS 优先：9 条实测 Feed 与独立停用 Seed 一一对应", () => {
+  const cases = [
+    ["designradar", "https://designradar.vercel.app/feed.xml"],
+    ["math-education-hot", "https://a0910580996-a11y.github.io/math-education-hot/feed.xml"],
+    ["shendeng-ai", "https://shendeng.news/feed.xml"],
+    ["reliefweb-jobs", "https://reliefweb.int/jobs/rss.xml"],
+    ["unicef-data", "https://data.unicef.org/feed/"],
+    ["icnl", "https://www.icnl.org/feed/"],
+    ["un-news-sdgs", "https://news.un.org/feed/subscribe/en/news/topic/sdgs/feed/rss.xml"],
+    ["un-geneva-news", "https://www.ungeneva.org/news-media/press-items-list/rss.xml"],
+    ["gdacs", "https://www.gdacs.org/contentdata/xml/rss_homepage.xml"],
+  ];
+  const seeds = JSON.parse(readFileSync(new URL("../industry/sources.json", import.meta.url), "utf8")).sources;
+  assert.equal(PEER_SITES.length, 56);
+  assert.equal(seeds.length, 192);
+  assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
+  assert.equal(new Set(seeds.map((s: { id: string }) => s.id)).size, seeds.length);
+  for (const [id, feedUrl] of cases) {
+    const peer = PEER_SITES.find(p => p.id === id);
+    const seed = seeds.find((s: { id: string }) => s.id === `rss-peer-${id}`);
+    assert.ok(peer, id);
+    assert.equal(peer.strategy, "rss");
+    assert.equal(peer.enabled, true);
+    assert.equal(peerFeedUrl(peer), feedUrl);
+    assert.ok(seed, id);
+    assert.equal(seed.kind, "rss");
+    assert.equal(seed.config.feedUrl, feedUrl);
+    assert.equal(seed.enabled, false, "邻域 RSS 可读不等于主新闻采集获批准");
+    assert.equal(seed.participation_mode, "isolated");
+    assert.equal(seed.site_fulltext, false);
+    assert.equal(seed.syndicate_fulltext, false);
+    assert.ok(seed.config._aihot.initialBackfillLimit <= 4);
+    assert.ok(seed.config.ingestNoiseFilter.requireMarkers.length >= 10);
   }
+});
+
+test("新增的 5 家可同步公共来源均属于其他邻域，已有 4 家保持原归属", () => {
+  for (const id of ["unicef-data", "icnl", "un-news-sdgs", "un-geneva-news", "gdacs"]) {
+    assert.equal(PEER_SITES.find(p => p.id === id)?.family, "other", id);
+  }
+  for (const id of ["designradar", "math-education-hot", "shendeng-ai"]) {
+    assert.equal(PEER_SITES.find(p => p.id === id)?.family, "same", id);
+  }
+  assert.equal(PEER_SITES.find(p => p.id === "reliefweb-jobs")?.family, "other");
+});
+
+test("GeoRSS 灾害事件保留标题、发布时间和来源链接，不把地理字段误当新闻证明", () => {
+  const xml = `<?xml version="1.0"?><rss version="2.0" xmlns:georss="http://www.georss.org/georss"><channel><title>GDACS</title><item><title>Earthquake in region</title><link>https://www.gdacs.org/report.aspx?eventtype=EQ&amp;eventid=123</link><pubDate>Sun, 15 Nov 2026 13:55:51 GMT</pubDate><description>Green notification and estimated impact.</description><georss:point>9.75 126.2</georss:point></item></channel></rss>`;
+  const items = parseFeed(xml);
+  assert.equal(items.length, 1);
+  assert.equal(items[0]?.title, "Earthquake in region");
+  assert.ok(items[0]?.publishedAt?.startsWith("2026-11-15"));
+  assert.match(items[0]?.itemUrl ?? "", /gdacs\.org\/report\.aspx/);
+  assert.equal(items[0]?.summary, "Green notification and estimated impact.");
+  // 当前 RawPeerItem 不含坐标字段；位置提取应在独立地图 PR 内处理、验证、授权。
 });

@@ -9,14 +9,16 @@ import { pathToFileURL } from "node:url";
 import { createRequestListener } from "@react-router/node";
 import { isApiOwned, resolveRedirect } from "@aihot/contracts/http-policy";
 import { botBlocked } from "@aihot/contracts/bot-policy";
+import { isPrivateAddress, lastForwardedAddress } from "@aihot/contracts/net";
 
 const PORT = Number(process.env.WEB_PORT || process.env.PORT || 3000);
 const HOST = process.env.WEB_HOST || "127.0.0.1";
 const API = new URL(process.env.API_BASE_URL || "http://127.0.0.1:3001");
 /**
- * Whether a reverse proxy in front (Caddy, nginx) records the visitor in X-Forwarded-For. Without one
- * the header is never believed: a visitor could name any address and slip past the api's per-visitor
- * limits (sign-in attempts, feedback).
+ * Whether a reverse proxy in front (Caddy, nginx) records the visitor in X-Forwarded-For.
+ * Turning it on is necessary but not sufficient: the header is only read when the TCP peer itself
+ * is local or on the container network. A public visitor who writes the header by hand is ignored,
+ * so per-address accounting in the api (sign-in attempts, feedback, rate limits) cannot be spoofed.
  */
 const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 const CLIENT_DIR = path.resolve(import.meta.dirname, "build/client");
@@ -337,10 +339,13 @@ async function handle(req: import("node:http").IncomingMessage, res: import("nod
   }
 
   if (isApiOwned(internal)) {
-    // The visitor's address, decided here: the one the trusted proxy saw (the last X-Forwarded-For
-    // entry), or this connection's own. Both headers carry only that.
-    const forwarded = String(req.headers["x-forwarded-for"] ?? "").split(",").map((v) => v.trim()).filter(Boolean);
-    const client = TRUST_PROXY && forwarded.length ? forwarded[forwarded.length - 1]! : (req.socket.remoteAddress ?? "");
+    // 访客地址在这里裁定。TRUST_PROXY 打开只说明「前面可能有反代」，不等于任何来源的
+    // X-Forwarded-For 都可信：只有当连接本身来自本机 / 容器网段（Caddy 经 docker-proxy 进来
+    // 就是这个形态）时才采纳它的最后一跳，其余一律用 TCP 源地址。否则任何人加一个请求头
+    // 就能自称另一个地址，api 那边按地址记账的限流会整体失效——而失效是静默的，不会报错。
+    const peer = req.socket.remoteAddress ?? "";
+    const forwarded = lastForwardedAddress(req.headers["x-forwarded-for"]);
+    const client = TRUST_PROXY && isPrivateAddress(peer) && forwarded ? forwarded : peer;
     const headers = { ...req.headers, "x-forwarded-for": client, "x-real-ip": client };
     const upstream = httpRequest({ hostname: API.hostname, port: API.port, path: internal + search, method: req.method, headers }, (up) => {
       res.writeHead(up.statusCode ?? 502, up.headers);

@@ -17,6 +17,7 @@ import { registerFeeds } from "./routes/feeds.ts";
 import { registerStatic } from "./routes/static.ts";
 import { registerMcp } from "./routes/mcp.ts";
 import { sendProblem } from "./http/respond.ts";
+import { registerRateLimit } from "./http/rate-limit.ts";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -58,6 +59,9 @@ export async function buildApp(): Promise<FastifyInstance> {
       return reply.code(decision.status).type("text/plain; charset=utf-8").send(decision.status === 410 ? "Gone" : "Not found");
     }
   });
+
+  // 限流排在重定向之后：被 301/410 接走的请求不消耗额度，它们本来就没有产出。
+  registerRateLimit(app);
 
   app.get("/api/health", async (_req, reply) => {
     const started = Date.now();

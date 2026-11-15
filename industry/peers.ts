@@ -592,6 +592,90 @@ export const PEER_SITES: PeerSite[] = [
     strategy: "link",
     enabled: true,
   },
+  {
+    // 2026-11-15 官网关于页页脚明确标注基于 AIHOT 开源框架。
+    id: "aisafetyhot",
+    family: "same",
+    name: "AI Safety HOT",
+    url: "https://aisafetyhot.com/",
+    note: "AI 安全研究、事件与治理，论文和新闻分开浏览",
+    group: "tech",
+    accent: "#80639c",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网使用规则第六节明确二次开发关系；公开转载须取得同意。
+    id: "aidchot",
+    family: "same",
+    name: "AIDC热点",
+    url: "https://aidchot.com/",
+    note: "AI 数据中心、算力政策与机电运维",
+    group: "tech",
+    accent: "#4a829c",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网关于页明确由 AIHOT 开源框架驱动。
+    id: "embhot",
+    family: "same",
+    name: "EmbHot",
+    url: "https://embhot.zhcmqtt.top/",
+    note: "嵌入式、具身智能、外骨骼与复合材料",
+    group: "tech",
+    accent: "#5d8b6b",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 官网关于页及页脚注明 Powered by AIHOT。
+    id: "markethot",
+    family: "same",
+    name: "MarketHOT",
+    url: "https://www.markethot.news/",
+    note: "美股公司事件、宏观与行业动态，中英阅读",
+    group: "biz",
+    accent: "#9c754a",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开仓库 README 明确行业定制关系；RSS 实测可读但本轮只列入口。
+    id: "designradar",
+    family: "same",
+    name: "DesignRadar · 设计雷达",
+    url: "https://designradar.vercel.app/",
+    note: "设计行业精选与 AI 生成界面的评测观察",
+    group: "tech",
+    accent: "#9c637d",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开仓库 README 明确医学版关系；GitHub Pages 静态快照非实时服务。
+    id: "medhot",
+    family: "same",
+    name: "MedHOT",
+    url: "https://mrf3247.github.io/medhot/",
+    note: "全球医学动态的静态快照，当前页面日期为 2026-11-05",
+    group: "health",
+    accent: "#598f8c",
+    strategy: "link",
+    enabled: true,
+  },
+  {
+    // 2026-11-15 公开仓库 README 明确社科版关系；读取到 2026-11-14 页面。
+    id: "thinkhot",
+    family: "same",
+    name: "ThinkHOT",
+    url: "https://mrf3247.github.io/thinkhot/",
+    note: "人文社科与思想动态的静态快照，含心智、语言与历史",
+    group: "public",
+    accent: "#94714f",
+    strategy: "link",
+    enabled: true,
+  },
 ];
 
 /** 每期条数：日报只是「顺带一看」，周月报可以铺开成一小版。 */

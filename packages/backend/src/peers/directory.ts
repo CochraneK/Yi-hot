@@ -67,7 +67,6 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
     const st = status.get(p.id) ?? null;
     // 明确读不到的（最近一次失败）不上页面；从没查过的仍列出来，卡片上写「尚未同步」。
     if (st && !st.ok) continue;
-    if (p.strategy === "none") continue;
     const l = newest.get(p.id) ?? null;
     sites.push({
       id: p.id,

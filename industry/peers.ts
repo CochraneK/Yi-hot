@@ -12,8 +12,15 @@
 // 名录来源不只自己找：上游 GitHub Discussions 的 #306（用 AIHOT 做了站？在这里登记一下）和
 // #284 的「社区改造清单（16 个站）」是主要线索。补站前先按上面三条实测，别只看名单。
 //
+// 2026-11-15 又加了一条更彻底的路：**读全部 fork 的 site/site.ts**。fork 的 description 与
+// homepage 默认继承上游，改的人很少；但每个真做了站的人都会动 SITE.name。2531 个 fork 里
+// 11-01 之后仍有推送的 485 个，逐个读 site/site.ts 得到 38 个改过站名的，其中 2 个有公网
+// 接口（本文件末尾那两家）。剩下 36 个多数是自部署、没有对外地址——找得到站名也进不来。
+// 复现方式见 .workbuddy 里的思路：raw.githubusercontent.com 直连不通，node 的 fetch 不读
+// HTTP_PROXY，要显式挂 undici 的 ProxyAgent。
+//
 // 数组顺序是**同分时的默认顺序**，也是周报/月报（名额多）的呈现顺序：先和公益读者最近的
-// （心理精神医学、环保双碳、医药生信），再到科技、商业、安全。
+// （心理精神医学、环保双碳、城市公共事务、医药生信），再到科技、商业、安全。
 // 日报只有 3 个名额，若固定按这个顺序取，第 4 家以后永远轮不上，所以日报按「近期最少出现」
 // 轮换（见 packages/backend/src/peers/select.ts 的 rotationOrder）。
 // 改这个文件后必须重建镜像才对生产生效（api 与 worker 都读它）。
@@ -60,6 +67,17 @@ export const PEER_SITES: PeerSite[] = [
     url: "https://qingyannews.cn",
     note: "环保与双碳",
     accent: "#2f7a55",
+    strategy: "api",
+    enabled: true,
+  },
+  {
+    // 扫 fork 的 site/site.ts 找到（nidao003/AIHOT-metro），2026-11-15 实测 /api/v1/items 标准、
+    // feed.xml 可用。城轨是名录里第一个公共基础设施方向。
+    id: "metrohot",
+    name: "MetroHot",
+    url: "https://metrohot.oohforce.com",
+    note: "城市轨道交通，地铁运营、TOD 开发与站点商业",
+    accent: "#4a8a7a",
     strategy: "api",
     enabled: true,
   },
@@ -125,6 +143,17 @@ export const PEER_SITES: PeerSite[] = [
     note: "AI for Mathematics 研究动态",
     accent: "#3f7a3f",
     strategy: "rss",
+    enabled: true,
+  },
+  {
+    // 扫 fork 的 site/site.ts 找到（TJJAom/AIHOT），2026-11-15 实测 /api/v1/items 标准。
+    // 名录里第一家用繁体中文写作的站，条目里会出现「輝達」「軟體」这类译名。
+    id: "dayacre",
+    name: "日耕 AI 熱點",
+    url: "https://aihot.dayacre.com",
+    note: "AI 动态的繁中版，台湾读者的用语与视角",
+    accent: "#9a5a9a",
+    strategy: "api",
     enabled: true,
   },
   {

@@ -865,11 +865,32 @@ WHERE s.id = 'web-thepaper' ORDER BY f.started_at DESC LIMIT 10;
 卡片显示方向、最近一条、留档条数与同步时间；最近一次抓取失败的站会暂时从页面消失，恢复后自动回来。
 开关是 `industry/features.ts` 的 `peerDirectory`。
 
-**名单从哪来**：不只自己找。上游 GitHub Discussions 的
-[#306「用 AIHOT 做了站？在这里登记一下」](https://github.com/KKKKhazix/AIHOT/discussions/306)
-和 [#284 的「社区改造清单（16 个站）」](https://github.com/KKKKhazix/AIHOT/discussions/284)
-是主要线索，2026-11-15 从这两处补进 4 家（生信之灵、AI快讯、XABC News、VulnHOT），
-十二家站每家 `/api/v1/items` 或 `/feed.xml` 都当场 `curl` 验证过。
+**名单从哪来**：三条渠道，按「能挖出多少」排序。
+
+1. **扫全部 fork 的 `site/site.ts`**（2026-11-15 加，最彻底）。用同一套框架做站的人一定是从
+   `KKKKhazix/AIHOT` fork 出来的，而且一定会改 `SITE.name`。fork 的 `description` / `homepage`
+   默认继承上游、几乎没人动，所以那两个字段没用；`site/site.ts` 里的站名才是真信号。
+   做法：拉 `/repos/KKKKhazix/AIHOT/forks`（2026-11-15 是 2531 个，25 页）→ 只留
+   `pushed_at` 近期的（11-01 之后有 485 个）→ 并发读
+   `raw.githubusercontent.com/<owner>/<repo>/HEAD/site/site.ts`（我们 fork 过的站路径是
+   `industry/site.ts`，两条都要试）→ 取 `SITE.name` 与 `SITE.subject`，过滤掉仍是
+   `MyHOT` / `AIHOT` 的。485 个里 38 个改过站名。
+   **两个坑**：`raw.githubusercontent.com` 直连不通、node 的 `fetch` 不读 `HTTP_PROXY`，
+   要显式 `setGlobalDispatcher(new ProxyAgent("http://127.0.0.1:7897"))`（undici 从
+   `packages/backend` 的依赖里 `createRequire` 解析）；并发别超过 60，否则大量超时。
+2. **上游 Discussions**：[#306「用 AIHOT 做了站？在这里登记一下」](https://github.com/KKKKhazix/AIHOT/discussions/306)
+   与 [#284 的「社区改造清单（16 个站）」](https://github.com/KKKKhazix/AIHOT/discussions/284)，
+   以及 `Show and tell` 分类（2026-11-15 共 12 条，已全部处理过）。
+3. **搜索引擎 / 微信公众号**：能挖到改造记录与技术文，但**基本拿不到域名**——这类文章大多
+   只写站名或本地 `localhost` 截图。用它发现「有人在做什么方向」，别指望它给出地址。
+
+**找得到站名不等于进得来**：38 个改过站名的 fork 里，只有 2 个有公网且开了 `/api/v1`
+（MetroHot 城轨、日耕 AI 熱點 繁中）。其余多是自部署、GitHub Pages 静态演示（`<owner>.github.io/<repo>`
+的 `/api/v1` 一律 404），或根本没有对外地址。所以补站按「先能找到地址、再能抓到接口」的顺序筛，
+别反过来。
+
+2026-11-15 这一轮补进的：生信之灵、AI快讯、VulnHOT（讨论区，都实测 `/api/v1/items`）、
+MetroHot、日耕 AI 熱點（fork 扫描）。每一家都是当场 `curl` 验证过 `/api/v1/items` 与 `/feed.xml` 才写进表的。
 补站时不要照抄名单：清单里 URHOT 的 Pages 子路径已 404、风向只有静态演示页、
 AIMAN.World 是产业数据库（有 MCP，没有资讯流）、NewsIQ 与 xabcnews 的 `/api/v1/*` 全 404，
 只有 Atom feed——这些都是实测才知道的。

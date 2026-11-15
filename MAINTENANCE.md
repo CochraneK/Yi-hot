@@ -3101,3 +3101,9 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 用户确认长期产品规则：**能进 RSS 的尽量进 RSS，减少只供浏览、无法结构化获取的邻域卡片**。本轮实际读取九个 RSS 端点后，将 DesignRadar、数学教育 HOT、神灯AI热点、ReliefWeb Jobs 四家由 `link` 改为 `rss`；新增 UNICEF Data、ICNL、联合国 SDG 新闻、联合国日内瓦新闻、GDACS 五个 `rss` 邻域。名录 51→**56 项（same 33 / other 23，含关闭项）**；独立主站 RSS Seed 183→**192 条（新增 9 条，全部 disabled、isolated、禁全文）**。邻域 RSS 同步不经过模型，主站 Seed 默认关闭，不产生新的主新闻模型处理成本。
 
 候选未证实具体 Feed 的 UNGM/CORDIS/GDELT 不直接进入目录。GDACS 源端 GeoRSS 可供后续新闻地图研究，但本轮未处理坐标或 IP 定位。真实 XML 端点、日期、验证方法、版权、测试、部署和回滚详见 [第八轮 RSS 优先台账](docs/PEER_RSS_FIRST_ROUND8_2026-11-16.md)。GitHub 合并、CI 全绿与腾讯云生产环境刷新仍须分别核实。
+
+### YiHot006 · 城市新闻地图（2026-11-16，代码级功能，非生产验收）
+
+- 新增 `/cities`：当前页新闻标题/摘要的地名线索、按城市文本检索、中国/世界经纬度示意；城市搜索不是事件地点数据库，地图圆点为城市代表点。动态和「更多」均有入口，原手机底栏顺序不变；无地点的新闻仍在 `/all`。
+- 「当地」仅用户手动选择城市或主动点击「按 IP 估计」后，浏览器端根据标题单一城市线索显示；默认不调用 IP 服务，第三方 ipwho.is 会收到公网 IP，生产前需确认许可、隐私文案和使用额度。OpenStreetMap 实地图同样由用户点击后才发起请求。
+- 词典与规则 `apps/web/app/features/cities/geo.ts`；浏览器保存与可选 IP 查询 `reader-city.ts`；回归 `apps/web/tests/cities.test.ts`；上线条件、地区筛选限制及后续服务端地理索引方案见 [`docs/CITIES_MVP_2026-11-16.md`](docs/CITIES_MVP_2026-11-16.md)。不新增模型、采集、DB 迁移、定时任务，也不代表腾讯云已部署。回滚为移除 Web 入口/路由/本地标签，数据库不变。

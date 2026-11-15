@@ -3120,3 +3120,7 @@ GitHub `industry/peers.ts` 登记从 **25** 家增至 **31** 家；`industry/sou
 时效性：后台以原始文章 `published_at` 的最近记录计算提示状态；普通正式新闻 7 日、明确周报 21 日。成功的刷新 `fetched_at` 不再用来证明文章最新。资源、仅浏览站不按日报阈值评价；若日期未知，明确按未知处理。**这是目录展示防误导，不意味着生产已部署或跨站重复已经彻底解决**。跨站近义重复需要事件级比对和真实样本评估，本轮不凭标题自动删除文章。
 
 变更与回滚详见 [邻域分层专项](docs/PEER_TIER_AUDIT_2026-11-16.md)。验收：`tests/peers.test.ts` 与 `apps/web/tests/peer-grouping.test.ts`、typecheck、Web build/SSR、PostgreSQL/Docker CI；确认 /peers 三层、候选折叠、旧数据兼容、原 RSS 同步不回归。合并 GitHub 与腾讯云部署分开，须在生产另行核验。回滚改动目录 tier/页面分组和新鲜度展示，原始历史条目不删。
+
+### YiHot007 · AI 地点角色候选（2026-11-16，候选层，未发布）
+
+复用既有 `structure_article` 模型调用提取 `place / role / evidence`；逐字检验引文、最多四条，写入私有 `analyses.output.geography` 并标记 `status=candidate`。不增加独立模型调用，但 token 可能略增，改 prompt 版本会使**主动重新分析**使用新的结构调用收据；未自动回填历史。不将 AI 推测的位置作为地图上确认发生地，当前 `/cities` 与「当地」前台逻辑均暂不改变。完整验证/成本/回滚及 M1 后续见 [`docs/GEO_AI_STRUCTURE_CANDIDATES_2026-11-16.md`](docs/GEO_AI_STRUCTURE_CANDIDATES_2026-11-16.md)。本轮只是 Git 代码，腾讯云尚未验证部署。

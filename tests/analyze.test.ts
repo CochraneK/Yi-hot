@@ -27,9 +27,9 @@ const SKIP_SOURCE = `test-analyze-skip-${T}`;
 type Step = "prefilter" | "score" | "understand" | "summarize" | "structure";
 interface Req { step: Step; marker: string; system: string; user: string; body: Record<string, any> }
 const requests: Req[] = [];
-const MARKERS = ["CLEAR", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "SKIP", "DIRECT", "推文"];
+const MARKERS = ["CLEAR", "GEO", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "SKIP", "DIRECT", "推文"];
 // Fixture scores are picked to land on the intended side of 2 × the T1 threshold (2 × 35 = 70).
-const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], SKIP: [78, 72], DIRECT: [78, 72], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
+const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], GEO: [79, 73], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], SKIP: [78, 72], DIRECT: [78, 72], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
 
 const stepOf = (system: string, user: string): Step =>
   system.includes("宽召回的公益相关性预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
@@ -52,6 +52,15 @@ const provider = await stub((_hit, req) => {
     if (marker === "SENSITIVE") return new Reply(400, { contentFilter: [{ level: 1, role: "user" }], error: { code: "1301", message: "系统检测到输入或生成内容可能包含不安全或敏感内容" } });
     return answer({ itemType: "policy_release", authorRole: "principal", tags: ["政策/监管", "政策", "志愿者", "不存在的标签"], editorialJudgment: `理由 ${marker}`, titleZh: `理解标题 ${marker}`, summaryZh: `理解摘要 ${marker}。第二句补充一个关键数字。` });
   }
+  if (step === "structure" && marker === "GEO") return answer({
+    category: "policy", tags: ["政策/监管"], subjects: [],
+    fact: { title: "举办活动", subject: null, action: "开展", object: "儿童教育项目", occurredAt: null },
+    geography: [
+      { place: "四川凉山", role: "event", evidence: "在四川凉山开展儿童教育项目" },
+      { place: "北京", role: "publisher", evidence: "北京某公益组织" },
+      { place: "火星", role: "event", evidence: "在火星开展教育项目" },
+    ],
+  });
   if (step === "structure") return answer({ category: "policy", tags: ["政策/监管", "养老服务"], subjects: ["ministry-of-civil-affairs", "unknown-co"], fact: { title: `事实 ${marker}`, subject: "某机构", action: "发布", object: "文件", occurredAt: null } });
   return answer(`title_zh: 翻译标题 ${marker}\nsummary_zh: 翻译摘要 ${marker}。第二句补充影响。`);
 });
@@ -121,6 +130,23 @@ test("a selected item: prefilter, two scores, the content understanding and the 
   assert.ok(understand.system.includes("【摘要答案前置规则") && understand.system.includes("【标题自洽规则"));
   const prefilter = requests.find((q) => q.marker === "CLEAR" && q.step === "prefilter")!;
   assert.ok(JSON.parse(prefilter.user).includes("【材料质量】"), "the material context, sent as a JSON string");
+});
+
+test("the existing structure call stores grounded geography candidates without an extra paid call", async () => {
+  const id = await article("GEO", {
+    title: "GEO 北京某公益组织在四川凉山开展儿童教育项目",
+    bodyText: "北京某公益组织在四川凉山开展儿童教育项目，项目面向当地儿童。",
+  });
+  const res = await analyzeArticle(id);
+  assert.equal(res!.output!.selected, true);
+  assert.deepEqual(calls("GEO").sort(), ["prefilter", "score", "score", "structure", "understand"]);
+  const r = await row(id);
+  assert.equal(r.receipt_ids.length, 5, "no sixth geography model receipt");
+  assert.deepEqual(r.output.geography.status, "candidate");
+  assert.equal(r.output.geography.origin, "structure");
+  assert.ok(Number.isInteger(r.output.geography.receiptId));
+  assert.deepEqual(r.output.geography.candidates.map((v: { place: string; role: string }) => [v.place, v.role]),
+    [["四川凉山", "event"], ["北京", "publisher"]], "unquoted 火星 location was rejected");
 });
 
 test("an item that reaches the threshold is written like a selected one; below it is translated", async () => {

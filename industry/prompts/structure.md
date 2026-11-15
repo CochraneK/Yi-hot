@@ -14,4 +14,11 @@
 
 四、事实 fact：这条资料报道的核心事实，用于把同一件事的多篇报道归到一起：title（≤30 字的事实标题），subject（主体），action（动作），object（对象），occurredAt（原文明确给出的发生日期 YYYY-MM-DD，未知为 null）。观点和盘点类资料可以给 null。
 
-只输出一个 JSON 对象，字段：category, tags, subjects, fact。
+五、地理线索 geography（可为空数组，最多 4 条；不属于地理事实的建议不要填）
+- role 只能是 event（具体事件发生地）、affected（受影响/服务覆盖地）、publisher（主体机构所在地）、mentioned（仅被提到或无法判断）。
+- place 填原文明确出现的地名，不要自行补全行政层级，不要生成经纬度。evidence 必须是标题或正文中**逐字存在**、包含该地名的简短原文片段，不许改写或翻译后再充当直接引文。
+- 严格区分“北京某基金会在四川开展活动”：北京是机构线索、四川才可能是活动地点；如果缺少清楚的动作/地点关系，宁可标 mentioned 或返回 []。多地活动可以多条。
+- 严禁用来源站点、作者署名、媒体域名、发布时间或机构注册地去猜事件发生地。只有城市名却不能判断地点角色时，应为 mentioned。
+- 这只是待审核的候选，不代表地点已确认。数据不足直接返回 []。
+
+只输出一个 JSON 对象，字段：category, tags, subjects, fact, geography。其中 geography 为 [{place, role, evidence}]。

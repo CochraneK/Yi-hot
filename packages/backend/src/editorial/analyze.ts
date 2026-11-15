@@ -27,6 +27,7 @@ import {
 } from "./writing.ts";
 import { CATEGORY_BY_ITEM_TYPE, CATEGORY_GUIDE, CATEGORY_TAGS, ENTITIES, ENTITY_TAGS, ITEM_TYPES, normalizeTags, TOPIC_TAGS } from "./vocabulary.ts";
 import { promptText, promptVersion, promptVersionWithVocab } from "./prompts.ts";
+import { GeoCandidateSchema, groundGeoCandidates, type GeoCandidate } from "./geography.ts";
 
 export { buildMaterial, loadAnalyzeInput, type AnalyzeInputArticle };
 
@@ -142,6 +143,8 @@ const StructureSchema = z.object({
   tags: z.array(z.string()).max(12).catch([]),
   subjects: z.array(z.string()).max(6).catch([]),
   fact: FactSchema,
+  // Optional for backwards compatibility with older model replies/receipts.
+  geography: z.array(GeoCandidateSchema).max(4).catch([]).default([]),
 });
 
 const UnderstandSchema = z.object({
@@ -189,7 +192,7 @@ export interface AnalysisRun {
     receiptIds: number[];
     reused: boolean;
   } | null;
-  structure: { model: string; category: string | null; tags: string[]; subjects: string[]; fact: z.infer<typeof FactSchema>; receiptId: number; reused: boolean } | null;
+  structure: { model: string; category: string | null; tags: string[]; subjects: string[]; fact: z.infer<typeof FactSchema>; geography: GeoCandidate[]; receiptId: number; reused: boolean } | null;
 }
 
 const isContentFilter = (error: unknown) => error instanceof ProviderRejectedError && !error.retryable && /contentFilter|"1301"/.test(error.message);
@@ -323,7 +326,8 @@ async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<Non
     attemptTag: tagged(opts.attemptTag, "structure"),
   });
   const subjects = verifiedEntitySubjects(a, res.data.subjects);
-  return { model: res.model, category: res.data.category, tags: normalizeTags(res.data.tags), subjects, fact: res.data.fact, receiptId: res.receiptId, reused: res.reused };
+  return { model: res.model, category: res.data.category, tags: normalizeTags(res.data.tags), subjects, fact: res.data.fact,
+    geography: groundGeoCandidates(a, res.data.geography), receiptId: res.receiptId, reused: res.reused };
 }
 
 /** The content understanding; null when the model's content filter declines the material. */
@@ -474,6 +478,8 @@ export function normalizeAnalysis(run: AnalysisRun) {
     summaryZh,
     reasonZh: run.writing?.reasonZh ?? null,
     fact: run.structure?.fact ?? null,
+    // Private model candidates, NOT confirmed event locations or map coordinates.
+    geoCandidates: run.structure?.geography ?? [],
   };
 }
 
@@ -508,6 +514,7 @@ export async function analyzeArticle(articleId: string, opts: StepOpts = {}): Pr
     ...(w ? { writer: w.kind, writerModel: w.model, itemType: w.itemType ?? null, authorRole: w.authorRole ?? null } : {}),
     ...(w?.identityGuard?.outcome === "fallback" ? { identityGuard: w.identityGuard } : {}),
     fact: out.fact,
+    ...(run.structure ? { geography: { status: "candidate", origin: "structure", receiptId: run.structure.receiptId, candidates: out.geoCandidates } } : {}),
   };
   const committed = await sql.begin(async (tx) => {
     const [current] = await tx<{ revision: number }[]>`SELECT revision FROM articles WHERE id = ${articleId} FOR UPDATE`;

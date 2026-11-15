@@ -29,7 +29,7 @@ export function PeerDirectoryPage({ data }: { data: PeerDirectory }) {
         <Kicker>邻域</Kicker>
         <h1 className="mt-3 text-[26px] font-black leading-[1.25] tracking-[-0.02em] text-ink lg:text-[30px]">邻域</h1>
         <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.9] text-ink-2">
-          这些站和本站用的是同一套框架，做的是别的行业。选什么、怎么评由它们各自的编辑系统决定，不由本站判断；
+          这些站有相近的行业精选模式，涵盖不同研究与产业领域。选什么、怎么评由它们各自的编辑系统决定，不由本站判断；
           日报与周报里的「邻域」版块，就是从这些站摘编的。下面按方向归类，点页头的标签可以直接跳过去。
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px] text-ink-3">

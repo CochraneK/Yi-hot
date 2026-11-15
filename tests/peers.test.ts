@@ -461,9 +461,8 @@ test("候选信息不混入正式邻域，所有 56 站层级在唯一事实源�
     assert.ok(p.tier === "official" || p.tier === "resource" || p.tier === "candidate", p.id);
     tiers[p.tier] += 1;
   }
-  assert.deepEqual(tiers, { official: 32, resource: 14, candidate: 10 });
-  for (const id of ["aimfast", "fengxiang-demo", "medhot", "thinkhot", "newsiq", "ai4scihot",
-    "xocto", "horizon-uu", "sanyu-insights", "yingxiao"]) {
+  assert.deepEqual(tiers, { official: 36, resource: 15, candidate: 5 });
+  for (const id of ["aimfast", "fengxiang-demo", "medhot", "thinkhot", "yingxiao"]) {
     const p = PEER_SITES.find(p => p.id === id);
     assert.ok(p, id);
     assert.equal(p.tier, "candidate", id);
@@ -471,6 +470,18 @@ test("候选信息不混入正式邻域，所有 56 站层级在唯一事实源�
   }
   for (const id of ["openalex-research", "foundation-center", "nsfc-guidelines", "un-partner-portal", "gdacs"]) {
     assert.equal(PEER_SITES.find(p => p.id === id)?.tier, "resource", id);
+  }
+  // 未同步/内容可能重合是透明度标记，不应作为移到候选区的理由。
+  for (const id of ["newsiq", "ai4scihot", "horizon-uu", "sanyu-insights"]) {
+    const peer = PEER_SITES.find(p => p.id === id);
+    assert.ok(peer, id);
+    assert.equal(peer.tier, "official", id);
+    assert.equal(peer.strategy, "link", "未接入同步也应可展示为正式邻域");
+  }
+  assert.equal(PEER_SITES.find(p => p.id === "xocto")?.tier, "resource");
+  for (const id of ["newsiq", "foxnan", "xabcnews", "shendeng-ai", "ai-pulse-lab", "dayacre"]) {
+    assert.equal(PEER_SITES.find(p => p.id === id)?.overlapPossible, true, id);
+    assert.equal(PEER_SITES.find(p => p.id === id)?.tier, "official", id);
   }
   assert.equal(PEER_SITES.find(p => p.id === "markethot")?.tier, "official");
   assert.equal(PEER_SITES.find(p => p.id === "math-education-hot")?.cadence, "weekly");

@@ -504,50 +504,10 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
     headline = lead.get("title") or report.get("title") or ("公益总报 · " + kind_name)
     intro = lead.get("leadParagraph") or report.get("overview") or ""
 
-    # LLM "本期速览" replaces the long lead paragraph when available (it already
-    # condenses the lead + every section). Falls back to the site's own lead text.
-    brief_html = ""
-    if brief:
-        brief_html = ('<div style="margin:16px 0 2px;padding:14px 16px;background:' + theme["soft"]
-                      + ';border:1px solid ' + theme["border"] + ';border-left:3px solid ' + theme["accent"]
-                      + ';border-radius:10px">' + _section_label("本期速览 · AI 浓缩", theme)
-                      + '<p style="margin:0;color:#374151;line-height:1.85;font-size:14.5px">' + esc(brief) + '</p></div>')
-    lead_html = ""
-    if not brief and intro:
-        lead_html = '<p style="color:#4b5563;line-height:1.85;margin:0 0 4px;font-size:15px">' + esc(intro[:260]) + ('…' if len(intro) > 260 else '') + '</p>'
-
-    # Gather section/theme blocks. Daily reports use "sections";
-    # weekly/monthly reports use "themes" (heading + summary + storyRefs). Both are rendered.
-    blocks = []
-    for section in report.get("sections") or []:
-        items = [i for i in (section.get("items") or []) if i.get("available", True)]
-        if items:
-            blocks.append((section.get("label") or "", section.get("summary") or "", items))
-    # NOTE: do not name this loop variable `theme` — it would shadow the colour theme dict above.
-    for topic in report.get("themes") or []:
-        refs = topic.get("storyRefs") or []
-        if refs:
-            blocks.append((topic.get("heading") or "", topic.get("summary") or "", refs))
-
-    # Highlights (daily "今日重点"): the public DTO carries full item objects here.
-    highlight_items = [it for it in (report.get("highlights") or []) if isinstance(it, dict)][:3]
-    highlights_html = ""
-    if highlight_items:
-        cards = []
-        for it in highlight_items:
-            title = esc(it.get("title") or "")
-            url = _link_for(it, base)
-            src_name = esc(_clean_source(it.get("sourceName")))
-            role = it.get("role") or ""
-            pub = _fmt_cn_date(it.get("publishedAt"))
-            disc = _fmt_cn_date(it.get("discoveredAt"))
-            date_piece = pub or (("收录 " + disc) if disc else "")
-            parts = [p for p in [src_name, (esc(role) if role else ""), date_piece] if p]
-            sub = ('<div style="color:#6b7280;font-size:12px;margin-top:4px">' + " · ".join(parts) + '</div>') if parts else ""
-            card = '<a href="' + esc(url) + '" style="display:block;text-decoration:none;background:#fff8f7;border:1px solid #f0e2df;border-left:3px solid ' + theme["accent"] + ';border-radius:10px;padding:12px 14px;margin-bottom:8px">' \
-                   '<div style="color:' + INK + ';font-weight:600;font-size:14px;line-height:1.5">' + title + '</div>' + sub + '</a>'
-            cards.append(card)
-        highlights_html = '<div style="margin:18px 0 4px">' + _section_label("今日重点", theme, "8px") + "".join(cards) + '</div>'
+    # The report's own audited insights are the 00 content, not a second
+    # unrelated model summary. Legacy reports fall back to brief/lead.
+    analysis_html, analysis_text = _analysis_00(report, base, theme, brief, intro)
+    sections_html, sections_text = _email_folded_sections(report, base, theme)
 
     # Metrics strip ("本期速览").
     metrics = report.get("metrics") or {}
@@ -564,49 +524,12 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
     if chips:
         metrics_html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px">' + "".join(chips) + '</div>'
 
-    # Body blocks — condensed: keep the LLM-written section summary (info-dense),
-    # show only a few compact headlines, and point the rest to the full report.
+    # Email 01+ intentionally contains only an indexed preview. The full
+    # edition still lives on the website (for weekly/monthly); daily remains
+    # private, so its sample headlines link directly to public item pages.
     url = report_url(base, report)
-    per_section = BRIEF_ITEMS.get(kind, 3)
-    total_hidden = 0
-    block_parts = []
-    for label, summary, items in blocks:
-        shown = items[:per_section]
-        hidden = len(items) - len(shown)
-        total_hidden += hidden
-        bitems = "".join(_item_html(it, base, compact=True) for it in shown)
-        head = ""
-        if label:
-            head = '<h2 style="margin:24px 0 4px;font-size:17px;color:' + INK + ';line-height:1.4;border-left:4px solid ' + theme["aux"] + ';padding-left:10px">' + esc(label) + ('<span style="font-size:12px;font-weight:400;color:#9ca3af;margin-left:8px">' + str(len(items)) + ' 条</span>' if len(items) > per_section else '') + '</h2>'
-        summ = ""
-        if summary:
-            summ = '<p style="margin:0 0 6px;color:#4b5563;line-height:1.7;font-size:14px">' + esc(summary) + '</p>'
-        more = ""
-        if hidden > 0:
-            more = '<div style="margin:8px 0 0;font-size:13px"><a href="' + esc(url) + '" style="color:' + theme["aux_ink"] + ';text-decoration:none">本板块另有 ' + str(hidden) + ' 条 → 在完整总报中查看</a></div>'
-        block_parts.append(head + summ + bitems + more)
-    blocks_html = "".join(block_parts)
-    total_items = sum(len(b[2]) for b in blocks)
-    overview_note = ""
-    if total_items > 0:
-        overview_note = ('<div style="margin:26px 0 0;padding:12px 14px;background:#fdf7f5;border:1px dashed #edd9d4;border-left:3px solid ' + theme["aux"] + ';border-radius:10px;'
-                         + 'font-size:13px;color:' + MUTED + ';line-height:1.7">本期共 ' + str(total_items) + ' 条动态，邮件精选 '
-                         + str(sum(min(len(b[2]), per_section) for b in blocks)) + ' 条；'
-                         + '<a href="' + esc(url) + '" style="color:' + theme["aux_ink"] + ';text-decoration:none;font-weight:600">查看全部 →</a></div>')
-    hot_html = _hot_html(hot, base, scope=scope or "近 48 小时", theme=theme)
 
-    # Flashes (daily overflow) as a light "更多速递" list.
-    flashes = report.get("flashes") or []
-    flashes_html = ""
-    if flashes:
-        fl = []
-        for f in flashes[:12]:
-            ft = esc(f.get("title") or "")
-            furl = f.get("url") or ""
-            fl.append('<li style="margin:0 0 6px;color:#374151;font-size:13px;line-height:1.6">' + ('<a href="' + esc(furl) + '" style="color:' + INK + ';text-decoration:none">' + ft + '</a>' if furl else ft) + '</li>')
-        flashes_html = '<div style="margin:22px 0 0">' + _section_label("更多速递", theme) + '<ul style="padding-left:18px;margin:0">' + "".join(fl) + '</ul></div>'
-
-    preheader = esc(brief or intro or headline)[:140]
+    preheader = esc((str(report.get("insights", [{}])[0].get("claim") or "") if _report_insights(report) else (brief or intro or headline)))[:140]
     unsub = ""
     if unsubscribe_url:
         unsub = '<br><a href="' + esc(unsubscribe_url) + '" style="color:#4b5563">退订邮件</a>'
@@ -631,20 +554,15 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
         '</div>'
         + ('<div style="margin-top:8px"><span style="display:inline-block;background:' + theme["aux_soft"] + ';color:' + theme["aux_ink"] + ';font-size:12px;font-weight:600;padding:3px 11px;border-radius:999px"><span style="display:inline-block;width:6px;height:6px;background:' + theme["aux"] + ';border-radius:50%;margin-right:6px;vertical-align:middle"></span>' + esc(scope) + '</span></div>' if scope else "")
         + '<h1 style="font-size:25px;line-height:1.35;margin:14px 0 10px;color:' + INK + '">' + esc(headline) + '</h1>'
-        + brief_html
-        + lead_html
+        + analysis_html
         + metrics_html
-        + highlights_html
-        + hot_html
-        + blocks_html
-        + overview_note
-        + flashes_html
+        + sections_html
         + '<p style="margin:24px 0 0"><a href="' + esc(url) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
         '</div>'
         '<p style="text-align:center;color:#6b7280;font-size:12px;line-height:1.9;margin:16px 0 0">你收到此邮件，是因为该地址已确认订阅 Yi-Hot 公益总报。' + unsub + '</p>'
         '</main></body></html>'
     )
-    text = headline + "\n\n" + (brief or intro) + "\n\n" + ("完整总报：" + url + "\n") + (("\n退订：" + unsubscribe_url + "\n") if unsubscribe_url else "")
+    text = headline + "\n\n" + analysis_text + ("\n\n01 起 · 新闻版面\n" + sections_text if sections_text else "") + "\n\n" + ("完整总报：" + url + "\n" if kind != "daily" else "日报全文入口未公开，以上新闻标题可单独访问。\n") + (("\n退订：" + unsubscribe_url + "\n") if unsubscribe_url else "")
     return body, text
 
 

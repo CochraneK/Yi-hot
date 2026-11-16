@@ -102,6 +102,9 @@ test("the 动态 header picks a city and marks its events", { skip: process.env.
       }), { cause: error });
     }
     assert.ok(!(await page.$eval('[data-item-id="synthetic-1"]',e=>e.textContent)).includes("当地"));
+    // The institution-name trap: 北京 inside the project's name ("北京大学在外地的
+    // 项目") must not make an article local to 北京 — only a resolved event place may.
+    assert.ok(!(await page.$eval('[data-item-id="synthetic-2"]',e=>e.textContent)).includes("当地"));
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),"mobile must not scroll sideways");
     assert.equal(
       await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('button[aria-haspopup="dialog"]')].find(b => b.offsetParent !== null)?.textContent?.trim()),

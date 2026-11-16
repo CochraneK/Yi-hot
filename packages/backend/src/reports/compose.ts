@@ -7,6 +7,8 @@ import { FEATURES } from "@aihot/industry/features";
 import { CATEGORIES } from "@aihot/industry/taxonomy";
 import { PEER_SECTION } from "@aihot/industry/peers";
 import { peerDigest } from "../peers/digest.ts";
+import { compilePeriodInsights, periodObservationBrief } from "./insights.ts";
+import { yesterdayHotForReport } from "./yesterday-hot.ts";
 import { promptText, promptVersion } from "../editorial/prompts.ts";
 import { modelFor } from "../editorial/models.ts";
 import { addDays, beijingDate, beijingMidnight, isoWeekLabel, isoWeekRange } from "@aihot/contracts/time";
@@ -193,10 +195,13 @@ export async function composeDaily(date: string, reason = "scheduled", opts: { a
   const lead = ordered.length ? await writeLead("daily", date, ordered, model) : null;
   // 「邻域」：姊妹站已经筛好的条目，读回来引用，没有模型调用。取不到就不出现，不影响本期。
   const peers = await peerDigest("daily", date, start, end, new Set(ordered.map((e) => e.sourceUrl)));
+  // The previous Beijing calendar day, NOT the daily [08:00,08:00) editorial window.
+  const yesterdayHot = await yesterdayHotForReport(addDays(date, -1));
   const content = {
     date,
     lead: lead?.lead ?? null,
     highlights: lead?.highlights ?? [],
+    ...(yesterdayHot ? { yesterdayHot } : {}),
     sections,
     flashes,
     ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
@@ -226,21 +231,30 @@ export const PeriodSchema = z.object({
     // answer. Anything sliced away here lands in the leftover block, so the ceiling sits well above
     // the count the prompt asks for (a 120-entry week groups into about ten).
     .transform((themes) => themes.slice(0, 20)),
+  // Optional for a model unable to make a supported inference: no fabricated insights.
+  insights: z.array(z.object({
+    claim: z.string().min(8).max(120),
+    reasoning: z.string().min(12).max(350),
+    alternative: z.string().min(5).max(220),
+    watchFor: z.string().min(5).max(180),
+    refs: z.array(z.union([z.number(), z.string()])).min(2).max(8),
+  })).max(3).optional().catch([]),
 });
 
 /** The editor's brief for a week or month: its top entries as a numbered list, each with its section. */
-export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endDateInclusive: string, top: Candidate[]) {
-  const list = top.map((e, i) => `${i + 1}. [${SECTION_OF[e.category ?? ""] ?? DEFAULT_SECTION}] ${e.title}｜${e.summary.slice(0, 140)}`).join("\n");
+export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endDateInclusive: string, top: Candidate[], observation = "") {
+  const list = top.map((e, i) => `${i + 1}. [${SECTION_OF[e.category ?? ""] ?? DEFAULT_SECTION}] [来源：${e.sourceName}] ${e.title}｜${e.summary.slice(0, 140)}`).join("\n");
   return {
     system: promptText("report-period", {
       kindName: kind === "weekly" ? "周报" : "月报",
-      overviewLength: kind === "weekly" ? "150–300" : "200–400",
+      overviewLength: kind === "weekly" ? "75" : "120",
       // The theme count is a consequence of this number, not the other way round: with the count
       // capped the model keeps it by dropping entries into the leftover block, whereas a floor on
       // entries per theme reaches the same count while citing what it was skipping.
       minPerTheme: kind === "weekly" ? "10" : "20",
+      insightObjective: kind === "weekly" ? "横向观察：独立事件之间的共同方向、分歧或行动链" : "机制假设：解释不同事件如何可能相关，以及还有什么其他解释",
     }),
-    user: `本期：${startDate} 至 ${endDateInclusive}\n${list}`,
+    user: `本期：${startDate} 至 ${endDateInclusive}\n${observation ? `${observation}\n` : ""}以下各条是本站已采集样本，不是总体抽样：\n${list}`,
   };
 }
 
@@ -273,6 +287,12 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   // eligible pool rather than duplicating the narrower selected feed.
   const all = await candidates(start, end, { selectedOnly: false, includeBackfill: true });
   const top = all.slice(0, kind === "weekly" ? 120 : 300);
+  // Compare observation windows without an extra LLM call. Previous-period samples may
+  // be incomplete: report their scope explicitly instead of claiming social incidence.
+  const previousEnd = addDays(startDate, -1);
+  const previousStart = kind === "weekly" ? addDays(startDate, -7) : `${previousEnd.slice(0, 7)}-01`;
+  const previous = await candidates(beijingMidnight(previousStart), start, { selectedOnly: false, includeBackfill: true });
+  const observation = periodObservationBrief(kind, all, previous, SECTION_OF);
   const dailyCount = (await sql<{ n: number }[]>`SELECT count(*) AS n FROM reports WHERE kind = 'daily' AND key >= ${startDate} AND key <= ${endDateInclusive}`)[0]?.n ?? 0;
   if (top.length === 0) {
     // Never publish a misleading empty weekly/monthly report. Only the automatic
@@ -287,15 +307,19 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
   let headline = "";
   let overview = "";
   let receiptId: number | null = null;
+  let insights: ReturnType<typeof compilePeriodInsights> = [];
   const model = await modelFor("report");
   if (top.length) {
     const res = await chatJson({
       model, purpose: `report_${kind}`, subject: `report:${kind}:${key}`, promptVersion: REPORT_VERSION,
-      ...periodPrompt(kind, startDate, endDateInclusive, top), schema: PeriodSchema, temperature: 0.3, maxTokens: 6000,
+      ...periodPrompt(kind, startDate, endDateInclusive, top, observation), schema: PeriodSchema, temperature: 0.3, maxTokens: 6000,
     });
     receiptId = res.receiptId;
     headline = res.data.headline.trim();
     overview = res.data.overview;
+    // Only record insights with valid numbered references to independent events and sources.
+    // A verbose unsupported model output is dropped, not displayed as editorial certainty.
+    insights = compilePeriodInsights(kind, res.data.insights ?? [], top);
     const assigned = new Set<string>();
     themes = res.data.themes.flatMap((t) => {
       const storyRefs: ReportEntry[] = [];
@@ -337,6 +361,8 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     }
   }
   const peers = await peerDigest(kind, key, start, end, new Set(top.map((e) => e.sourceUrl)));
+  // Yesterday relative to the PERIOD END, not the day a backfill happened to run.
+  const yesterdayHot = await yesterdayHotForReport(endDateInclusive);
   const content = {
     kind,
     title: `公益总报 · ${kind === "weekly" ? "周报" : "月报"} · ${key}`,
@@ -346,6 +372,8 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     ...(headline ? { headline } : {}),
     overview,
     themes,
+    ...(yesterdayHot ? { yesterdayHot } : {}),
+    ...(insights.length ? { insights } : {}),
     ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
     storyOrder: top.map((e) => e.itemId),
     metrics: {

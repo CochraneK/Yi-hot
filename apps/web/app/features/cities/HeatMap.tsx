@@ -45,6 +45,24 @@ function headingOf(hours: number): string {
   return PERIODS.find(p => p.hours === hours)?.heading ?? `近 ${hours} 小时`;
 }
 
+/**
+ * Names for cities that are both busy and far enough apart to stay readable.
+ * Taking the top eight by count alone piles 南京/上海/杭州 on top of each other;
+ * a minimum separation spreads them over the country instead.
+ */
+function pickSpread<T extends { point: GeoHeatPoint }>(items: T[], limit: number): T[] {
+  const picked: T[] = [];
+  for (const item of [...items].sort((a, b) => b.point.count - a.point.count)) {
+    if (item.point.count < 2) break;
+    const crowded = picked.some(p =>
+      Math.abs(p.point.lon - item.point.lon) < 4.5 && Math.abs(p.point.lat - item.point.lat) < 3.5);
+    if (crowded) continue;
+    picked.push(item);
+    if (picked.length >= limit) break;
+  }
+  return picked;
+}
+
 export function CityHeatMap({
   points, hours, onChoose, amapKey, amapSecurityCode, compact = false, mapHeight = "h-[300px] sm:h-[380px]",
 }: {
@@ -155,18 +173,20 @@ export function CityHeatMap({
     for (const point of visible) {
       // Area, not radius, tracks the count: a city with 4x the stories reads as
       // twice the circle instead of four times, which keeps one busy city from
-      // swallowing the map.
-      const radius = 5 + 15 * Math.sqrt(point.count / max);
+      // swallowing the map. The ceiling is modest because a month of news puts
+      // 300 circles on one province, and larger discs merge into a red slab with
+      // no gradient left in it.
+      const radius = 4 + 11 * Math.sqrt(point.count / max);
       // Places are geonames WGS-84; 高德 draws GCJ-02.
       const [lng, lat] = wgs84ToGcj02(point.lon, point.lat);
       const marker = new AMap.CircleMarker({
         center: [lng, lat],
         radius,
         strokeColor: "#DA291C",
-        strokeOpacity: 0.55,
+        strokeOpacity: 0.5,
         strokeWeight: 1,
         fillColor: "#DA291C",
-        fillOpacity: 0.28,
+        fillOpacity: 0.22,
         bubble: true,
         cursor: "pointer",
       });
@@ -174,11 +194,10 @@ export function CityHeatMap({
       drawn.push({ point, marker });
     }
     // Names, for the cities a reader can actually make out. Vector overlays drop
-    // the `label` option silently, so the name has to be its own Text overlay; eight
-    // of them answer "where is it happening" without turning the card into a list.
-    const named = [...drawn].sort((a, b) => b.point.count - a.point.count)
-      .filter(d => d.point.count >= 2).slice(0, LABELLED_CITIES);
-    for (const { point } of named) {
+    // the `label` option silently, so the name has to be its own Text overlay; a
+    // handful of them answers "where is it happening" without turning the card
+    // into a list.
+    for (const { point } of pickSpread(drawn, LABELLED_CITIES)) {
       const [lng, lat] = wgs84ToGcj02(point.lon, point.lat);
       const name = new AMap.Text({
         text: point.name,

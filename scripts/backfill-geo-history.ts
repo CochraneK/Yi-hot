@@ -16,7 +16,7 @@ const valid = args.every(a => a === "--apply" || /^--after=.+$/.test(a) || /^--l
 const option = (key: string) => args.find(x => x.startsWith(key))?.slice(key.length);
 const apply = args.includes("--apply");
 const after = option("--after=") ?? "";
-const limit = Math.min(Math.max(Number(option("--limit=") ?? 50), 1), 500);
+const limit = Math.min(Math.max(Number(option("--limit=") ?? 50), 1), 20000);
 
 interface Row { article_id: string; analysis_id: number; revision: number }
 
@@ -84,6 +84,11 @@ try {
     } catch (error) {
       result.failed += 1;
       if (result.failures.length < 5) result.failures.push(`${row.article_id}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    // A long batch runs for hours; without a line every so often the log looks dead
+    // and there is no way to tell a slow crawl from a stalled one.
+    if (result.processed % 50 === 0) {
+      console.error(`[geo-backfill] ${result.processed}/${rows.length} processed, ${result.withHints} with hints, ${result.hints} hints, ${result.failed} failed`);
     }
   }
 

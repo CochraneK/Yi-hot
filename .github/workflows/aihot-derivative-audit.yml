@@ -1,0 +1,44 @@
+# Weekly, review-only discovery of upstream AIHOT customization forks.
+# Does not execute fork code, probe their domains, modify seed sources or auto-publish.
+name: AIHOT derivative discovery
+
+on:
+  schedule:
+    # Weekly Monday 03:23 UTC = 11:23 China Standard Time.
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: aihot-derivative-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify discovery rules offline
+        run: node --test tests/aihot-derivatives.test.mjs
+      - name: Scan new and changed AIHOT forks, update one review-only Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/scan-aihot-derivatives.mjs --lookback-days=60 --max-forks=3000 --max-configs=600
+      - name: Attach full audit evidence even when discovery has incomplete coverage
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: aihot-derivative-discovery
+          path: artifacts/aihot-derivatives/
+          retention-days: 30
+          if-no-files-found: warn

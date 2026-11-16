@@ -57,11 +57,13 @@ export default function CitiesPage() {
     const m = new Map<string, GeoEventPlace>(CITY_PLACES.map(p => [p.id, { ...staticReaderLocation(p.id)!, precision: "city" as const }]));
     for (const p of catalog) if (p.precision === "city") m.set(p.id, p);
     if (reader && !m.has(reader.id)) m.set(reader.id, { ...reader, precision: "city" });
-    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+    // Registry order is stable and already groups Chinese/overseas cities; append canonical entries in API order.
+    // Avoid runtime ICU collation differences during SSR hydration.
+    return [...m.values()];
   }, [catalog, reader]);
   const countries = geo?.countries ?? [...new Set(catalog.map(p => p.countryCode))].sort();
   const regions = chosenCountry === urlCountry && geo?.regions?.length ? geo.regions
-    : [...new Set(catalog.filter(p => p.countryCode === chosenCountry && p.region).map(p => p.region!))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+    : [...new Set(catalog.filter(p => p.countryCode === chosenCountry && p.region).map(p => p.region!))].sort();
   const selected = catalog.find(p => p.id === params.get("place")) ?? geo?.places.find(p => p.id === params.get("place"));
   const items = result.kind === "reviewed" ? result.data.items
     : result.data.items.filter(item => cityClues(item).some(p => !result.city || p.id === result.city));

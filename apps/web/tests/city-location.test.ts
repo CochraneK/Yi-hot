@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GeoEventPlace } from "@aihot/contracts/site";
 import { isLocalEvent, locationFromIpResult, readerLocation, staticReaderLocation } from "../app/features/cities/reader-city.ts";
+import { cityCountryLabel } from "../app/features/cities/geo.ts";
 const place: GeoEventPlace = { id: "canonical-beijing", name: "北京市", countryCode: "CN", region: "北京", city: "北京市", lat: 39.9, lon: 116.4, precision: "city" };
 test("local badge uses reviewed city events, including canonical IDs outside the old dictionary", () => {
   const reader = staticReaderLocation("beijing");
@@ -28,4 +29,13 @@ test("IP matching uses country and region and refuses ambiguous catalog names", 
   assert.equal(locationFromIpResult("Springfield", "Unknown", "US", [a,b]), null);
   assert.equal(locationFromIpResult("Springfield", "Illinois", "GB", [a,b]), null);
   assert.equal(locationFromIpResult("Beijing", "Beijing", "CN", [])?.id, "beijing");
+});
+
+test("country labels are stable across Node and browser ICU versions", () => {
+  assert.equal(cityCountryLabel("MO"), "澳门");
+  assert.equal(cityCountryLabel("HK"), "香港");
+  assert.equal(cityCountryLabel("TW"), "台湾");
+  assert.equal(cityCountryLabel("CN"), "中国");
+  assert.equal(cityCountryLabel("FR"), "法国");
+  assert.equal(cityCountryLabel("ZZ"), "ZZ");
 });

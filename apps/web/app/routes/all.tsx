@@ -170,10 +170,7 @@ export default function AllPage() {
         </div>
       )}
 
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[12px] text-ink-4">
-          {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
-        </span>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {!here && (
             <select
@@ -198,6 +195,9 @@ export default function AllPage() {
             只看未读
           </ToggleChip>
         </div>
+        <span className="ml-auto text-[12px] text-ink-4">
+          {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
+        </span>
       </div>
 
       <div className={`transition-opacity duration-200 ${busy ? "opacity-50" : ""}`}>

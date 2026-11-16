@@ -477,7 +477,7 @@ export interface ReportDetail {
   lead: { title: string; leadParagraph: string } | null;
   overview: string | null;
   /** Empty for legacy issues, or when corroborating citations were withdrawn. */
-  insights: ReportInsight[];
+  insights?: ReportInsight[];
   highlights: ReportCitation[];
   /** As edited: daily categories, weekly and monthly themes. */
   sections: Array<{ label: string; summary: string | null; items: ReportCitation[] }>;

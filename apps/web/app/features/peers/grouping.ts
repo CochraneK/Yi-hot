@@ -1,5 +1,5 @@
 import type { PeerDirectoryEntry } from "@aihot/contracts/peers";
-import { PEER_GROUP_FALLBACK, PEER_GROUPS } from "@aihot/industry/peers";
+import { PEER_GROUP_FALLBACK, PEER_GROUPS, PEER_SITES } from "@aihot/industry/peers";
 
 export interface PeerGroupView {
   id: string;
@@ -57,44 +57,17 @@ export function filterPeerSites(sites: PeerDirectoryEntry[], query: string): Pee
   });
 }
 
-/** 使用价值分层。family 与 tier 正交，原行业 group 不变。 */
-export interface NeighborhoodFamily {
-  id: "same" | "other";
-  label: string;
-  sites: PeerDirectoryEntry[];
-  groups: PeerGroupView[];
+/**
+ * 「邻域」展示纯聚合站，而不是机构官网、公开数据库或普通 RSS 采集源。
+ * 后端使用同一登记表过滤；这里再兜底处理短时缓存的旧 API 数据。
+ * 候选与正式站按同一个 group 排列，tier 只是卡片上的状态标记。
+ */
+const sourceOnlyIds = new Set(PEER_SITES.filter(s => s.directoryVisible === false).map(s => s.id));
+
+export function isNeighborhoodAggregator(site: PeerDirectoryEntry): boolean {
+  return site.tier !== "resource" && !sourceOnlyIds.has(site.id);
 }
 
-export interface NeighborhoodSection {
-  id: "official" | "resource" | "candidate";
-  label: string;
-  note: string;
-  sites: PeerDirectoryEntry[];
-  groups: PeerGroupView[];
-  /** 正式邻域下先按技术谱系，再按行业；其他两层不重复分类。 */
-  families?: NeighborhoodFamily[];
-}
-
-export function groupNeighborhoods(sites: PeerDirectoryEntry[]): NeighborhoodSection[] {
-  const kinds: Array<Pick<NeighborhoodSection, "id" | "label" | "note">> = [
-    { id: "official", label: "正式邻域", note: "收录有独立领域价值的行业资讯，按同系与其他分区。同步情况和内容可能重叠仅作提示。" },
-    { id: "resource", label: "实用资源", note: "官方机会、科研数据库与专业资料，不要求按新闻节奏更新。" },
-    { id: "candidate", label: "候选信息", note: "核心内容需付费、产品演示、静态快照或已关闭的站点；重复内容和同步状态不影响收录资格。" },
-  ];
-  return kinds.flatMap(kind => {
-    const entries = sites.filter(s =>
-      (s.tier === "official" || s.tier === "resource" ? s.tier : "candidate") === kind.id);
-
-    if (!entries.length) return [];
-    const families: NeighborhoodFamily[] | undefined = kind.id === "official"
-      ? ([
-          { id: "same" as const, label: "同系邻域" },
-          { id: "other" as const, label: "其他邻域" },
-        ].flatMap(family => {
-          const matching = entries.filter(site => (site.family === "same" ? "same" : "other") === family.id);
-          return matching.length ? [{ ...family, sites: matching, groups: groupSites(matching) }] : [];
-        }))
-      : undefined;
-    return [{ ...kind, sites: entries, groups: groupSites(entries), families }];
-  });
+export function groupNeighborhoods(sites: PeerDirectoryEntry[]): PeerGroupView[] {
+  return groupSites(sites.filter(isNeighborhoodAggregator));
 }

@@ -3152,3 +3152,16 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 ### YiHot009 · 已保存 AI 地点候选免费回填（2026-11-16，需手工执行）
 
 新增 `scripts/backfill-geo-candidates.ts`：从当前公开新闻对应的 `analyses.output.geography` 将**已存在**的 AI 地点候选经原文证据再校验后写回 `geo_candidates` 的 `pending` 审核队列，默认 dry-run，`--apply` 才会写入，单批 1–200，游标使用 `--after=<analysis-id>`；幂等，不修改或批准已审核候选，**不调用模型、不触发全库重新分析**。需先上线 0052 migration，真实生产任务须授权人员执行并记录结果。详见 [`docs/GEO_OFFLINE_BACKFILL_2026-11-16.md`](docs/GEO_OFFLINE_BACKFILL_2026-11-16.md)。
+
+
+## 邻域职责收敛：只展示信息聚合站，候选按主题混排（2026-11-16）
+
+用户新决定覆盖先前「正式邻域 / 实用资源 / 候选信息」三级及「同系/其他」二级**前台**分区。现在 `/peers` 只用现有 `PEER_GROUPS` 主题分组（健康、公共、研究、综合 AI、市场等）展示信息聚合类网站；**候选站直接放入对应主题，只显示「候选」标签**。同系/其他仍在目录记录与 API 字段保留为谱系信息，但不单独开栏目。暂时失败、尚未同步、内容可能重合继续标记，不作为踢出聚合站的理由。
+
+- 原 `industry/peers.ts` 56 个 ID、URL、family、tier、strategy、enabled、同步队列和历史数据库均保留，作为规范登记源。现 36 正式含 2 个联合国普通发布源；后端 `loadPeerDirectory()` 仅输出已启用、非 `strategy=none`、`tier!==resource` 且 `directoryVisible!==false` 的聚合站，计 **34 正式聚合站 + 4 可浏览候选 = 38 个展示条目**，不是 38 个确认已成功抓取的网站。
+- `un-news-sdgs` 和 `un-geneva-news` 标记 `directoryVisible:false`，不作为邻域产品展示；现有 `industry/sources.json` 已有 **`rss-un-news` 中文源**（原先就在主站信源列表且未禁用），以及 `rss-peer-un-news-sdgs` / `rss-peer-un-geneva-news` 两条待审 RSS（**仍 disabled，不自动启用**，待单独核验链接、许可、相关性和成本）。联合国官方网站不是聚合产品，不能仅因有 RSS 就标为同类。
+- 原 15 项数据库、机会库、机构门户等 `tier=resource` 不再占用邻域页面；数据与配置继续保留，不删除第三方 RSS/接口、来源关系或历史信息。需要使用时从信源体系或各自官方网址访问。
+- 正式与候选依据 `group` 混排，卡片上候选小标记；移动端保留横滑主题锚点、搜索与紧凑官网卡片；桌面继续网格排版。旧缓存若短时包含来源站，前端使用同一登记表再次兜底过滤，避免闪现。
+- 验收 `tests/peers.test.ts` 与 `apps/web/tests/peer-grouping.test.ts`，并检查 TypeScript、Web build/test、PostgreSQL、Docker、原日报选稿；生产部署与移动/电脑真实页面另行核对。回滚 UI 分组、后端目录筛选和 `directoryVisible` 即可，源数据及历史稿件不改。
+
+**与旧手册冲突的前台目录描述以本条为准。** 这不是将所有 RSS 加入主站采集，也不是让现有待审源自动开始烧模型预算。

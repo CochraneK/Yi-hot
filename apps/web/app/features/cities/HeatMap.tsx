@@ -9,8 +9,9 @@ import "leaflet/dist/leaflet.css";
  * draws one circle per city sized by article count, so the reader can see where
  * the last two days happened without paging through a feed.
  *
- * Nothing third-party loads until the reader asks for the map, and the circles
- * are reviewed event places only — the same gate as the city page.
+ * The map is the content of this card, so it draws itself on arrival instead of
+ * waiting for a click. Only reviewed event places are drawn — the same gate as
+ * the city page.
  */
 export function CityHeatMap({ points, hours, onChoose, compact = false }: {
   points: GeoHeatPoint[];
@@ -20,16 +21,20 @@ export function CityHeatMap({ points, hours, onChoose, compact = false }: {
   compact?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
-  const [enabled, setEnabled] = useState(false);
-  const [failure, setFailure] = useState("");
+  const [enabled, setEnabled] = useState(true);
+  // A failed map collapses to one line: an empty grey slab reads as a broken page.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const choose = useRef(onChoose);
   choose.current = onChoose;
+  const hasPoints = points.length > 0;
 
   useEffect(() => {
-    if (!enabled || !host.current) return;
+    if (!enabled || failed || !hasPoints || !host.current) return;
     let disposed = false;
     let cleanup = () => {};
-    setFailure("");
+    // One bad tile is a hiccup; a map that never painted a tile is a failure.
+    let drew = false;
     import("leaflet").then(L => {
       if (disposed || !host.current) return;
       const map = L.map(host.current, { minZoom: 2, maxZoom: 12, scrollWheelZoom: false, worldCopyJump: true }).setView([34, 105], 4);
@@ -37,7 +42,8 @@ export function CityHeatMap({ points, hours, onChoose, compact = false }: {
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
       }).addTo(map);
-      tile.on("tileerror", () => { if (!disposed) setFailure("底图暂不可用，下方城市排行仍可查看。"); });
+      tile.on("tileload", () => { drew = true; });
+      tile.on("tileerror", () => { if (!disposed && !drew) setFailed(true); });
 
       const max = Math.max(...points.map(p => p.count), 1);
       for (const point of points) {
@@ -61,30 +67,37 @@ export function CityHeatMap({ points, hours, onChoose, compact = false }: {
       const observer = new ResizeObserver(() => map.invalidateSize());
       observer.observe(host.current);
       cleanup = () => { observer.disconnect(); map.remove(); };
-    }).catch(() => { if (!disposed) setFailure("地图组件加载失败，下方城市排行仍可查看。"); });
+    }).catch(() => { if (!disposed) setFailed(true); });
     return () => { disposed = true; cleanup(); };
-  }, [enabled, points]);
+  }, [enabled, failed, attempt, hasPoints, points]);
 
   const total = points.reduce((sum, p) => sum + p.count, 0);
   const top = compact ? [] : points.slice(0, 12);
 
   return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label={`近 ${hours} 小时城市热力`}>
-    <div className="flex flex-wrap items-center justify-between gap-2 p-4">
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
       <div>
         <h2 className="font-semibold text-ink">近 {hours} 小时，哪里在发生</h2>
         <p className="mt-1 text-[12px] text-ink-3">
-          {points.length ? `${points.length} 个城市 · ${total} 条已核准的事件新闻` : "这段时间还没有已核准的事件地点"}
+          {hasPoints ? `${points.length} 个城市 · ${total} 条已核准的事件新闻` : "这段时间还没有已核准的事件地点"}
         </p>
       </div>
-      <button type="button" onClick={() => setEnabled(v => !v)} className="rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink">
-        {enabled ? "收起地图" : "加载热力地图"}
-      </button>
+      {hasPoints && !failed && (
+        <button type="button" onClick={() => setEnabled(v => !v)} className="rounded-full border border-line-strong px-3.5 py-1.5 text-[12px] text-ink">
+          {enabled ? "收起地图" : "展开地图"}
+        </button>
+      )}
     </div>
-    {enabled
-      ? <div ref={host} className="relative z-0 h-[320px] w-full bg-bg-sunk sm:h-[420px]" aria-label="可拖动、缩放的城市热力地图" />
-      : <div className="bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-3">
-          {points.length ? `圆点越大，近 ${hours} 小时的报道越多；点击城市可查看它的新闻。` : "等自动核准的事件地点多起来，这里会显示各城市的报道密度。"}
-        </div>}
+    {!hasPoints ? null : failed ? (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-soft px-4 py-3 text-[12.5px] leading-relaxed text-ink-3">
+        <span>地图底图没加载出来，可能是网络或 OpenStreetMap 暂时不可用。</span>
+        <button type="button" onClick={() => { setFailed(false); setAttempt(n => n + 1); }} className="font-medium text-accent hover:underline">重试</button>
+      </div>
+    ) : enabled ? (
+      <div ref={host} className="relative z-0 h-[300px] w-full bg-bg-sunk sm:h-[380px]" aria-label="可拖动、缩放的城市热力地图" />
+    ) : (
+      <div className="border-t border-line-soft px-4 py-3 text-[12.5px] text-ink-3">圆点越大，近 {hours} 小时的报道越多；点城市看它的新闻。</div>
+    )}
     {top.length > 0 && (
       <ol className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-line-soft px-4 py-3 sm:grid-cols-3">
         {top.map((point, index) => (
@@ -98,9 +111,10 @@ export function CityHeatMap({ points, hours, onChoose, compact = false }: {
         ))}
       </ol>
     )}
-    <div className="space-y-1 border-t border-line-soft p-3 text-[11.5px] text-ink-4">
-      <p>加载后 OpenStreetMap 会收到连接 IP 和本站域名。统计的是已核准的事件地点，同一篇报道只计一次。</p>
-      {failure && <p role="status">{failure}</p>}
-    </div>
+    {hasPoints && !failed && (
+      <p className="border-t border-line-soft px-4 py-2.5 text-[11.5px] leading-relaxed text-ink-4">
+        底图来自 OpenStreetMap，对方会收到你的连接 IP 和本站域名。统计只含已核准的事件地点，同一篇报道只计一次。
+      </p>
+    )}
   </section>;
 }

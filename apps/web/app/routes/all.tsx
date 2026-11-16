@@ -128,14 +128,49 @@ export default function AllPage() {
   };
   const localLabel = place ? `只看当地 · ${here?.name ?? reader?.name ?? "本城"}` : "只看当地";
 
+  // The narrow filters sit under the search field on desktop and under the topic
+  // row on phones. Without a city the 只看当地 chip would only bounce the reader
+  // to /cities, so the city picker stands in for it until one is chosen.
+  const localControls = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {here ? (
+        <ToggleChip on={!!place} onToggle={toggleLocal}>
+          {localLabel}
+        </ToggleChip>
+      ) : (
+        <select
+          aria-label="选择我的城市"
+          value=""
+          onChange={e => chooseLocal(e.target.value)}
+          className="h-8 max-w-[9rem] rounded-full border border-line-strong bg-surface px-3 text-[12.5px] text-ink-2"
+        >
+          <option value="">选择我的城市…</option>
+          {places.map(city => (
+            <option key={city.id} value={city.id}>{city.name} · {city.count}</option>
+          ))}
+        </select>
+      )}
+      <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
+        只看精选
+      </ToggleChip>
+      <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
+        只看未读
+      </ToggleChip>
+    </div>
+  );
+
   return (
     <div className="pb-6">
-      {/* Desktop, as on 精选: the title, then one filter row with the search field aligned on the right. */}
+      {/* Desktop, as on 精选: the title, then one filter row with the search field
+          and the narrow filters stacked on the right. */}
       <div className="hidden lg:block">
         <div className="flex items-center justify-between gap-3"><h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1><Link to="/cities" className="text-[12px] font-medium text-accent hover:underline">城市地图</Link></div>
-        <div className="mb-5 mt-4 flex items-center justify-between gap-4">
-          <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0" />
-          <SearchField variant="track" defaultValue={f.q ?? ""} keep={keep} />
+        <div className="mb-5 mt-4 flex items-center justify-between gap-6">
+          <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0 flex-1" />
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <SearchField variant="track" defaultValue={f.q ?? ""} keep={keep} />
+            {localControls}
+          </div>
         </div>
       </div>
 
@@ -153,6 +188,7 @@ export default function AllPage() {
         <div className="-mx-4 mt-3 border-b border-line-soft px-4 pb-3">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-mobile" size="sm" className="min-w-0" />
         </div>
+        <div className="mb-1 mt-3">{localControls}</div>
       </div>
 
       {f.q && (
@@ -170,35 +206,9 @@ export default function AllPage() {
         </div>
       )}
 
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {!here && (
-            <select
-              aria-label="选择我的城市"
-              value=""
-              onChange={e => chooseLocal(e.target.value)}
-              className="max-w-[9.5rem] rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[12px] text-ink-2"
-            >
-              <option value="">选择我的城市…</option>
-              {places.map(city => (
-                <option key={city.id} value={city.id}>{city.name} · {city.count}</option>
-              ))}
-            </select>
-          )}
-          <ToggleChip on={!!place} onToggle={toggleLocal}>
-            {localLabel}
-          </ToggleChip>
-          <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
-            只看精选
-          </ToggleChip>
-          <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
-            只看未读
-          </ToggleChip>
-        </div>
-        <span className="ml-auto text-[12px] text-ink-4">
-          {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
-        </span>
-      </div>
+      {unreadOnly && hiddenCount > 0 && (
+        <p className="mb-2 text-[12px] text-ink-4">已隐藏本页 {hiddenCount} 条读过的内容</p>
+      )}
 
       <div className={`transition-opacity duration-200 ${busy ? "opacity-50" : ""}`}>
         {items.length === 0 ? (

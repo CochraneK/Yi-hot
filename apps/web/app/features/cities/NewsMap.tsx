@@ -12,10 +12,11 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
   const choose = useRef(onChoose);
   choose.current = onChoose;
   useEffect(() => {
-    if (!enabled || !host.current) return;
+    if (!enabled || failure || !host.current) return;
     let disposed = false;
     let cleanup = () => {};
-    setFailure("");
+    // One bad tile is a hiccup; a map that never painted a tile is a failure.
+    let drew = false;
     import("leaflet").then(L => {
       if (disposed || !host.current) return;
       const map = L.map(host.current, { minZoom: 2, maxZoom: 16, scrollWheelZoom: false, worldCopyJump: true }).setView([34, 105], 4);
@@ -23,7 +24,8 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
       }).addTo(map);
-      tile.on("tileerror", () => { if (!disposed) setFailure("底图暂不可用，仍可使用地点标记、下方列表和地区筛选。"); });
+      tile.on("tileload", () => { drew = true; });
+      tile.on("tileerror", () => { if (!disposed && !drew) setFailure("底图暂不可用，仍可使用下方列表和地区筛选。"); });
       const layer = L.layerGroup().addTo(map);
       function render() {
         layer.clearLayers();
@@ -61,18 +63,23 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
       const observer = new ResizeObserver(() => map.invalidateSize());
       observer.observe(host.current);
       cleanup = () => { observer.disconnect(); map.remove(); };
-    }).catch(() => { if (!disposed) setFailure("地图组件加载失败，请使用下方新闻列表。关闭后可重试。"); });
+    }).catch(() => { if (!disposed) setFailure("地图组件加载失败，仍可使用下方列表和地区筛选。"); });
     return () => { disposed = true; cleanup(); };
-  }, [enabled, places, items]);
+  }, [enabled, failure, places, items]);
 
   return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label="新闻地图">
     <div className="flex flex-wrap items-center justify-between gap-2 p-4">
       <div><h2 className="font-semibold text-ink">地图上的新闻</h2><p className="mt-1 text-[12px] text-ink-3">已审核的事件地点 · 标记为登记的城市或地区代表点</p></div>
-      <button type="button" onClick={() => { setSelectedIds([]); setEnabled(v => !v); }} className="rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink">{enabled ? "关闭地图" : "加载交互地图"}</button>
+      <button type="button" onClick={() => { setSelectedIds([]); setFailure(""); setEnabled(v => !v); }} className="rounded-full border border-line-strong px-3.5 py-1.5 text-[12px] text-ink">{enabled ? "关闭地图" : "加载交互地图"}</button>
     </div>
-    {enabled ? <div ref={host} className="relative z-0 h-[340px] w-full bg-bg-sunk sm:h-[430px]" aria-label="可拖动、缩放的新闻地图" />
-      : <div className="bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-3">{places.length ? `${places.length} 个地点已有新闻，可加载地图探索。` : "还没有审核通过的事件地点。"}</div>}
-    {enabled && selectedPlaces.length > 0 && (
+    {enabled && !failure ? <div ref={host} className="relative z-0 h-[340px] w-full bg-bg-sunk sm:h-[430px]" aria-label="可拖动、缩放的新闻地图" />
+      : failure ? (
+        <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-soft px-4 py-3 text-[12.5px] leading-relaxed text-ink-3">
+          <span>{failure}</span>
+          <button type="button" onClick={() => setFailure("")} className="font-medium text-accent hover:underline">重试</button>
+        </div>
+      ) : <div className="bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-3">{places.length ? `${places.length} 个地点已有新闻，可加载地图探索。` : "还没有审核通过的事件地点。"}</div>}
+    {enabled && !failure && selectedPlaces.length > 0 && (
       <div role="region" aria-label="所选地图地点" className="space-y-3 border-t border-line-soft bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-[13px] font-semibold text-ink">所选地点</h3>
@@ -93,7 +100,6 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
     )}
     <div className="space-y-1 border-t border-line-soft p-3 text-[11.5px] text-ink-4">
       <p>加载后 OpenStreetMap 会收到连接 IP 和本站域名；不发送你的城市选择。可拖动、双击或用加减按钮缩放，圆点数字为该地点的新闻数。</p>
-      {failure && <p role="status">{failure}</p>}
       <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer" className="text-accent">反馈底图问题</a>
     </div>
   </section>;

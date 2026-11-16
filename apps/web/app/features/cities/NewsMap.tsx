@@ -82,7 +82,7 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
           <div key={place.id} className="space-y-1 border-t border-line-soft pt-2 first:border-0">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[13px] font-medium text-ink">{place.name} · {place.count} 条新闻</span>
-              <button type="button" onClick={() => onChoose(place.id)} className="min-h-10 rounded-full bg-bg-sunk px-3 text-[12px] font-medium text-accent">查看这个地点的新闻</button>
+              <button type="button" data-geo-place-link={place.id} onClick={() => onChoose(place.id)} className="min-h-10 rounded-full bg-bg-sunk px-3 text-[12px] font-medium text-accent">查看这个地点的新闻</button>
             </div>
             {items.filter(item => item.eventPlaces?.some(p => p.id === place.id)).slice(0,3).map(item => (
               <a key={item.id} href={`/yihot/items/${encodeURIComponent(item.id)}`} className="block py-1 text-[12.5px] leading-relaxed text-ink-2 underline-offset-2 hover:underline">{item.title}</a>

@@ -205,9 +205,11 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
     ...(c.sections ?? []).flatMap((s: any) => s.items ?? []),
     ...(c.flashes ?? []),
     ...(c.themes ?? []).flatMap((t: any) => t.storyRefs ?? []),
-    ...(c.yesterdayHot?.entries ?? []).map((e: any) => ({ itemId: e.itemId })),
   ];
-  const avail = await availability([...new Set(rawItems.map((i) => i.itemId).filter(Boolean))]);
+  // Heat citations need revocation checks, but must never overwrite the source
+  // metadata used by insight evidence validation.
+  const hotIds: string[] = (c.yesterdayHot?.entries ?? []).map((e: any) => e.itemId).filter((id: unknown): id is string => typeof id === "string");
+  const avail = await availability([...new Set([...rawItems.map((i) => i.itemId).filter(Boolean), ...hotIds])]);
   const cite = (raw: Record<string, any>) => citationFrom(raw, avail);
   const yesterdayHot = publicYesterdayHot(c.yesterdayHot, avail);
 

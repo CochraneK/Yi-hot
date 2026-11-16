@@ -122,7 +122,7 @@ function InsightPage({ report }: { report: ReportDetail }) {
   return (
     <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 border-t border-line-strong pt-8 @[880px]:pt-10">
       <header className="pb-4">
-        <Kicker>{isWeekly ? "本周观察" : "本月分析"}</Kicker>
+        <Kicker>00 · {isWeekly ? "本周观察" : "本月分析"}</Kicker>
         <h2 id="s-insights-title" className="mt-2 text-[24px] font-black leading-[1.3] text-ink @[880px]:text-[30px]">
           {isWeekly ? "这些新闻，值得放在一起看" : "从本月新闻，看尚待检验的变化"}
         </h2>
@@ -137,7 +137,7 @@ function InsightPage({ report }: { report: ReportDetail }) {
           return (
             <li key={insight.evidence.map(e => e.itemId).join(":")} className="py-7 @[880px]:py-9">
               <div className="mb-2 text-[11.5px] font-semibold text-accent">
-                {pad(index + 1)} · {isWeekly ? "跨事件观察" : "分析假设"}
+                洞察 {pad(index + 1)} · {isWeekly ? "跨事件观察" : "分析假设"}
               </div>
               <h3 className="text-[21px] font-bold leading-[1.45] tracking-[-0.015em] text-ink @[880px]:text-[25px]">
                 {insight.claim}
@@ -362,16 +362,19 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const highlights = report.highlights.filter((h) => !leadStory || keyOf(h) !== keyOf(leadStory)).slice(0, 3);
   const inPage = new Set(pages.flatMap((p) => p.items.map((c) => c.itemId)).filter(Boolean));
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
-  const archiveCount = pages.reduce((sum, p) => sum + p.items.length, 0) + report.flashes.length + (report.peers?.items.length ?? 0);
+  const hasHot = !!report.yesterdayHot?.entries.length;
   const index = [
-    ...(report.insights?.length ? [{ id: "s-insights", label: "核心判断", n: `${report.insights.length} 则` }] : []),
-    ...(archiveCount > 0 || report.yesterdayHot?.entries.length ? [{ id: "report-archive", label: "新闻资料", n: `${archiveCount} 条` }] : []),
+    { id: "report-start", label: "今日 / 本期要点", n: "00" },
+    ...(hasHot ? [{ id: "s-yesterday-hot", label: "昨日热榜", n: `${report.yesterdayHot!.entries.length} 条` }] : []),
+    ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 条` })),
+    ...(report.flashes.length ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
+    ...(report.peers?.items.length ? [{ id: "s-peers", label: "邻域", n: `${report.peers.items.length} 条` }] : []),
   ];
 
   return (
     <section aria-label="头版" className="grid @[880px]:grid-cols-[minmax(0,1fr)_300px] @[1040px]:grid-cols-[minmax(0,1fr)_340px]">
       <div id={leadStory ? (anchorOf(leadStory) ?? undefined) : undefined} className="min-w-0 scroll-mt-6 py-7 @[880px]:border-r @[880px]:border-line @[880px]:py-10 @[880px]:pr-10">
-        <Kicker>{daily ? "头条" : "本期导读"}</Kicker>
+        <Kicker>00 · {daily ? "今日要点" : "本期导读"}</Kicker>
         {cover && wide && <LeadPicture cover={cover} onError={() => setBroken(cover.url)} priority className="mt-5" />}
         <h2 className="mt-4 text-[32px] font-black leading-[1.28] tracking-[-0.03em] text-ink [text-wrap:balance] @[520px]:text-[40px] @[1040px]:text-[48px] @[1040px]:leading-[1.22]">
           {leadStory?.itemId ? (
@@ -433,7 +436,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
               {index.map((p, i) => (
                 <li key={p.id}>
                   <a href={`#${p.id}`} className="group flex items-baseline gap-2 py-1.5 text-[13.5px]">
-                    <span className="num w-7 shrink-0 text-[14px] font-bold text-ink">{pad(i + 1)}</span>
+                    <span className="num w-7 shrink-0 text-[14px] font-bold text-ink">{pad(i)}</span>
                     <span className="min-w-0 flex-1 truncate text-ink-2 transition-colors group-hover:text-accent">{p.label}</span>
                     <span className="num shrink-0 text-[12px] text-ink-4">{p.n}</span>
                   </a>
@@ -521,6 +524,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
   const hasNarrative = !daily && !!report.insights?.length;
   const pages = pagesOf(report, hasNarrative ? null : leadStory);
   const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (!hasNarrative && leadStory ? 1 : 0);
+  const hotOffset = report.yesterdayHot?.entries.length ? 1 : 0;
   return (
     <article className="@container">
       <Masthead report={report} index={index} />
@@ -533,16 +537,15 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
 
       <InsightPage report={report} />
 
-      <details id="report-archive" className="group mt-8 scroll-mt-6 border-t border-line-strong">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 text-[14px] font-semibold text-ink marker:hidden">
-          <span>完整新闻资料 <span className="ml-2 font-normal text-ink-4">· {count + report.flashes.length + (report.peers?.items.length ?? 0)} 条，可按议题查阅</span></span>
-          <span className="shrink-0 text-[12px] font-normal text-ink-4">展开 / 收起</span>
-        </summary>
+      <section id="report-archive" aria-label="本期新闻版面" className="mt-8 scroll-mt-6 border-t border-line-strong">
+        <div className="flex flex-wrap items-baseline justify-between gap-3 py-5">
+          <h2 className="text-[13px] font-semibold tracking-[0.12em] text-ink-3">01 起 · 本期新闻版面</h2>
+          <span className="text-[12px] text-ink-4">按议题阅读 · {count + report.flashes.length + (report.peers?.items.length ?? 0)} 条</span>
+        </div>
         <div className="pb-8">
           {report.yesterdayHot && report.yesterdayHot.entries.length > 0 && (
-            <section id="s-yesterday-hot" aria-label="昨日热榜" className="scroll-mt-6 border-b border-line pb-7">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-[21px] font-bold tracking-[-0.015em] text-ink">昨日热榜</h2>
+            <SectionPage id="s-yesterday-hot" no={1} label="昨日热榜">
+              <div className="flex justify-end pt-3">
                 <span className="num text-[12px] text-ink-4">{report.yesterdayHot.day}</span>
               </div>
               <p className="mt-2 text-[12px] leading-[1.75] text-ink-4">
@@ -560,7 +563,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
                   </li>
                 ))}
               </ol>
-            </section>
+            </SectionPage>
           )}
           {hasNarrative && report.overview && (
             <details id="report-overview" className="border-b border-line py-4 text-[13px] leading-[1.8] text-ink-3">
@@ -569,14 +572,14 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
             </details>
           )}
           <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line py-4 text-[12.5px]">
-            {report.yesterdayHot?.entries.length ? <a href="#s-yesterday-hot" className="font-medium text-accent">昨日热榜 · {report.yesterdayHot.entries.length}</a> : null}
+            {report.yesterdayHot?.entries.length ? <a href="#s-yesterday-hot" className="font-medium text-accent">01 昨日热榜 · {report.yesterdayHot.entries.length}</a> : null}
             {hasNarrative && report.overview ? <a href="#report-overview" className="text-ink-3 hover:text-accent">原摘要</a> : null}
-            {pages.map(p => <a key={p.id} href={`#${p.id}`} className="text-ink-3 underline-offset-4 hover:text-accent hover:underline">{p.label} · {p.items.length}</a>)}
+            {pages.map((p, i) => <a key={p.id} href={`#${p.id}`} className="text-ink-3 underline-offset-4 hover:text-accent hover:underline">{pad(i + 1 + hotOffset)} {p.label} · {p.items.length}</a>)}
             {report.flashes.length > 0 && <a href="#s-flash" className="text-ink-3 hover:text-accent">快讯</a>}
             {!!report.peers?.items.length && <a href="#s-peers" className="text-ink-3 hover:text-accent">{report.peers.label}</a>}
           </nav>
       {pages.map((p, i) => (
-        <SectionPage key={p.id} id={p.id} no={i + 1} label={p.label}>
+        <SectionPage key={p.id} id={p.id} no={i + 1 + hotOffset} label={p.label}>
           {p.summary && (
             <details className="border-b border-line py-4 text-[13px] leading-[1.85] text-ink-3">
               <summary className="cursor-pointer font-medium text-ink-2">本版原摘要</summary>
@@ -588,7 +591,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
       ))}
 
       {report.flashes.length > 0 && (
-        <SectionPage id="s-flash" no={pages.length + 1} label="快讯">
+        <SectionPage id="s-flash" no={pages.length + hotOffset + 1} label="快讯">
           <ul className={`${COLUMNS} @[1040px]:columns-3`}>
             {report.flashes.map((f, i) => (
               <li key={`${keyOf(f)}-${i}`} className="flex break-inside-avoid gap-2.5 border-b border-line py-3 text-[14.5px] leading-[1.65]">
@@ -610,11 +613,11 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
       )}
 
       {report.peers && report.peers.items.length > 0 && (
-        <PeerPage block={report.peers} no={pages.length + (report.flashes.length > 0 ? 2 : 1)} />
+        <PeerPage block={report.peers} no={pages.length + hotOffset + (report.flashes.length > 0 ? 2 : 1)} />
       )}
 
         </div>
-      </details>
+      </section>
 
       <Neighbours report={report} index={index} />
       {!daily && <History report={report} index={index} />}

@@ -89,7 +89,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
         aria-expanded={open}
         onClick={() => { setOpen(value => !value); setQuery(""); }}
         className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] transition-colors ${
-          block ? "w-full max-w-[26rem] justify-between" : "max-w-[11rem]"
+          block ? "w-full justify-between" : "max-w-[11rem]"
         } ${current ? "border-line bg-surface text-ink-2 hover:border-ink-4" : "border-line-strong bg-surface text-ink-2 hover:border-ink-4"}`}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" className="size-3.5 shrink-0 text-ink-4">

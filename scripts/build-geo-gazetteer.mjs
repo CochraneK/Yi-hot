@@ -18,10 +18,26 @@ const MIN_FOREIGN_POPULATION = Number(arg("min-pop", "500000"));
 const CJK_ONLY = /^[\u4e00-\u9fa5\u00b7]+$/u;
 const HOME_COUNTRIES = new Set(["CN", "TW", "HK", "MO"]);
 
+// The dump mixes Japanese shinjitai into Chinese aliases (徳州市, 東営市). They
+// read as typos on a Chinese page, so normalise the ones that actually appear
+// instead of pulling in a full OpenCC conversion table.
+const JA_VARIANTS = {
+  "徳": "德", "広": "广", "浜": "滨", "営": "营", "鶏": "鸡", "竜": "龙",
+  "渓": "溪", "恵": "惠", "郷": "乡", "掲": "揭", "塩": "盐", "関": "关",
+  "児": "儿", "鉄": "铁", "黒": "黑", "亜": "亚", "楽": "乐", "県": "县",
+  "観": "观",
+};
+
+function normalizeVariants(name) {
+  let out = "";
+  for (const ch of name) out += JA_VARIANTS[ch] ?? ch;
+  return out;
+}
+
 function chineseNames(fields) {
   const seen = new Set();
   for (const raw of [fields.name, ...(fields.alternatenames || "").split(",")]) {
-    const name = raw.trim();
+    const name = normalizeVariants(raw.trim());
     if (!name || name.length > 24) continue;
     if (!CJK_ONLY.test(name)) continue;
     seen.add(name);

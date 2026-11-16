@@ -105,7 +105,11 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
         <div
           role="dialog"
           aria-label="选择我的城市"
-          className={`absolute z-40 mt-2 overflow-hidden rounded-xl border border-line bg-surface shadow-[0_18px_44px_rgba(0,0,0,0.18)] ${block ? "left-0 w-full min-w-[17rem]" : "w-[min(21rem,calc(100vw-2rem))]"} ${align === "right" ? "right-0" : "left-0"}`}
+          // On a phone the trigger sits at the left edge, so a right-aligned panel
+          // would hang off the screen; the alignment only flips at desktop width.
+          className={`absolute z-40 mt-2 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-[0_18px_44px_rgba(0,0,0,0.18)] ${
+            block ? "left-0 w-full min-w-[17rem]" : `w-[min(21rem,calc(100vw-2rem))] ${align === "right" ? "left-0 lg:left-auto lg:right-0" : "left-0"}`
+          }`}
         >
           <div className="space-y-2 border-b border-line-soft p-3">
             <input

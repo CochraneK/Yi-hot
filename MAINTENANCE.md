@@ -3360,3 +3360,38 @@ WHERE h.id = <同一 id>;
 
 **验证**：`npx tsc -p packages/backend`；`curl -s http://49.233.72.222/yihot/api/site/hot` 的第一个 `entries[].story.title` 应是中文标题。
 
+### 热点地图：自己缩放、按窗口回看（2026-11-16 18:45）
+
+**功能**
+
+- 卡片右上 `48h / 周 / 月` 三档；切换**只换圆圈、不重建地图**，读者已经缩放/平移过的视野不会因为换窗口被拉回全国。数据走 `/api/site/geo/heat?hours=48|168|720`，每档结果缓存在组件里，取数失败时退回页面自带的 48h 并提示一句，不留空白卡片。
+- 地图右上 `+/−` 是自绘按钮（`map.zoomIn()` / `zoomOut()`），到 `zooms: [3, 12]` 边界自动禁用。没用高德自带的 `ToolBar`：那是浅色控件，在深色卡片里很突兀。
+- 窗口上限从 168 放到 720：`packages/backend/src/publication/geo.ts` 的 `HEAT_MAX_HOURS`，API 路由从同一常量取，两处不再各写一个数字。
+
+**三个坑，都是实测出来的**
+
+1. **容器高度会被高德吃掉**。SDK 给容器加 class `amap-container` 并把 `position` 强制成 `relative`，于是 `absolute inset-0` 彻底失效、高度算成 0——canvas 是 712×0，卡片一片纯黑，但 `complete` 事件照常触发，降级逻辑也不会启动。必须让宿主自己 `h-full w-full`，靠父容器定高。
+2. **`setFitView` 会被海外点带跑**。`geo_places` 里有坎帕拉、安塔利亚、澳大利亚等 21 个非中国点（真实事件，该画）。305 个点一起 fit，动画结束后落在 `center [76.2, 10.3]`、`zoom 3`——一整屏空荡荡的印度洋。现在只对国内包围盒（`lon 73–136 / lat 3–54`）取景，海外点照画但不参与定视野。
+3. **`CircleMarker` 的 `label` 是死的**。传了不报错、也不渲染（305 个 marker 产生 0 个 label 节点）。城市名改用 `AMap.Text` 覆盖物，取「计数靠前且彼此至少隔 4.5° 经度 / 3.5° 纬度」的 8 个（`pickSpread`），否则按纯计数取前八会让南京/上海/杭州叠成一坨。文字是白字加深描边，深浅两套底图都能读。
+
+**观感**：圆点半径 `4 + 11*sqrt(count/max)`、`fillOpacity 0.22`。月窗口 305 个城市时，原先的 `5 + 15*sqrt` / `0.28` 会在华东糊成一块没有层次的红色。
+
+**验证**：`.workbuddy/tmp/live-map-v2.mjs`（390 px 无头浏览器）读出三档的标题与计数、`+` 连点 9 次后禁用、`−` 连点后禁用、无 console 错误；深色浅色各截一张图人工看。数值口径：`/api/site/geo/heat?hours=` 依次返回 `window=48/168/720`，越界值被夹到 720 而不是报错。
+
+### 核准队列的头部阻塞（2026-11-16 18:20）
+
+**现象**：`geo.auto-approve` 每小时都跑，`approved` 一直是 0，连续两次运行的明细逐字节相同；地图城市数几个小时不动。
+
+**根因**：SQL 是 `ORDER BY id ASC LIMIT 800` 且游标永远从 0 开始，而最老的 800 条里有 452 条是 `mentioned / affected / publisher`——按规则**永远不可能核准**，于是每小时都在扫同一批。把游标往后挪 800，立刻出了 51 个核准。
+
+**修法**
+
+- 迁移 `0056_geo_auto_scan.sql`：`geo_candidates.auto_reviewed_at` 加一个部分索引（`pending` + 未扫 + `role = 'event'`）。
+- 查询只取 `role = 'event'` 且未扫；扫完一批（无论核准与否）整批 `UPDATE … auto_reviewed_at = now()`。**依然从不驳回**：跳过的候选保持 `pending`、证据原样，只是不再被重复读。
+- dry-run 不写任何东西（`marked` 只在 `--apply` 时统计）。词表更新后要让旧候选重看：`scripts/geo-auto-approve.ts --reset-scan --apply`。
+
+**结果（18:20–18:26 手动补跑四个批次）**：已核准事件 388 → 3439，`geo_places` 291 → 1028（其中县级 673）；地图 48h 26 → 33 城、周 170 城、月 305 城。带发布与版本门槛的可扫队列已清零（`reachable_unscanned = 0`），之后每小时只处理新增；worker 日志的 `detail` 里出现 `marked` 字段即说明跑的是新逻辑。
+
+**一处重要更正**：此前判断「历史回填还剩 1,448 个分析」是错的。按 `jsonb_array_length(…candidates) > 0` 重新统计：6,193 个合格分析里 4,745 个有条目，**剩下 1,448 个的候选数组本来就是空的**（模型没抽出任何地点），真正缺数据的分析是 **0 个**。`scripts/geo-backfill-drain.ts` 因此没有实际工作可做，保留作为将来中断后续跑的工具——`--missing-only` 只补缺口、不重扫已完成区间，`--after` 保证每批都前进。
+
+

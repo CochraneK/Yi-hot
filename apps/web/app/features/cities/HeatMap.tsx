@@ -99,11 +99,11 @@ function spreadCounties(points: GeoHeatPoint[]): GeoHeatPoint[] {
  * a minimum separation spreads them over the country instead.
  */
 function pickSpread<T extends { point: GeoHeatPoint }>(
-  items: T[], limit: number, minLon = 4.5, minLat = 3.5,
+  items: T[], limit: number, minLon = 4.5, minLat = 3.5, minCount = 2,
 ): T[] {
   const picked: T[] = [];
   for (const item of [...items].sort((a, b) => b.point.count - a.point.count)) {
-    if (item.point.count < 2) break;
+    if (item.point.count < minCount) break;
     const crowded = picked.some(p =>
       Math.abs(p.point.lon - item.point.lon) < minLon && Math.abs(p.point.lat - item.point.lat) < minLat);
     if (crowded) continue;
@@ -259,8 +259,11 @@ export function CityHeatMap({
       drawn, LABELLED_CITIES,
       // Counties of one city sit ~0.2° apart after the spread; the city-level
       // separation would keep only one label per prefecture.
-      level === "district" ? 0.7 : 4.5,
-      level === "district" ? 0.5 : 3.5,
+      level === "district" ? 0.35 : 4.5,
+      level === "district" ? 0.28 : 3.5,
+      // A county with one story is the whole point of the county view — most of
+      // them have one — so the "not worth a label" floor drops to 1 there.
+      level === "district" ? 1 : 2,
     )) {
       const [lng, lat] = wgs84ToGcj02(point.lon, point.lat);
       const name = new AMap.Text({

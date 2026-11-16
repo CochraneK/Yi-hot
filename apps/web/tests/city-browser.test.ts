@@ -85,8 +85,20 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     assert.equal(await page.$eval(".leaflet-tile",e=>e.getAttribute("referrerpolicy")),"strict-origin-when-cross-origin");
     await page.tap('.leaflet-marker-icon[title="北京：1条新闻"]');
     await page.waitForSelector(".leaflet-popup");
-    await page.locator('::-p-text(查看这个地点的新闻)').click();
-    await page.waitForFunction(()=>location.search.includes("place=beijing"));
+    // Target the actual popup control, not an ancestor matched by a text selector.
+    await page.locator(".leaflet-popup button").click();
+    try {
+      await page.waitForFunction(()=>location.search.includes("place=beijing"),{timeout:9000});
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        url: location.href,
+        popup: document.querySelector(".leaflet-popup")?.textContent,
+        popupButtons: [...document.querySelectorAll(".leaflet-popup button")].map(x=>x.textContent),
+        articleIds: [...document.querySelectorAll("article[data-item-id]")].map(x=>x.getAttribute("data-item-id")),
+      }));
+      throw new Error("Map popup click did not navigate to verified place; " +
+        JSON.stringify({diagnostics, pageErrors:errors, webLog:logs.slice(-1500)}), {cause:error});
+    }
     await page.waitForFunction(()=>document.querySelectorAll("article[data-item-id]").length===1);
     await page.locator('::-p-text(关闭地图)').click();
     await page.waitForFunction(()=>!document.querySelector(".leaflet-container"));

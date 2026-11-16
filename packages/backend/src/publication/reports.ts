@@ -2,6 +2,7 @@
 // listed; a missing date is a 404, never another day. Withdrawn citations are marked, not shown.
 import type { ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind, ReportPeerBlock } from "@aihot/contracts/site";
 import { projectPeriodInsights } from "../reports/insights.ts";
+import { publicYesterdayHot } from "../reports/yesterday-hot.ts";
 import { sql } from "../db.ts";
 import { cached, type Cached } from "../lib/cache.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
@@ -204,9 +205,11 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
     ...(c.sections ?? []).flatMap((s: any) => s.items ?? []),
     ...(c.flashes ?? []),
     ...(c.themes ?? []).flatMap((t: any) => t.storyRefs ?? []),
+    ...(c.yesterdayHot?.entries ?? []).map((e: any) => ({ itemId: e.itemId })),
   ];
   const avail = await availability([...new Set(rawItems.map((i) => i.itemId).filter(Boolean))]);
   const cite = (raw: Record<string, any>) => citationFrom(raw, avail);
+  const yesterdayHot = publicYesterdayHot(c.yesterdayHot, avail);
 
   // Current public evidence is the authority, not the raw model output.
   // Unknown and withdrawn citations cannot silently support an interpretation.
@@ -277,6 +280,7 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
     lead: c.lead ?? (headline ? { title: headline, leadParagraph: String(c.overview ?? "") } : null),
     overview: c.overview ?? null,
     insights,
+    yesterdayHot,
     highlights,
     sections,
     stories,

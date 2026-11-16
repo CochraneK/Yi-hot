@@ -384,7 +384,14 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
         </h2>
         {dek && (
           <div className={cover && !wide ? "mt-6 grid gap-6 @[640px]:grid-cols-[minmax(0,1fr)_minmax(0,38%)] @[880px]:mt-7" : ""}>
-            <p className={`text-[16.5px] leading-[1.9] text-ink-2 @[880px]:text-[17.5px] ${cover && !wide ? "" : "mt-6 @[560px]:text-justify @[880px]:mt-7"}`}>{dek}</p>
+            {daily ? (
+              <p className={`text-[16.5px] leading-[1.9] text-ink-2 @[880px]:text-[17.5px] ${cover && !wide ? "" : "mt-6 @[560px]:text-justify @[880px]:mt-7"}`}>{dek}</p>
+            ) : (
+              <details className="mt-6 border-t border-line-soft py-3 text-[14px] leading-[1.8] text-ink-3">
+                <summary className="cursor-pointer font-medium text-ink-2">查看本期原摘要</summary>
+                <p className="pt-3">{dek}</p>
+              </details>
+            )}
             {cover && !wide && <LeadPicture cover={cover} onError={() => setBroken(cover.url)} />}
           </div>
         )}

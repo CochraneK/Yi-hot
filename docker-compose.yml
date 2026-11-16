@@ -101,6 +101,11 @@ services:
       SITE_URL: ${SITE_URL:-http://localhost:3000}
       TRUST_PROXY: ${TRUST_PROXY:-false}
       MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-}
+      # 高德 Web端(JS API) base map for /hot. Empty means the map card degrades to a
+      # city list; the key is public by design (the browser presents it) and abuse is
+      # bounded by 高德's quota and optional domain whitelist.
+      AMAP_JS_KEY: ${AMAP_JS_KEY:-}
+      AMAP_SECURITY_CODE: ${AMAP_SECURITY_CODE:-}
       # FutureMe stays on a dedicated Docker-only network; no extra public port.
       # Leave empty until FutureMe is healthy and bridge network is created.
       FUTUREME_UPSTREAM_URL: ${FUTUREME_UPSTREAM_URL:-}

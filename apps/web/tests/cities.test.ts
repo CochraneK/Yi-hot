@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CITY_PLACES, cityClues, mentionsCity, placeById, placeByIpResult, embedMapLink } from "../app/features/cities/geo.ts";
+import { CITY_PLACES, cityClues, mentionsCity, placeById, placeByIpResult } from "../app/features/cities/geo.ts";
+import { outOfChina, wgs84ToGcj02 } from "../app/features/cities/amap.ts";
 
 test("unique IDs, bounded centres and no duplicate names within a country", () => {
   assert.equal(new Set(CITY_PLACES.map((p) => p.id)).size, CITY_PLACES.length);
@@ -34,8 +35,13 @@ test("IP result is country-scoped and exact-city; ambiguity falls back", () => {
   assert.equal(placeByIpResult("", "", "CN"), null);
 });
 
-test("map is an opt-in HTTPS origin", () => {
-  const url = embedMapLink(placeById("wuhan")!);
-  assert.equal(new URL(url).origin, "https://www.openstreetmap.org");
-  assert.ok(url.includes("marker="));
+test("WGS-84 places shift into GCJ-02 inside China and stay put outside it", () => {
+  // 天安门: geonames WGS-84 (116.3912, 39.9063); 高德 draws it at 116.3975, 39.9078.
+  const [lng, lat] = wgs84ToGcj02(116.3912, 39.9063);
+  assert.ok(Math.abs(lng - 116.3975) < 0.0005, `lng was ${lng}`);
+  assert.ok(Math.abs(lat - 39.9078) < 0.0005, `lat was ${lat}`);
+  assert.equal(outOfChina(116.3912, 39.9063), false);
+  // Outside China the obfuscation is not applied at all.
+  assert.deepEqual(wgs84ToGcj02(-0.1276, 51.5072), [-0.1276, 51.5072]);
+  assert.equal(outOfChina(-0.1276, 51.5072), true);
 });

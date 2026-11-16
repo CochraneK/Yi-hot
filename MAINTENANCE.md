@@ -3286,3 +3286,77 @@ node scripts/quarterly-report.ts --from=2026-09-30 --to=2026-12-31 --out=reports
 回填完还要走 `scripts/geo-auto-approve.ts --apply` 才会进统计，核准规则不变（证据必须能在正文里找到）。
 
 踩坑：`docker cp /dev/stdin aihot-api-1:/app/...` 在容器里留下的是**指向 `/proc/self/fd/0` 的软链**，之后所有 `docker cp` 到该路径都会报 `Could not find the file /proc/self/fd in container`。先 `docker exec aihot-api-1 rm -f` 删掉软链，再 `docker cp` 就会正常覆盖。
+
+### 热点页底图从 OpenStreetMap 换成高德（2026-11-16 17:20）
+
+**现象**：热点页的城市热力卡片在国内手机上只剩一行「地图底图没加载出来」，电脑上却正常。2026-11-16 17:10 从生产机实测 `https://tile.openstreetmap.org/4/13/6.png` 和 `a.tile.openstreetmap.org` 同一张：DNS 0.01 秒解析成功，TCP 12 秒超时、HTTP 000——国内网络到 OSM 瓦片不通。瓦片是**浏览器自己拉**的，手机上没代理就一张都拿不到，卡片按失败兜底折叠成一行字，于是看起来像「只有手机坏了」。同一时刻接口是好的：`/api/site/geo/heat?hours=24` 返回 127 个城市点，库内 291 个已登记地点、388 条已核准事件。
+
+**为什么换源而不只是换镜像**：境内公开展示地图要用有审图号的底图（腾讯地图 / 高德 / 百度 / 天地图），OSM 海外瓦片不在其列，且 OSM 的中国国界绘制不符合官方主张。换源一次解决合规与可达性。
+
+**改法**：
+
+- 新增 `apps/web/app/features/cities/amap.ts`：`loadAMap()` 按需插 `<script src="https://webapi.amap.com/maps?v=2.0&key=…">`（SDK 约 300 KB，不进首屏包）；`wgs84ToGcj02()` 做坐标偏移——地点来自 geonames 是 WGS-84，高德瓦片是 GCJ-02，不转会偏 100–700 米。
+- `HeatMap.tsx` 用 `AMap.Map` + `CircleMarker` 重写：半径仍按 `sqrt(count)` 换算**面积**，`setFitView` 一次装下全部城市，`mapStyle: amap://styles/whitesmoke` 压住高德默认的鲜艳配色。
+- 失败判据改成 `map.on("complete")` + 10 秒超时。高德的瓦片错误事件不对外暴露，只有「底图画完了没」这一个可用信号。
+- **降级一并修掉**：key 缺失、脚本被拦、超时，一律折叠成「地图没加载出来，先按城市看」+ 前 10 个城市列表。此前 `compact` 模式（热点页正是）根本不渲染列表，地图一挂整张卡片就空了。
+- `geo.ts` 删掉 `openStreetMapLink` / `embedMapLink`（无调用点，只被测试引用过）。
+
+**配置**（`.env` → compose 的 web 段 → SSR loader → 组件 props）：
+
+```
+AMAP_JS_KEY=…          # 高德控制台 → 应用管理 → 新建，服务平台选「Web端(JS API)」
+AMAP_SECURITY_CODE=…   # 2021-12 之后创建的 key 配套的安全密钥，两样都要填
+```
+
+key 会出现在页面 HTML 里——前端 key 本来就得公开，滥用靠高德后台的配额和「域名白名单」约束，不要指望保密。站点目前用 IP 访问（`49.233.72.222`），若高德的域名白名单不收 IP，就只靠安全密钥 + 配额兜。
+
+**验证**：`cd apps/web && npx tsc -p .`；`node --test apps/web/tests/cities.test.ts`（新增坐标断言：天安门 WGS-84 `116.3912/39.9063` → GCJ-02 `116.39744/39.90770`）。**真实渲染必须带 key 在浏览器里看一次**，typecheck 证明不了高德画出来了。
+
+**风险与回滚**：免费配额按日计、并发限一档，超了地图会白屏，此时走超时降级、不会留灰块。回滚是恢复 `HeatMap.tsx` 旧版并清空两个 env——但 OSM 在国内本来不通，回滚等于回到「手机看不到」。`leaflet@1.9.4` 仍留在 `package.json`（已无 import、不进任何产物包），删依赖要连带改 `package-lock.json`，本次未动。
+
+**已知未做**：`/privacy` 仍未提地图提供方，目前唯一的披露是卡片脚注那句「底图由高德地图提供，会收到你的 IP」；高德的 logo 与版权由 SDK 自己渲染，卡片容器的 `overflow-hidden` 会裁掉右下圆角一点点，不影响识别与阅读。
+
+### 手机动态页：四个筛选控件压成一行（2026-11-16 17:40）
+
+**现象**：`/all` 在手机上「选择城市 / 只看当地 / 只看精选 / 只看未读」折成两行，把第一张卡推低半屏。
+
+**算式**：三个 chip 各约 78 px（`h-8 px-3 text-[13px]` 装 4 个汉字）+ 城市选择器约 112 px + `gap-1.5` ×3 ≈ 364 px；390 px 屏减去左右各 16 px 只有 358 px，**差 6 px 就换行**，360 px 的安卓机差得更多。
+
+**改法**：
+
+- `ToggleChip` 增加 `dense`（`px-2.5`，每个省 8 px）和 `shrink-0`（文字永不被压扁），只在 `/all` 的筛选行使用；其他页面仍是原尺寸。
+- `CityPicker` 外层加 `min-w-0`、按钮的 `max-w-[11rem]` 改成 `max-w-full`：空间不够时**选择器先让出宽度**（城市名 `truncate`），而不是把整行顶到第二行。宽度上限改由调用处的 `className="max-w-[11rem]"` 给。
+- 容器 `flex flex-wrap` → `flex flex-nowrap gap-1`。
+
+**别加 `overflow-x-auto`**：`overflow-x: auto` 会把 `overflow-y` 一并算成 `auto`，`CityPicker` 的绝对定位下拉会被裁掉一半。要横向滑动就得先把下拉改成 portal，代价不值得。
+
+现在 360 px 屏也放得下；城市名过长显示成「乌兰察…」，下拉里有全名。
+
+### 事件标题被模型写成时间戳（2026-11-16 17:35）
+
+**现象**：热点页第一名显示「2026-11-16 02:00」而不是标题，点进去内容正常。
+
+**根因不在前端**：`stories.title` 里存的就是时间串。`packages/backend/src/events/group.ts` 建事件时用 `String(frame?.title || title)`，而结构步返回的 `frame.title` 偶尔是报道自身的时间；同一行的 `digest` 还留着「时间—标题—摘要」三段，能从第二段反查真标题。全库共 5 条：stories 3073 / 3074 / 3090 / 3096 / 3132。
+
+**修法两层**：
+
+1. **代码**：`events/group.ts` 新增 `eventTitle(candidate, fallback)`——只由数字、空格和日期标点组成的串一律不认作标题，回退到报道标题 `an.title_zh || a.title`。改的是 `packages/backend`，**必须重建 worker**（归组跑在 worker 里）。
+2. **存量**：按 `facts` / `publications` 里的真实标题逐条 `UPDATE stories SET title = …`。
+
+**关键坑：改完 `stories.title` 热榜不会变。** `/api/site/hot` 读的是 `hot_rankings.entries`（JSONB 快照，计算时把 title 一起复制），`publication/stories.ts` 直接取 `e.title`。要让线上立刻正确得连快照一起改：
+
+```sql
+UPDATE hot_rankings h SET entries = sub.entries
+FROM (SELECT jsonb_agg(CASE WHEN s.id IS NOT NULL THEN jsonb_set(t.e,'{title}',to_jsonb(s.title)) ELSE t.e END ORDER BY t.ord) AS entries
+      FROM hot_rankings h2, LATERAL jsonb_array_elements(h2.entries) WITH ORDINALITY AS t(e,ord)
+      LEFT JOIN stories s ON s.id = (t.e->>'storyId')::bigint
+      WHERE h2.id = <最新 published 快照 id> GROUP BY h2.id) sub
+WHERE h.id = <同一 id>;
+```
+
+下一轮热榜重算会自然修正，改快照只是为了不必等。
+
+**顺带发现**：3073 与 3074 是同一件事（宁夏第三批完整社区建设）的两条事件，创建时间只差 39 分钟、各挂 1 条报道——需要人工合并（`stories.merged_into`）或让归组自己去重。本轮只改了标题，没有合并。
+
+**验证**：`npx tsc -p packages/backend`；`curl -s http://49.233.72.222/yihot/api/site/hot` 的第一个 `entries[].story.title` 应是中文标题。
+

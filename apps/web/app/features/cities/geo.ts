@@ -136,12 +136,3 @@ export function placeByIpResult(city: string, region: string, countryCode: strin
     ?? null;
 }
 
-export function openStreetMapLink(place: CityPlace): string {
-  return "https://www.openstreetmap.org/?mlat=" + encodeURIComponent(place.lat) + "&mlon=" + encodeURIComponent(place.lon) + "#map=10/" + place.lat + "/" + place.lon;
-}
-
-export function embedMapLink(place: CityPlace): string {
-  const dLat = 0.18, dLon = 0.28;
-  const bbox = [place.lon - dLon, place.lat - dLat, place.lon + dLon, place.lat + dLat].join(",");
-  return "https://www.openstreetmap.org/export/embed.html?bbox=" + encodeURIComponent(bbox) + "&marker=" + encodeURIComponent(place.lat + "," + place.lon);
-}

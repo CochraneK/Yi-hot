@@ -19,7 +19,10 @@ export async function loader({ request }: { request: Request }) {
     loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }),
     loadOr404<GeoHeatResponse>("/api/site/geo/heat?hours=48", { signal: request.signal }),
   ]);
-  return { hot, heat };
+  // 高德 keys are public by design — the browser has to present one, and 高德's
+  // quota, not secrecy, is what bounds abuse. Empty simply means this deployment
+  // has no map, and the card falls back to its city list.
+  return { hot, heat, amapKey: process.env.AMAP_JS_KEY ?? "", amapSecurityCode: process.env.AMAP_SECURITY_CODE ?? "" };
 }
 
 export function meta() {
@@ -230,7 +233,7 @@ function Row({ e, hours }: { e: HotEntryView; hours: number }) {
 }
 
 export default function HotPage() {
-  const { hot, heat } = useLoaderData<typeof loader>();
+  const { hot, heat, amapKey, amapSecurityCode } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [lead, ...rest] = hot.entries;
   const runners = rest.slice(0, 2);
@@ -269,7 +272,7 @@ export default function HotPage() {
             {/* Same two-day window as the ranking, read geographically. It takes the
                 slot beside the lead story, so the 2nd and 3rd entries drop below. */}
             <div className="self-start lg:col-span-5 xl:col-span-4">
-              <CityHeatMap compact mapHeight="h-[260px] sm:h-[280px]" points={heat.points} hours={heat.hours} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
+              <CityHeatMap compact mapHeight="h-[260px] sm:h-[280px]" points={heat.points} hours={heat.hours} amapKey={amapKey} amapSecurityCode={amapSecurityCode} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
             </div>
           </section>
 

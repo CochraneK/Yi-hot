@@ -89,11 +89,20 @@ contract, omits repository-specific brand filters and adds portable font discove
 The source repository's datasets, images, article text, generated reports and
 personal artifacts are **not** relicensed or copied into YiHot by this notice.
 
-## Leaflet and OpenStreetMap
+## 高德地图（热点页底图）
 
-The optional city news map bundles Leaflet 1.9.4 under BSD-2-Clause.
-Copyright (c) 2010–2023 Volodymyr Agafonkin; (c) 2010–2011 CloudMade.
-The full license is retained in [docs/licenses/Leaflet.txt](docs/licenses/Leaflet.txt).
-OpenStreetMap data/map tiles carry their own attribution and usage conditions:
-https://www.openstreetmap.org/copyright and https://operations.osmfoundation.org/policies/tiles/ .
-Visible attribution remains on the interactive map. Third-party tile/IP connections occur only on the corresponding explicit reader actions.
+The 热点 page's heat map draws on the AMap JavaScript API 2.0, loaded at runtime
+from `https://webapi.amap.com/maps`; the SDK is not bundled with the site.
+Its terms require keeping 高德's own logo and copyright line on the map — do not
+cover or remove them. The circles and the city counts on top of the base map are
+our own data. https://lbs.amap.com/ · https://console.amap.com/dev/key/app
+The card states in the page that the base-map provider sees the reader's IP.
+
+## Leaflet（仍列为依赖，热点页已不再加载）
+
+`leaflet@1.9.4` under BSD-2-Clause. Copyright (c) 2010–2023 Volodymyr Agafonkin;
+(c) 2010–2011 CloudMade. The full license is retained in
+[docs/licenses/Leaflet.txt](docs/licenses/Leaflet.txt).
+Until 2026-11-16 the heat map bundled it with OpenStreetMap tiles; nothing
+imports it now, so no served bundle contains it and the site no longer requests
+OpenStreetMap tiles. The dependency is kept only to avoid churning the lockfile.

@@ -117,7 +117,7 @@ function Original({ c, className = "" }: { c: ReportCitation; className?: string
  * The source badges refer to current public reports, never hidden or withdrawn material.
  */
 function InsightPage({ report }: { report: ReportDetail }) {
-  if (!report.insights.length) return null;
+  if (!report.insights?.length) return null;
   const isWeekly = report.kind === "weekly";
   return (
     <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 pt-10 @[880px]:pt-14">

@@ -51,6 +51,9 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
     import("leaflet").then(L => {
       if (disposed || !host.current) return;
       const map = L.map(host.current, { minZoom: 2, maxZoom: 12, scrollWheelZoom: false, worldCopyJump: true }).setView([34, 105], 4);
+      // The card is ~280px wide, so drop Leaflet's own prefix and keep only the
+      // credit the tile policy asks for — otherwise the line runs to the edge.
+      map.attributionControl.setPrefix(false);
       const tile = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',

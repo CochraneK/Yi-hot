@@ -364,7 +364,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
   const hasHot = !!report.yesterdayHot?.entries.length;
   const index = [
-    { id: "report-start", label: "今日 / 本期要点", n: "00" },
+    { id: "report-start", label: "本期要点", n: "" },
     ...(hasHot ? [{ id: "s-yesterday-hot", label: "昨日热榜", n: `${report.yesterdayHot!.entries.length} 条` }] : []),
     ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 条` })),
     ...(report.flashes.length ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),

@@ -7,6 +7,7 @@ import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
 import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlaces, parseGeoFilters } from "@aihot/backend/publication/geo";
+import { loadGeoCatalog } from "@aihot/backend/publication/geo-catalog";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
 import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/groups";
@@ -147,6 +148,15 @@ export function registerSite(app: FastifyInstance) {
     const data = await loadGeoPlaces();
     const { generatedAt: _g, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoplaces", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
+  }));
+
+  // Every place a reader may call home, including cities with nothing filed yet:
+  // the picker loads this once and filters locally, so it is one cached request
+  // instead of one per keystroke.
+  app.get("/api/site/geo/catalog", siteHandler(async (req, reply) => {
+    const data = await loadGeoCatalog();
+    const { generatedAt: _g, ...content } = data;
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geocatalog", cacheControl: "public, max-age=3600, s-maxage=3600", etagOf: content });
   }));
 
   app.get("/api/site/items/:id", siteHandler(async (req, reply) => {

@@ -2,7 +2,7 @@ import { SITE, withSubject } from "@aihot/industry/site";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigation, useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/all";
-import type { GeoPlacesResponse, PoolResponse } from "@aihot/contracts/site";
+import type { GeoCatalogPlace, GeoPlacesResponse, PoolResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
 import { loadOr404, queryString } from "../lib/api.server";
 import { listPath, pageMeta } from "../lib/seo";
@@ -13,6 +13,7 @@ import { DayList, Pagination } from "../features/feed/DayList";
 import { ToggleChip } from "../components/ui/Controls";
 import { useReadSet } from "../lib/local-state";
 import { canonicalCity, saveReaderLocation, useReaderLocation } from "../features/cities/reader-city";
+import { CityPicker } from "../features/cities/CityPicker";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
 
@@ -107,7 +108,10 @@ export default function AllPage() {
   // this browser, so its canonical id goes into the URL and the API decides what
   // belongs to it. A stored city that predates canonical places is matched by name
   // here, otherwise the filter would accept an id the pool has never heard of.
-  const here = canonicalCity(reader, places);
+  const here = canonicalCity(reader, places)
+    // A city picked before it had any news is not in the places list yet, but its
+    // id is a canonical one, so it can filter right away.
+    ?? (reader && /^geonames-\d+$/.test(reader.id) ? { id: reader.id, name: reader.name } : null);
   const toggleLocal = () => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
@@ -117,41 +121,24 @@ export default function AllPage() {
     const query = sp.toString();
     navigate(query ? `/all?${query}` : "/all");
   };
-  const chooseLocal = (id: string) => {
-    const city = places.find(p => p.id === id);
-    if (!city) return;
-    saveReaderLocation({ id: city.id, name: city.name, countryCode: city.countryCode, region: city.region, city: city.city ?? city.name, lat: city.lat, lon: city.lon });
+  const choosePicked = (picked: GeoCatalogPlace) => {
+    saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: picked.name, lat: picked.lat, lon: picked.lon });
     const sp = new URLSearchParams(params);
     sp.delete("page");
-    sp.set("place", city.id);
+    sp.set("place", picked.id);
     navigate(`/all?${sp.toString()}`);
   };
-  const localLabel = place ? `只看当地 · ${here?.name ?? reader?.name ?? "本城"}` : "只看当地";
 
   // The narrow filters sit under the search field on desktop and under the topic
-  // row on phones. Without a city the 只看当地 chip would only bounce the reader
-  // to /cities, so the city picker stands in for it until one is chosen.
+  // row on phones. The city picker stays visible after a city is chosen, so the
+  // filter can be switched city by city instead of stranding the reader.
   const localControls = (
     <div className="flex flex-wrap items-center gap-1.5">
-      {here ? (
-        <ToggleChip on={!!place} onToggle={toggleLocal}>
-          {localLabel}
-        </ToggleChip>
-      ) : (
-        <select
-          aria-label="选择我的城市"
-          value=""
-          onChange={e => chooseLocal(e.target.value)}
-          className="h-8 max-w-[9rem] rounded-full border border-line-strong bg-surface px-3 text-[12.5px] text-ink-2"
-        >
-          <option value="">选择我的城市…</option>
-          {places.map(city => (
-            <option key={city.id} value={city.id}>{city.name} · {city.count}</option>
-          ))}
-        </select>
-      )}
+      <CityPicker current={here ? { id: here.id, name: here.name } : null} onPick={choosePicked} align="right" />
       {here && (
-        <Link to="/cities" className="px-1 text-[12px] text-ink-4 underline-offset-2 hover:text-ink-2 hover:underline">换城市</Link>
+        <ToggleChip on={!!place} onToggle={toggleLocal}>
+          只看当地
+        </ToggleChip>
       )}
       <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
         只看精选
@@ -239,7 +226,7 @@ export default function AllPage() {
               </EmptyState>
             ) : (
               <EmptyState
-                title={place ? "这个城市暂时没有已审核的新闻" : "没有找到相关内容"}
+                title={place ? `${here?.name ?? "这个城市"}还没有已核准的事件新闻` : "没有找到相关内容"}
                 action={
                   place ? (
                     <button type="button" onClick={toggleLocal} className="text-[13px] font-medium text-accent hover:underline">
@@ -253,7 +240,7 @@ export default function AllPage() {
                 }
               >
                 {place
-                  ? "只有地点审核通过的新闻才会归到城市；也可以关掉「只看当地」看全部。"
+                  ? "城市先记着，等这里有了已核准的事件会自动出现；也可以关掉「只看当地」看全部。"
                   : f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
               </EmptyState>
             )}

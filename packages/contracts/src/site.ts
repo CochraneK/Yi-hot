@@ -204,6 +204,38 @@ export interface GeoPlacesResponse {
   generatedAt: string;
 }
 
+/**
+ * The full pickable city list, not just the cities that already have news.
+ *
+ * A reader can choose a place before anything is filed there; the id is the same
+ * gazetteer id the review pipeline writes, so the feed starts matching by itself
+ * once events land. `count` is 0 until then.
+ */
+export interface GeoCatalogPlace {
+  id: string;
+  name: string;
+  /** Province for the mainland (北京, 四川), or 中国香港 / 中国澳门 / 中国台湾. */
+  region: string;
+  countryCode: string;
+  lat: number;
+  lon: number;
+  count: number;
+}
+
+export interface GeoCatalogRegion {
+  key: string;
+  label: string;
+  countryCode: string;
+  /** How many cities the region offers, so the picker can order them. */
+  cities: number;
+}
+
+export interface GeoCatalogResponse {
+  places: GeoCatalogPlace[];
+  regions: GeoCatalogRegion[];
+  generatedAt: string;
+}
+
 export interface OutlineEntry {
   id: string;
   text: string;

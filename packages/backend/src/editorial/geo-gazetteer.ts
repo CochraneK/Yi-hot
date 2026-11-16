@@ -20,6 +20,8 @@ export interface GazetteerEntry {
   zh: string[];
   cc: string;
   admin1: string | null;
+  /** Chinese province for CN rows, 香港 / 澳门 / 台湾 for the three special regions. */
+  province?: string | null;
   lat: number;
   lon: number;
   pop: number;
@@ -205,4 +207,9 @@ export function resolvePlace(placeText: string): PlaceResolution {
 export function gazetteerStats(): { entries: number; names: number } {
   const { entries, index } = load();
   return { entries: entries.length, names: index.size };
+}
+
+/** Raw rows, for building a pickable city list. Resolution rules are not applied here. */
+export function gazetteerEntries(): GazetteerEntry[] {
+  return load().entries;
 }

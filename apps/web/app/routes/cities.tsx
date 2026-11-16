@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Form, Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import type { Route } from "./+types/cities";
 import type { GeoEventPlace, GeoReviewedResponse, PoolResponse } from "@aihot/contracts/site";
@@ -6,7 +6,8 @@ import { loadOr404, queryString } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { CITY_PLACES, cityClues, cityCountryLabel, placeById } from "../features/cities/geo";
-import { locationFromOptInIp, saveReaderLocation, staticReaderLocation, useReaderLocation } from "../features/cities/reader-city";
+import { CityPicker } from "../features/cities/CityPicker";
+import { locationFromOptInIp, saveReaderLocation, useReaderLocation } from "../features/cities/reader-city";
 import { NewsMap } from "../features/cities/NewsMap";
 import { EmptyState } from "../components/ui/Page";
 
@@ -55,24 +56,6 @@ export default function CitiesPage() {
   useEffect(() => setChosenCountry(urlCountry), [urlCountry]);
   const geo = result.kind === "reviewed" ? result.data : null;
   const catalog = geo?.catalog ?? [];
-  const choices = useMemo(() => {
-    // Canonical places first. The static list predates canonical ids, so offering
-    // both would list 北京 twice — once with an id the feed filter cannot match.
-    const list: GeoEventPlace[] = catalog.filter(p => p.precision === "city");
-    const names = new Set(list.map(p => p.name));
-    for (const p of CITY_PLACES) {
-      const loc = staticReaderLocation(p.id);
-      if (!loc || names.has(loc.name)) continue;
-      names.add(loc.name);
-      list.push({ ...loc, precision: "city" as const });
-    }
-    if (reader && !list.some(p => p.id === reader.id || p.name === reader.name)) {
-      list.push({ ...reader, precision: "city" });
-    }
-    // API order is stable and already groups Chinese/overseas cities; appending the
-    // remaining static entries keeps it deterministic during SSR hydration.
-    return list;
-  }, [catalog, reader]);
   const countries = geo?.countries ?? [...new Set(catalog.map(p => p.countryCode))].sort();
   const regions = chosenCountry === urlCountry && geo?.regions?.length ? geo.regions
     : [...new Set(catalog.filter(p => p.countryCode === chosenCountry && p.region).map(p => p.region!))].sort();
@@ -96,10 +79,16 @@ export default function CitiesPage() {
     <header className="pb-4 pt-5 lg:pt-0"><h1 className="text-[23px] font-semibold text-ink">城市地图</h1><p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">看看一座城市正在发生什么，也看看与你相近的新闻。</p></header>
     <section className="mb-4 space-y-3 rounded-xl border border-line-soft bg-surface p-4" aria-label="我的城市">
       <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor="my-city" className="text-[13px] text-ink-3">我的城市</label>
-        <select id="my-city" className={`${control} flex-1`} value={reader?.id ?? ""} onChange={e => { saveReaderLocation(choices.find(p => p.id === e.target.value) ?? null); setMessage(""); }}>
-          <option value="">不设置</option>{choices.map(p => <option key={p.id} value={p.id}>{countryName(p.countryCode)} · {p.region} · {p.name}</option>)}
-        </select>
+        <span className="text-[13px] text-ink-3">我的城市</span>
+        <CityPicker
+          block
+          className="min-w-[12rem] flex-1"
+          current={reader ? { id: reader.id, name: reader.name } : null}
+          onPick={picked => {
+            saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: picked.name, lat: picked.lat, lon: picked.lon });
+            setMessage("");
+          }}
+        />
         <button type="button" onClick={locate} disabled={working} className={action}>{working ? "正在识别…" : "按 IP 估计"}</button>
       </div>
       <div className="flex flex-wrap items-center gap-2">

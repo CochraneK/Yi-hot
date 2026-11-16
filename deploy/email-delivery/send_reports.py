@@ -834,16 +834,16 @@ def main():
     parser.add_argument("--kind", choices=("weekly", "monthly"))
     args = parser.parse_args()
     base = env("YIHOT_BASE") or "https://49.233.72.222/yihot"
-    if args.preview_json:
-        if not args.preview_dir: parser.error("--preview-json requires --preview-dir (a new directory)")
-        if args.kind or args.test_to: parser.error("preview cannot set --kind or --test-to")
-        print(json.dumps(preview_from_json(args.preview_json, args.preview_dir, args.preview_base or base), ensure_ascii=False))
+    if args.preview_json is not None:
+        if args.preview_dir is None: parser.error("--preview-json requires --preview-dir (a new directory)")
+        if args.kind is not None or args.test_to is not None: parser.error("preview cannot set --kind or --test-to")
+        print(json.dumps(preview_from_json(args.preview_json, args.preview_dir, (args.preview_base if args.preview_base is not None else base)), ensure_ascii=False))
         return
-    if args.preview_dir or args.preview_base:
+    if args.preview_dir is not None or args.preview_base is not None:
         parser.error("--preview-dir/--preview-base require --preview-json")
-    if args.kind and not args.test:
+    if args.kind is not None and not args.test:
         parser.error("--kind requires --test; it must not accidentally process the subscriber outbox")
-    if args.test_to and not args.test:
+    if args.test_to is not None and not args.test:
         parser.error("--test-to requires --test")
     if args.test:
         target = (args.test_to or "").strip()

@@ -67,8 +67,10 @@ python3 deploy/email-delivery/send_reports.py \
 
 **`--test` 仍然是真实 SMTP 发送，不是 dry-run，且必须给 `--test-to` 单个明确授权地址；不再读取 EMAIL_TO 列表。** 验收前优先使用 preview；需真实投递时须明确指定受控收件人，且不能向全体重发历史期刊。旧期可选 `brief_for()` 与新一期复用洞察是不同分支；预览始终跳过可选brief请求，以便核对原报告本身。
 
-用 [部署核查脚本](../scripts/check_report_deployment.py) 对比运行中 Web/API/worker 的不可变镜像及九个报告文件哈希，再独立对比 `/opt/yihot-email-delivery/send_reports.py`、timer 和 ExecStart。仅访问公共API不会给出“已部署”结论。完整命令、11月17日验收、只读SQL与WorkBuddy接手见 [报告上线验收](REPORT_TRIAL_2026-11-17.md)。
+用 [部署核查脚本](../scripts/check_report_deployment.py) 对比运行中 Web/API/worker 的不可变镜像及报告/入口文件哈希，再独立对比 `/opt/yihot-email-delivery/send_reports.py`、timer 和 ExecStart。仅访问公共API不会给出“已部署”结论。完整命令、11月17日验收、只读SQL与WorkBuddy接手见 [报告上线验收](REPORT_TRIAL_2026-11-17.md)。
 
 受控测试模式不领取 outbox、不读取生产投递状态、不调用可选 AnyDoor brief，固定一次发送到显式地址。缺少 `--test-to`、列表、显示名或换行注入均拒绝；正常订阅定时与发送去重流程不变。真实受控收件人属于本次授权信息，不写入仓库或示例配置。
 
 `--kind weekly/monthly` 仅能搭配 `--test --test-to`，单独使用直接报错，避免旧命令忽略kind后进入整个订阅队列。无参数运行仍是生产outbox投递入口，不能拿来手动测试；原systemd timer按既有配置使用该入口。
+
+所有测试/预览专用参数按“是否显式提供”判断；传入空 `--test-to` 或空 `--preview-base` 也必须拒绝，不能回落生产投递。部署核查需逐角色源码、可信Web编译产物和启动后文件改动检查，缺少可信build不能标为已核验。

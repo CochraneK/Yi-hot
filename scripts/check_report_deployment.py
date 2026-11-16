@@ -5,6 +5,7 @@ import concurrent.futures
 import datetime as dt
 import hashlib
 import json
+import math
 import re
 import subprocess
 from pathlib import Path
@@ -13,6 +14,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_FILES = [
+    "apps/web/server.ts", "apps/api/src/main.ts", "apps/api/src/routes/site.ts", "apps/worker/src/main.ts",
     "apps/web/app/features/report/ReportPaper.tsx", "packages/backend/src/publication/reports.ts",
     "packages/backend/src/reports/compose.ts", "packages/backend/src/reports/insights.ts",
     "packages/backend/src/reports/yesterday-hot.ts", "industry/prompts/report-daily-lead.md",
@@ -55,19 +57,48 @@ def public_evidence(base, fetch=request_json):
         for key, value in executor.map(get, ["health", "weekly", "monthly"]): output[key] = value
     return output
 
-def runtime_evidence(root, mail_path, containers, docker, execute=run):
+def expected_web_files(build_root):
+    build_root = Path(build_root).resolve()
+    if not (build_root / "server/index.js").is_file() or not (build_root / "client").is_dir():
+        raise ValueError("a complete trusted Web build is required")
+    files = {}
+    for path in sorted(build_root.rglob("*")):
+        if path.is_symlink(): raise ValueError("trusted build cannot contain symlinks")
+        if path.is_file(): files["apps/web/build/" + path.relative_to(build_root).as_posix()] = digest(path)
+    if not any(name.startswith("apps/web/build/client/") for name in files):
+        raise ValueError("trusted Web build has no client assets")
+    return files
+
+def runtime_evidence(root, mail_path, containers, docker, execute=run, web_build=None):
     evidence = {"app": {"status": "unverified"}, "mail": {"status": "unverified"}}
-    # Compare immutable running images, not just an editable /opt/yihot source directory or release label.
     try:
+        if len(containers) != 3 or len(set(containers)) != 3: raise ValueError("three distinct role containers are required")
         expected = {name: digest(root / name) for name in APP_FILES}
-        images = [execute(docker + ["inspect", "--format", "{{.Image}} {{.State.Running}}", name]).split() for name in containers]
-        same_running_image = all(len(v) == 2 and v[1] == "true" for v in images) and len({v[0] for v in images}) == 1
-        program = "const fs=require('node:fs'),c=require('node:crypto');let o={};for(const p of JSON.parse(process.argv[1]))o[p]=c.createHash('sha256').update(fs.readFileSync('/app/'+p)).digest('hex');console.log(JSON.stringify(o));"
-        actual = json.loads(execute(docker + ["exec", containers[0], "node", "-e", program, json.dumps(APP_FILES)]))
-        mismatches = [name for name in APP_FILES if actual.get(name) != expected[name]]
-        evidence["app"] = {"status": "verified" if same_running_image and not mismatches else "mismatch",
-                           "sameRunningImage": same_running_image, "mismatchedFiles": mismatches}
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        web_files = expected_web_files(web_build or root / "apps/web/build")
+        inspection = '{"image":{{json .Image}},"running":{{json .State.Running}},"startedAt":{{json .State.StartedAt}},"cmd":{{json .Config.Cmd}},"workingDir":{{json .Config.WorkingDir}}}'
+        states = [json.loads(execute(docker + ["inspect", "--format", inspection, name])) for name in containers]
+        same_running_image = all(v.get("running") is True for v in states) and len({v.get("image") for v in states}) == 1 and bool(states[0].get("image"))
+        program = "const fs=require('node:fs'),c=require('node:crypto');let hashes={},newestCtimeMs=0;for(const p of JSON.parse(process.argv[1])){try{const f='/app/'+p;hashes[p]=c.createHash('sha256').update(fs.readFileSync(f)).digest('hex');newestCtimeMs=Math.max(newestCtimeMs,fs.statSync(f).ctimeMs)}catch(e){if(e.code==='ENOENT')hashes[p]=null;else throw e}}console.log(JSON.stringify({hashes,newestCtimeMs}));"
+        roles = []
+        for name, role, command, state in zip(containers, ("api", "web", "worker"),
+                (["node", "apps/api/src/main.ts"], ["node", "apps/web/server.ts"], ["node", "apps/worker/src/main.ts"]), states):
+            required = {**expected, **(web_files if role == "web" else {})}
+            actual = json.loads(execute(docker + ["exec", name, "node", "-e", program, json.dumps(list(required))]))
+            if not isinstance(actual, dict) or not isinstance(actual.get("hashes"), dict): raise ValueError("invalid role fingerprint")
+            changed = [path for path, sha in required.items() if actual["hashes"].get(path) != sha]
+            ctime = actual.get("newestCtimeMs")
+            if not isinstance(ctime, (int, float)) or not math.isfinite(ctime) or ctime <= 0: raise ValueError("invalid file ctime")
+            started = dt.datetime.fromisoformat(state["startedAt"].replace("Z", "+00:00")).timestamp() * 1000
+            # Live file replacement can leave already-imported Node modules stale in memory.
+            # Fail closed until the container has restarted after its relevant files changed.
+            patched_after_start = ctime > started
+            command_matches = state.get("cmd") == command and state.get("workingDir") == "/app"
+            roles.append({"role": role, "container": name, "status": "verified" if not changed and not patched_after_start and command_matches else "mismatch",
+                          "mismatchedFiles": changed, "patchedAfterStart": patched_after_start, "commandMatches": command_matches,
+                          "webBuildFilesChecked": len(web_files) if role == "web" else 0})
+        evidence["app"] = {"status": "verified" if same_running_image and all(r["status"] == "verified" for r in roles) else "mismatch",
+                           "sameRunningImage": same_running_image, "roles": roles}
+    except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError) as error:
         evidence["app"]["error"] = type(error).__name__
     try:
         expected_mail, actual_mail = digest(root / MAIL_FILE), digest(mail_path)
@@ -97,6 +128,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="public or explicit internal site base, e.g. http://host/yihot")
     parser.add_argument("--source-root", type=Path, default=ROOT, help="trusted, already aligned expected source tree")
+    parser.add_argument("--web-build-root", type=Path, help="complete Web build from the same trusted build used for deployment; defaults to source-root/apps/web/build")
     parser.add_argument("--runtime", action="store_true", help="read Docker images/files and the separate mail unit on this host")
     parser.add_argument("--sudo-docker", action="store_true", help="use sudo -n docker for read-only operations")
     parser.add_argument("--api-container", default="aihot-api-1")
@@ -107,7 +139,7 @@ def main():
     containers = [args.api_container, args.web_container, args.worker_container]
     if not all(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,100}", name) for name in containers): parser.error("invalid container name")
     public = public_evidence(args.base)
-    runtime = runtime_evidence(args.source_root, args.mail_file, containers, ["sudo", "-n", "docker"] if args.sudo_docker else ["docker"]) if args.runtime else None
+    runtime = runtime_evidence(args.source_root, args.mail_file, containers, ["sudo", "-n", "docker"] if args.sudo_docker else ["docker"], web_build=args.web_build_root) if args.runtime else None
     evidence = result(public, runtime)
     print(json.dumps(evidence, ensure_ascii=False, indent=2))
     return 0 if evidence["deploymentVerified"] else 2

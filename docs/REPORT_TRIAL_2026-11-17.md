@@ -15,16 +15,32 @@ PR #67/#69/#70/#71 已保留原报告、主题、引用和历史期刊，在其�
 ```bash
 cd /opt/yihot
 python3 scripts/check_report_deployment.py \
-  --base http://127.0.0.1/yihot --runtime --sudo-docker
+  --base http://127.0.0.1/yihot --runtime --sudo-docker \
+  --web-build-root /path/to/trusted-build/apps/web/build
 ```
 
 脚本只执行 Docker inspect、容器内文件哈希和 systemctl 只读检查，不启动/重启服务、不调用模型、不读.env、不连接SMTP或数据库、不列收件人。它对比：
 
-- Web/API/worker均运行且来自同一镜像；运行中镜像内报告源码/提示词/调度/功能开关文件与本地可信源码相符。
+- Web/API/worker均运行且来自同一镜像，启动命令对应各自入口；**分别**核对三个运行容器的报告源码/提示词/调度/功能开关，而不是只检查API容器。
+- Web还要逐文件对比实际 `apps/web/build` 的服务端bundle和客户端资源。`--web-build-root` 必须来自**部署使用的同一次可信构建**，默认仅在本地已有完整 `apps/web/build` 时使用它；没有可信编译产物保持unverified，不能从正在核查的Web容器复制一份自比来通过。可保留可信CI/构建阶段的完整build目录；另一次构建不保证字节完全相同，需核对使用的构建产物。
+- 逐角色检查相关文件ctime不晚于容器启动，避免热拷贝文件已更新、Node进程却仍加载旧模块。若检出 `patchedAfterStart`，按原部署流程重建/重启对应服务后再核查，脚本本身不会执行重启。检查须在部署结束、运行状态稳定后执行，它只是该时间点的证据。
 - 独立邮件脚本哈希相符、timer active、ExecStart确实指向该Python文件。脚本文件匹配但systemd仍指向旧程序不能通过。
 - 公共health/数据库健康、周报和月报读取路径可达。
 
 只有上述全部满足才输出 `deploymentVerified:true` 并返回0；不匹配、权限/服务不可用或仅公共检查返回2。**这仍不证明worker未来一定按时生成、SMTP已送达或模型判断正确**，`reportQualityVerified` 始终false，留给实际验收。源码目录必须已核对GitHub/本地/服务器blob一致；对着同一份旧代码自比不能证明新版本上线。
+
+可信build的一个准备办法：先确认本轮 `aihot-app` 已从核对过的源码**成功重建**，并记录新镜像ID。可以从该新构建镜像创建一个**不启动**的临时容器、复制build、立即移除临时容器；不要复制运行中的Web容器来做自证。以下只用于提取，不运行邮件或应用程序：
+
+```bash
+trusted_build_dir=$(mktemp -d /tmp/yihot-report-build.XXXXXX)
+expected_container=$(sudo -n docker create --entrypoint /bin/true aihot-app)
+sudo -n docker cp "$expected_container:/app/apps/web/build/." "$trusted_build_dir/"
+sudo -n docker rm "$expected_container"
+python3 scripts/check_report_deployment.py --base http://127.0.0.1/yihot \
+  --runtime --sudo-docker --web-build-root "$trusted_build_dir"
+```
+
+这一步的信任前提是“新镜像确由本轮可信源码构建、构建成功且部署使用它”，不是镜像tag叫相同的名字。若该前提不能核验，保留unverified。校验后可清理临时期望产物；核查脚本自身仍然只读。
 
 不在服务器时可只核对公开接口：
 
@@ -36,7 +52,7 @@ python3 scripts/check_report_deployment.py --base http://49.233.72.222/yihot
 
 ## 交给有腾讯云连接的 WorkBuddy
 
-> 连续完成 YiHot 报告上线与11月17日验收准备。先读AGENTS.md、docs/PROJECT_CONTEXT.md、docs/EMAIL_DELIVERY.md和本文件；使用最新main，保留另一会话的修改，按blob核对三方，不强制覆盖、不用开发机旧.env。先备份数据库、当前共用镜像及 /opt/yihot-email-delivery/send_reports.py；沿用服务器现有三个compose组合重建Web/API/worker。独立备份并原子同步 deploy/email-delivery/send_reports.py 到 /opt/yihot-email-delivery/，不改变原.env、订阅人、outbox、模型开关或报告调度。先跑合成Python测试，再用 --preview-json 预览真实公共DTO；预览通过后，只有用户已明确授权受控收件人时才使用 --test --test-to <该单个地址> 发送一次；不可无参数运行或只传--kind。不要读取EMAIL_TO、领取订阅outbox或向其他用户发送。运行 check_report_deployment.py --runtime --sudo-docker，逐项处理版本/镜像/邮件timer/ExecStart问题并保存脱敏结果；不要把未核验改为通过。11月17日08:00后核对实际日报记录、reports.daily任务和正常邮件回执；不手动重编旧报告、不批量补发。把实际部署时间、源码blob/镜像、独立邮件哈希、核查结果与回滚点写入Git的脱敏交接，未观察到的SMTP送达和报告质量保持待验收。
+> 连续完成 YiHot 报告上线与11月17日验收准备。先读AGENTS.md、docs/PROJECT_CONTEXT.md、docs/EMAIL_DELIVERY.md和本文件；使用最新main，保留另一会话的修改，按blob核对三方，不强制覆盖、不用开发机旧.env。先备份数据库、当前共用镜像及 /opt/yihot-email-delivery/send_reports.py；沿用服务器现有三个compose组合重建Web/API/worker。独立备份并原子同步 deploy/email-delivery/send_reports.py 到 /opt/yihot-email-delivery/，不改变原.env、订阅人、outbox、模型开关或报告调度。保留部署所用同一次可信构建的Web build目录（不能取运行容器自比）；先跑合成Python测试，再用 --preview-json 预览真实公共DTO；预览通过后，只有用户已明确授权受控收件人时才使用 --test --test-to <该单个地址> 发送一次；不可无参数运行或只传--kind。不要读取EMAIL_TO、领取订阅outbox或向其他用户发送。运行 check_report_deployment.py --runtime --sudo-docker --web-build-root <可信build目录>，逐项处理版本/镜像/邮件timer/ExecStart问题并保存脱敏结果；不要把未核验改为通过。11月17日08:00后核对实际日报记录、reports.daily任务和正常邮件回执；不手动重编旧报告、不批量补发。把实际部署时间、源码blob/镜像、独立邮件哈希、核查结果与回滚点写入Git的脱敏交接，未观察到的SMTP送达和报告质量保持待验收。
 
 部署路径沿用 `docs/PROJECT_CONTEXT.md` §2 的现有compose组合（含futureme代理/werss），不额外新建一套生产站。邮件文件替换采用临时文件+rename，避免timer运行时读取半份脚本；保留服务器现有访问权限和.env。不要把备份、凭据、真实日报、收件人或退订链接上传Git。
 

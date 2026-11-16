@@ -51,11 +51,15 @@ class PreviewTests(unittest.TestCase):
                      ["--test", "--test-to", "a@example.org\nBcc:other@example.org"],
                      ["--test", "--test-to", "group:a@example.org"],
                      ["--test", "--test-to", "Name <a@example.org>"],
+                     ["--test-to", ""], ["--preview-base", ""], ["--preview-dir", ""],
                      ["--kind", "weekly"], ["--initialize", "--kind", "monthly"],
                      ["--test-to", "a@example.org"]):
             with patch.object(sys, "argv", ["send_reports.py", *argv]), \
                  patch.object(mail, "fetch_latest", side_effect=AssertionError("invalid mode fetched data")), \
                  patch.object(mail, "send", side_effect=AssertionError("invalid mode sent mail")), \
+                 patch.object(mail, "load_state", side_effect=AssertionError("invalid mode read production state")), \
+                 patch.object(mail, "process_outbox", side_effect=AssertionError("invalid mode claimed subscribers")), \
+                 patch.dict(mail.os.environ, {"EMAIL_DELIVERY_ENABLED": "true"}), \
                  redirect_stdout(io.StringIO()), patch("sys.stderr", new_callable=io.StringIO):
                 with self.assertRaises(SystemExit) as error: mail.main()
                 self.assertEqual(error.exception.code, 2)
@@ -97,25 +101,40 @@ class DeploymentTests(unittest.TestCase):
         self.assertFalse(evidence["reportQualityVerified"])
         with self.assertRaises(ValueError): check.public_evidence("https://user:secret@example.org", fixture)
 
-    def test_runtime_checks_two_installations_and_image_consistency_without_mutation_commands(self):
+    def test_runtime_checks_each_role_web_build_and_loaded_file_freshness(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            for name in check.APP_FILES + [check.MAIL_FILE]:
+            for name in check.APP_FILES + [check.MAIL_FILE, "apps/web/build/server/index.js", "apps/web/build/client/assets/main.js"]:
                 path = root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("expected source")
             deployed = root / "deployed-mail.py"; deployed.write_text("expected source")
             calls = []
+            stale = {}
             def command(args):
                 calls.append(args)
-                if "inspect" in args: return "sha256:matching-image true"
-                if "exec" in args: return json.dumps({name: check.digest(root / name) for name in check.APP_FILES})
+                if "inspect" in args:
+                    entry = {"api": "apps/api/src/main.ts", "web": "apps/web/server.ts", "worker": "apps/worker/src/main.ts"}[args[-1]]
+                    return json.dumps({"image": "sha256:matching-image", "running": True, "startedAt": "2026-11-16T08:00:00Z", "cmd": ["node", entry], "workingDir": "/app"})
+                if "exec" in args:
+                    container = args[args.index("exec") + 1]
+                    hashes = {name: check.digest(root / name) for name in json.loads(args[-1])}
+                    if container == stale.get("container") and stale.get("path"): hashes[stale["path"]] = "old-bytes"
+                    return json.dumps({"hashes": hashes, "newestCtimeMs": 1794816005000 if container == stale.get("patched") else 1794729600000})
                 if "is-active" in args: return "active"
                 if "show" in args: return "{ argv[]=/usr/bin/python3 " + str(deployed) + " ; }"
                 raise AssertionError(args)
             evidence = check.runtime_evidence(root, deployed, ["api", "web", "worker"], ["docker"], command)
             self.assertEqual(evidence["app"]["status"], "verified")
             self.assertEqual(evidence["mail"]["status"], "verified")
-            deployed.write_text("old renderer")
+            self.assertEqual([r["role"] for r in evidence["app"]["roles"]], ["api", "web", "worker"])
+            for container, path in [("web", "apps/web/app/features/report/ReportPaper.tsx"), ("worker", "packages/backend/src/reports/compose.ts"), ("web", "apps/web/build/server/index.js"), ("web", "apps/web/build/client/assets/main.js")]:
+                stale.update(container=container, path=path)
+                self.assertEqual(check.runtime_evidence(root, deployed, ["api", "web", "worker"], ["docker"], command)["app"]["status"], "mismatch")
+            stale.clear(); stale["patched"] = "web"
+            self.assertEqual(check.runtime_evidence(root, deployed, ["api", "web", "worker"], ["docker"], command)["app"]["status"], "mismatch")
+            stale.clear(); deployed.write_text("old renderer")
             self.assertEqual(check.runtime_evidence(root, deployed, ["api", "web", "worker"], ["docker"], command)["mail"]["status"], "mismatch")
+            (root / "apps/web/build/server/index.js").unlink()
+            self.assertEqual(check.runtime_evidence(root, deployed, ["api", "web", "worker"], ["docker"], command)["app"]["status"], "unverified")
             self.assertTrue(all("restart" not in c and "up" not in c and "start" not in c and "psql" not in c for c in calls))
             self.assertFalse(check.result({"health": {"ok": False}}, evidence)["deploymentVerified"])
             def missing(args): raise FileNotFoundError("no runtime")

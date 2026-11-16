@@ -97,6 +97,18 @@ test("普通发布源不占邻域卡片，且原始候选仍可见", () => {
   assert.deepEqual(grouped[1].sites.map(s => s.id), ["ai-pulse-lab"]);
 });
 
+test("付费核心内容在旧缓存 API 中也不显示，免费候选继续按主题展示", () => {
+  const input: PeerDirectoryEntry[] = [
+    { ...site("aimfast", "market"), tier: "candidate", family: "other" },
+    { ...site("myhot-finance", "market"), tier: "official", family: "same" },
+    { ...site("medhot", "health"), tier: "candidate", family: "same" },
+  ];
+  const topics = groupNeighborhoods(input);
+  assert.deepEqual(topics.map(g => g.id), ["health", "market"]);
+  assert.deepEqual(topics.flatMap(g => g.sites).map(s => s.id), ["medhot", "myhot-finance"]);
+  assert.deepEqual(groupNeighborhoods(filterPeerSites(input, "AimFast")), []);
+});
+
 test("旧 API 未提供 tier 或无效 tier 时保守视为候选，而非删除", () => {
   const legacy = { ...site("legacy", "news"), family: "same" as const };
   const invalid = { ...site("invalid", "growth"), tier: "invalid" as "candidate" };

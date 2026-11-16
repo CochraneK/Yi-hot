@@ -5,7 +5,7 @@ import type { GeoEventPlace, GeoReviewedResponse, PoolResponse } from "@aihot/co
 import { loadOr404, queryString } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { DayList, Pagination } from "../features/feed/DayList";
-import { CITY_PLACES, cityClues, placeById } from "../features/cities/geo";
+import { CITY_PLACES, cityClues, cityCountryLabel, placeById } from "../features/cities/geo";
 import { locationFromOptInIp, saveReaderLocation, staticReaderLocation, useReaderLocation } from "../features/cities/reader-city";
 import { NewsMap } from "../features/cities/NewsMap";
 import { EmptyState } from "../components/ui/Page";
@@ -38,7 +38,7 @@ export function meta({ location }: Route.MetaArgs) {
 export function headers() { return { "Cache-Control": "public, max-age=0, s-maxage=60" }; }
 const control = "min-w-0 max-w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-[13px] text-ink";
 const action = "rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink disabled:opacity-50";
-const countryName = (code: string) => { try { return new Intl.DisplayNames(["zh-CN"], { type: "region" }).of(code) ?? code; } catch { return code; } };
+const countryName = cityCountryLabel;
 
 export default function CitiesPage() {
   const result = useLoaderData<typeof loader>();

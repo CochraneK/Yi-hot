@@ -35,13 +35,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
  * A filter that stays on or off: a pill in the same shape as the tag filters. `aria-pressed`
  * carries the state, so the label never has to change and screen readers announce it.
  */
-export function ToggleChip({ on, onToggle, children }: { on: boolean; onToggle: () => void; children: ReactNode }) {
+export function ToggleChip({ on, onToggle, children, dense = false }: {
+  on: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+  /** Narrower padding — for the phone row that has to hold the city picker and three filters on one line. */
+  dense?: boolean;
+}) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onToggle}
-      className={`inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-[13px] transition-colors ${
+      className={`inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border text-[13px] transition-colors ${dense ? "px-2.5" : "px-3"} ${
         on ? "border-ink bg-ink font-semibold text-bg" : "border-line bg-surface text-ink-3 hover:border-ink-4 hover:text-ink"
       }`}
     >

@@ -139,19 +139,19 @@ export default function AllPage() {
   // phone the title row carries today's count instead, so the picker stays in the row
   // of narrow filters under the search field.
   const cityPicker = (
-    <CityPicker current={here ? { id: here.id, name: here.name } : null} onPick={choosePicked} align="right" />
+    <CityPicker className="max-w-[11rem]" current={here ? { id: here.id, name: here.name } : null} onPick={choosePicked} align="right" />
   );
   const narrowFilters = (
     <>
       {here && (
-        <ToggleChip on={!!place} onToggle={toggleLocal}>
+        <ToggleChip dense on={!!place} onToggle={toggleLocal}>
           只看当地
         </ToggleChip>
       )}
-      <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
+      <ToggleChip dense on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
         只看精选
       </ToggleChip>
-      <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
+      <ToggleChip dense on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
         只看未读
       </ToggleChip>
     </>
@@ -187,7 +187,9 @@ export default function AllPage() {
         <div className="-mx-4 mt-3 border-b border-line-soft px-4 pb-3">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-mobile" size="sm" className="min-w-0" />
         </div>
-        <div className="mb-1 mt-3 flex flex-wrap items-center gap-1.5">{cityPicker}{narrowFilters}</div>
+        {/* One row, never two: the city picker gives up width (its label truncates) before the
+            filters wrap, because a second line pushes the first card off a phone screen. */}
+        <div className="mb-1 mt-3 flex flex-nowrap items-center gap-1">{cityPicker}{narrowFilters}</div>
       </div>
 
       {f.q && (

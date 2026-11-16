@@ -82,14 +82,14 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
   const scopedTotal = regionKey === "all" ? places.length : places.filter(place => keyOf(place) === regionKey).length;
 
   return (
-    <div ref={box} className={`relative ${className}`}>
+    <div ref={box} className={`relative min-w-0 ${className}`}>
       <button
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => { setOpen(value => !value); setQuery(""); }}
-        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] transition-colors ${
-          block ? "w-full justify-between" : "max-w-[11rem]"
+        className={`inline-flex h-8 min-w-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] transition-colors ${
+          block ? "w-full justify-between" : "max-w-full"
         } ${current ? "border-line bg-surface text-ink-2 hover:border-ink-4" : "border-line-strong bg-surface text-ink-2 hover:border-ink-4"}`}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" className="size-3.5 shrink-0 text-ink-4">

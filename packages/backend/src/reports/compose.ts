@@ -349,10 +349,16 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
       }
       for (const label of SECTION_ORDER.filter((l) => bySection.has(l))) {
         const list = bySection.get(label)!;
-        for (let i = 0; i < list.length; i += 20) {
-          const chunk = list.slice(i, i + 20);
+        // Split into as few blocks as the 20-per-block ceiling allows, and make them
+        // even. Stepping by a fixed 20 turned a 21-entry section into "（1）20 条 /
+        // （2）1 条", which reads as a mistake rather than a continuation; two blocks
+        // of 11 and 10 do not.
+        const blocks = Math.ceil(list.length / 20);
+        const size = Math.ceil(list.length / blocks);
+        for (let i = 0; i < list.length; i += size) {
+          const chunk = list.slice(i, i + size);
           themes.push({
-            heading: list.length > 20 ? `${label}（${Math.floor(i / 20) + 1}）` : label,
+            heading: blocks > 1 ? `${label}（${Math.floor(i / size) + 1}）` : label,
             summary: "以下动态也属于本期合格信息，按板块一并列出，可继续查看摘要与原文。",
             storyRefs: chunk.map(({ category: _c, factKey: _f, ...e }) => e),
           });

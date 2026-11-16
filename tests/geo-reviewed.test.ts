@@ -117,3 +117,58 @@ test("invalid ids, malformed places and review operations are rejected", async (
   }), /invalid place id/);
   assert.throws(() => validateGeoReview({ id: 1, action: "approve", reviewer: "test", reason: "reason" }), /place id/);
 });
+
+test("global map, country/region and nearby query all reviewed publications; multi-place articles count once", async () => {
+  const region = `geo-${T}`;
+  const places = [
+    { suffix: "east", lat: 0, lon: 179.9, precision: "city" as const },
+    { suffix: "west", lat: 0, lon: -179.9, precision: "city" as const },
+    { suffix: "region", lat: 0, lon: 179.9, precision: "region" as const },
+    { suffix: "far", lat: 30, lon: 100, precision: "city" as const },
+  ];
+  for (const p of places) await registerGeoPlace({ id: `nz-${T}-${p.suffix}`, name: `地点-${p.suffix}`,
+    countryCode: "NZ", region, city: p.precision === "city" ? `地点-${p.suffix}` : null,
+    lat: p.lat, lon: p.lon, precision: p.precision, sourceUrl: "https://example.org/places" });
+  async function at(article: { articleId: string; analysisId: number }, suffix: string) {
+    const [c] = await sql<{ id: number }[]>`INSERT INTO geo_candidates (article_id, analysis_id, role, place_text, evidence)
+      VALUES (${article.articleId}, ${article.analysisId}, 'event', ${`地点-${suffix}`}, ${`在地点-${suffix}开展社区项目`}) RETURNING id`;
+    await reviewGeoCandidate({ id: c!.id, action: "approve", placeId: `nz-${T}-${suffix}`, reviewer: "test-reviewer", reason: "核对合成原文中的事件地点" });
+  }
+  const multi = await makeArticle();
+  await at(multi, "east"); await at(multi, "west");
+  const regional = await makeArticle(); await at(regional, "region");
+  const distant = await makeArticle(); await at(distant, "far");
+  const pending = await makeArticle(); await candidate(pending.articleId, pending.analysisId, "event");
+  const load = async (query: string) => {
+    const response = await app.inject({ method: "GET", url: `/api/site/geo?${query}` });
+    assert.equal(response.statusCode, 200, response.body);
+    return response.json();
+  };
+  const scope = `country=NZ&region=${encodeURIComponent(region)}`;
+  const all = await load(scope);
+  assert.equal(all.total, 3);
+  assert.ok(all.countries.includes("NZ"));
+  assert.ok(all.regions.includes(region));
+  assert.equal(all.places.length, 4);
+  assert.equal(all.places.reduce((n: number, p: { count: number }) => n + p.count, 0), 4);
+  assert.ok(all.catalog.some((p: { id: string }) => p.id === `nz-${T}-east`));
+  const feed = all.items.find((p: { id: string }) => p.id === multi.articleId);
+  assert.equal(feed.eventPlaces.length, 2);
+  assert.ok(feed.eventPlaces.every((p: Record<string, unknown>) => !("evidence" in p) && !("reviewed_by" in p)));
+  const near = await load(`${scope}&lat=0&lon=179.95&radius=50`);
+  assert.deepEqual(near.items.map((i: { id: string }) => i.id), [multi.articleId], "dateline is handled and articles deduplicated");
+  assert.equal(near.total, 1);
+  assert.equal(near.places.length, 2, "region centres and distant cities are excluded");
+  assert.equal((await load(`${scope}&lat=0&lon=0&radius=25`)).total, 0);
+  const secondPage = await load(`${scope}&page=2`);
+  assert.equal(secondPage.items.length, 0);
+  assert.equal(secondPage.places.length, 4, "map counts are scoped across all pages");
+  assert.ok((await load("")).items.every((i: { id: string }) => i.id !== pending.articleId));
+  await setVisibility(multi.articleId, { visibility: "withdrawn", reason: "synthetic withdrawal", version: 0 }, "test-reviewer");
+  const withdrawn = await load(`${scope}&lat=0&lon=179.95&radius=50`);
+  assert.equal(withdrawn.total, 0);
+  assert.equal(withdrawn.places.length, 0);
+  assert.ok(!withdrawn.catalog.some((p: { id: string }) => p.id === `nz-${T}-east`));
+  for (const query of ["country=China", "region=alone", "lat=0&lon=0&radius=1001", "lat=NaN&lon=0&radius=100", "lat=0&radius=10"])
+    assert.equal((await app.inject({ method: "GET", url: `/api/site/geo?${query}` })).statusCode, 400);
+});

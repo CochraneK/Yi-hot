@@ -1,13 +1,14 @@
 // Public read layer, item level. Every exit (site API, v1, RSS, MCP, sitemap) reads
 // items through these functions; visibility, release gate and body licences are applied here.
 import type { CategoryKey, ChannelKey } from "@aihot/contracts/taxonomy";
-import type { FeedItemSummary, ItemSummary, MediaView, SourceKind, XPostView } from "@aihot/contracts/site";
+import type { FeedItemSummary, GeoEventPlace, ItemSummary, MediaView, SourceKind, XPostView } from "@aihot/contracts/site";
 import { sql, type Db } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
 import { displayTags } from "./rules.ts";
 import { cardTags, cardTagValues } from "@aihot/industry/card-tags";
 
 export interface ItemRow {
+  event_places?: GeoEventPlace[];
   id: string;
   revision: number;
   title: string;
@@ -60,6 +61,14 @@ export const ITEM_COLUMNS = sql`
   s.id AS source_id, s.name AS source_name, s.kind AS source_kind, s.participation_mode AS source_mode, s.icon_url AS source_icon,
   a.x_post, a.author, a.language,
   st.public_id::text AS story_public_id, st.title AS story_title,
+  coalesce((SELECT jsonb_agg(gj.place ORDER BY gj.id) FROM (
+    SELECT DISTINCT gp.id, jsonb_build_object('id', gp.id, 'name', gp.name, 'countryCode', gp.country_code,
+      'region', gp.region, 'city', gp.city, 'lat', gp.lat, 'lon', gp.lon, 'precision', gp.coordinate_precision) AS place
+    FROM geo_candidates gc JOIN geo_places gp ON gp.id = gc.place_id
+    JOIN analyses ga ON ga.id = gc.analysis_id
+    WHERE p.eligible AND gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+      AND ga.input_revision = a.revision AND gc.review_status = 'verified' AND gc.role = 'event'
+  ) gj), '[]'::jsonb) AS event_places,
   CASE WHEN p.channel = 'x' THEN tr.body_text END AS zh_text, qt.text_zh AS quoted_zh`;
 
 /** Public API listings never render article bodies, X media or story metadata. */
@@ -154,6 +163,7 @@ export function toItemSummary(row: ItemRow): ItemSummary {
   const x = row.channel === "x" ? xView(row, true) : null;
   return {
     id: row.id,
+    eventPlaces: row.event_places ?? [],
     revision: row.revision,
     title: row.title,
     originalTitle: row.original_title,
@@ -186,6 +196,7 @@ export function toItemSummary(row: ItemRow): ItemSummary {
 export function toFeedItemSummary(row: ItemRow): FeedItemSummary {
   const item = toItemSummary(row);
   return {
+    eventPlaces: item.eventPlaces,
     id: item.id, title: item.title, summary: item.summary, reason: item.reason,
     source: { name: item.source.name }, publishedAt: item.publishedAt, publishedAtPrecision: item.publishedAtPrecision, discoveredAt: item.discoveredAt, timelineAt: item.timelineAt,
     category: item.category, tags: cardTags(row.tags), score: item.score, selected: item.selected, channel: item.channel,

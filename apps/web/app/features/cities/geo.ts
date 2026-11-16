@@ -1,6 +1,7 @@
 /** Reader-side place clues, not verified event locations.
  * Coordinates are approximate city centres; never use them as street addresses.
- * Keep one dictionary for the map, local badge and regional search.
+ * This small fallback dictionary is only for text clues and manual city choices.
+ * Reviewed maps and local badges use the canonical event-place index.
  */
 export interface CityPlace {
   id: string;
@@ -117,23 +118,6 @@ export function placeByIpResult(city: string, region: string, countryCode: strin
   return candidates.find((p) => [p.name, ...p.aliases].some((a) => a.toLocaleLowerCase() === city.toLocaleLowerCase()))
     ?? candidates.find((p) => p.region.toLocaleLowerCase() === region.toLocaleLowerCase() && p.name.toLocaleLowerCase() === city.toLocaleLowerCase())
     ?? null;
-}
-
-/** Local is deliberately stricter than the map: one place explicitly named in the headline. */
-export function localHeadline(article: { title: string; summary?: string | null }, readerCityId: string | null): boolean {
-  const place = placeById(readerCityId);
-  // Only an explicit Chinese city name qualifies for the badge; English aliases may be ambiguous homonyms.
-  if (!place || !hasTerm(article.title, place.name)) return false;
-  if (CITY_PLACES.filter((p) => mentionsCity(article.title, p)).length !== 1) return false;
-  // Institution names are not event locations: a place name must directly introduce an event action
-  // or follow an explicit location preposition. Suppress a competing province mention.
-  const competingRegion = new Set(CITY_PLACES.filter((p) => p.country === "中国" && p.region !== place.region).map((p) => p.region));
-  if ([...competingRegion].some((name) => hasTerm(article.title, name))) return false;
-  const index = article.title.indexOf(place.name);
-  const before = article.title.slice(Math.max(0, index - 3), index);
-  const after = article.title.slice(index + place.name.length).replace(/^[市省区县]/, "");
-  const actions = ["举行", "举办", "开展", "启动", "召开", "发生", "通报", "发布", "宣布", "新增", "启动", "：", ":"];
-  return before.endsWith("在") || before.endsWith("于") || after.startsWith("市在") || actions.some((verb) => after.startsWith(verb));
 }
 
 export function openStreetMapLink(place: CityPlace): string {

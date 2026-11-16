@@ -143,6 +143,8 @@ jobs:
           test "${actual_sources}" = "${expected_sources}"
       - name: Chromium isolated redirect/subresource regression
         run: docker compose exec -T worker node --test tests/browser-chromium-isolation.test.ts
+      - name: City map Chromium regression (offline synthetic fixtures)
+        run: docker compose exec -T -e CITY_BROWSER_TEST=1 worker node --test apps/web/tests/city-browser.test.ts
       - name: Logs
         if: failure()
         run: docker compose logs --tail 80

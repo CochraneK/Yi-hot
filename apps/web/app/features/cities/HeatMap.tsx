@@ -13,13 +13,6 @@ import "leaflet/dist/leaflet.css";
  * be collapsed — a folded map was just a title with a button under it. Only
  * reviewed event places are drawn.
  */
-/**
- * Lowest zoom the card opens at. Fitting the whole country into a 450×280 box lands
- * around level 4, where city names are unreadable; level 5 shows province capitals
- * and the big prefecture cities as actual names.
- */
-const CORE_ZOOM = 5;
-
 export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeight = "h-[300px] sm:h-[380px]" }: {
   points: GeoHeatPoint[];
   hours: number;
@@ -30,13 +23,8 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
   mapHeight?: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
-  const frame = useRef<{ all: () => void; focus: () => void } | null>(null);
   // A failed map collapses to one line: an empty grey slab reads as a broken page.
   const [failed, setFailed] = useState(false);
-  // True while the view spans every point; false once it has been pushed in.
-  const [wide, setWide] = useState(false);
-  // Whether the card had to trade edges for legibility — only then is the toggle useful.
-  const [pushed, setPushed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const choose = useRef(onChoose);
   choose.current = onChoose;
@@ -79,41 +67,21 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
         marker.on("click", () => choose.current(point.id));
       }
 
-      // Fitting every point into a card this small lands around zoom 4, where even
-      // provincial capitals are a smudge among the circles. So frame the country once,
-      // then push one level in around the story-weighted centre of gravity — never
-      // below CORE_ZOOM — and let the edges of the map fall outside. The "看全国"
-      // button is one click back to the whole picture.
-      const allBounds = L.latLngBounds(points.map(p => [p.lat, p.lon] as [number, number]));
-      const weight = points.reduce((sum, p) => sum + p.count, 0) || 1;
-      const centre = L.latLng(
-        points.reduce((sum, p) => sum + p.lat * p.count, 0) / weight,
-        points.reduce((sum, p) => sum + p.lon * p.count, 0) / weight,
+      // The card shows the whole country: every plotted city is on screen at once.
+      // Detail is the reader's call — double-click or the map's own +/− zoom in.
+      map.fitBounds(
+        L.latLngBounds(points.map(p => [p.lat, p.lon] as [number, number])),
+        { padding: [24, 24], maxZoom: 6, animate: false },
       );
-      const frameAll = () => map.fitBounds(allBounds, { padding: [24, 24], maxZoom: 6, animate: false });
-      frameAll();
-      const fitted = map.getZoom();
-      const focus = () => map.setView(centre, Math.max(fitted, CORE_ZOOM), { animate: false });
-      if (fitted < CORE_ZOOM) focus();
-      frame.current = { all: frameAll, focus };
-      // Any pan or zoom — ours or the reader's — decides what the toggle offers next.
-      map.on("moveend", () => { if (!disposed) setWide(map.getZoom() < CORE_ZOOM); });
-      setWide(fitted >= CORE_ZOOM);
-      setPushed(fitted < CORE_ZOOM);
       const observer = new ResizeObserver(() => map.invalidateSize());
       observer.observe(host.current);
-      cleanup = () => { observer.disconnect(); frame.current = null; map.remove(); };
+      cleanup = () => { observer.disconnect(); map.remove(); };
     }).catch(() => { if (!disposed) setFailed(true); });
     return () => { disposed = true; cleanup(); };
   }, [failed, attempt, hasPoints, points]);
 
   const total = points.reduce((sum, p) => sum + p.count, 0);
   const top = compact ? [] : points.slice(0, 12);
-  const switchView = () => {
-    const f = frame.current;
-    if (!f) return;
-    if (wide) f.focus(); else f.all();
-  };
 
   return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label={`近 ${hours} 小时城市热力`}>
     <div className="px-4 py-3">
@@ -128,16 +96,7 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
         <button type="button" onClick={() => { setFailed(false); setAttempt(n => n + 1); }} className="font-medium text-accent hover:underline">重试</button>
       </div>
     ) : (
-      <div className={`relative w-full ${mapHeight}`}>
-        <div ref={host} className="absolute inset-0 z-0 bg-bg-sunk" aria-label="可拖动、缩放的城市热力地图" />
-        {pushed && (
-          <button
-            type="button"
-            onClick={switchView}
-            className="absolute right-2 top-2 z-[700] rounded-full border border-line bg-surface/95 px-2.5 py-1 text-[11.5px] font-medium text-ink-2 shadow-sm transition-colors hover:text-ink"
-          >{wide ? "看重点" : "看全国"}</button>
-        )}
-      </div>
+      <div ref={host} className={`relative z-0 w-full bg-bg-sunk ${mapHeight}`} aria-label="可拖动、缩放的城市热力地图" />
     )}
     {top.length > 0 && (
       <ol className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-line-soft px-4 py-3 sm:grid-cols-3">

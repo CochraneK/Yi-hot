@@ -6,7 +6,7 @@ import { isCategoryKey, isChannelKey, type CategoryKey, type ChannelKey } from "
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
-import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlaces, parseGeoFilters } from "@aihot/backend/publication/geo";
+import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlaces, parseGeoFilters, HEAT_MAX_HOURS } from "@aihot/backend/publication/geo";
 import { loadGeoCatalog } from "@aihot/backend/publication/geo-catalog";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
@@ -136,7 +136,10 @@ export function registerSite(app: FastifyInstance) {
   // by place, so the map can size a dot without exposing per-story rows.
   app.get("/api/site/geo/heat", siteHandler(async (req, reply) => {
     const q = looseQuery(req);
-    const hours = Math.min(Math.max(Number(q.hours) || 48, 1), 168);
+    // 48 h by default; the card also asks for a week and a month, so the ceiling
+    // is a month. Anything longer is clamped rather than refused: the answer is
+    // still a valid map, just not the window that was asked for.
+    const hours = Math.min(Math.max(Number(q.hours) || 48, 1), HEAT_MAX_HOURS);
     const data = await loadGeoHeat(hours);
     const { generatedAt: _g, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoheat", cacheControl: "public, max-age=120, s-maxage=120", etagOf: content });

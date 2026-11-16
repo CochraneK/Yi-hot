@@ -97,6 +97,13 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
 
 const HEAT_MAX_POINTS = 400;
 
+/**
+ * The longest window the heat map offers (the card's 月 button). The limit is a
+ * cost ceiling, not a rule: the query scans publications by published_at, and a
+ * month is the longest range the map is asked to answer.
+ */
+export const HEAT_MAX_HOURS = 720;
+
 const PLACES_MAX = 500;
 
 /**
@@ -136,7 +143,7 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
  * inside a city.
  */
 export async function loadGeoHeat(hours: number, now = new Date()): Promise<GeoHeatResponse> {
-  const window = Math.min(Math.max(Math.floor(hours) || 48, 1), 168);
+  const window = Math.min(Math.max(Math.floor(hours) || 48, 1), HEAT_MAX_HOURS);
   const rows = await sql<Array<GeoHeatPoint & { articles: number }>>`
     SELECT city.id, city.name, city.country_code AS "countryCode", city.lat, city.lon,
            count(DISTINCT p.article_id)::int AS count

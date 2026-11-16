@@ -62,11 +62,16 @@ export interface AMapOverlay {
 }
 
 export interface AMapInstance {
-  on(event: "complete", handler: () => void): void;
+  on(event: "complete" | "zoomend", handler: () => void): void;
   add(overlays: AMapOverlay[]): void;
+  /** Drops the previous circles when the heat window changes; the base map stays. */
+  remove(overlays: AMapOverlay[]): void;
   setFitView(overlays?: AMapOverlay[], immediately?: boolean, avoid?: [number, number, number, number], maxZoom?: number): void;
   /** Repaints the base map in another built-in style without rebuilding the overlays. */
   setMapStyle(style: string): void;
+  getZoom(): number;
+  zoomIn(): void;
+  zoomOut(): void;
   destroy(): void;
 }
 

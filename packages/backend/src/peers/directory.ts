@@ -57,7 +57,7 @@ export async function loadPeerDirectory(): Promise<PeerDirectory> {
     if (p.strategy === "none") continue;
     // 邻域只展示信息聚合站；官方发布源和资料库归入 RSS / 信源管理，
     // 保留原目录登记、历史 peer_items、定时刷新配置与文章来源关系。
-    if (p.tier === "resource" || p.directoryVisible === false) continue;
+    if (p.tier === "resource" || p.directoryVisible === false || p.requiresPaidAccess === true) continue;
     // Browsable links have no RSS/API. Do not infer failures or show fictitious article counts.
     // Keep a normal clickable directory card without joining peer_items or peer_status.
     if (p.strategy === "link") {

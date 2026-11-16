@@ -489,17 +489,23 @@ test("候选保留独立状态但与正式站按主题展示，56 项唯一目�
 
 test("邻域展示只包含聚合类网站，联合国官方新闻走既有 RSS", () => {
   const visible = PEER_SITES.filter(p =>
-    p.enabled && p.strategy !== "none" && p.tier !== "resource" && p.directoryVisible !== false);
-  assert.equal(visible.length, 38, "34 家正式聚合站 + 4 家仍可点击的候选站");
+    p.enabled && p.strategy !== "none" && p.tier !== "resource" && p.directoryVisible !== false && p.requiresPaidAccess !== true);
+  assert.equal(visible.length, 37, "34 家正式聚合站 + 3 家可浏览的免费候选站");
   for (const id of ["un-news-sdgs", "un-geneva-news"]) {
     const peer = PEER_SITES.find(p => p.id === id);
     assert.ok(peer, id);
     assert.equal(peer.directoryVisible, false);
     assert.ok(!visible.some(p => p.id === id));
   }
-  for (const id of ["aimfast", "fengxiang-demo", "medhot", "thinkhot"]) {
+  const paid = PEER_SITES.find(p => p.id === "aimfast");
+  assert.equal(paid?.requiresPaidAccess, true, "AimFast 深度分析需要付费");
+  assert.equal(paid?.enabled, true, "下架只是目录展示，不删除登记或改变同步配置");
+  assert.ok(!visible.some(p => p.id === "aimfast"), "付费核心站点不得进入公开邻域");
+  for (const id of ["fengxiang-demo", "medhot", "thinkhot"]) {
     assert.ok(visible.some(p => p.id === id && p.tier === "candidate"), id);
   }
+  assert.equal(visible.filter(p => p.family === "same").length, 32);
+  assert.equal(visible.filter(p => p.family === "other").length, 5);
   assert.ok(visible.some(p => p.id === "aiman-robot-hot" && p.family === "other"),
     "非同系的独立聚合站仍可出现在主题目录");
 

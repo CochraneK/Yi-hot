@@ -323,6 +323,19 @@ async function judgeSignal(articleId: string, query: ReportView, cands: Candidat
 // Writes
 // ---------------------------------------------------------------------------
 
+/**
+ * The frame's own title names the event, but the structural pass sometimes puts the report's
+ * timestamp there instead (`2026-11-16 02:00`). That string then becomes a story title, and on
+ * 热点 the leader reads as a clock where the headline should be — five stories were created this
+ * way before it was noticed. A title has to carry words, so anything made only of digits, spaces
+ * and date punctuation falls back to the report's own headline.
+ */
+export function eventTitle(candidate: unknown, fallback: string): string {
+  const text = typeof candidate === "string" ? candidate.trim() : "";
+  const timeOnly = text.length > 0 && !/[^\d\s:：\-—/.,年月日时点分秒]/.test(text);
+  return (text && !timeOnly ? text : fallback).slice(0, 60);
+}
+
 async function createStory(db: Db, title: string, at: Date): Promise<number> {
   const [row] = await db<{ id: number }[]>`
     INSERT INTO stories (public_id, title, status, first_report_at, latest_at, origin)
@@ -682,7 +695,7 @@ async function decide(articleId: string, opts: GroupOptions): Promise<GroupResul
     title, source: a.source_name, firstParty: a.first_party, at: observedAt, summary: an.summary_zh,
     frame: frame ? { subject: frame.subject, action: frame.action, object: frame.object, occurredAt: frame.occurredAt } : null,
   };
-  const newTitle = String(frame?.title || title).slice(0, 60);
+  const newTitle = eventTitle(frame?.title, title);
 
   const { sameUrl, referenced } = await relatedPosts(a);
   let verdict: GroupResult["verdict"] = "new-story";

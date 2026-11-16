@@ -56,7 +56,25 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
       void request.abort();
     });
     await page.setViewport({width:390,height:844,isMobile:true,hasTouch:true});
-    await page.goto(origin+"/yihot/cities",{waitUntil:"networkidle0"});
+    const initialResponse = await page.goto(origin+"/yihot/cities",{waitUntil:"networkidle0"});
+    if (errors.length && initialResponse) {
+      const serverHtml = await initialResponse.text();
+      const diffs = await page.evaluate((html) => {
+        const server = new DOMParser().parseFromString(html, "text/html");
+        return ["#main", 'nav[aria-label="底部导航"]', "aside"].map(selector => {
+          const before = server.querySelector(selector)?.textContent ?? "";
+          const after = document.querySelector(selector)?.textContent ?? "";
+          let i = 0;
+          while (i < Math.min(before.length, after.length) && before[i] === after[i]) i++;
+          return {
+            selector, beforeLength: before.length, afterLength: after.length, firstDiff: i,
+            serverText: before.slice(Math.max(0,i-70), i+160),
+            clientText: after.slice(Math.max(0,i-70), i+160),
+          };
+        });
+      }, serverHtml);
+      console.log("FIRST-HYDRATION-TEXT-DIFF " + JSON.stringify(diffs));
+    }
     assert.equal(outside.length,0,"opening the page must not load maps or resolve the visitor IP");
     assert.ok(await page.$('[data-item-id="synthetic-0"]'), "fixture article should be SSR-rendered before selecting a city");
     await page.select("#my-city","beijing");

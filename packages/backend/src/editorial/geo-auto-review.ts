@@ -5,6 +5,11 @@
 // public map. Rejecting automatically would destroy the evidence a later manual
 // pass needs, and the site would rather show fewer cities than a wrong one.
 //
+// It does keep a scan cursor of its own (auto_reviewed_at): a row the rules
+// cannot decide is still marked as looked at, so the next pass moves on. Without
+// that, the pass kept reselecting the same oldest rows and starved every
+// candidate behind them — see 0056_geo_auto_scan.sql.
+//
 // Approve only when ALL of these hold:
 //   1. role is "event" — the prompt already separates event from publisher,
 //      affected and mentioned; anything else is not an event location.
@@ -107,6 +112,8 @@ export interface AutoReviewSummary {
   approved: number;
   skipped: number;
   placesCreated: number;
+  /** Rows stamped as looked at, so the next pass starts behind them. */
+  marked: number;
   reasons: Record<string, number>;
   samples: Array<{ candidateId: number; placeText: string; placeId: string | null; title: string }>;
 }
@@ -135,11 +142,15 @@ export async function autoApprovePending(options: { limit?: number; apply?: bool
     JOIN analyses an ON an.id = gc.analysis_id AND an.input_revision = a.revision
     JOIN publications p ON p.article_id = gc.article_id AND p.analysis_id = gc.analysis_id
     WHERE gc.review_status = 'pending' AND gc.id > ${options.afterId ?? 0}
+      -- Only event places can become a map pin, so the other roles must not spend
+      -- the batch. They stay pending: the rules still never reject.
+      AND gc.role = 'event'
+      AND gc.auto_reviewed_at IS NULL
       AND p.visibility = 'public' AND p.eligible
     ORDER BY gc.id ASC
     LIMIT ${limit}`;
 
-  const summary: AutoReviewSummary = { scanned: rows.length, approved: 0, skipped: 0, placesCreated: 0, reasons: {}, samples: [] };
+  const summary: AutoReviewSummary = { scanned: rows.length, approved: 0, skipped: 0, placesCreated: 0, marked: 0, reasons: {}, samples: [] };
   const note = (reason: string) => { summary.reasons[reason] = (summary.reasons[reason] ?? 0) + 1; };
 
   for (const row of rows) {
@@ -200,6 +211,16 @@ export async function autoApprovePending(options: { limit?: number; apply?: bool
       await tx`INSERT INTO geo_review_audit (candidate_id, action, place_id, reviewer, reason)
         VALUES (${row.id}, 'approve', ${place.id}, ${AUTO_REVIEWER}, ${decision.reason})`;
     });
+  }
+  // One statement for the batch, not one per row: the rows the rules could not
+  // decide keep their pending status and their evidence (this pass never
+  // rejects), they only stop being re-read. A dry run writes nothing at all.
+  if (apply && rows.length) {
+    const marked = await sql<{ id: number }[]>`
+      UPDATE geo_candidates SET auto_reviewed_at = now()
+      WHERE id = ANY(${rows.map(r => r.id)}::bigint[]) AND auto_reviewed_at IS NULL
+      RETURNING id`;
+    summary.marked = marked.length;
   }
   return summary;
 }

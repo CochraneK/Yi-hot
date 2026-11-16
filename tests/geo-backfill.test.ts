@@ -59,6 +59,8 @@ test("dry run never writes, apply creates pending and is idempotent", async () =
     [["成都", "event", "pending"], ["北京", "publisher", "pending"]]);
   const replay = await backfillSavedGeoCandidates({ ...args, apply: true });
   assert.equal(replay.inserted, 0, "rerunning with the same cursor never duplicates rows");
+  const hole = await backfillSavedGeoCandidates({ ...args, limit: 1, missingOnly: true });
+  assert.equal(hole.scanned, 0, "missing-only skips an analysis that already has candidates");
   assert.equal((await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM receipts`)[0]!.n, beforeReceipts[0]!.n,
     "no new paid model receipts");
 });
@@ -74,5 +76,5 @@ test("backfill limits fail closed rather than causing accidental full-table work
   assert.throws(() => validateGeoBackfillOptions({ afterId: -1 }), /afterId/);
   assert.throws(() => validateGeoBackfillOptions({ limit: 0 }), /limit/);
   assert.throws(() => validateGeoBackfillOptions({ limit: 99999 }), /limit/);
-  assert.deepEqual(validateGeoBackfillOptions({}), { afterId: 0, limit: 100, apply: false });
+  assert.deepEqual(validateGeoBackfillOptions({}), { afterId: 0, limit: 100, apply: false, missingOnly: false });
 });

@@ -8,6 +8,8 @@ export interface GeoBackfillOptions {
   afterId?: number;
   limit?: number;
   apply?: boolean;
+  /** Skip analyses that already have candidates — fills holes instead of rescanning the range. */
+  missingOnly?: boolean;
 }
 
 export interface GeoBackfillResult {
@@ -26,11 +28,11 @@ export function validateGeoBackfillOptions(opts: GeoBackfillOptions) {
   const limit = opts.limit ?? 100;
   if (!Number.isSafeInteger(afterId) || afterId < 0) throw Error("afterId must be a non-negative safe integer");
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw Error("limit must be an integer from 1 to 200");
-  return { afterId, limit, apply: opts.apply === true };
+  return { afterId, limit, apply: opts.apply === true, missingOnly: opts.missingOnly === true };
 }
 
 export async function backfillSavedGeoCandidates(opts: GeoBackfillOptions = {}): Promise<GeoBackfillResult> {
-  const { afterId, limit, apply } = validateGeoBackfillOptions(opts);
+  const { afterId, limit, apply, missingOnly } = validateGeoBackfillOptions(opts);
   const analyses = await sql<{
     analysis_id: number; article_id: string; revision: number; candidates: unknown;
   }[]>`
@@ -43,6 +45,9 @@ export async function backfillSavedGeoCandidates(opts: GeoBackfillOptions = {}):
       AND p.visibility = 'public' AND p.eligible
       AND an.output->'geography'->>'status' = 'candidate'
       AND jsonb_typeof(an.output #> '{geography,candidates}') = 'array'
+      -- A resumed run must not re-read the thousands already done: the holes sit
+      -- anywhere in the id range, so a plain cursor cannot find them.
+      AND (${missingOnly} = false OR NOT EXISTS (SELECT 1 FROM geo_candidates g WHERE g.analysis_id = an.id))
     ORDER BY an.id ASC LIMIT ${limit}`;
   const result: GeoBackfillResult = {
     mode: apply ? "apply" : "preview",

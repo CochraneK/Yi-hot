@@ -113,9 +113,6 @@ function Original({ c, className = "" }: { c: ReportCitation; className?: string
   );
 }
 
-/** Editorial inference with explicit evidence, rival explanation and observable next check.
- * The source badges refer to current public reports, never hidden or withdrawn material.
- */
 /** Evidence-led reading: the actual news is read inside the argument, not merely listed after it.
  * Everything factual below comes from current public citations, not a second model rewrite.
  */
@@ -153,6 +150,7 @@ function InsightPage({ report }: { report: ReportDetail }) {
                       ? <Link to={`/items/${e.itemId}`} className="font-semibold text-ink underline decoration-line-strong underline-offset-4 hover:text-accent">{e.title}</Link>
                       : <span className="font-semibold text-ink">{e.title}</span>}
                     <span className="ml-2 text-[12px] text-ink-4">（{shortSourceName(e.sourceName)}）</span>
+                    <Original c={e} className="ml-2" />
                     {e.summary && <span className="mt-1 block line-clamp-2 text-[13px] leading-[1.75] text-ink-3">{e.summary}</span>}
                   </p>
                 ))}
@@ -160,12 +158,14 @@ function InsightPage({ report }: { report: ReportDetail }) {
               <p className="mt-4 border-l-2 border-accent pl-4 text-[14.5px] leading-[1.85] text-ink-2">
                 <span className="mr-2 font-semibold text-ink">联系与判断</span>{insight.reasoning}
               </p>
-              <details className="group mt-4 border-t border-line-soft pt-3 text-[12.5px] leading-[1.8] text-ink-3">
+              <p className="mt-3 text-[12.5px] leading-[1.75] text-ink-3">
+                <span className="font-semibold text-ink-2">需要留意：</span>{insight.alternative}
+              </p>
+              <details className="group mt-3 border-t border-line-soft pt-3 text-[12.5px] leading-[1.8] text-ink-3">
                 <summary className="cursor-pointer py-1 font-medium text-ink-3 hover:text-accent">
-                  另一种解释 · 下期核验{remaining.length ? ` · 其余 ${remaining.length} 条引用` : ""}
+                  下期验证{remaining.length ? ` · 其余 ${remaining.length} 条依据` : ""}
                 </summary>
                 <div className="space-y-2 pb-2 pt-3">
-                  <p><strong className="text-ink-2">其他可能：</strong>{insight.alternative}</p>
                   <p><strong className="text-ink-2">下期查看：</strong>{insight.watchFor}</p>
                   {remaining.length > 0 && (
                     <div>

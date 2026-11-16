@@ -3219,3 +3219,24 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 测试相应改写：`city-page.test.ts` 断言 302 与 `Location`（含 `/yihot` 前缀）；`city-browser.test.ts` 改在 `/all` 上跑（fixture 增加 `/api/site/geo/places`），断言行内触发器选完即写 `place=`、当地标签只落在对应城市、手机不横向溢出、桌面触发器与标题同一行。
 
 热点页 `HeatMap` 打开时不再装下全国：先 `fitBounds`，若比例尺不足 `CORE_ZOOM = 5` 再 `setView` 到按报道量加权的重心，城市名才读得出来；被裁掉的边缘用右上角「看全国 / 看重点」一键切换。地图容器改为外层定高、内层 `absolute inset-0` 承载 Leaflet，切换按钮不进 Leaflet 接管的节点。
+
+### 热榜的两种保留：五分钟快照与每日日榜（2026-11-16 15:00）
+
+`hot_rankings` 是每 5 分钟一条的完整快照，只留 30 天（`packages/backend/src/events/hot.ts` 里的 `DELETE ... interval '30 days'`），供页面读取与事故回查。它**不是**年度报告的数据源：30 天之外什么都没有。
+
+`hot_daily`（迁移 `0053_hot_daily.sql`）每天一行，存当天**最后一次**计算的榜单：`computeHotRanking()` 写完 `hot_rankings` 后立刻 upsert，`ON CONFLICT (day) DO UPDATE ... WHERE hot_daily.computed_at < EXCLUDED.computed_at` 保证只有更新的榜单能覆盖，迟到的回填不会把新榜换成旧榜。日界按北京自然日（`(computed_at AT TIME ZONE 'Asia/Shanghai')::date`）。
+
+体积：31 天 224 kB，约 2.6 MB/年，因此不设保留期，也不再进月度归档。
+
+回填：`scripts/hot-daily-backfill.ts`（默认 dry-run，`--apply` 落库）从还在盘上的 30 天快照里取每天最后一榜。2026-11-16 已执行，序列起点 `2026-10-17`，其中 10-18、10-19 两天为空榜（当时没有满足参与门槛的事件）。
+
+出年度报告时按日期区间读这张表即可：
+
+```sql
+SELECT day, computed_at, rule_version,
+       entries->0->>title AS top_title,
+       jsonb_array_length(entries) AS entries
+FROM hot_daily WHERE day BETWEEN 2026-10-17 AND 2026-12-31 ORDER BY day;
+```
+
+注意 `rule_version` 会变（当前两条：`heat-v1-48h-halflife24h`、`heat-v1-48h72h-halflife24h`），跨期比较热度值时必须分段，别把不同算法的数字画进同一条曲线。

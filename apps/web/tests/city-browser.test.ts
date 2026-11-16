@@ -84,35 +84,24 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     assert.ok(outside.some(u=>u.startsWith("https://tile.openstreetmap.org/")));
     assert.equal(await page.$eval(".leaflet-tile",e=>e.getAttribute("referrerpolicy")),"strict-origin-when-cross-origin");
     await page.tap('.leaflet-marker-icon[title="北京：1条新闻"]');
-    await page.waitForSelector(".leaflet-popup");
-    // On phones the fixed bottom navigation can cover part of a popup when the
-    // map is near the fold. Scroll the button into the visible viewport before tapping.
-    // A covered control is a real mobile accessibility failure, not a timeout to ignore.
-    await page.$eval(".leaflet-popup button", el => el.scrollIntoView({ block: "center", behavior: "instant" }));
-    const popupTarget = await page.$eval(".leaflet-popup button", el => {
+    const placeAction = '[data-geo-place-link="beijing"]';
+    await page.waitForSelector(placeAction);
+    // A selected place appears below the map, not in a clipped Leaflet popup.
+    // The button must be visible and hit-testable above fixed mobile navigation.
+    await page.$eval(placeAction, el => el.scrollIntoView({ block: "center", behavior: "instant" }));
+    const placeTarget = await page.$eval(placeAction, el => {
       const r = el.getBoundingClientRect();
       const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
       return {
         visible: r.top >= 0 && r.bottom <= window.innerHeight,
-        hittable: !!(top === el || (top instanceof Element && top.closest(".leaflet-popup button") === el)),
-        covering: top?.closest("a,button,nav")?.outerHTML.slice(0,250) ?? top?.tagName ?? null,
+        hittable: !!(top === el || (top instanceof Element && top.closest('[data-geo-place-link="beijing"]') === el)),
+        covering: top?.outerHTML.slice(0,180) ?? null,
       };
     });
-    assert.ok(popupTarget.visible && popupTarget.hittable,
-      "map popup action must be uncovered on a 390px phone: " + JSON.stringify(popupTarget));
-    await page.locator(".leaflet-popup button").click();
-    try {
-      await page.waitForFunction(()=>location.search.includes("place=beijing"),{timeout:9000});
-    } catch (error) {
-      const diagnostics = await page.evaluate(() => ({
-        url: location.href,
-        popup: document.querySelector(".leaflet-popup")?.textContent,
-        popupButtons: [...document.querySelectorAll(".leaflet-popup button")].map(x=>x.textContent),
-        articleIds: [...document.querySelectorAll("article[data-item-id]")].map(x=>x.getAttribute("data-item-id")),
-      }));
-      throw new Error("Map popup click did not navigate to verified place; " +
-        JSON.stringify({diagnostics, pageErrors:errors, webLog:logs.slice(-1500)}), {cause:error});
-    }
+    assert.ok(placeTarget.visible && placeTarget.hittable,
+      "in-flow map place action must be touchable on a 390px phone: " + JSON.stringify(placeTarget));
+    await page.locator(placeAction).click();
+    await page.waitForFunction(()=>location.search.includes("place=beijing"),{timeout:9000});
     await page.waitForFunction(()=>document.querySelectorAll("article[data-item-id]").length===1);
     await page.locator('::-p-text(关闭地图)').click();
     await page.waitForFunction(()=>!document.querySelector(".leaflet-container"));

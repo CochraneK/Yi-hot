@@ -29,6 +29,10 @@ const INSTITUTION_WORDS = [
   "派出所", "法院", "检察院", "街道办", "居委会", "办事处", "代表处", "管理中心",
   "公安局", "公安厅", "民政厅", "教育厅", "分局", "分公司", "分部", "分会", "支部", "支行",
   "报社", "杂志社", "电视台", "广播电台", "日报", "晚报", "新闻网",
+  // Single characters that only ever finish a government body's name here
+  // (市场监管局, 医保局, 住建厅). "办" and "委" are left out on purpose:
+  // 举办 and 委托 are ordinary words.
+  "局", "厅", "署",
 ];
 
 /** A quote that only names a place says nothing about an event happening there. */

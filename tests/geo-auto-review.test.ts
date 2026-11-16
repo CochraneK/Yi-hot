@@ -120,6 +120,11 @@ test("datelines and branch offices are not event locations", () => {
 
   const police = decideAutoApproval({ placeText: "宜昌", role: "event", evidence: "宜昌市公安局西陵区分局窑湾派出所所长介绍情况" });
   assert.equal(police.approve, false);
+
+  const bureau = decideAutoApproval({ placeText: "上海", role: "event", evidence: "上海市金山区市场监管局回应称已立案" });
+  assert.equal(bureau.approve, false);
+  // 办 must not be read as 办公室: 举办 is an ordinary verb.
+  assert.equal(decideAutoApproval({ placeText: "北京", role: "event", evidence: "11月15日，北京举办第七届公益论坛" }).approve, true);
 });
 
 test("auto approval accepts a city with a clean event quote", () => {

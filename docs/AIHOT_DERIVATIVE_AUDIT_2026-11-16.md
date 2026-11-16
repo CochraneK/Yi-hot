@@ -10,7 +10,7 @@ AIHOT 上游 `KKKKhazix/AIHOT` 的 fork 数持续增长；单纯 fork 数 ≠ �
 
 - `.github/workflows/aihot-derivative-audit.yml`：每周一 **03:23 UTC / 北京 11:23** 自动执行，也可在 GitHub Actions 中选择 **AIHOT derivative discovery → Run workflow** 手动立即执行。
 - 只用 Actions 自带 `GITHUB_TOKEN`（仅 `contents:read`、`issues:write`），不需要用户提供个人 Token；不使用 YiHot 生产数据库/模型/服务器密钥。
-- `scripts/scan-aihot-derivatives.mjs`：自动枚举上游**直接 forks**（默认最多 3,000），筛选近 60 天推送或创建的，检查最多 600 个新增/有变更的配置，调用 GitHub REST API 读取 `site/site.ts`，旧布局回退 `industry/site.ts`。不读取私有仓库。
+- `scripts/scan-aihot-derivatives.mjs`：自动枚举上游**直接 forks**（默认最多 3,000），筛选近 60 天推送或创建的，检查最多 400 个新增/有变更的配置（考虑旧结构回退时每 fork 最多两次读取，预留 GitHub Actions Token 请求配额），调用 GitHub REST API 读取 `site/site.ts`，旧布局回退 `industry/site.ts`。不读取私有仓库。
 - `scripts/lib/aihot-derivatives.mjs`：仅提取文本字面量 `SITE.name / SITE.subject / SITE.defaultUrl`，过滤 MyHOT/AIHOT 模板原值；比对 `industry/peers.ts` 的已登记站名/网址；识别公开官网**线索**，不主动连接任意候选站域名。
 - 首次运行创建 **「AIHOT 衍生站自动巡检 · 待审线索」** Issue，此后只更新**同一 Issue** 的候选列表和内部压缩状态，避免每周生成大量新 Issue；JSON 状态记录已看过的仓库和最近 `pushed_at`，无变化不重复读配置、无实质变化不重复提醒。
 - 每次保留 `report.md`、`result.json` 为 GitHub Actions Artifact（30 天）；Issue 显示按最近推送排序的至多 60 项未收录候选，Artifact 可看全量。运行异常明确标记不完整，失败时不假装全量完成。

@@ -19,7 +19,7 @@ import tempfile
 import datetime
 from email.message import EmailMessage
 from pathlib import Path
-from email.utils import getaddresses
+from email.utils import getaddresses, parseaddr
 from urllib.request import Request, urlopen
 
 
@@ -845,7 +845,8 @@ def main():
         parser.error("--test-to requires --test")
     if args.test:
         target = (args.test_to or "").strip()
-        if len(target) > 254 or not re.fullmatch(r"[^<>\s@,;]+@[^<>\s@,;]+\.[A-Za-z]{2,63}", target):
+        display_name, parsed_address = parseaddr(target)
+        if display_name or parsed_address != target or len(target) > 254 or not re.fullmatch(r"[^<>\s@,;]+@[^<>\s@,;]+\.[A-Za-z]{2,63}", target):
             parser.error("--test requires --test-to with exactly one authorized email address")
         report = fetch_latest(base, args.kind or "weekly")
         if not isinstance(report, dict) or report.get("kind") != (args.kind or "weekly"):

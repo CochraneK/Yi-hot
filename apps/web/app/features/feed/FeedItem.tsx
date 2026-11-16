@@ -9,8 +9,7 @@ import { ScoreLabel } from "../../components/ui/Score";
 import { MediaThumbs, SourceLine, StarButton } from "./parts";
 import { GroupDevelopments, GroupSources, LatestDevelopment } from "./ReadingGroup";
 import { QuotedLine } from "../item/QuotedPost";
-import { localHeadline } from "../cities/geo";
-import { useReaderCity } from "../cities/reader-city";
+import { isLocalEvent, useReaderLocation } from "../cities/reader-city";
 
 export interface FeedItemProps {
   item: FeedItemSummary;
@@ -24,8 +23,8 @@ export interface FeedItemProps {
 
 export const FeedItem = memo(function FeedItem({ item, group, filters, read = false, onOpen, showTags = false }: FeedItemProps) {
   const isX = item.channel === "x" && !!item.x;
-  const readerCityId = useReaderCity();
-  const isLocal = localHeadline(item, readerCityId);
+  const readerLocation = useReaderLocation();
+  const isLocal = isLocalEvent(item.eventPlaces, readerLocation);
   const open = () => onOpen?.(item.id);
   const showSources = !!group && (group.additionalSourceCount > 0 || (group.developmentCount <= 1 && group.reportCount > 1));
   const showDevelopments = !!group?.story && group.developmentCount > 1;
@@ -35,7 +34,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
     <article className="relative min-w-0 lg:card lg:card-hover lg:px-[18px] lg:pb-[14px] lg:pt-[15px]" data-item-id={item.id}>
       <header className="flex min-h-[18px] items-center gap-2 text-[12.5px] leading-[18px] text-ink-4">
         <SourceLine item={item} className="text-ink-4" />
-        {isLocal && <span title="按手动选择或 IP 估计的城市与新闻标题匹配；并非事件发生地的核实结论" className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">当地</span>}
+        {isLocal && <span title="已审核的事件地点与你选择的城市一致；IP 估计可能有误，可手动更改" className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">当地</span>}
         {item.selected && (
           <span className="hidden lg:inline-flex">
             <SelectedBadge />

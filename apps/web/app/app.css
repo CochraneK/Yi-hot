@@ -566,3 +566,9 @@
 @keyframes cr-pulse {
   50% { box-shadow: 0 0 0 7px color-mix(in srgb, currentColor 6%, transparent); }
 }
+
+/* Map points stay readable over light/dark tiles; no remote marker images. */
+.yihot-map-marker span { display: flex; width: 42px; height: 42px; align-items: center; justify-content: center; border: 2px solid #fff; border-radius: 50%; background: #994640; color: #fff; box-shadow: 0 2px 7px #0004; font: 600 12px/1 sans-serif; }
+.yihot-map-marker:focus { outline: 3px solid #1d5c71; outline-offset: 3px; border-radius: 50%; }
+.leaflet-container { font-family: inherit; }
+.leaflet-popup-content { line-height: 1.6; }

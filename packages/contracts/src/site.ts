@@ -42,7 +42,20 @@ export interface StoryRef {
   title: string;
 }
 
+export interface GeoEventPlace {
+  id: string;
+  name: string;
+  countryCode: string;
+  region: string | null;
+  city: string | null;
+  lat: number;
+  lon: number;
+  precision: "country" | "region" | "city";
+}
+
 export interface ItemSummary {
+  /** Current, manually verified event places only. No candidate evidence or reviewer identity. */
+  eventPlaces?: GeoEventPlace[];
   id: string;
   revision: number;
   title: string;
@@ -66,6 +79,7 @@ export interface ItemSummary {
 
 /** The fields rendered by a site feed card; full original text lives in the item detail. */
 export interface FeedItemSummary extends Pick<ItemSummary, "id" | "title" | "summary" | "reason" | "publishedAt" | "publishedAtPrecision" | "discoveredAt" | "timelineAt" | "category" | "tags" | "score" | "selected" | "channel"> {
+  eventPlaces?: GeoEventPlace[];
   source: Pick<SourceRef, "name">;
   x: (Pick<XPostView, "authorName" | "handle" | "avatarUrl" | "avatarSrcSet" | "media"> & {
     quoted: Omit<NonNullable<XPostView["quoted"]>, "url"> | null;
@@ -132,6 +146,13 @@ export interface TimelineResponse {
 /** Only operator-reviewed event locations; unreviewed AI hints never appear here. */
 export interface GeoReviewedResponse {
   placeId: string;
+  places: Array<GeoEventPlace & { count: number }>;
+  catalog: GeoEventPlace[];
+  countries: string[];
+  regions: string[];
+  placesTruncated: boolean;
+  catalogTruncated: boolean;
+  totalCapped: boolean;
   items: FeedItemSummary[];
   page: number;
   pageCount: number;

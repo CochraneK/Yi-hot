@@ -88,3 +88,12 @@ the full permission and warranty disclaimer is retained in
 contract, omits repository-specific brand filters and adds portable font discovery.
 The source repository's datasets, images, article text, generated reports and
 personal artifacts are **not** relicensed or copied into YiHot by this notice.
+
+## Leaflet and OpenStreetMap
+
+The optional city news map bundles Leaflet 1.9.4 under BSD-2-Clause.
+Copyright (c) 2010–2023 Volodymyr Agafonkin; (c) 2010–2011 CloudMade.
+The full license is retained in [docs/licenses/Leaflet.txt](docs/licenses/Leaflet.txt).
+OpenStreetMap data/map tiles carry their own attribution and usage conditions:
+https://www.openstreetmap.org/copyright and https://operations.osmfoundation.org/policies/tiles/ .
+Visible attribution remains on the interactive map. Third-party tile/IP connections occur only on the corresponding explicit reader actions.

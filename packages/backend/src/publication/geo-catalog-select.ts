@@ -94,10 +94,17 @@ export function selectCatalogPlaces(
   // Counties hang under the cities already listed: a county whose prefecture the
   // gazetteer does not carry would be unreachable, so it is left out rather than
   // promoted to a city of its own.
+  //
+  // Only counties with a story are listed. All 2543 of them would make this file
+  // four times larger for rows that open an empty feed, and the search box is the
+  // way to a county — searching for one with no news would find nothing anyway,
+  // whether it is in the catalogue or not.
   const known = new Map(places.map(place => [place.id, place]));
   for (const row of counties) {
     const city = known.get(row.cityId);
     if (!city || !CJK.test(row.name)) continue;
+    const count = counts.get(row.id) ?? 0;
+    if (count <= 0) continue;
     places.push({
       id: row.id,
       name: row.name,
@@ -105,7 +112,7 @@ export function selectCatalogPlaces(
       countryCode: "CN",
       lat: row.lat,
       lon: row.lon,
-      count: counts.get(row.id) ?? 0,
+      count,
       parentId: row.cityId,
       level: "district",
     });

@@ -435,7 +435,7 @@ export function CityHeatMap({
         底图由高德地图提供，会收到你的 IP。
         {/* Said where the dots are, not in a footnote: a county dot is a city
             coordinate, and a province dot opens nothing. */}
-        {level === "district" && " 区县没有独立坐标，点按所属城市位置排开。"}
+        {level === "district" && " 区县没有独立坐标，点按所属城市位置排开；只算报到区县的报道。"}
         {level === "province" && " 省份只做汇总，点城市可以看当地新闻。"}
       </p>
     )}

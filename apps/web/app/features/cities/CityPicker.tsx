@@ -260,7 +260,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
           </div>
 
           <p className="border-t border-line-soft px-3 py-2 text-[11px] leading-relaxed text-ink-4">
-            城市或区县只记在这台设备上；还没有报道的也可以先选，等有了会自己出现。
+            只记在这台设备上。城市可以先选，等有了报道会自己出现；区县只列已经有报道的。
           </p>
         </div>
       )}

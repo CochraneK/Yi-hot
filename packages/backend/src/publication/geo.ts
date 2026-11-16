@@ -118,7 +118,10 @@ const HEAT_MAX_POINTS = 400;
  */
 export const HEAT_MAX_HOURS = 720;
 
-const PLACES_MAX = 500;
+// 963 places carried a story as of 2026-11-16, and this list is what turns a
+// `?place=` id back into a name. Cutting it at 500 silently dropped the tail,
+// so a link to a quieter county rendered as "选择城市".
+const PLACES_MAX = 1400;
 
 /**
  * Every city the reader could pick as "my city", with how many stories it has.

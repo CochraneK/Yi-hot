@@ -529,7 +529,7 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
     # private, so its sample headlines link directly to public item pages.
     url = report_url(base, report)
 
-    preheader = esc((str(report.get("insights", [{}])[0].get("claim") or "") if _report_insights(report) else (brief or intro or headline)))[:140]
+    preheader = esc((_report_insights(report)[0].get("claim") if _report_insights(report) else (brief or intro or headline)))[:140]
     unsub = ""
     if unsubscribe_url:
         unsub = '<br><a href="' + esc(unsubscribe_url) + '" style="color:#4b5563">退订邮件</a>'
@@ -557,7 +557,9 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
         + analysis_html
         + metrics_html
         + sections_html
-        + '<p style="margin:24px 0 0"><a href="' + esc(url) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
+        + ('<p style="margin:24px 0 0"><a href="' + esc(url, quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
+           if kind != "daily"
+           else '<p style="margin:24px 0 0"><a href="' + esc(base.rstrip("/") + "/all", quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">查看 Yi-Hot 最新动态</a></p>')
         '</div>'
         '<p style="text-align:center;color:#6b7280;font-size:12px;line-height:1.9;margin:16px 0 0">你收到此邮件，是因为该地址已确认订阅 Yi-Hot 公益总报。' + unsub + '</p>'
         '</main></body></html>'
@@ -661,7 +663,7 @@ def deliver_outbox(item, base, hot=None, state=None):
         report = payload["report"]
         label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
         subject = subject_for(report, label)
-        brief = brief_for(report, state if state is not None else {})
+        brief = None if _report_insights(report) else brief_for(report, state if state is not None else {})
         body, text = render(report, base, payload.get("unsubscribeUrl", ""), hot, brief)
     send(subject, body, text, recipient, payload.get("unsubscribeUrl", "") if item["kind"] == "report" else "")
 
@@ -669,12 +671,13 @@ def deliver_outbox(item, base, hot=None, state=None):
 def process_outbox(base, state=None):
     state = state if state is not None else {}
     api("/api/ingest/newsletter/sync", {})
-    hot = fetch_hot(base)
+    # Live hot is not relevant to a published period issue; the report now owns
+    # its frozen historical leaderboard, if that date has one.
     items = api("/api/ingest/newsletter/claim", {"limit": 20}).get("items", [])
     results = []
     for item in items:
         try:
-            deliver_outbox(item, base, hot, state)
+            deliver_outbox(item, base, None, state)
             api("/api/ingest/newsletter/result", {"id": item["id"], "status": "sent", "response": "SMTP accepted"})
             results.append({"id": item["id"], "status": "sent"})
         except smtplib.SMTPRecipientsRefused as exc:
@@ -762,7 +765,8 @@ def save_state(path, state):
 
 
 def deliver(report, base, target, state, test=False):
-    body, text = render(report, base, "", fetch_hot(base), brief_for(report, state))
+    body, text = render(report, base, "", None,
+                        None if _report_insights(report) else brief_for(report, state))
     label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
     subject = subject_for(report, label, test)
     key = f"{report['kind']}:{report['key']}:{target}"

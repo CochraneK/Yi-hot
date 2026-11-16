@@ -240,7 +240,10 @@ export function CityHeatMap({
       </div>
     ) : (
       <div className={`relative z-0 w-full bg-bg-sunk ${mapHeight}`}>
-        <div ref={host} className="absolute inset-0" aria-label="可拖动、缩放的城市热力地图" />
+        {/* h-full, not absolute inset-0: 高德 adds its own `amap-container` class and
+            forces position:relative on this element, which voids the inset and
+            collapses the map to zero height. */}
+        <div ref={host} className="h-full w-full" aria-label="可拖动、缩放的城市热力地图" />
         {/* The SDK's own control is a light widget with its own shadow; these two
             buttons sit in the card's palette and follow the theme with it. */}
         <div className="absolute right-2 top-2 z-10 flex flex-col overflow-hidden rounded-lg border border-line-strong bg-surface/95 shadow-sm backdrop-blur-sm">

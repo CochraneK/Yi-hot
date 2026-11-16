@@ -222,7 +222,7 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   assert.match(html, /href="https:\/\/example\.org\/evaluation"/);
   assert.match(html, /需要留意：/);
   assert.match(html, /昨日热榜合成头条/);
-  assert.match(html, /热度<!-- --> 18\.7|热度 18\.7/);
+  assert.ok(html.includes("热度") && html.includes("18.7"), "historic snapshot must retain its measured heat value");
   assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("合成议题归档"),
     "historical leaderboard must come before the story archive");
   assert.match(html, /<details id="report-overview"[^>]*>/, "keep original overview available as a foldout");

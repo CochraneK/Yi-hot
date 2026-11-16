@@ -58,8 +58,24 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     await page.setViewport({width:390,height:844,isMobile:true,hasTouch:true});
     await page.goto(origin+"/yihot/cities",{waitUntil:"networkidle0"});
     assert.equal(outside.length,0,"opening the page must not load maps or resolve the visitor IP");
+    assert.ok(await page.$('[data-item-id="synthetic-0"]'), "fixture article should be SSR-rendered before selecting a city");
     await page.select("#my-city","beijing");
-    await page.waitForFunction(()=>document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.includes("当地"));
+    try {
+      await page.waitForFunction(()=>document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.includes("当地"),{timeout:9000});
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        url: location.href,
+        select: (document.querySelector("#my-city") as HTMLSelectElement | null)?.value,
+        readerLocation: localStorage.getItem("yihot:reader-location:v2"),
+        legacyCity: localStorage.getItem("yihot:reader-city:v1"),
+        articleText: document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.slice(0,400),
+        cards: document.querySelectorAll("article[data-item-id]").length,
+        reactScripts: document.querySelectorAll('script[type="module"]').length,
+      }));
+      throw new Error("City selection failed to update local event badge; " + JSON.stringify({
+        diagnostics, pageErrors: errors, upstreamRequests: outside.slice(0,12), webLog: logs.slice(-1500),
+      }), { cause: error });
+    }
     assert.ok(!(await page.$eval('[data-item-id="synthetic-1"]',e=>e.textContent)).includes("当地"));
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),"mobile must not scroll sideways");
     await page.locator('::-p-text(加载交互地图)').click();

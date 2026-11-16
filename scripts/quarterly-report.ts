@@ -222,7 +222,7 @@ try {
 
   md.push("## 五、信源", "");
   md.push(table(["分级", "条数", "占入选"], tiers.map(t => [t.tier, t.n, pct(t.n, totals.eligible)])), "");
-  md.push("", "产出最多的信源（按入选条数）：", "");
+  md.push("", `产出最多的 ${topSources.length} 个信源（有产出的共 ${totals.sources} 个，按入选条数）：`, "");
   md.push(table(["信源", "分级", "条数"], topSources.map(s => [s.name, s.tier ?? "—", s.n])), "");
 
   md.push("## 六、热榜", "");
@@ -242,6 +242,7 @@ try {
     md.push("这个区间没有已核准的事件地点。", "");
   } else {
     md.push("按父城市上卷：区、县、县级市的事件计入其所属地级市。", "");
+    md.push(`下表按报道数排序，只列前 ${cities.length} 个；全区间共有 ${cityTotal!.n} 个城市有已核准地点。`, "");
     md.push(table(["城市", "报道数", "事件数", "覆盖的区县数"], cities.map(c => [c.city, c.articles, c.stories, c.units])), "");
   }
   md.push(`地点口径：已核准事件地点 ${geo.verified} 条，待核准 ${geo.pending} 条，选中报道中有地点的 ${geo.placed} 条。`, "");

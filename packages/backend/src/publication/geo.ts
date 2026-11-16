@@ -135,21 +135,35 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
   // One row per place the feed can actually filter by, counties included: a
   // `?place=` link to 江宁区 has to come back with its name, not "选择城市".
   // The parent id is what lets the picker show a county under its city.
+  //
+  // The number beside a city is what the city's feed will hold, so a city counts
+  // its counties too (同一个城市，选区和选市看到的是同一批报道). A county counts
+  // only itself — the feed does the same, so the two never disagree.
   const rows = await sql<GeoPlaceOption[]>`
+    WITH hits AS (
+      SELECT gp.id AS place_id, coalesce(gp.parent_id, gp.id) AS city_id, p.article_id
+      FROM publications p
+      JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+      JOIN analyses an ON an.id = gc.analysis_id
+      JOIN articles ar ON ar.id = p.article_id
+      JOIN geo_places gp ON gp.id = gc.place_id
+      WHERE ${listedCondition(now)} AND p.eligible
+        AND an.input_revision = ar.revision
+        AND gc.review_status = 'verified' AND gc.role = 'event'
+    ), own AS (
+      SELECT place_id AS id, count(DISTINCT article_id)::int AS n FROM hits GROUP BY 1
+    ), city AS (
+      SELECT city_id AS id, count(DISTINCT article_id)::int AS n FROM hits GROUP BY 1
+    )
     SELECT gp.id, gp.name, gp.country_code AS "countryCode",
-           coalesce(gp.region, city.region) AS region, gp.city,
+           coalesce(gp.region, parent.region) AS region, gp.city,
            gp.lat, gp.lon, gp.coordinate_precision AS precision,
-           gp.parent_id AS "parentId", count(DISTINCT p.article_id)::int AS count
-    FROM publications p
-    JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
-    JOIN analyses an ON an.id = gc.analysis_id
-    JOIN articles ar ON ar.id = p.article_id
-    JOIN geo_places gp ON gp.id = gc.place_id
-    JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
-    WHERE ${listedCondition(now)} AND p.eligible
-      AND an.input_revision = ar.revision
-      AND gc.review_status = 'verified' AND gc.role = 'event'
-    GROUP BY gp.id, city.region
+           gp.parent_id AS "parentId",
+           CASE WHEN gp.parent_id IS NULL THEN city.n ELSE own.n END AS count
+    FROM geo_places gp
+    JOIN own ON own.id = gp.id
+    LEFT JOIN city ON city.id = gp.id
+    LEFT JOIN geo_places parent ON parent.id = gp.parent_id
     ORDER BY count DESC, gp.name
     LIMIT ${PLACES_MAX}`;
   return { places: rows, generatedAt: new Date().toISOString() };

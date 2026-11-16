@@ -1,0 +1,680 @@
+{
+  "window": {
+    "from": "2026-09-30",
+    "to": "2026-11-16",
+    "timezone": "Asia/Shanghai"
+  },
+  "generatedAt": "2026-11-16T13:11:00.340Z",
+  "totals": {
+    "articles": 36626,
+    "publications": 28879,
+    "eligible": 8323,
+    "stories": 3010,
+    "sources": 165,
+    "firstDay": "2026-09-29",
+    "lastDay": "2026-11-16"
+  },
+  "categories": [
+    {
+      "category": "policy",
+      "n": 3668
+    },
+    {
+      "category": "field",
+      "n": 2099
+    },
+    {
+      "category": "project",
+      "n": 1194
+    },
+    {
+      "category": "research",
+      "n": 376
+    },
+    {
+      "category": "organization",
+      "n": 272
+    },
+    {
+      "category": "policy-analysis",
+      "n": 247
+    },
+    {
+      "category": "opinion",
+      "n": 205
+    },
+    {
+      "category": "fundraising",
+      "n": 147
+    },
+    {
+      "category": "未分类",
+      "n": 115
+    }
+  ],
+  "tiers": [
+    {
+      "tier": "T2",
+      "n": 8070
+    },
+    {
+      "tier": "T1",
+      "n": 238
+    },
+    {
+      "tier": "T1_5",
+      "n": 15
+    }
+  ],
+  "topSources": [
+    {
+      "name": "网页搜索·老年人权益",
+      "tier": "T2",
+      "n": 289
+    },
+    {
+      "name": "网页搜索·残障融合",
+      "tier": "T2",
+      "n": 281
+    },
+    {
+      "name": "网页搜索·大病与罕见病儿童救助",
+      "tier": "T2",
+      "n": 222
+    },
+    {
+      "name": "网页搜索·国家卫健委",
+      "tier": "T2",
+      "n": 206
+    },
+    {
+      "name": "网页搜索·江西民政",
+      "tier": "T2",
+      "n": 198
+    },
+    {
+      "name": "公益时报 · 公益资讯",
+      "tier": "T2",
+      "n": 190
+    },
+    {
+      "name": "网页搜索·乡村振兴",
+      "tier": "T2",
+      "n": 186
+    },
+    {
+      "name": "网页搜索·儿童与公益",
+      "tier": "T2",
+      "n": 184
+    },
+    {
+      "name": "网页搜索·韩红基金会",
+      "tier": "T2",
+      "n": 184
+    },
+    {
+      "name": "网页搜索·免费午餐",
+      "tier": "T2",
+      "n": 178
+    },
+    {
+      "name": "网页搜索·云南民政",
+      "tier": "T2",
+      "n": 172
+    },
+    {
+      "name": "网页搜索·北京民政",
+      "tier": "T2",
+      "n": 169
+    },
+    {
+      "name": "网页搜索·江苏民政",
+      "tier": "T2",
+      "n": 167
+    },
+    {
+      "name": "网页搜索·甘肃民政",
+      "tier": "T2",
+      "n": 167
+    },
+    {
+      "name": "网页搜索·中国社会报",
+      "tier": "T2",
+      "n": 165
+    }
+  ],
+  "weeks": [
+    {
+      "week": "09-28",
+      "n": 54,
+      "stories": 4
+    },
+    {
+      "week": "10-05",
+      "n": 76,
+      "stories": 9
+    },
+    {
+      "week": "10-12",
+      "n": 291,
+      "stories": 51
+    },
+    {
+      "week": "10-19",
+      "n": 1569,
+      "stories": 455
+    },
+    {
+      "week": "10-26",
+      "n": 1820,
+      "stories": 850
+    },
+    {
+      "week": "11-02",
+      "n": 2384,
+      "stories": 1129
+    },
+    {
+      "week": "11-09",
+      "n": 2105,
+      "stories": 872
+    },
+    {
+      "week": "11-16",
+      "n": 24,
+      "stories": 22
+    }
+  ],
+  "hotCoverage": {
+    "days": 31,
+    "first": "2026-10-17",
+    "last": "2026-11-16",
+    "entries": 217,
+    "stories": 129
+  },
+  "hotStories": [
+    {
+      "storyId": 1107,
+      "title": "检察公益诉讼法表决通过 2027年1月1日起施行",
+      "days": 11,
+      "peak": 42.1,
+      "firstDay": "2026-10-30",
+      "lastDay": "2026-11-15",
+      "maxReports": 97,
+      "maxSources": 13
+    },
+    {
+      "storyId": 1101,
+      "title": "三部门部署特殊困难老年人探访关爱服务",
+      "days": 7,
+      "peak": 36.5,
+      "firstDay": "2026-10-30",
+      "lastDay": "2026-11-05",
+      "maxReports": 53,
+      "maxSources": 11
+    },
+    {
+      "storyId": 129,
+      "title": "第二届全国民政行业职业技能大赛决赛在郑州举行",
+      "days": 6,
+      "peak": 34.5,
+      "firstDay": "2026-10-20",
+      "lastDay": "2026-10-28",
+      "maxReports": 24,
+      "maxSources": 6
+    },
+    {
+      "storyId": 139,
+      "title": "三部门推进普惠养老收费政策落地",
+      "days": 5,
+      "peak": 137,
+      "firstDay": "2026-10-27",
+      "lastDay": "2026-11-12",
+      "maxReports": 197,
+      "maxSources": 38
+    },
+    {
+      "storyId": 717,
+      "title": "民政部部署2026—2027年“寒冬送温暖”专项救助行动",
+      "days": 5,
+      "peak": 16.6,
+      "firstDay": "2026-10-27",
+      "lastDay": "2026-11-01",
+      "maxReports": 14,
+      "maxSources": 3
+    },
+    {
+      "storyId": 384,
+      "title": "国务院残工委印发国家残疾预防行动计划",
+      "days": 4,
+      "peak": 50.5,
+      "firstDay": "2026-10-30",
+      "lastDay": "2026-11-03",
+      "maxReports": 22,
+      "maxSources": 11
+    },
+    {
+      "storyId": 851,
+      "title": "全国命名1992个示范性老年友好型社区",
+      "days": 4,
+      "peak": 20,
+      "firstDay": "2026-11-09",
+      "lastDay": "2026-11-13",
+      "maxReports": 34,
+      "maxSources": 7
+    },
+    {
+      "storyId": 2483,
+      "title": "修订后《基金会管理条例》公布",
+      "days": 3,
+      "peak": 78.7,
+      "firstDay": "2026-11-10",
+      "lastDay": "2026-11-12",
+      "maxReports": 47,
+      "maxSources": 23
+    },
+    {
+      "storyId": 2655,
+      "title": "张雪改捐冠军车款引慈善信任讨论",
+      "days": 3,
+      "peak": 76.8,
+      "firstDay": "2026-11-12",
+      "lastDay": "2026-11-16",
+      "maxReports": 44,
+      "maxSources": 17
+    },
+    {
+      "storyId": 2096,
+      "title": "六部门出台措施促进适老用品消费",
+      "days": 3,
+      "peak": 47.1,
+      "firstDay": "2026-11-06",
+      "lastDay": "2026-11-10",
+      "maxReports": 36,
+      "maxSources": 13
+    },
+    {
+      "storyId": 1499,
+      "title": "南京两家零元面馆免费供餐引争议与监管介入",
+      "days": 3,
+      "peak": 38.7,
+      "firstDay": "2026-11-04",
+      "lastDay": "2026-11-13",
+      "maxReports": 63,
+      "maxSources": 9
+    },
+    {
+      "storyId": 1300,
+      "title": "宁夏九部门印发老年人权益保障实施意见及33项清单",
+      "days": 3,
+      "peak": 38.3,
+      "firstDay": "2026-11-03",
+      "lastDay": "2026-11-05",
+      "maxReports": 10,
+      "maxSources": 7
+    },
+    {
+      "storyId": 2422,
+      "title": "郭树清撰文主张优化社会保障制度 聚焦养老保险缺口应对",
+      "days": 3,
+      "peak": 31.4,
+      "firstDay": "2026-11-10",
+      "lastDay": "2026-11-13",
+      "maxReports": 16,
+      "maxSources": 7
+    },
+    {
+      "storyId": 2464,
+      "title": "三部门部署乡村振兴高校招生专项计划",
+      "days": 3,
+      "peak": 30.3,
+      "firstDay": "2026-11-10",
+      "lastDay": "2026-11-12",
+      "maxReports": 25,
+      "maxSources": 9
+    },
+    {
+      "storyId": 2102,
+      "title": "国务院常务会议部署健全社会救助体系",
+      "days": 3,
+      "peak": 26.4,
+      "firstDay": "2026-11-07",
+      "lastDay": "2026-11-09",
+      "maxReports": 25,
+      "maxSources": 13
+    },
+    {
+      "storyId": 268,
+      "title": "嫣然天使儿童医院免费救治西藏唇腭裂男童",
+      "days": 3,
+      "peak": 26.1,
+      "firstDay": "2026-10-23",
+      "lastDay": "2026-10-29",
+      "maxReports": 29,
+      "maxSources": 6
+    },
+    {
+      "storyId": 1020,
+      "title": "重庆社区阳光基金累计设立1164支并实现中心城区全覆盖",
+      "days": 3,
+      "peak": 23.9,
+      "firstDay": "2026-10-30",
+      "lastDay": "2026-11-05",
+      "maxReports": 12,
+      "maxSources": 4
+    },
+    {
+      "storyId": 2012,
+      "title": "全国老龄办公布50个'银龄行动'典型案例",
+      "days": 3,
+      "peak": 17.4,
+      "firstDay": "2026-11-05",
+      "lastDay": "2026-11-07",
+      "maxReports": 4,
+      "maxSources": 2
+    },
+    {
+      "storyId": 1620,
+      "title": "中国残联五大专门协会与滴滴签署三年无障碍出行合作协议",
+      "days": 2,
+      "peak": 75,
+      "firstDay": "2026-11-04",
+      "lastDay": "2026-11-05",
+      "maxReports": 24,
+      "maxSources": 18
+    },
+    {
+      "storyId": 2987,
+      "title": "新版国家医保目录纳入重症肌无力皮下注射剂型",
+      "days": 2,
+      "peak": 64.3,
+      "firstDay": "2026-11-15",
+      "lastDay": "2026-11-16",
+      "maxReports": 17,
+      "maxSources": 15
+    }
+  ],
+  "champions": [
+    {
+      "day": "2026-10-17",
+      "title": "美团、世界粮食计划署与壹基金推进乡村儿童健康项目",
+      "heat": 5
+    },
+    {
+      "day": "2026-10-20",
+      "title": "第二届全国民政行业职业技能大赛决赛在郑州举行",
+      "heat": 9.5
+    },
+    {
+      "day": "2026-10-21",
+      "title": "第二届全国民政行业职业技能大赛决赛在郑州举行",
+      "heat": 25.3
+    },
+    {
+      "day": "2026-10-22",
+      "title": "第二届全国民政行业职业技能大赛决赛在郑州举行",
+      "heat": 34.5
+    },
+    {
+      "day": "2026-10-23",
+      "title": "韩红基金会向西藏巴青地震灾区捐赠500万元",
+      "heat": 51.6
+    },
+    {
+      "day": "2026-10-24",
+      "title": "西藏那曲巴青县7.0级地震应急响应提升至三级",
+      "heat": 21.4
+    },
+    {
+      "day": "2026-10-25",
+      "title": "全国总工会拨付200万元支援西藏地震灾区",
+      "heat": 18.3
+    },
+    {
+      "day": "2026-10-26",
+      "title": "《事业单位登记管理条例》公布",
+      "heat": 25.9
+    },
+    {
+      "day": "2026-10-27",
+      "title": "三部门发文明确普惠养老收费政策",
+      "heat": 19.2
+    },
+    {
+      "day": "2026-10-28",
+      "title": "民政部部署2026—2027年“寒冬送温暖”专项救助行动",
+      "heat": 14.3
+    },
+    {
+      "day": "2026-10-29",
+      "title": "山西下达养老惠民补贴资金强化兜底保障",
+      "heat": 20.3
+    },
+    {
+      "day": "2026-10-30",
+      "title": "民政部印发《社会组织注销指引》规范社会组织退出",
+      "heat": 39.7
+    },
+    {
+      "day": "2026-10-31",
+      "title": "民政部印发《社会组织注销指引》规范社会组织退出",
+      "heat": 19.9
+    },
+    {
+      "day": "2026-11-01",
+      "title": "三部门部署特殊困难老年人探访关爱服务",
+      "heat": 7
+    },
+    {
+      "day": "2026-11-02",
+      "title": "国务院残工委印发国家残疾预防行动计划",
+      "heat": 50.5
+    },
+    {
+      "day": "2026-11-03",
+      "title": "国务院残工委印发国家残疾预防行动计划",
+      "heat": 37
+    },
+    {
+      "day": "2026-11-04",
+      "title": "中国残联五大专门协会与滴滴签署三年无障碍出行合作协议",
+      "heat": 75
+    },
+    {
+      "day": "2026-11-05",
+      "title": "两部门推进养老服务师职业资格制度建设",
+      "heat": 38.8
+    },
+    {
+      "day": "2026-11-06",
+      "title": "两部门修订发布罕见病目录制订工作程序2026年版",
+      "heat": 50.9
+    },
+    {
+      "day": "2026-11-07",
+      "title": "六部门联合发文促进适老用品消费",
+      "heat": 47.1
+    },
+    {
+      "day": "2026-11-08",
+      "title": "国务院常务会议部署健全社会救助体系",
+      "heat": 26.4
+    },
+    {
+      "day": "2026-11-09",
+      "title": "国务院常务会议部署健全社会救助体系",
+      "heat": 21.2
+    },
+    {
+      "day": "2026-11-10",
+      "title": "匿名捐赠者“顺其自然”连续28年向宁波市慈善总会捐款",
+      "heat": 39.5
+    },
+    {
+      "day": "2026-11-11",
+      "title": "三部门推进普惠养老收费政策落地",
+      "heat": 137
+    },
+    {
+      "day": "2026-11-12",
+      "title": "修订后《基金会管理条例》公布",
+      "heat": 78.7
+    },
+    {
+      "day": "2026-11-13",
+      "title": "张雪改捐冠军车拍卖款引慈善信任讨论",
+      "heat": 76.8
+    },
+    {
+      "day": "2026-11-14",
+      "title": "烟台印发民政事业“十五五”发展规划",
+      "heat": 27.6
+    },
+    {
+      "day": "2026-11-15",
+      "title": "新版国家医保目录纳入重症肌无力皮下注射剂型",
+      "heat": 64.3
+    },
+    {
+      "day": "2026-11-16",
+      "title": "上海市关爱自闭症儿童公益联合体成立，首批9家单位共同倡议",
+      "heat": 20.9
+    }
+  ],
+  "cities": [
+    {
+      "city": "北京",
+      "articles": 331,
+      "stories": 135,
+      "units": 16
+    },
+    {
+      "city": "上海",
+      "articles": 264,
+      "stories": 132,
+      "units": 16
+    },
+    {
+      "city": "南京",
+      "articles": 152,
+      "stories": 40,
+      "units": 6
+    },
+    {
+      "city": "杭州",
+      "articles": 93,
+      "stories": 49,
+      "units": 10
+    },
+    {
+      "city": "那曲",
+      "articles": 87,
+      "stories": 31,
+      "units": 3
+    },
+    {
+      "city": "广州",
+      "articles": 75,
+      "stories": 28,
+      "units": 8
+    },
+    {
+      "city": "重庆",
+      "articles": 75,
+      "stories": 32,
+      "units": 16
+    },
+    {
+      "city": "天津",
+      "articles": 61,
+      "stories": 26,
+      "units": 10
+    },
+    {
+      "city": "济南",
+      "articles": 60,
+      "stories": 28,
+      "units": 6
+    },
+    {
+      "city": "宁波",
+      "articles": 59,
+      "stories": 21,
+      "units": 8
+    },
+    {
+      "city": "赣州",
+      "articles": 52,
+      "stories": 20,
+      "units": 15
+    },
+    {
+      "city": "扬州",
+      "articles": 50,
+      "stories": 14,
+      "units": 4
+    },
+    {
+      "city": "武汉",
+      "articles": 48,
+      "stories": 24,
+      "units": 7
+    },
+    {
+      "city": "苏州",
+      "articles": 45,
+      "stories": 26,
+      "units": 9
+    },
+    {
+      "city": "金华",
+      "articles": 43,
+      "stories": 20,
+      "units": 8
+    },
+    {
+      "city": "南宁",
+      "articles": 42,
+      "stories": 19,
+      "units": 4
+    },
+    {
+      "city": "长沙",
+      "articles": 42,
+      "stories": 23,
+      "units": 8
+    },
+    {
+      "city": "银川",
+      "articles": 39,
+      "stories": 17,
+      "units": 7
+    },
+    {
+      "city": "成都",
+      "articles": 35,
+      "stories": 21,
+      "units": 13
+    },
+    {
+      "city": "深圳",
+      "articles": 33,
+      "stories": 21,
+      "units": 7
+    }
+  ],
+  "cityCount": 348,
+  "geo": {
+    "verified": 4937,
+    "pending": 11452,
+    "first": "2026-11-15",
+    "placed": 3329,
+    "placedFrom": "2026-09-29",
+    "total": 8323
+  },
+  "gaps": [
+    "热榜快照从 2026-10-17 才开始，早于此日期的「上榜天数」没有记录；热榜统计窗口为 48 小时，不是全年累计。",
+    "地点覆盖率 40.0%（3329/8323 条入选报道有已核准事件地点），城市榜是下界，不是全量。",
+    "另有 11452 条地点候选待核准，未进入任何统计。"
+  ]
+}

@@ -127,6 +127,11 @@ export interface PoolQuery extends TimelineFilters {
  * Restricts the pool to one reviewed event place. The same gates as the public
  * geography API apply: verified, event role, and the analysis must still be the
  * one the publication points at with an unchanged article revision.
+ *
+ * A city also owns the counties under it: the catalog prints one count per city
+ * (counties roll up to their parent), so the list has to agree — otherwise a card
+ * that says 南京 119 opens a page with 11. A county has no children of its own, so
+ * the same predicate selects exactly itself.
  */
 export function placeCondition(place: string | null | undefined) {
   if (!place) return sql``;
@@ -136,7 +141,8 @@ export function placeCondition(place: string | null | undefined) {
     JOIN articles ar ON ar.id = gc.article_id
     WHERE gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
       AND an.input_revision = ar.revision
-      AND gc.review_status = 'verified' AND gc.role = 'event' AND gc.place_id = ${place})`;
+      AND gc.review_status = 'verified' AND gc.role = 'event'
+      AND (gc.place_id = ${place} OR gc.place_id IN (SELECT id FROM geo_places WHERE parent_id = ${place})))`;
 }
 
 export async function loadPool(query: PoolQuery): Promise<PoolResponse> {

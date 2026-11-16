@@ -247,7 +247,7 @@ export function periodPrompt(kind: "weekly" | "monthly", startDate: string, endD
   return {
     system: promptText("report-period", {
       kindName: kind === "weekly" ? "周报" : "月报",
-      overviewLength: kind === "weekly" ? "75" : "120",
+      overviewLength: kind === "weekly" ? "150–300" : "200–400",
       // The theme count is a consequence of this number, not the other way round: with the count
       // capped the model keeps it by dropping entries into the leftover block, whereas a floor on
       // entries per theme reaches the same count while citing what it was skipping.

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Form, Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import type { Route } from "./+types/cities";
-import type { GeoReviewedResponse, PoolResponse } from "@aihot/contracts/site";
+import type { GeoCatalogPlace, GeoReviewedResponse, PoolResponse } from "@aihot/contracts/site";
 import { loadOr404, queryString } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { CITY_PLACES, cityClues, placeById } from "../features/cities/geo";
-import { CityPicker } from "../features/cities/CityPicker";
+import { CityPicker, loadCityCatalog } from "../features/cities/CityPicker";
 import { locationFromOptInIp, saveReaderLocation, useReaderLocation } from "../features/cities/reader-city";
 import { EmptyState } from "../components/ui/Page";
 
@@ -57,6 +57,19 @@ export default function CitiesPage() {
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   const [radius, setRadius] = useState(params.get("radius") ?? "100");
+  // The chips are "places with news" across the whole catalogue, not just the current
+  // filter — otherwise choosing 南京 leaves a single chip and no way to hop to another
+  // city. The picker already caches this request, so it costs nothing extra.
+  const [popular, setPopular] = useState<GeoCatalogPlace[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadCityCatalog()
+      // The catalogue appends Hong Kong, Macao and Taiwan after the mainland list, so sort
+      // again here: the chips are a "busiest first" row, not a geographic one.
+      .then(data => { if (alive) setPopular(data.places.filter(p => p.count > 0).sort((a, b) => b.count - a.count)); })
+      .catch(() => { /* the filtered places below still work as a fallback */ });
+    return () => { alive = false; };
+  }, []);
   const geo = result.kind === "reviewed" ? result.data : null;
   const catalog = geo?.catalog ?? [];
   const placeParam = params.get("place");
@@ -84,18 +97,19 @@ export default function CitiesPage() {
     } catch { setMessage("定位服务暂不可用，请手动选择城市。"); } finally { setWorking(false); }
   }
   const nearbyActive = geo && params.has("radius");
-  const chips = geo?.places.slice(0, CHIP_LIMIT) ?? [];
+  const allChips = popular ?? geo?.places ?? [];
+  const chips = allChips.slice(0, CHIP_LIMIT);
   return <div className="pb-8">
     <header className="pb-4 pt-5 lg:pt-0">
       <h1 className="text-[23px] font-semibold text-ink">城市</h1>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">选一座城市，看它正在发生什么。城市只记在这台设备上。</p>
     </header>
     <section className="mb-4 space-y-3 rounded-xl border border-line-soft bg-surface p-4" aria-label="选择城市">
+      <p className="text-[12px] text-ink-4">我的城市</p>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[13px] text-ink-3">我的城市</span>
         <CityPicker
           block
-          className="min-w-[12rem] flex-1"
+          className="min-w-[10rem] flex-1"
           current={current}
           onPick={picked => {
             saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: picked.name, lat: picked.lat, lon: picked.lon });
@@ -104,7 +118,7 @@ export default function CitiesPage() {
             choosePlace(picked.id);
           }}
         />
-        <button type="button" onClick={locate} disabled={working} className={action}>{working ? "正在识别…" : "按 IP 估计"}</button>
+        <button type="button" onClick={locate} disabled={working} className={`${action} shrink-0`}>{working ? "正在识别…" : "按 IP 估计"}</button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="nearby-radius" className="text-[12px] text-ink-3">城市周边</label>
@@ -131,7 +145,7 @@ export default function CitiesPage() {
             </Link>;
           })}
         </div>
-        {(geo.places.length > chips.length) && <p className="mt-2 px-1 text-[11.5px] text-ink-4">还有 {geo.places.length - chips.length} 个地点在上面的选择器里，可以搜城市名或先选省份。</p>}
+        {allChips.length > chips.length && <p className="mt-2 px-1 text-[11.5px] text-ink-4">还有 {allChips.length - chips.length} 个地点在上面的选择器里，可以搜城市名或先选省份。</p>}
       </section>}
       {nearbyActive && <p className="mb-3 text-[13px] text-ink-3">当前范围：所选城市中心周边 {params.get("radius")} 公里 · <Link to="/cities" className="text-accent">查看全部</Link></p>}
       {(geo.placesTruncated || geo.catalogTruncated) && <p className="mb-3 text-[12px] text-ink-4">地点较多，选项最多展示 1000 个；请用选择器搜具体城市。新闻列表仍按全库筛选。</p>}

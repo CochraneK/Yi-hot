@@ -89,7 +89,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
         aria-expanded={open}
         onClick={() => { setOpen(value => !value); setQuery(""); }}
         className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] transition-colors ${
-          block ? "w-full justify-between" : "max-w-[11rem]"
+          block ? "w-full max-w-[26rem] justify-between" : "max-w-[11rem]"
         } ${current ? "border-line bg-surface text-ink-2 hover:border-ink-4" : "border-line-strong bg-surface text-ink-2 hover:border-ink-4"}`}
       >
         <svg viewBox="0 0 16 16" aria-hidden="true" className="size-3.5 shrink-0 text-ink-4">
@@ -108,7 +108,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
           // On a phone the trigger sits at the left edge, so a right-aligned panel
           // would hang off the screen; the alignment only flips at desktop width.
           className={`absolute z-40 mt-2 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-[0_18px_44px_rgba(0,0,0,0.18)] ${
-            block ? "left-0 w-full min-w-[17rem]" : `w-[min(21rem,calc(100vw-2rem))] ${align === "right" ? "left-0 lg:left-auto lg:right-0" : "left-0"}`
+            block ? "left-0 w-full min-w-[17rem] max-w-[26rem]" : `w-[min(21rem,calc(100vw-2rem))] ${align === "right" ? "left-0 lg:left-auto lg:right-0" : "left-0"}`
           }`}
         >
           <div className="space-y-2 border-b border-line-soft p-3">

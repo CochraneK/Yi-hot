@@ -49,7 +49,13 @@ const api = createServer((req, res) => {
       }],
       highlights: [], sections: [{ label: "合成议题归档", summary: "旧的主题摘要不应在首屏重复", items: refs }],
       stories: refs.map(r => ({ ...r, label: "合成议题归档" })),
-      flashes: [], peers: null, cover: null,
+      flashes: [{ ...refs[0], itemId:"fixture-flash", title:"合成快讯：专项公开征求意见" }],
+      peers: { label:"邻域", note:null, items:[{
+        key:"sibling:1", peerId:"sibling", peerName:"合成姊妹站", peerUrl:"https://example.org/peer",
+        title:"合成邻域报道", summary:"合成邻域摘要", reason:null, category:"公益", score:null,
+        publishedAt:"2026-11-15T00:00:00Z", url:"https://example.org/peer/article",
+        sourceName:"合成独立站点", originalUrl:"https://example.org/original",
+      }] }, cover: null,
       yesterdayHot: { day: "2026-11-15", computedAt: "2026-11-15T15:30:00Z",
         entries: [{ rank: 1, storyPublicId: "story-a", itemId: "fixture-policy",
           title: "昨日热榜合成头条", sourceName: "合成官方信源", heat: 18.7 }] },
@@ -229,8 +235,18 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   assert.match(html, /本版原摘要/, "keep former section summary available under a foldout");
   assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("查看本期原摘要"),
     "put historic ranking before the legacy summary");
-    assert.match(html, /<details id="report-archive"[^>]*>/);
-  assert.doesNotMatch(html, /<details id="report-archive"[^>]*\sopen(?:\s|>|=)/);
+    assert.match(html, /00 ·/, "analysis has the reserved page 00");
+  assert.match(html, /本周观察/, "00 is the evidence-led weekly analysis");
+  assert.match(html, /<section id="report-archive"[^>]*>/,
+    "the website's 01+ news pages must be visible without opening an outer foldout");
+  assert.doesNotMatch(html, /<details id="report-archive"/);
+  assert.ok(html.indexOf('id="s-yesterday-hot"') < html.indexOf('id="s-1"'),
+    "01 historical hot ranks before the first subject");
+  assert.ok(html.indexOf('id="s-1"') < html.indexOf('id="s-flash"'),
+    "article categories precede overflow news");
+  assert.ok(html.indexOf('id="s-flash"') < html.indexOf('id="s-peers"'),
+    "peer neighbourhood must be the very last edition content section");
+  assert.match(html, /本版原摘要/, "the original summaries remain individually expandable");
   assert.ok(html.indexOf("项目评价开始关注结果与反馈") < html.indexOf('id="report-archive"'),
     "evidence-driven body should appear before the full list of news");
   assert.doesNotMatch(html, /aria-label="头版"/, "do not repeat an overview before the evidence narrative");

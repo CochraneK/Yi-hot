@@ -336,8 +336,166 @@ def _hot_html(hot, base, limit=6, scope="近 48 小时", theme=None):
     return '<div style="margin:22px 0 0">' + _section_label("热点榜 · " + scope, theme, "4px") + "".join(rows) + '</div>'
 
 
+
+def _report_insights(report):
+    """Use the already-reviewed public-report insight projection, never a second email opinion."""
+    return [
+        it for it in (report.get("insights") or [])[:3]
+        if isinstance(it, dict) and it.get("claim") and
+        any(isinstance(e, dict) and e.get("available", True) for e in (it.get("evidence") or []))
+    ]
+
+
+def _safe_issue_link(base, item):
+    """Use the site's own public article link; ignore untrusted external URL strings."""
+    from urllib.parse import quote
+    item_id = item.get("itemId") if isinstance(item, dict) else None
+    return base.rstrip("/") + "/items/" + quote(str(item_id), safe="") if item_id else ""
+
+
+def _analysis_00(report, base, theme, brief, intro):
+    """HTML and plain text for the main 00 page. No model calls here."""
+    esc = html.escape
+    insights = _report_insights(report)
+    heading = "00 · 本期分析" if insights else ("00 · 今日要点" if report.get("kind") == "daily" else "00 · 本期要点")
+    parts = ['<section style="margin:22px 0 24px">', _section_label(heading, theme)]
+    lines = [heading]
+    if insights:
+        for insight in insights:
+            claim = str(insight.get("claim") or "")
+            reasoning = str(insight.get("reasoning") or "")
+            alternative = str(insight.get("alternative") or "")
+            watch = str(insight.get("watchFor") or "")
+            parts.append('<div style="border-bottom:1px solid ' + LINE + ';padding:12px 0">'
+                         + '<h2 style="font-size:18px;line-height:1.45;color:' + INK + ';margin:0 0 7px">'
+                         + esc(claim) + '</h2>')
+            lines.extend(["", claim])
+            for e in (insight.get("evidence") or [])[:3]:
+                if not isinstance(e, dict) or not e.get("available", True):
+                    continue
+                title = str(e.get("title") or "").strip()
+                if not title:
+                    continue
+                source = _clean_source(e.get("sourceName"))
+                link = _safe_issue_link(base, e)
+                label = esc(title) + (" · " + esc(source) if source else "")
+                parts.append('<p style="margin:5px 0;font-size:13px;line-height:1.65;color:#4b5563">'
+                             + ('<a href="' + esc(link, quote=True) + '" style="color:' + INK + '">' + label + '</a>'
+                                if link else label) + '</p>')
+                lines.append("依据：" + title + ((" · " + source) if source else "") + (("\n" + link) if link else ""))
+            if reasoning:
+                parts.append('<p style="margin:10px 0 0;color:#374151;font-size:14px;line-height:1.8">'
+                             + esc(reasoning) + '</p>')
+                lines.append("分析：" + reasoning)
+            if alternative:
+                parts.append('<p style="margin:8px 0 0;color:#6b7280;font-size:12.5px;line-height:1.7">'
+                             + '<b>另一种解释：</b>' + esc(alternative) + '</p>')
+                lines.append("另一种解释：" + alternative)
+            if watch:
+                parts.append('<p style="margin:7px 0 0;color:#6b7280;font-size:12.5px;line-height:1.7">'
+                             + '<b>下期观察：</b>' + esc(watch) + '</p>')
+                lines.append("下期观察：" + watch)
+            parts.append("</div>")
+    else:
+        # Legacy daily editions have only a factual lead. Keep the old optional
+        # AnyDoor brief as fallback, never replace a validated report insight.
+        text = str(brief or intro or "").strip()
+        if text:
+            parts.append('<p style="font-size:14.5px;line-height:1.85;color:#374151;margin:9px 0 0">'
+                         + esc(text[:380]) + '</p>')
+            lines.append(text[:380])
+        refs = [e for e in (report.get("highlights") or []) if isinstance(e, dict) and e.get("available", True)][:3]
+        for e in refs:
+            url = _safe_issue_link(base, e)
+            title = str(e.get("title") or "").strip()
+            if not title:
+                continue
+            parts.append('<p style="margin:8px 0;font-size:13.5px;line-height:1.65">'
+                         + ('<a href="' + esc(url, quote=True) + '" style="color:' + INK + '">'
+                            + esc(title) + '</a>' if url else esc(title)) + '</p>')
+            lines.append("新闻：" + title + (("\n" + url) if url else ""))
+    parts.append("</section>")
+    return "".join(parts), "\n".join(lines)
+
+
+def _email_folded_sections(report, base, theme):
+    """01+ stays a *short* index in email regardless of client HTML-details support.
+
+    Clients that support <details> may expand a few linked examples. Clients that
+    strip it still see only compact headings/previews, not the full report.
+    Weekly/monthly sections link to the exact web anchors. Daily report pages
+    are intentionally private/hidden, so their preview links go to PUBLIC items.
+    """
+    esc = html.escape
+    rows = []
+    plain = []
+    number = 0
+    is_daily = report.get("kind") == "daily"
+    report_link = report_url(base, report)
+
+    def row(label, count, anchor, previews, source_links=False):
+        nonlocal number
+        if not count:
+            return
+        number += 1
+        mark = f"{number:02d}"
+        jump = (report_link + "#" + anchor) if (anchor and not is_daily) else ""
+        title = f"{mark} · {label}"
+        preview_html = ""
+        for item in previews[:3]:
+            if not isinstance(item, dict) or not item.get("available", True):
+                continue
+            it_title = str(item.get("title") or "").strip()
+            if not it_title:
+                continue
+            link = item.get("url") if source_links else _safe_issue_link(base, item)
+            if not isinstance(link, str) or not link.startswith(("https://", "http://")):
+                link = ""
+            preview_html += ('<div style="margin:7px 0;font-size:12.5px;line-height:1.65">'
+                             + ('<a href="' + esc(link, quote=True) + '" style="color:' + INK + '">'
+                                + esc(it_title) + '</a>' if link else esc(it_title)) + '</div>')
+        more = ('<a href="' + esc(jump, quote=True) + '" style="font-size:12px;color:'
+                + theme["aux_ink"] + '">进入 YiHot 阅读本版全部新闻</a>') if jump else ""
+        # The whole HTML stays bounded even if a non-supporting client expands
+        # <details>; it contains at most 3 article links, never long summaries.
+        rows.append('<details style="border-top:1px solid ' + LINE + ';padding:10px 0">'
+                    + '<summary style="font-size:14px;font-weight:600;color:' + INK + '">'
+                    + esc(title) + '<span style="font-size:12px;color:' + MUTED + ';font-weight:400"> · '
+                    + str(count) + ' 条</span></summary>'
+                    + '<div style="padding:6px 0 4px 22px">' + preview_html + more + '</div></details>')
+        plain.append(title + f" · {count} 条" + (("\n" + jump) if jump else ""))
+
+    hot = report.get("yesterdayHot") or {}
+    hot_entries = [e for e in (hot.get("entries") or []) if isinstance(e, dict)]
+    if hot_entries:
+        row("昨日热榜", len(hot_entries), "s-yesterday-hot", hot_entries)
+    blocks = report.get("sections") or []
+    if not blocks:
+        blocks = [{"label": t.get("heading") or "", "items": t.get("storyRefs") or []}
+                  for t in (report.get("themes") or []) if isinstance(t, dict)]
+    for i, section in enumerate(blocks):
+        items = [e for e in (section.get("items") or []) if isinstance(e, dict) and e.get("available", True)]
+        if items:
+            row(str(section.get("label") or "本期新闻"), len(items), f"s-{i+1}", items)
+    flashes = [e for e in (report.get("flashes") or []) if isinstance(e, dict) and e.get("available", True)]
+    if flashes:
+        row("快讯", len(flashes), "s-flash", flashes)
+    # The peer neighbourhood is ALWAYS the last content section, not an input
+    # to the model's claim evidence and not mixed into YiHot's local sources.
+    peer = report.get("peers") or {}
+    peer_items = [p for p in (peer.get("items") or []) if isinstance(p, dict)]
+    if peer_items:
+        row(str(peer.get("label") or "邻域"), len(peer_items), "s-peers", peer_items, source_links=True)
+    if not rows:
+        return "", ""
+    wrapper = '<section style="margin:24px 0 0">' + _section_label("01 起 · 新闻版面", theme)
+    wrapper += '<p style="font-size:12px;color:' + MUTED + ';line-height:1.7;margin:0 0 12px">'
+    wrapper += '邮件只显示简短目录和少量可点击新闻；不同邮箱的展开功能可能受限。周报、月报可到 YiHot 按版面阅读完整内容。</p>'
+    return wrapper + "".join(rows) + "</section>", "\n".join(plain)
+
+
 def render(report, base, unsubscribe_url="", hot=None, brief=None):
-    esc = lambda v: html.escape(str(v or ""))
+    esc = lambda v, quote=True: html.escape(str(v or ""), quote=quote)
     kind = report.get("kind", "daily")
     kind_name = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(kind, "公益总报")
     theme = KIND_THEME.get(kind, KIND_THEME["daily"])
@@ -346,50 +504,10 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
     headline = lead.get("title") or report.get("title") or ("公益总报 · " + kind_name)
     intro = lead.get("leadParagraph") or report.get("overview") or ""
 
-    # LLM "本期速览" replaces the long lead paragraph when available (it already
-    # condenses the lead + every section). Falls back to the site's own lead text.
-    brief_html = ""
-    if brief:
-        brief_html = ('<div style="margin:16px 0 2px;padding:14px 16px;background:' + theme["soft"]
-                      + ';border:1px solid ' + theme["border"] + ';border-left:3px solid ' + theme["accent"]
-                      + ';border-radius:10px">' + _section_label("本期速览 · AI 浓缩", theme)
-                      + '<p style="margin:0;color:#374151;line-height:1.85;font-size:14.5px">' + esc(brief) + '</p></div>')
-    lead_html = ""
-    if not brief and intro:
-        lead_html = '<p style="color:#4b5563;line-height:1.85;margin:0 0 4px;font-size:15px">' + esc(intro[:260]) + ('…' if len(intro) > 260 else '') + '</p>'
-
-    # Gather section/theme blocks. Daily reports use "sections";
-    # weekly/monthly reports use "themes" (heading + summary + storyRefs). Both are rendered.
-    blocks = []
-    for section in report.get("sections") or []:
-        items = [i for i in (section.get("items") or []) if i.get("available", True)]
-        if items:
-            blocks.append((section.get("label") or "", section.get("summary") or "", items))
-    # NOTE: do not name this loop variable `theme` — it would shadow the colour theme dict above.
-    for topic in report.get("themes") or []:
-        refs = topic.get("storyRefs") or []
-        if refs:
-            blocks.append((topic.get("heading") or "", topic.get("summary") or "", refs))
-
-    # Highlights (daily "今日重点"): the public DTO carries full item objects here.
-    highlight_items = [it for it in (report.get("highlights") or []) if isinstance(it, dict)][:3]
-    highlights_html = ""
-    if highlight_items:
-        cards = []
-        for it in highlight_items:
-            title = esc(it.get("title") or "")
-            url = _link_for(it, base)
-            src_name = esc(_clean_source(it.get("sourceName")))
-            role = it.get("role") or ""
-            pub = _fmt_cn_date(it.get("publishedAt"))
-            disc = _fmt_cn_date(it.get("discoveredAt"))
-            date_piece = pub or (("收录 " + disc) if disc else "")
-            parts = [p for p in [src_name, (esc(role) if role else ""), date_piece] if p]
-            sub = ('<div style="color:#6b7280;font-size:12px;margin-top:4px">' + " · ".join(parts) + '</div>') if parts else ""
-            card = '<a href="' + esc(url) + '" style="display:block;text-decoration:none;background:#fff8f7;border:1px solid #f0e2df;border-left:3px solid ' + theme["accent"] + ';border-radius:10px;padding:12px 14px;margin-bottom:8px">' \
-                   '<div style="color:' + INK + ';font-weight:600;font-size:14px;line-height:1.5">' + title + '</div>' + sub + '</a>'
-            cards.append(card)
-        highlights_html = '<div style="margin:18px 0 4px">' + _section_label("今日重点", theme, "8px") + "".join(cards) + '</div>'
+    # The report's own audited insights are the 00 content, not a second
+    # unrelated model summary. Legacy reports fall back to brief/lead.
+    analysis_html, analysis_text = _analysis_00(report, base, theme, brief, intro)
+    sections_html, sections_text = _email_folded_sections(report, base, theme)
 
     # Metrics strip ("本期速览").
     metrics = report.get("metrics") or {}
@@ -406,49 +524,12 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
     if chips:
         metrics_html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px">' + "".join(chips) + '</div>'
 
-    # Body blocks — condensed: keep the LLM-written section summary (info-dense),
-    # show only a few compact headlines, and point the rest to the full report.
+    # Email 01+ intentionally contains only an indexed preview. The full
+    # edition still lives on the website (for weekly/monthly); daily remains
+    # private, so its sample headlines link directly to public item pages.
     url = report_url(base, report)
-    per_section = BRIEF_ITEMS.get(kind, 3)
-    total_hidden = 0
-    block_parts = []
-    for label, summary, items in blocks:
-        shown = items[:per_section]
-        hidden = len(items) - len(shown)
-        total_hidden += hidden
-        bitems = "".join(_item_html(it, base, compact=True) for it in shown)
-        head = ""
-        if label:
-            head = '<h2 style="margin:24px 0 4px;font-size:17px;color:' + INK + ';line-height:1.4;border-left:4px solid ' + theme["aux"] + ';padding-left:10px">' + esc(label) + ('<span style="font-size:12px;font-weight:400;color:#9ca3af;margin-left:8px">' + str(len(items)) + ' 条</span>' if len(items) > per_section else '') + '</h2>'
-        summ = ""
-        if summary:
-            summ = '<p style="margin:0 0 6px;color:#4b5563;line-height:1.7;font-size:14px">' + esc(summary) + '</p>'
-        more = ""
-        if hidden > 0:
-            more = '<div style="margin:8px 0 0;font-size:13px"><a href="' + esc(url) + '" style="color:' + theme["aux_ink"] + ';text-decoration:none">本板块另有 ' + str(hidden) + ' 条 → 在完整总报中查看</a></div>'
-        block_parts.append(head + summ + bitems + more)
-    blocks_html = "".join(block_parts)
-    total_items = sum(len(b[2]) for b in blocks)
-    overview_note = ""
-    if total_items > 0:
-        overview_note = ('<div style="margin:26px 0 0;padding:12px 14px;background:#fdf7f5;border:1px dashed #edd9d4;border-left:3px solid ' + theme["aux"] + ';border-radius:10px;'
-                         + 'font-size:13px;color:' + MUTED + ';line-height:1.7">本期共 ' + str(total_items) + ' 条动态，邮件精选 '
-                         + str(sum(min(len(b[2]), per_section) for b in blocks)) + ' 条；'
-                         + '<a href="' + esc(url) + '" style="color:' + theme["aux_ink"] + ';text-decoration:none;font-weight:600">查看全部 →</a></div>')
-    hot_html = _hot_html(hot, base, scope=scope or "近 48 小时", theme=theme)
 
-    # Flashes (daily overflow) as a light "更多速递" list.
-    flashes = report.get("flashes") or []
-    flashes_html = ""
-    if flashes:
-        fl = []
-        for f in flashes[:12]:
-            ft = esc(f.get("title") or "")
-            furl = f.get("url") or ""
-            fl.append('<li style="margin:0 0 6px;color:#374151;font-size:13px;line-height:1.6">' + ('<a href="' + esc(furl) + '" style="color:' + INK + ';text-decoration:none">' + ft + '</a>' if furl else ft) + '</li>')
-        flashes_html = '<div style="margin:22px 0 0">' + _section_label("更多速递", theme) + '<ul style="padding-left:18px;margin:0">' + "".join(fl) + '</ul></div>'
-
-    preheader = esc(brief or intro or headline)[:140]
+    preheader = esc((_report_insights(report)[0].get("claim") if _report_insights(report) else (brief or intro or headline)))[:140]
     unsub = ""
     if unsubscribe_url:
         unsub = '<br><a href="' + esc(unsubscribe_url) + '" style="color:#4b5563">退订邮件</a>'
@@ -473,20 +554,17 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
         '</div>'
         + ('<div style="margin-top:8px"><span style="display:inline-block;background:' + theme["aux_soft"] + ';color:' + theme["aux_ink"] + ';font-size:12px;font-weight:600;padding:3px 11px;border-radius:999px"><span style="display:inline-block;width:6px;height:6px;background:' + theme["aux"] + ';border-radius:50%;margin-right:6px;vertical-align:middle"></span>' + esc(scope) + '</span></div>' if scope else "")
         + '<h1 style="font-size:25px;line-height:1.35;margin:14px 0 10px;color:' + INK + '">' + esc(headline) + '</h1>'
-        + brief_html
-        + lead_html
+        + analysis_html
         + metrics_html
-        + highlights_html
-        + hot_html
-        + blocks_html
-        + overview_note
-        + flashes_html
-        + '<p style="margin:24px 0 0"><a href="' + esc(url) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
-        '</div>'
+        + sections_html
+        + ('<p style="margin:24px 0 0"><a href="' + esc(url, quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
+           if kind != "daily"
+           else '<p style="margin:24px 0 0"><a href="' + esc(base.rstrip("/") + "/all", quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">查看 Yi-Hot 最新动态</a></p>')
+        + '</div>'
         '<p style="text-align:center;color:#6b7280;font-size:12px;line-height:1.9;margin:16px 0 0">你收到此邮件，是因为该地址已确认订阅 Yi-Hot 公益总报。' + unsub + '</p>'
         '</main></body></html>'
     )
-    text = headline + "\n\n" + (brief or intro) + "\n\n" + ("完整总报：" + url + "\n") + (("\n退订：" + unsubscribe_url + "\n") if unsubscribe_url else "")
+    text = headline + "\n\n" + analysis_text + ("\n\n01 起 · 新闻版面\n" + sections_text if sections_text else "") + "\n\n" + ("完整总报：" + url + "\n" if kind != "daily" else "日报全文入口未公开，以上新闻标题可单独访问。\n") + (("\n退订：" + unsubscribe_url + "\n") if unsubscribe_url else "")
     return body, text
 
 
@@ -585,7 +663,7 @@ def deliver_outbox(item, base, hot=None, state=None):
         report = payload["report"]
         label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
         subject = subject_for(report, label)
-        brief = brief_for(report, state if state is not None else {})
+        brief = None if _report_insights(report) else brief_for(report, state if state is not None else {})
         body, text = render(report, base, payload.get("unsubscribeUrl", ""), hot, brief)
     send(subject, body, text, recipient, payload.get("unsubscribeUrl", "") if item["kind"] == "report" else "")
 
@@ -593,12 +671,13 @@ def deliver_outbox(item, base, hot=None, state=None):
 def process_outbox(base, state=None):
     state = state if state is not None else {}
     api("/api/ingest/newsletter/sync", {})
-    hot = fetch_hot(base)
+    # Live hot is not relevant to a published period issue; the report now owns
+    # its frozen historical leaderboard, if that date has one.
     items = api("/api/ingest/newsletter/claim", {"limit": 20}).get("items", [])
     results = []
     for item in items:
         try:
-            deliver_outbox(item, base, hot, state)
+            deliver_outbox(item, base, None, state)
             api("/api/ingest/newsletter/result", {"id": item["id"], "status": "sent", "response": "SMTP accepted"})
             results.append({"id": item["id"], "status": "sent"})
         except smtplib.SMTPRecipientsRefused as exc:
@@ -686,7 +765,8 @@ def save_state(path, state):
 
 
 def deliver(report, base, target, state, test=False):
-    body, text = render(report, base, "", fetch_hot(base), brief_for(report, state))
+    body, text = render(report, base, "", None,
+                        None if _report_insights(report) else brief_for(report, state))
     label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
     subject = subject_for(report, label, test)
     key = f"{report['kind']}:{report['key']}:{target}"

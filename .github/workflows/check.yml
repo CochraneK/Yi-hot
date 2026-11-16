@@ -61,6 +61,10 @@ jobs:
         run: node --test tests/opportunity-source-candidates.test.mjs
       - name: DeepSeek Flash switch utility tests (offline)
         run: python3 -m unittest discover -s tests -p test_switch_deepseek_flash.py
+      - name: Report email 00/01 layout and source consistency (offline synthetic fixtures)
+        run: |
+          python3 -m py_compile deploy/email-delivery/send_reports.py
+          python3 -m unittest discover -s tests -p test_report_email_layout.py -v
       - name: Charity SQLite read-only preflight tests (synthetic fixtures only)
         run: python3 -m unittest discover -s tests -p test_charity_db_preflight.py -v
       - name: Offline charity organization preview and WeChat migration tests

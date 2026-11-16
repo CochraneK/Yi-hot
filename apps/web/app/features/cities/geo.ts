@@ -3,6 +3,22 @@
  * This small fallback dictionary is only for text clues and manual city choices.
  * Reviewed maps and local badges use the canonical event-place index.
  */
+/** Stable Chinese labels for the known map countries and territories.
+ * Intl.DisplayNames varies across Node/Chromium ICU releases (e.g. MO), which
+ * changes <option> text during hydration. Unknown ISO codes remain explicit.
+ */
+const COUNTRY_LABELS: Readonly<Record<string, string>> = {
+  CN: "中国", HK: "香港", MO: "澳门", TW: "台湾",
+  SG: "新加坡", JP: "日本", KR: "韩国", TH: "泰国",
+  VN: "越南", MY: "马来西亚", GB: "英国", FR: "法国",
+  DE: "德国", RU: "俄罗斯", US: "美国", KE: "肯尼亚",
+  CH: "瑞士",
+};
+
+export function cityCountryLabel(code: string): string {
+  return COUNTRY_LABELS[code] ?? code;
+}
+
 export interface CityPlace {
   id: string;
   name: string;

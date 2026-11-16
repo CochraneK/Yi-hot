@@ -10,6 +10,7 @@ import { scheduleMpReconcile } from "@aihot/backend/sources/mp";
 import { refreshSourceIcons } from "@aihot/backend/sources/icons";
 import { refreshPeers } from "@aihot/backend/peers/refresh";
 import { computeHotRanking, snapshotHeat } from "@aihot/backend/events/hot";
+import { autoApprovePending } from "@aihot/backend/editorial/geo-auto-review";
 import { refreshStoryStatuses } from "@aihot/backend/events/digest";
 import { linkRelatedStories } from "@aihot/backend/events/group";
 import { catchUpReports, composeDaily, composeMonthly, composeWeekly, refillPeriod } from "@aihot/backend/reports/compose";
@@ -48,6 +49,11 @@ export const SCHEDULES: Scheduled[] = [
   { name: "peers.refresh", cron: "25 * * * *", run: refreshPeers },
   { name: "stories.status", cron: "7 * * * *", run: refreshStoryStatuses },
   { name: "stories.links", cron: "12 * * * *", run: linkRelatedStories },
+  // Location candidates arrive with each analysis and need a decision before they can
+  // reach the map. The pass is rules only — no model call — and it can only approve,
+  // so running it hourly keeps the map in step with the feed without widening what is
+  // allowed: anything it cannot settle stays pending for a human.
+  { name: "geo.auto-approve", cron: "20 * * * *", run: () => autoApprovePending({ limit: 800, apply: true }) },
   ...(FEATURES.dailyReports || FEATURES.dailyNewsletter ? [{ name: "reports.daily", cron: "0 8 * * *", missed: "once" as const, run: () => composeDaily(beijingDate(Date.now())) }] : []),
   // Weekly and monthly reports run before the 09:00 peak opens: the same model calls at half price,
   // and the report is still on the site before the working day starts.

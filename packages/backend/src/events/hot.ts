@@ -184,11 +184,22 @@ export async function computeHotRanking(at = new Date()): Promise<{ id: number; 
         .slice(0, 40).map(({ name, kind, tier, site, outlet }) => (site ? { name, kind, tier, site, outlet } : { name, kind, tier })),
     });
   }
+  const evidence = { windowHours, halfLifeHours: HALF_LIFE_HOURS, minParticipants: MIN_PARTICIPANTS, candidates: rows.length };
   const [row] = await sql<{ id: number }[]>`
     INSERT INTO hot_rankings (computed_at, rule_version, entries, evidence, published)
-    VALUES (${at}, ${HOT_RULE_VERSION}, ${sql.json(entries as never)},
-            ${sql.json({ windowHours, halfLifeHours: HALF_LIFE_HOURS, minParticipants: MIN_PARTICIPANTS, candidates: rows.length } as never)}, true)
+    VALUES (${at}, ${HOT_RULE_VERSION}, ${sql.json(entries as never)}, ${sql.json(evidence as never)}, true)
     RETURNING id`;
+  // The day's board is the last one computed that day: each run overwrites the row, so the yearly
+  // archive keeps one board per day instead of one per five minutes. The guard keeps a late backfill
+  // of an earlier hour from replacing a newer board with an older one.
+  await sql`
+    INSERT INTO hot_daily (day, computed_at, rule_version, entries, evidence)
+    VALUES (((${at} AT TIME ZONE 'Asia/Shanghai'))::date, ${at}, ${HOT_RULE_VERSION},
+            ${sql.json(entries as never)}, ${sql.json(evidence as never)})
+    ON CONFLICT (day) DO UPDATE
+      SET computed_at = EXCLUDED.computed_at, rule_version = EXCLUDED.rule_version,
+          entries = EXCLUDED.entries, evidence = EXCLUDED.evidence, inserted_at = now()
+      WHERE hot_daily.computed_at < EXCLUDED.computed_at`;
   // Keep a bounded history of rankings.
   await sql`DELETE FROM hot_rankings WHERE computed_at < now() - interval '30 days'`;
   return { id: row!.id, entries: entries.length, windowHours };

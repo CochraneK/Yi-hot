@@ -255,12 +255,6 @@ export default function HotPage() {
         )}
       </header>
 
-      {/* Same two-day window as the ranking, read geographically: what is being
-          talked about, and where it is being filed from. */}
-      <div className="mb-5">
-        <CityHeatMap compact points={heat.points} hours={heat.hours} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
-      </div>
-
       {!lead ? (
         <div className="card rounded-sheet">
           <EmptyState title="暂时没有热点">还没有足够多来源共同讨论的事件。</EmptyState>
@@ -268,11 +262,19 @@ export default function HotPage() {
       ) : (
         <>
           <section aria-label="热度前三" className="grid gap-3 lg:grid-cols-12 lg:gap-4">
-            <div className="grid lg:col-span-7 lg:row-span-2 xl:col-span-8">
+            <div className="grid lg:col-span-7 xl:col-span-8">
               <Lead e={lead} />
             </div>
+            {/* Same two-day window as the ranking, read geographically. It takes the
+                slot beside the lead story, so the 2nd and 3rd entries drop below. */}
+            <div className="self-start lg:col-span-5 xl:col-span-4">
+              <CityHeatMap compact mapHeight="h-[260px] sm:h-[280px]" points={heat.points} hours={heat.hours} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
+            </div>
+          </section>
+
+          <section aria-label="热度二三名" className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
             {runners.map((e) => (
-              <div key={e.story.publicId} className="grid lg:col-span-5 xl:col-span-4">
+              <div key={e.story.publicId} className="grid">
                 <Runner e={e} />
               </div>
             ))}

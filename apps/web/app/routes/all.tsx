@@ -150,6 +150,9 @@ export default function AllPage() {
           ))}
         </select>
       )}
+      {here && (
+        <Link to="/cities" className="px-1 text-[12px] text-ink-4 underline-offset-2 hover:text-ink-2 hover:underline">换城市</Link>
+      )}
       <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
         只看精选
       </ToggleChip>

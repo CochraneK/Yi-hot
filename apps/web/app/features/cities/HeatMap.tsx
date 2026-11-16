@@ -13,12 +13,14 @@ import "leaflet/dist/leaflet.css";
  * waiting for a click. Only reviewed event places are drawn — the same gate as
  * the city page.
  */
-export function CityHeatMap({ points, hours, onChoose, compact = false }: {
+export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeight = "h-[300px] sm:h-[380px]" }: {
   points: GeoHeatPoint[];
   hours: number;
   onChoose: (id: string) => void;
   /** On 热点 the page already ends with its own ranking, so the city list is dropped. */
   compact?: boolean;
+  /** The map shrinks when the card shares a row with the lead story. */
+  mapHeight?: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState(true);
@@ -94,7 +96,7 @@ export function CityHeatMap({ points, hours, onChoose, compact = false }: {
         <button type="button" onClick={() => { setFailed(false); setAttempt(n => n + 1); }} className="font-medium text-accent hover:underline">重试</button>
       </div>
     ) : enabled ? (
-      <div ref={host} className="relative z-0 h-[300px] w-full bg-bg-sunk sm:h-[380px]" aria-label="可拖动、缩放的城市热力地图" />
+      <div ref={host} className={`relative z-0 w-full bg-bg-sunk ${mapHeight}`} aria-label="可拖动、缩放的城市热力地图" />
     ) : (
       <div className="border-t border-line-soft px-4 py-3 text-[12.5px] text-ink-3">圆点越大，近 {hours} 小时的报道越多；点城市看它的新闻。</div>
     )}

@@ -23,7 +23,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta() {
   return pageMeta({
     title: "邻域",
-    description: "同系邻域与其他邻域：跨行业信息站、科研数据库和公共资源入口，按方向浏览，点标题直达原站。",
+    description: "按领域浏览独立信息聚合站：候选与正式站按主题展示，点击站名查看原站，点最新条目阅读原文。",
     path: "/peers",
   });
 }

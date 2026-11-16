@@ -8,6 +8,7 @@ an email-friendly view, and records one receipt per report and recipient in a lo
 import argparse
 import email
 import html
+import hashlib
 import imaplib
 import json
 import os
@@ -18,7 +19,7 @@ import tempfile
 import datetime
 from email.message import EmailMessage
 from pathlib import Path
-from email.utils import getaddresses
+from email.utils import getaddresses, parseaddr
 from urllib.request import Request, urlopen
 
 
@@ -766,7 +767,7 @@ def save_state(path, state):
 
 def deliver(report, base, target, state, test=False):
     body, text = render(report, base, "", None,
-                        None if _report_insights(report) else brief_for(report, state))
+                        None if test or _report_insights(report) else brief_for(report, state))
     label = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(report["kind"], "公益总报")
     subject = subject_for(report, label, test)
     key = f"{report['kind']}:{report['key']}:{target}"
@@ -778,21 +779,84 @@ def deliver(report, base, target, state, test=False):
     return {"recipient": target, "status": "sent", "key": key}
 
 
+
+def preview_from_json(source, output_dir, base):
+    """Render an explicit DTO snapshot. Never call delivery, state, bounce or LLM paths."""
+    from urllib.parse import urlsplit
+    parsed = urlsplit(base)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ValueError("preview base must be an HTTP(S) site URL without credentials, query or fragment")
+    source = Path(source)
+    if source.stat().st_size > 10 * 1024 * 1024:
+        raise ValueError("report JSON exceeds 10 MiB")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    report = payload.get("report") if isinstance(payload, dict) and "report" in payload else payload
+    if not isinstance(report, dict):
+        raise ValueError("expected a public report DTO or latest-page object containing report")
+    kind, key = report.get("kind"), report.get("key")
+    if kind not in ("daily", "weekly", "monthly") or not isinstance(key, str):
+        raise ValueError("invalid report kind/key")
+    if kind == "weekly":
+        if not re.fullmatch(r"[0-9]{4}-W[0-9]{2}", key): raise ValueError("invalid weekly key")
+        datetime.date.fromisocalendar(int(key[:4]), int(key[-2:]), 1)
+    elif kind == "daily":
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", key): raise ValueError("invalid daily key")
+        datetime.date.fromisoformat(key)
+    else:
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}", key): raise ValueError("invalid monthly key")
+        datetime.date.fromisoformat(key + "-01")
+    body, text = render(report, base.rstrip("/"), brief=None)
+    # A fresh directory prevents accidental overwrites and mixing different issue previews.
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=False, mode=0o700)
+    stem = kind + "-" + key
+    outputs = {"html": destination / (stem + ".html"), "text": destination / (stem + ".txt")}
+    for name, content in (("html", body), ("text", text)):
+        fd = os.open(outputs[name], os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as out: out.write(content)
+    return {"mode": "preview", "kind": kind, "key": key,
+            "html": str(outputs["html"]), "text": str(outputs["text"]),
+            "rendererSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "insights": len(_report_insights(report)), "hasYesterdayHot": bool(report.get("yesterdayHot")),
+            "sent": False, "modelCalls": 0,
+            "note": "Snapshot preview only; no current withdrawal check or delivery proof."}
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--test", action="store_true", help="send the latest weekly as a test; do not write a receipt")
-    parser.add_argument("--initialize", action="store_true", help="initialize bounce cursor without sending")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--preview-json", type=Path, help="render a supplied report DTO locally; never send or call a model")
+    parser.add_argument("--preview-dir", type=Path, help="new directory for offline HTML/text files")
+    parser.add_argument("--preview-base", help="public site link prefix used inside the preview")
+    modes.add_argument("--test", action="store_true", help="send one controlled test; requires --test-to and never uses EMAIL_TO")
+    parser.add_argument("--test-to", help="one explicitly authorized test recipient; never a comma-separated list")
+    modes.add_argument("--initialize", action="store_true", help="initialize bounce cursor without sending")
     parser.add_argument("--kind", choices=("weekly", "monthly"))
     args = parser.parse_args()
     base = env("YIHOT_BASE") or "https://49.233.72.222/yihot"
+    if args.preview_json is not None:
+        if args.preview_dir is None: parser.error("--preview-json requires --preview-dir (a new directory)")
+        if args.kind is not None or args.test_to is not None: parser.error("preview cannot set --kind or --test-to")
+        print(json.dumps(preview_from_json(args.preview_json, args.preview_dir, (args.preview_base if args.preview_base is not None else base)), ensure_ascii=False))
+        return
+    if args.preview_dir is not None or args.preview_base is not None:
+        parser.error("--preview-dir/--preview-base require --preview-json")
+    if args.kind is not None and not args.test:
+        parser.error("--kind requires --test; it must not accidentally process the subscriber outbox")
+    if args.test_to is not None and not args.test:
+        parser.error("--test-to requires --test")
+    if args.test:
+        target = (args.test_to or "").strip()
+        display_name, parsed_address = parseaddr(target)
+        if display_name or parsed_address != target or len(target) > 254 or not re.fullmatch(r"[^<>\s@,;]+@[^<>\s@,;]+\.[A-Za-z]{2,63}", target):
+            parser.error("--test requires --test-to with exactly one authorized email address")
+        report = fetch_latest(base, args.kind or "weekly")
+        if not isinstance(report, dict) or report.get("kind") != (args.kind or "weekly"):
+            raise RuntimeError("no published report of the requested kind; test was not sent")
+        result = deliver(report, base, target, {"sent": {}}, True)
+        print(json.dumps({"results": [result]}, ensure_ascii=False)); return
     state_path = Path(env("EMAIL_DELIVERY_STATE") or "/var/lib/yihot-email-delivery/state.json")
     state = load_state(state_path)
-    if args.test:
-        targets = recipients()
-        if not targets: raise RuntimeError("EMAIL_TO has no recipients")
-        report = fetch_latest(base, args.kind or "weekly")
-        results = [deliver(report, base, target, state, True) for target in targets]
-        print(json.dumps({"results": results}, ensure_ascii=False)); return
     if env("EMAIL_DELIVERY_ENABLED").lower() not in ("1", "true", "yes"):
         print(json.dumps({"status": "disabled"}))
         return

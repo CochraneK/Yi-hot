@@ -3239,3 +3239,17 @@ CI：`tests/report-yesterday-hot.test.ts` 核验北京时间边界、防串日�
 独立 Python 邮件适配器 \`deploy/email-delivery/send_reports.py\` 则在邮件默认展示 **00 的证据叙事**，01 起仅呈现短目录，每版最多 3 条链接与可直接进入网页的锚点，避免把数十/数百篇 summary 直接塞进收件箱。HTML5 \`<details>\` 仅是渐进增强，并非 QQ 邮箱/Gmail/Outlook 跨客户端有保证的交互能力。邮件已有经公共出版层校验的 \`insights\` 时跳过原来额外调用 AnyDoor 的「本期速览」，所以判断不会在两个渠道另写一套；日报或无有效洞察的旧期仍保留现有 brief/lead 回退。本期已保存的 \`yesterdayHot\` 才算昨日热榜，不再在发送时套用实时热榜。邮件端现在包含最后「邻域」目录，日报独立网页目前关闭，日版仅提供可公开文章的链接与“最新动态”，不造一个无法访问的日报完整 URL。
 
 **部署区别重要**：GitHub Web/API/worker 部署 != 邮件服务部署。线上 Python 在 \`/opt/yihot-email-delivery/send_reports.py\`，变更仓库不会自动修改这个副本。生产运维先备份、核对 SHA，人工同步邮件脚本；验收现有 outbox 发送回执，不主动向全体重发邮件。详见 [邮件布局/降级与验收](docs/EMAIL_DELIVERY.md) 及 [报告证据分级框架](docs/REPORT_INSIGHT_ARCHITECTURE_2026-11-16.md)。PR CI 需要 Python 语法与合成邮件测试、Web SSR 版面顺序/旧摘要、全套 PostgreSQL 与 Docker 测试。回滚只撤销网站读者界面和邮件 Python 适配器，不需删库或动历史稿。
+
+### 报告生产验收：离线邮件预览和两个部署位置（2026-11-16）
+
+在既有00/01增量布局之后补齐验收入口：邮件脚本新增 `--preview-json/--preview-dir/--preview-base`，可从公共DTO/受控导出快照生成HTML和纯文本；完全绕过outbox、投递状态、IMAP、SMTP和AnyDoor，不改变正常发送分支。新目录与文件权限限制、防覆盖、合法期号/链接前缀校验；`--test`仍是真实发送，与preview互斥。
+
+`scripts/check_report_deployment.py` 只读比较运行Web/API/worker镜像及报告源码、独立邮件脚本哈希和systemd timer/ExecStart，再核对公共API；只有两套位置和公共读取均确认才标deploymentVerified。仅health/release/旧DTO可读保持unverified，报告质量永不由脚本自动判通过。本环境公共接口健康、W46/10月旧期可读，但无SSH凭据，未部署、重编或发送；已用真实公开旧期离线预览，不冒充新期分析质量验收。
+
+11月17日08:00日报、11月23日06:00周报、12月1日06:30月报均为原有计划，实际执行和送达另验；独立日报网页仍隐藏。新增工具测试使用合成fixture，10项Python报告布局/预览/核查通过；typecheck、Web构建和52项Web回归通过，实际Chromium由Docker CI执行。操作、只读SQL、无凭据时WorkBuddy接手提示词、未证实项和回滚见 [报告上线验收](docs/REPORT_TRIAL_2026-11-17.md)。不更改模型、调度、订阅、数据库或历史报告。
+
+受控邮件测试另设 `--test-to` 强制单收件人，`--test` 不能复用 EMAIL_TO 订阅列表，缺少地址或逗号/换行/显示名输入直接拒绝；测试模式不读生产状态、不领取outbox、不调用AnyDoor brief，正常订阅流程保持原状。实际测试地址由当次用户授权决定，不固化到Git。
+
+旧CLI单独 `--kind weekly/monthly` 会忽略kind而进入生产订阅队列；现改为仅受控test支持kind，其余调用直接拒绝，无参数systemd生产入口不变。手动验收不运行无参数邮件脚本。
+
+部署核查进一步逐一检查API/Web/worker的报告文件、启动命令与ctime，Web对比同一次可信构建的完整服务端/客户端产物；发现启动后热拷贝或缺少可信build保持未核验。空的测试/预览专用参数同样拒绝，不能因为空字符串被当成“未提供”而进入订阅队列。

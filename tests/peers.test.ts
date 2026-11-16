@@ -453,7 +453,7 @@ test("GeoRSS 灾害事件保留标题、发布时间和来源链接，不把地�
   // 当前 RawPeerItem 不含坐标字段；位置提取应在独立地图 PR 内处理、验证、授权。
 });
 
-test("候选信息不混入正式邻域，所有 56 站层级在唯一事实源明确", () => {
+test("候选保留独立状态但与正式站按主题展示，56 项唯一目录不丢", () => {
   assert.equal(PEER_SITES.length, 56);
   assert.equal(new Set(PEER_SITES.map(p => p.id)).size, PEER_SITES.length);
   const tiers = { official: 0, resource: 0, candidate: 0 };
@@ -485,6 +485,35 @@ test("候选信息不混入正式邻域，所有 56 站层级在唯一事实源�
   }
   assert.equal(PEER_SITES.find(p => p.id === "markethot")?.tier, "official");
   assert.equal(PEER_SITES.find(p => p.id === "math-education-hot")?.cadence, "weekly");
+});
+
+test("邻域展示只包含聚合类网站，联合国官方新闻走既有 RSS", () => {
+  const visible = PEER_SITES.filter(p =>
+    p.enabled && p.strategy !== "none" && p.tier !== "resource" && p.directoryVisible !== false);
+  assert.equal(visible.length, 38, "34 家正式聚合站 + 4 家仍可点击的候选站");
+  for (const id of ["un-news-sdgs", "un-geneva-news"]) {
+    const peer = PEER_SITES.find(p => p.id === id);
+    assert.ok(peer, id);
+    assert.equal(peer.directoryVisible, false);
+    assert.ok(!visible.some(p => p.id === id));
+  }
+  for (const id of ["aimfast", "fengxiang-demo", "medhot", "thinkhot"]) {
+    assert.ok(visible.some(p => p.id === id && p.tier === "candidate"), id);
+  }
+  assert.ok(visible.some(p => p.id === "aiman-robot-hot" && p.family === "other"),
+    "非同系的独立聚合站仍可出现在主题目录");
+
+  const sources = JSON.parse(readFileSync("industry/sources.json", "utf8")).sources as Array<{
+    id: string; kind: string; enabled?: boolean; config: { feedUrl?: string }
+  }>;
+  assert.ok(sources.some(s => s.id === "rss-un-news" && s.kind === "rss" && s.enabled !== false),
+    "现有联合国中文 RSS 不应因目录改动被关闭");
+  for (const id of ["rss-peer-un-news-sdgs", "rss-peer-un-geneva-news"]) {
+    const source = sources.find(s => s.id === id);
+    assert.ok(source?.config.feedUrl, id);
+    assert.equal(source.kind, "rss");
+    assert.equal(source.enabled, false, "候选源继续等待单独采集许可，不因 UI 改动自动启用");
+  }
 });
 
 test("发布时间决定邻域新鲜度，重复抓取与静态资源不冒充更新", () => {

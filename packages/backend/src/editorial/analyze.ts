@@ -310,7 +310,12 @@ function meanScore(scores: AnalysisRun["scores"]): number | null {
   return scores.values.reduce((total, value) => total + value, 0) / scores.values.length;
 }
 
-async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<NonNullable<AnalysisRun["structure"]>> {
+/**
+ * The paid structure step on its own. Exported for the geography backfill, which
+ * needs this step's output for articles analysed before the step asked for
+ * location hints — without re-running scoring or rewriting reader-facing copy.
+ */
+export async function runStructure(a: AnalyzeInputArticle, opts: StepOpts): Promise<NonNullable<AnalysisRun["structure"]>> {
   const model = await modelFor("structure");
   checkAnalysisRunning();
   const res = await chatJson({

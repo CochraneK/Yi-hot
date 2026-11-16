@@ -59,7 +59,16 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
               popup.append(a);
             }
           }
-          marker.bindPopup(popup, { maxWidth: 280, maxHeight: 240 });
+          // On a 340px-tall phone map the popup used to extend above the map
+          // viewport, underneath the adjacent "关闭地图" button. Reserve
+          // room both above and below so Leaflet auto-pans to a hittable popup.
+          marker.bindPopup(popup, {
+            maxWidth: 280,
+            maxHeight: 160,
+            autoPan: true,
+            autoPanPaddingTopLeft: L.point(18, 82),
+            autoPanPaddingBottomRight: L.point(18, 48),
+          });
           // bindPopup's normal click handler opens the list at maximum zoom, even
           // when distinct places have the same coordinates. At lower zoom expand.
           if (clustered) marker.on("click", () => {

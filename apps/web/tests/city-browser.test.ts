@@ -25,6 +25,12 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
   const api = createServer((req,res)=> {
     const u=new URL(req.url!,"http://fixture"); res.setHeader("content-type","application/json");
     if(u.pathname==="/api/site/meta") return res.end(JSON.stringify({changelogVersion:"test"}));
+    if(u.pathname==="/api/site/geo/catalog") return res.end(JSON.stringify({
+      places, regions: [
+        { key:"CN:北京", label:"北京", countryCode:"CN", cities:1 },
+        { key:"CN:四川", label:"四川", countryCode:"CN", cities:1 },
+      ], generatedAt:"test",
+    }));
     if(u.pathname==="/api/site/geo") {
       const scoped=places.filter(p=>(!u.searchParams.get("place")||p.id===u.searchParams.get("place"))&&(!u.searchParams.get("region")||p.region===u.searchParams.get("region")));
       return res.end(JSON.stringify({placeId:u.searchParams.get("place")||"",items:items.filter(i=>i.eventPlaces.some(p=>scoped.some(s=>s.id===p!.id))),places:scoped,catalog:places,total:scoped.length,page:1,pageCount:1,placesTruncated:false,catalogTruncated:false,totalCapped:false,generatedAt:"test"}));
@@ -77,13 +83,21 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     }
     assert.equal(outside.length,0,"opening the page must not load maps or resolve the visitor IP");
     assert.ok(await page.$('[data-item-id="synthetic-0"]'), "fixture article should be SSR-rendered before selecting a city");
-    await page.select("#my-city","beijing");
+    // CityPicker replaced #my-city: open the real searchable city dialog
+    // and tap the matching synthetic city, without bypassing its UI events.
+    await page.locator('section[aria-label="我的城市"] button[aria-haspopup="dialog"]').click();
+    await page.waitForSelector('[role="dialog"][aria-label="选择我的城市"] ul button');
+    const picks = await page.$('[role="dialog"][aria-label="选择我的城市"] ul button');
+    const labels = await Promise.all(picks.map(button => button.evaluate(el => el.textContent ?? "")));
+    const beijingChoice = labels.findIndex(label => label.trim().startsWith("北京"));
+    assert.ok(beijingChoice >= 0, "fixture city 北京 should appear in searchable picker");
+    await picks[beijingChoice]!.click();
     try {
       await page.waitForFunction(()=>document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.includes("当地"),{timeout:9000});
     } catch (error) {
       const diagnostics = await page.evaluate(() => ({
         url: location.href,
-        select: (document.querySelector("#my-city") as HTMLSelectElement | null)?.value,
+        picker: document.querySelector('section[aria-label="我的城市"] button[aria-haspopup="dialog"]')?.textContent?.trim(),
         readerLocation: localStorage.getItem("yihot:reader-location:v2"),
         legacyCity: localStorage.getItem("yihot:reader-city:v1"),
         articleText: document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.slice(0,400),
@@ -142,7 +156,7 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     await page.goto(origin+"/yihot/cities?reviewed=0",{waitUntil:"networkidle0"});
     assert.ok(!(await page.$eval('[data-item-id="synthetic-2"]',e=>e.textContent)).includes("当地"),"institution-name text cannot trigger local badge");
     await page.locator('::-p-text(清除我的城市)').click();
-    await page.waitForFunction(()=>!(document.querySelector("#my-city") as HTMLSelectElement).value);
+    await page.waitForFunction(()=>document.querySelector('section[aria-label="我的城市"] button[aria-haspopup="dialog"]')?.textContent?.includes("选择城市"));
     assert.deepEqual(errors,[],"no client hydration or map lifecycle errors");
   } finally {
     await browser?.close();

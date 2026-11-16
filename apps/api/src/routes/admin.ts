@@ -1,3 +1,4 @@
+import { geoReviewPage, reviewGeoFromWeb, createGeoPlaceFromWeb } from "@aihot/backend/admin/geo-workbench";
 // /api/admin/*: queries are GET, creation POST, edits PATCH, business commands POST.
 // Every route goes through adminHandler (session + CSRF); manual changes are audited in the modules.
 import { readFile } from "node:fs/promises";
@@ -36,6 +37,13 @@ function decodeImage(dataUrl: unknown): Buffer {
 }
 
 export function registerAdmin(app: FastifyInstance) {
+  app.get("/api/admin/geo", adminHandler(async req => geoReviewPage(q(req))));
+  app.post("/api/admin/geo/places", adminHandler(async (req, reply, admin) => {
+    await createGeoPlaceFromWeb(body(req), actorOf(admin)); return reply.code(204).send();
+  }));
+  app.post("/api/admin/geo/:id/review", adminHandler(async (req, reply, admin) => {
+    await reviewGeoFromWeb(param(req, "id"), body(req), actorOf(admin)); return reply.code(204).send();
+  }));
   // Sources (F18)
   app.get("/api/admin/sources", adminHandler(async (req) => {
     const f = q(req);

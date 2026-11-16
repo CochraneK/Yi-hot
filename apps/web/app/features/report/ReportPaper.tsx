@@ -113,6 +113,57 @@ function Original({ c, className = "" }: { c: ReportCitation; className?: string
   );
 }
 
+/** Editorial inference with explicit evidence, rival explanation and observable next check.
+ * The source badges refer to current public reports, never hidden or withdrawn material.
+ */
+function InsightPage({ report }: { report: ReportDetail }) {
+  if (!report.insights?.length) return null;
+  const isWeekly = report.kind === "weekly";
+  return (
+    <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 pt-10 @[880px]:pt-14">
+      <header className="border-b border-line-strong pb-4">
+        <Kicker>{isWeekly ? "跨事件观察" : "结构性解释"}</Kicker>
+        <h2 id="s-insights-title" className="mt-2 text-[24px] font-black leading-[1.3] text-ink @[880px]:text-[28px]">
+          本期洞察
+        </h2>
+        <p className="mt-2 max-w-[680px] text-[12.5px] leading-[1.8] text-ink-4">
+          基于本站本期公开资料形成的{isWeekly ? "跨来源观察" : "待检验的分析假设"}，不是已证实的因果结论。
+          入池来源与筛选口径会影响可见样本；点击依据可核对原文。
+        </p>
+      </header>
+      <ol className="divide-y divide-line">
+        {report.insights.map((insight, index) => (
+          <li key={insight.evidence.map(e => e.itemId).join(":")} className="py-6 @[880px]:py-8">
+            <div className="flex items-baseline gap-3">
+              <span className="num w-7 shrink-0 text-[20px] font-bold text-accent">{String(index + 1).padStart(2, "0")}</span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[11.5px] font-semibold text-ink-4">{isWeekly ? "观察 · 模式" : "分析 · 假设"}</div>
+                <h3 className="mt-1 text-[19px] font-bold leading-[1.5] text-ink @[880px]:text-[21px]">{insight.claim}</h3>
+                <p className="mt-3 text-[14.5px] leading-[1.9] text-ink-2">{insight.reasoning}</p>
+                <div className="mt-4 grid gap-x-9 gap-y-3 text-[13px] leading-[1.8] @[760px]:grid-cols-2">
+                  <p><span className="font-semibold text-ink">另一种解释</span><span className="ml-2 text-ink-3">{insight.alternative}</span></p>
+                  <p><span className="font-semibold text-ink">下期验证</span><span className="ml-2 text-ink-3">{insight.watchFor}</span></p>
+                </div>
+                <div className="mt-4 border-t border-line-soft pt-3">
+                  <span className="text-[11.5px] font-semibold text-ink-4">依据 · {insight.evidence.length} 条当前可公开记录</span>
+                  <ul className="mt-1.5 flex flex-col gap-1.5">
+                    {insight.evidence.map(e => (
+                      <li key={e.itemId} className="text-[12.5px] leading-[1.7]">
+                        <Link to={`/items/${e.itemId}`} className="text-ink-2 underline-offset-4 hover:text-accent hover:underline">{e.title}</Link>
+                        <span className="ml-2 text-ink-4">— {shortSourceName(e.sourceName)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 /** One story: source, headline, at most four lines of summary, and the original at the foot. */
 function Story({ c, dated, className = "" }: { c: ReportCitation; dated: boolean; className?: string }) {
   return (
@@ -286,6 +337,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const inPage = new Set(pages.flatMap((p) => p.items.map((c) => c.itemId)).filter(Boolean));
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
   const index = [
+    ...(report.insights?.length ? [{ id: "s-insights", label: "本期洞察", n: `${report.insights.length} 则` }] : []),
     ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 件` })),
     ...(report.flashes.length > 0 ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
     ...(report.peers?.items.length ? [{ id: "s-peers", label: report.peers.label, n: `${report.peers.items.length} 条` }] : []),
@@ -445,6 +497,8 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
       ) : (
         <FrontPage report={report} pages={pages} leadStory={leadStory} count={count} />
       )}
+
+      <InsightPage report={report} />
 
       {pages.map((p, i) => (
         <SectionPage key={p.id} id={p.id} no={i + 1} label={p.label}>

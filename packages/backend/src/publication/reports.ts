@@ -1,6 +1,7 @@
 // Reports through the public read layer: website DTOs and the v1 shapes. Only real reports are
 // listed; a missing date is a 404, never another day. Withdrawn citations are marked, not shown.
 import type { ReportCitation, ReportDetail, ReportIndexEntry, ReportNavigationEntry, ReportKind, ReportPeerBlock } from "@aihot/contracts/site";
+import { projectPeriodInsights } from "../reports/insights.ts";
 import { sql } from "../db.ts";
 import { cached, type Cached } from "../lib/cache.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
@@ -207,6 +208,19 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
   const avail = await availability([...new Set(rawItems.map((i) => i.itemId).filter(Boolean))]);
   const cite = (raw: Record<string, any>) => citationFrom(raw, avail);
 
+  // Current public evidence is the authority, not the raw model output.
+  // Unknown and withdrawn citations cannot silently support an interpretation.
+  const evidenceSources = new Map<string, { citation: ReportCitation; sourceId: string; factId: string | null }>();
+  for (const raw of rawItems) {
+    if (typeof raw.itemId !== "string" || !avail.has(raw.itemId)) continue;
+    evidenceSources.set(raw.itemId, {
+      citation: cite(raw),
+      sourceId: String(raw.sourceId ?? ""),
+      factId: raw.factId ?? null,
+    });
+  }
+  const insights = kind === "daily" ? [] : projectPeriodInsights(kind, c.insights, evidenceSources);
+
   const sections = kind === "daily"
     ? (c.sections ?? []).map((s: any) => ({ label: String(s.label), summary: null, items: (s.items ?? []).map(cite) }))
     : (c.themes ?? []).map((t: any) => ({ label: String(t.heading), summary: t.summary ?? null, items: (t.storyRefs ?? []).map(cite) }));
@@ -262,6 +276,7 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
     revision: r.revision,
     lead: c.lead ?? (headline ? { title: headline, leadParagraph: String(c.overview ?? "") } : null),
     overview: c.overview ?? null,
+    insights,
     highlights,
     sections,
     stories,

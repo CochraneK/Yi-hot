@@ -456,6 +456,16 @@ export interface ReportPeerBlock {
   items: ReportPeerItem[];
 }
 
+/** Evidence-audited interpretation, explicitly not a verified causal finding. */
+export interface ReportInsight {
+  level: "pattern" | "hypothesis";
+  claim: string;
+  reasoning: string;
+  alternative: string;
+  watchFor: string;
+  evidence: ReportCitation[];
+}
+
 export interface ReportDetail {
   kind: ReportKind;
   key: string;
@@ -466,6 +476,8 @@ export interface ReportDetail {
   revision: number;
   lead: { title: string; leadParagraph: string } | null;
   overview: string | null;
+  /** Empty for legacy issues, or when corroborating citations were withdrawn. */
+  insights?: ReportInsight[];
   highlights: ReportCitation[];
   /** As edited: daily categories, weekly and monthly themes. */
   sections: Array<{ label: string; summary: string | null; items: ReportCitation[] }>;

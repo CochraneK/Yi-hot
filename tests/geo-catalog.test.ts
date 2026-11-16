@@ -23,6 +23,18 @@ test("a township below the population floor is not offered as a city", () => {
   assert.deepEqual(places.map(p => p.name), ["绵阳"]);
 });
 
+test("a district is not offered as a city of its own", () => {
+  // 浦东新区 has a city-sized population in the dump but belongs to 上海; listing
+  // both would split one city's news across two entries in the picker.
+  const places = selectCatalogPlaces([
+    entry({ id: "geonames-5", name: "上海", pop: 22_000_000 }),
+    entry({ id: "geonames-6", name: "浦东新区", pop: 5_681_512 }),
+    entry({ id: "geonames-7", name: "重庆", province: "重庆", pop: 7_000_000 }),
+    entry({ id: "geonames-8", name: "万州区", province: "重庆", pop: 1_545_900 }),
+  ], new Map());
+  assert.deepEqual(places.map(p => p.name), ["上海", "重庆"]);
+});
+
 test("a mainland place with no province cannot be filed under a 省", () => {
   const places = selectCatalogPlaces([entry({ id: "geonames-3", name: "崇明", province: null })], new Map());
   assert.equal(places.length, 0);

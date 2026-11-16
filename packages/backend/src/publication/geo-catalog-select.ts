@@ -9,7 +9,7 @@
 //      call home. Hong Kong, Macao and Taiwan are curated instead: their dumps are
 //      full of housing estates, and the useful picks are the well-known divisions.
 import type { GeoCatalogPlace, GeoCatalogRegion } from "@aihot/contracts/site";
-import type { GazetteerEntry } from "../editorial/geo-gazetteer.ts";
+import { isDistrictPlace, type GazetteerEntry } from "../editorial/geo-gazetteer.ts";
 
 /** Mainland entries below this are townships; 昆山 and 义乌 are well above it. */
 const CN_MIN_POP = 50_000;
@@ -76,6 +76,9 @@ export function selectCatalogPlaces(
   for (const entry of entries) {
     if (entry.cc !== "CN") continue;
     if (!entry.province || entry.pop < CN_MIN_POP || !CJK.test(entry.name)) continue;
+    // 浦东新区 and 万州区 carry city-sized populations in the dump but are districts
+    // of 上海 and 重庆; offering them would split one city's news across two entries.
+    if (isDistrictPlace(entry.name)) continue;
     places.push({
       id: entry.id,
       name: entry.name,

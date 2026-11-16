@@ -45,6 +45,7 @@ export type PlaceResolution =
   | { status: "unknown"; placeText: string };
 
 const GAZETTEER_PATH = path.join(REPO_ROOT, "industry/geo/gazetteer.json");
+const DISTRICTS_PATH = path.join(REPO_ROOT, "industry/geo/districts.json");
 
 /** Suffixes stripped once to try the plain name; longest first so 新区 wins over 区. */
 const SUFFIXES = ["特别行政区", "自治区", "自治州", "自治县", "地区", "新区", "街道", "社区", "省", "市", "区", "县", "镇", "乡", "村", "旗", "盟", "州"];
@@ -84,7 +85,33 @@ function load(): { entries: GazetteerEntry[]; index: Map<string, GazetteerEntry[
 }
 
 /** Test seam: drop the parsed gazetteer so a rebuilt file is picked up. */
-export function resetGazetteerCache() { cache = null; }
+export function resetGazetteerCache() { cache = null; districtCache = null; }
+
+/**
+ * District and county names, each with the prefecture cities that contain one.
+ * A district is a unit inside a city, never a city of its own on this map:
+ * 江宁区 is 南京, and 朝阳区 belongs to either 北京 or 长春 — never to 朝阳市,
+ * which is what stripping the 区 and looking the head up would produce.
+ */
+let districtCache: Map<string, string[]> | null = null;
+
+function districts(): Map<string, string[]> {
+  if (districtCache) return districtCache;
+  const raw = JSON.parse(readFileSync(DISTRICTS_PATH, "utf8")) as { districts: Record<string, string[]> };
+  districtCache = new Map(Object.entries(raw.districts));
+  return districtCache;
+}
+
+/** Cities a district name belongs to; null when the name is not a district. */
+export function districtCities(name: string): string[] | null {
+  return districts().get(normalizePlaceName(name)) ?? null;
+}
+
+/** True when the gazetteer entry is really a district of another city. */
+export function isDistrictPlace(name: string): boolean {
+  const cities = districtCities(name);
+  return !!cities && !cities.includes(normalizePlaceName(name));
+}
 
 /**
  * A name that many places share is only auto-resolved when one of them clearly
@@ -164,9 +191,56 @@ function splitAdministrative(name: string): string[] {
  * compound name. Anything else is unknown; a compound head must itself be a
  * whole place ("南京东路世纪广场" never yields "南京").
  */
+/** The city an administrative district belongs to, or null when the name is not a district. */
+function cityEntry(name: string): GazetteerEntry | null {
+  const direct = lookup(name);
+  if (direct) return pickDominant(direct);
+  const bare = stripSuffix(name);
+  if (!bare) return null;
+  const hit = lookup(bare);
+  return hit ? pickDominant(hit) : null;
+}
+
+function resolveDistrict(raw: string): PlaceResolution | null {
+  const index = districts();
+  let cities = index.get(raw) ?? null;
+  let matched = raw;
+  if (!cities) {
+    // A district can arrive with its city in front: 南京江宁区, 广西百色市田阳区.
+    // The tail is the administrative unit; the head only helps choose between
+    // same-named districts, never creates one.
+    for (let len = Math.min(raw.length - 1, 8); len >= 2; len -= 1) {
+      const hit = index.get(raw.slice(-len));
+      if (hit) { cities = hit; matched = raw.slice(-len); break; }
+    }
+  }
+  if (!cities) return null;
+
+  const prefix = raw.slice(0, raw.length - matched.length);
+  let picked = cities;
+  if (picked.length > 1) {
+    const hinted = picked.filter(city => prefix.includes(city));
+    if (hinted.length === 1) picked = hinted;
+  }
+  if (picked.length > 1) {
+    // 朝阳区 is 北京 and 长春. With nothing to choose by, stay undecided rather
+    // than fold it into whichever city shares the characters (朝阳市).
+    const candidateIds = picked.flatMap(city => (lookup(city) ?? []).map(entry => entry.id));
+    return { status: "ambiguous", placeText: raw, candidateIds };
+  }
+
+  const city = cityEntry(picked[0]!);
+  // A prefecture we do not carry (伊犁哈萨克自治州) leaves the name unresolved
+  // instead of inventing a pin: the old rules get another chance below.
+  return city ? { status: "resolved", place: toResolved(city) } : null;
+}
+
 export function resolvePlace(placeText: string): PlaceResolution {
   const raw = normalizePlaceName(placeText);
   if (raw.length < 2) return { status: "unknown", placeText };
+
+  const district = resolveDistrict(raw);
+  if (district) return district;
 
   const direct = lookup(raw);
   if (direct) {

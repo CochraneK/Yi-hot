@@ -36,13 +36,33 @@ if (unknownArg) {
       ORDER BY gc.id ASC`;
 
     const failures: Array<{ row: VerifiedRow; reason: string }> = [];
+    const remaps: Array<{ row: VerifiedRow; place: NonNullable<ReturnType<typeof decideAutoApproval>["place"]> }> = [];
     for (const row of rows) {
       const decision = decideAutoApproval({ placeText: row.place_text, role: row.role, evidence: row.evidence });
-      if (!decision.approve) failures.push({ row, reason: decision.reason });
+      if (!decision.approve) { failures.push({ row, reason: decision.reason }); continue; }
+      // A rule can move a name to a different place without rejecting it: 浦东新区
+      // used to stand for itself, now it is 上海. Keeping the old id would leave the
+      // pin on a district the map no longer carries.
+      if (decision.place && decision.place.id !== row.place_id) remaps.push({ row, place: decision.place });
     }
 
     const byReason: Record<string, number> = {};
     for (const item of failures) byReason[item.reason] = (byReason[item.reason] ?? 0) + 1;
+
+    if (apply) {
+      for (const item of remaps) {
+        const place = item.place;
+        await sql.begin(async tx => {
+          await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+            VALUES (${place.id}, ${place.name}, ${place.countryCode}, ${place.region}, ${place.city},
+              ${place.lat}, ${place.lon}, ${place.precision}, ${place.sourceUrl})
+            ON CONFLICT (id) DO NOTHING`;
+          await tx`UPDATE geo_candidates SET place_id = ${place.id} WHERE id = ${item.row.id}`;
+          await tx`INSERT INTO geo_review_audit (candidate_id, action, place_id, reviewer, reason)
+            VALUES (${item.row.id}, 'remap', ${place.id}, ${AUTO_REVIEWER}, ${`moved from ${item.row.place_id} (${item.row.place_name})`})`;
+        });
+      }
+    }
 
     if (apply && failures.length) {
       for (const item of failures) {
@@ -61,7 +81,14 @@ if (unknownArg) {
       apply,
       checked: rows.length,
       reopened: failures.length,
+      remapped: remaps.length,
       byReason,
+      remapSamples: remaps.slice(0, 20).map(item => ({
+        candidateId: item.row.id,
+        placeText: item.row.place_text,
+        from: `${item.row.place_name} (${item.row.place_id})`,
+        to: `${item.place.name} (${item.place.id})`,
+      })),
       samples: failures.slice(0, 20).map(item => ({
         candidateId: item.row.id,
         placeText: item.row.place_text,

@@ -30,10 +30,33 @@ test("a street is never read as the city in its name", () => {
 });
 
 test("names absent from the dump stay unknown instead of guessed", () => {
-  assert.equal(resolvePlace("江宁区").status, "unknown");
-  assert.equal(resolvePlace("雨花台区").status, "unknown");
   assert.equal(resolvePlace("银山社区").status, "unknown");
   assert.equal(resolvePlace("柳峰上岚村").status, "unknown");
+});
+
+test("a district folds into the city that contains it", () => {
+  for (const [input, city] of [["江宁区", "南京"], ["静安区", "上海"], ["浦东新区", "上海"], ["万州区", "重庆"], ["城阳区", "青岛"], ["天河区", "广州"]]) {
+    const result = resolvePlace(input);
+    assert.equal(result.status, "resolved", `${input} should resolve`);
+    if (result.status === "resolved") assert.equal(result.place.name, city, input);
+  }
+  // With the city in front the tail still wins, and the head decides between
+  // same-named districts.
+  const compound = resolvePlace("南京江宁区");
+  assert.equal(compound.status, "resolved");
+  if (compound.status === "resolved") assert.equal(compound.place.name, "南京");
+  const hinted = resolvePlace("北京朝阳区");
+  assert.equal(hinted.status, "resolved");
+  if (hinted.status === "resolved") assert.equal(hinted.place.name, "北京");
+});
+
+test("a district name is never stripped into a different city", () => {
+  // 朝阳区 is 北京 and 长春. Stripping 区 leaves 朝阳, a city in 辽宁 — the one
+  // outcome worse than leaving the name unresolved.
+  const result = resolvePlace("朝阳区");
+  assert.equal(result.status, "ambiguous");
+  if (result.status === "ambiguous") assert.ok(result.candidateIds.length >= 2);
+  assert.equal(resolvePlace("鼓楼区").status, "ambiguous");
 });
 
 test("compound administrative names resolve to their city head", () => {
@@ -77,12 +100,21 @@ test("auto approval refuses quotes that only name the place", () => {
 });
 
 test("auto approval refuses places the gazetteer cannot settle", () => {
-  const unknown = decideAutoApproval({ placeText: "江宁区", role: "event", evidence: "江宁区民政局举办集体婚礼" });
+  // 色达县 belongs to a prefecture the gazetteer does not carry, so it stays pending.
+  const unknown = decideAutoApproval({ placeText: "色达县", role: "event", evidence: "色达县的牧民搬进了新居" });
   assert.equal(unknown.approve, false);
   assert.match(unknown.reason, /not in gazetteer/);
 
   const bare = decideAutoApproval({ placeText: "银山社区", role: "event", evidence: "银山社区开展垃圾分类宣传" });
   assert.equal(bare.approve, false);
+});
+
+test("a district in a clean quote is approved as its city", () => {
+  // The candidate keeps the name the model read (江宁区, so the evidence check
+  // still finds it), while the pin lands on the city that contains it.
+  const decision = decideAutoApproval({ placeText: "江宁区", role: "event", evidence: "江宁区新开两条公交线路，九月起试运行" });
+  assert.equal(decision.approve, true);
+  assert.equal(decision.place?.name, "南京");
 });
 
 test("a village or township reusing a city name is not that city", () => {

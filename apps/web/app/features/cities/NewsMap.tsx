@@ -40,12 +40,6 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
             alt: clustered ? `${group.length}个地点` : p.name,
             icon: L.divIcon({ className: "yihot-map-marker", html: `<span>${label}</span>`, iconSize: [42, 42], iconAnchor: [21, 21] }),
           }).addTo(layer);
-          if (clustered) {
-            marker.on("click", () => {
-              if (map.getZoom() < 16) map.fitBounds(L.latLngBounds(group.map(p => [p.lat, p.lon])), { padding: [30, 30], maxZoom: map.getZoom() + 3 });
-              else marker.openPopup();
-            });
-          }
           const popup = document.createElement("div");
           for (const place of group) {
             const heading = document.createElement("strong");
@@ -66,11 +60,19 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
             }
           }
           marker.bindPopup(popup, { maxWidth: 280, maxHeight: 240 });
+          // bindPopup's normal click handler opens the list at maximum zoom, even
+          // when distinct places have the same coordinates. At lower zoom expand.
+          if (clustered) marker.on("click", () => {
+            if (map.getZoom() < 16) {
+              marker.closePopup();
+              map.fitBounds(L.latLngBounds(group.map(p => [p.lat, p.lon])), { padding: [30, 30], maxZoom: map.getZoom() + 3, animate: false });
+            }
+          });
         }
       }
       render();
       map.on("zoomend", render);
-      if (places.length) map.fitBounds(L.latLngBounds(places.map(p => [p.lat, p.lon])), { padding: [35, 35], maxZoom: 9 });
+      if (places.length) map.fitBounds(L.latLngBounds(places.map(p => [p.lat, p.lon])), { padding: [35, 35], maxZoom: 9, animate: false });
       const observer = new ResizeObserver(() => map.invalidateSize());
       observer.observe(host.current);
       cleanup = () => { observer.disconnect(); map.remove(); };

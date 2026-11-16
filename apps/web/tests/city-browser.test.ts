@@ -67,7 +67,7 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     await page.waitForFunction(()=>document.querySelectorAll(".leaflet-tile").length>0);
     assert.ok(outside.some(u=>u.startsWith("https://tile.openstreetmap.org/")));
     assert.equal(await page.$eval(".leaflet-tile",e=>e.getAttribute("referrerpolicy")),"strict-origin-when-cross-origin");
-    await page.click('.leaflet-marker-icon[title="北京：1条新闻"]');
+    await page.tap('.leaflet-marker-icon[title="北京：1条新闻"]');
     await page.waitForSelector(".leaflet-popup");
     await page.locator('::-p-text(查看这个地点的新闻)').click();
     await page.waitForFunction(()=>location.search.includes("place=beijing"));

@@ -336,6 +336,164 @@ def _hot_html(hot, base, limit=6, scope="近 48 小时", theme=None):
     return '<div style="margin:22px 0 0">' + _section_label("热点榜 · " + scope, theme, "4px") + "".join(rows) + '</div>'
 
 
+
+def _report_insights(report):
+    """Use the already-reviewed public-report insight projection, never a second email opinion."""
+    return [
+        it for it in (report.get("insights") or [])[:3]
+        if isinstance(it, dict) and it.get("claim") and
+        any(isinstance(e, dict) and e.get("available", True) for e in (it.get("evidence") or []))
+    ]
+
+
+def _safe_issue_link(base, item):
+    """Use the site's own public article link; ignore untrusted external URL strings."""
+    from urllib.parse import quote
+    item_id = item.get("itemId") if isinstance(item, dict) else None
+    return base.rstrip("/") + "/items/" + quote(str(item_id), safe="") if item_id else ""
+
+
+def _analysis_00(report, base, theme, brief, intro):
+    """HTML and plain text for the main 00 page. No model calls here."""
+    esc = html.escape
+    insights = _report_insights(report)
+    heading = "00 · 本期分析" if insights else ("00 · 今日要点" if report.get("kind") == "daily" else "00 · 本期要点")
+    parts = ['<section style="margin:22px 0 24px">', _section_label(heading, theme)]
+    lines = [heading]
+    if insights:
+        for insight in insights:
+            claim = str(insight.get("claim") or "")
+            reasoning = str(insight.get("reasoning") or "")
+            alternative = str(insight.get("alternative") or "")
+            watch = str(insight.get("watchFor") or "")
+            parts.append('<div style="border-bottom:1px solid ' + LINE + ';padding:12px 0">'
+                         + '<h2 style="font-size:18px;line-height:1.45;color:' + INK + ';margin:0 0 7px">'
+                         + esc(claim) + '</h2>')
+            lines.extend(["", claim])
+            for e in (insight.get("evidence") or [])[:3]:
+                if not isinstance(e, dict) or not e.get("available", True):
+                    continue
+                title = str(e.get("title") or "").strip()
+                if not title:
+                    continue
+                source = _clean_source(e.get("sourceName"))
+                link = _safe_issue_link(base, e)
+                label = esc(title) + (" · " + esc(source) if source else "")
+                parts.append('<p style="margin:5px 0;font-size:13px;line-height:1.65;color:#4b5563">'
+                             + ('<a href="' + esc(link, quote=True) + '" style="color:' + INK + '">' + label + '</a>'
+                                if link else label) + '</p>')
+                lines.append("依据：" + title + ((" · " + source) if source else "") + (("\n" + link) if link else ""))
+            if reasoning:
+                parts.append('<p style="margin:10px 0 0;color:#374151;font-size:14px;line-height:1.8">'
+                             + esc(reasoning) + '</p>')
+                lines.append("分析：" + reasoning)
+            if alternative:
+                parts.append('<p style="margin:8px 0 0;color:#6b7280;font-size:12.5px;line-height:1.7">'
+                             + '<b>另一种解释：</b>' + esc(alternative) + '</p>')
+                lines.append("另一种解释：" + alternative)
+            if watch:
+                parts.append('<p style="margin:7px 0 0;color:#6b7280;font-size:12.5px;line-height:1.7">'
+                             + '<b>下期观察：</b>' + esc(watch) + '</p>')
+                lines.append("下期观察：" + watch)
+            parts.append("</div>")
+    else:
+        # Legacy daily editions have only a factual lead. Keep the old optional
+        # AnyDoor brief as fallback, never replace a validated report insight.
+        text = str(brief or intro or "").strip()
+        if text:
+            parts.append('<p style="font-size:14.5px;line-height:1.85;color:#374151;margin:9px 0 0">'
+                         + esc(text[:380]) + '</p>')
+            lines.append(text[:380])
+        refs = [e for e in (report.get("highlights") or []) if isinstance(e, dict) and e.get("available", True)][:3]
+        for e in refs:
+            url = _safe_issue_link(base, e)
+            title = str(e.get("title") or "").strip()
+            if not title:
+                continue
+            parts.append('<p style="margin:8px 0;font-size:13.5px;line-height:1.65">'
+                         + ('<a href="' + esc(url, quote=True) + '" style="color:' + INK + '">'
+                            + esc(title) + '</a>' if url else esc(title)) + '</p>')
+            lines.append("新闻：" + title + (("\n" + url) if url else ""))
+    parts.append("</section>")
+    return "".join(parts), "\n".join(lines)
+
+
+def _email_folded_sections(report, base, theme):
+    """01+ stays a *short* index in email regardless of client HTML-details support.
+
+    Clients that support <details> may expand a few linked examples. Clients that
+    strip it still see only compact headings/previews, not the full report.
+    Weekly/monthly sections link to the exact web anchors. Daily report pages
+    are intentionally private/hidden, so their preview links go to PUBLIC items.
+    """
+    esc = html.escape
+    rows = []
+    plain = []
+    number = 0
+    is_daily = report.get("kind") == "daily"
+    report_link = report_url(base, report)
+
+    def row(label, count, anchor, previews, source_links=False):
+        nonlocal number
+        if not count:
+            return
+        number += 1
+        mark = f"{number:02d}"
+        jump = (report_link + "#" + anchor) if (anchor and not is_daily) else ""
+        title = f"{mark} · {label}"
+        preview_html = ""
+        for item in previews[:3]:
+            if not isinstance(item, dict) or not item.get("available", True):
+                continue
+            it_title = str(item.get("title") or "").strip()
+            if not it_title:
+                continue
+            link = item.get("url") if source_links else _safe_issue_link(base, item)
+            if not isinstance(link, str) or not link.startswith(("https://", "http://")):
+                link = ""
+            preview_html += ('<div style="margin:7px 0;font-size:12.5px;line-height:1.65">'
+                             + ('<a href="' + esc(link, quote=True) + '" style="color:' + INK + '">'
+                                + esc(it_title) + '</a>' if link else esc(it_title)) + '</div>')
+        more = ('<a href="' + esc(jump, quote=True) + '" style="font-size:12px;color:'
+                + theme["aux_ink"] + '">进入 YiHot 阅读本版全部新闻</a>') if jump else ""
+        # The whole HTML stays bounded even if a non-supporting client expands
+        # <details>; it contains at most 3 article links, never long summaries.
+        rows.append('<details style="border-top:1px solid ' + LINE + ';padding:10px 0">'
+                    + '<summary style="font-size:14px;font-weight:600;color:' + INK + '">'
+                    + esc(title) + '<span style="font-size:12px;color:' + MUTED + ';font-weight:400"> · '
+                    + str(count) + ' 条</span></summary>'
+                    + '<div style="padding:6px 0 4px 22px">' + preview_html + more + '</div></details>')
+        plain.append(title + f" · {count} 条" + (("\n" + jump) if jump else ""))
+
+    hot = report.get("yesterdayHot") or {}
+    hot_entries = [e for e in (hot.get("entries") or []) if isinstance(e, dict)]
+    if hot_entries:
+        row("昨日热榜", len(hot_entries), "s-yesterday-hot", hot_entries)
+    blocks = report.get("sections") or []
+    if not blocks:
+        blocks = [{"label": t.get("heading") or "", "items": t.get("storyRefs") or []}
+                  for t in (report.get("themes") or []) if isinstance(t, dict)]
+    for i, section in enumerate(blocks):
+        items = [e for e in (section.get("items") or []) if isinstance(e, dict) and e.get("available", True)]
+        if items:
+            row(str(section.get("label") or "本期新闻"), len(items), f"s-{i+1}", items)
+    flashes = [e for e in (report.get("flashes") or []) if isinstance(e, dict) and e.get("available", True)]
+    if flashes:
+        row("快讯", len(flashes), "s-flash", flashes)
+    # The peer neighbourhood is ALWAYS the last content section, not an input
+    # to the model's claim evidence and not mixed into YiHot's local sources.
+    peer = report.get("peers") or {}
+    peer_items = [p for p in (peer.get("items") or []) if isinstance(p, dict)]
+    if peer_items:
+        row(str(peer.get("label") or "邻域"), len(peer_items), "s-peers", peer_items, source_links=True)
+    if not rows:
+        return "", ""
+    wrapper = '<section style="margin:24px 0 0">' + _section_label("01 起 · 新闻版面", theme)
+    wrapper += '<p style="font-size:12px;color:' + MUTED + ';line-height:1.7;margin:0 0 12px">'
+    wrapper += '邮件只显示简短目录和少量可点击新闻；不同邮箱的展开功能可能受限。周报、月报可到 YiHot 按版面阅读完整内容。</p>'
+    return wrapper + "".join(rows) + "</section>", "\n".join(plain)
+
+
 def render(report, base, unsubscribe_url="", hot=None, brief=None):
     esc = lambda v: html.escape(str(v or ""))
     kind = report.get("kind", "daily")

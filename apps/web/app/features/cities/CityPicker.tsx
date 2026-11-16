@@ -158,7 +158,9 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                           className={`flex w-full items-baseline gap-2 px-3 py-2 text-left text-[13px] hover:bg-bg-sunk ${active ? "text-accent" : "text-ink-2"}`}
                         >
                           <span className="truncate">{place.name}</span>
-                          <span className="shrink-0 text-[11.5px] text-ink-4">{place.region}</span>
+                          {place.region !== place.name && (
+                            <span className="shrink-0 text-[11.5px] text-ink-4">{place.region}</span>
+                          )}
                           <span className="num ml-auto shrink-0 text-[11.5px] text-ink-4">{place.count > 0 ? `${place.count} 条` : "还没有"}</span>
                         </button>
                       </li>

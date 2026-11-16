@@ -57,10 +57,10 @@ export function normalizeYesterdayHot(day: string, computedAt: string, rows: Ran
  */
 export async function yesterdayHotForReport(day: string): Promise<StoredYesterdayHot | null> {
   const { start, end } = yesterdayRankingWindow(day);
-  const [row] = await sql<{ computed_at: Date; entries: RankingArticle[] }[]>\u0060
+  const [row] = await sql<{ computed_at: Date; entries: RankingArticle[] }[]>`
     SELECT computed_at, entries FROM hot_rankings
-    WHERE published AND computed_at >= \u0024{start} AND computed_at < \u0024{end}
-    ORDER BY computed_at DESC, id DESC LIMIT 1\u0060;
+    WHERE published AND computed_at >= ${start} AND computed_at < ${end}
+    ORDER BY computed_at DESC, id DESC LIMIT 1`;
   if (!row) return null;
   return normalizeYesterdayHot(day, row.computed_at.toISOString(), row.entries);
 }

@@ -87,11 +87,10 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     // and tap the matching synthetic city, without bypassing its UI events.
     await page.locator('section[aria-label="我的城市"] button[aria-haspopup="dialog"]').click();
     await page.waitForSelector('[role="dialog"][aria-label="选择我的城市"] ul button');
-    const picks = await page.$('[role="dialog"][aria-label="选择我的城市"] ul button');
-    const labels = await Promise.all(picks.map(button => button.evaluate(el => el.textContent ?? "")));
-    const beijingChoice = labels.findIndex(label => label.trim().startsWith("北京"));
-    assert.ok(beijingChoice >= 0, "fixture city 北京 should appear in searchable picker");
-    await picks[beijingChoice]!.click();
+    const firstChoice = '[role="dialog"][aria-label="选择我的城市"] ul button';
+    assert.match(await page.$eval(firstChoice, button => button.textContent?.trim() ?? ""), /^北京/,
+      "synthetic catalog must render Beijing first");
+    await page.locator(firstChoice).click();
     try {
       await page.waitForFunction(()=>document.querySelector('[data-item-id="synthetic-0"]')?.textContent?.includes("当地"),{timeout:9000});
     } catch (error) {

@@ -51,6 +51,7 @@ class PreviewTests(unittest.TestCase):
                      ["--test", "--test-to", "a@example.org\nBcc:other@example.org"],
                      ["--test", "--test-to", "group:a@example.org"],
                      ["--test", "--test-to", "Name <a@example.org>"],
+                     ["--kind", "weekly"], ["--initialize", "--kind", "monthly"],
                      ["--test-to", "a@example.org"]):
             with patch.object(sys, "argv", ["send_reports.py", *argv]), \
                  patch.object(mail, "fetch_latest", side_effect=AssertionError("invalid mode fetched data")), \

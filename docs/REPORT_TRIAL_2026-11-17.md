@@ -36,7 +36,7 @@ python3 scripts/check_report_deployment.py --base http://49.233.72.222/yihot
 
 ## 交给有腾讯云连接的 WorkBuddy
 
-> 连续完成 YiHot 报告上线与11月17日验收准备。先读AGENTS.md、docs/PROJECT_CONTEXT.md、docs/EMAIL_DELIVERY.md和本文件；使用最新main，保留另一会话的修改，按blob核对三方，不强制覆盖、不用开发机旧.env。先备份数据库、当前共用镜像及 /opt/yihot-email-delivery/send_reports.py；沿用服务器现有三个compose组合重建Web/API/worker。独立备份并原子同步 deploy/email-delivery/send_reports.py 到 /opt/yihot-email-delivery/，不改变原.env、订阅人、outbox、模型开关或报告调度。先跑合成Python测试，再用 --preview-json 预览真实公共DTO；预览通过后，只有用户已明确授权受控收件人时才使用 --test --test-to <该单个地址> 发送一次；不要读取EMAIL_TO、领取订阅outbox或向其他用户发送。运行 check_report_deployment.py --runtime --sudo-docker，逐项处理版本/镜像/邮件timer/ExecStart问题并保存脱敏结果；不要把未核验改为通过。11月17日08:00后核对实际日报记录、reports.daily任务和正常邮件回执；不手动重编旧报告、不批量补发。把实际部署时间、源码blob/镜像、独立邮件哈希、核查结果与回滚点写入Git的脱敏交接，未观察到的SMTP送达和报告质量保持待验收。
+> 连续完成 YiHot 报告上线与11月17日验收准备。先读AGENTS.md、docs/PROJECT_CONTEXT.md、docs/EMAIL_DELIVERY.md和本文件；使用最新main，保留另一会话的修改，按blob核对三方，不强制覆盖、不用开发机旧.env。先备份数据库、当前共用镜像及 /opt/yihot-email-delivery/send_reports.py；沿用服务器现有三个compose组合重建Web/API/worker。独立备份并原子同步 deploy/email-delivery/send_reports.py 到 /opt/yihot-email-delivery/，不改变原.env、订阅人、outbox、模型开关或报告调度。先跑合成Python测试，再用 --preview-json 预览真实公共DTO；预览通过后，只有用户已明确授权受控收件人时才使用 --test --test-to <该单个地址> 发送一次；不可无参数运行或只传--kind。不要读取EMAIL_TO、领取订阅outbox或向其他用户发送。运行 check_report_deployment.py --runtime --sudo-docker，逐项处理版本/镜像/邮件timer/ExecStart问题并保存脱敏结果；不要把未核验改为通过。11月17日08:00后核对实际日报记录、reports.daily任务和正常邮件回执；不手动重编旧报告、不批量补发。把实际部署时间、源码blob/镜像、独立邮件哈希、核查结果与回滚点写入Git的脱敏交接，未观察到的SMTP送达和报告质量保持待验收。
 
 部署路径沿用 `docs/PROJECT_CONTEXT.md` §2 的现有compose组合（含futureme代理/werss），不额外新建一套生产站。邮件文件替换采用临时文件+rename，避免timer运行时读取半份脚本；保留服务器现有访问权限和.env。不要把备份、凭据、真实日报、收件人或退订链接上传Git。
 

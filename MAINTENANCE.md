@@ -3249,3 +3249,5 @@ CI：`tests/report-yesterday-hot.test.ts` 核验北京时间边界、防串日�
 11月17日08:00日报、11月23日06:00周报、12月1日06:30月报均为原有计划，实际执行和送达另验；独立日报网页仍隐藏。新增工具测试使用合成fixture，10项Python报告布局/预览/核查通过；typecheck、Web构建和52项Web回归通过，实际Chromium由Docker CI执行。操作、只读SQL、无凭据时WorkBuddy接手提示词、未证实项和回滚见 [报告上线验收](docs/REPORT_TRIAL_2026-11-17.md)。不更改模型、调度、订阅、数据库或历史报告。
 
 受控邮件测试另设 `--test-to` 强制单收件人，`--test` 不能复用 EMAIL_TO 订阅列表，缺少地址或逗号/换行/显示名输入直接拒绝；测试模式不读生产状态、不领取outbox、不调用AnyDoor brief，正常订阅流程保持原状。实际测试地址由当次用户授权决定，不固化到Git。
+
+旧CLI单独 `--kind weekly/monthly` 会忽略kind而进入生产订阅队列；现改为仅受控test支持kind，其余调用直接拒绝，无参数systemd生产入口不变。手动验收不运行无参数邮件脚本。

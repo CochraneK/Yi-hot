@@ -29,8 +29,6 @@ YIHOT_BASE=https://49.233.72.222/yihot
 ```bash
 python3 send_reports.py --test --test-to "$YIHOT_CONTROLLED_TEST_EMAIL"  # 仅一个明确授权收件人
 python3 send_reports.py --initialize           # 首次部署只建立 IMAP 退信游标
-python3 send_reports.py --kind weekly          # 投递最新周报
-python3 send_reports.py --kind monthly         # 投递最新月报
 systemctl status yihot-email-delivery.timer
 journalctl -u yihot-email-delivery.service -n 50 --no-pager
 ```
@@ -72,3 +70,5 @@ python3 deploy/email-delivery/send_reports.py \
 用 [部署核查脚本](../scripts/check_report_deployment.py) 对比运行中 Web/API/worker 的不可变镜像及九个报告文件哈希，再独立对比 `/opt/yihot-email-delivery/send_reports.py`、timer 和 ExecStart。仅访问公共API不会给出“已部署”结论。完整命令、11月17日验收、只读SQL与WorkBuddy接手见 [报告上线验收](REPORT_TRIAL_2026-11-17.md)。
 
 受控测试模式不领取 outbox、不读取生产投递状态、不调用可选 AnyDoor brief，固定一次发送到显式地址。缺少 `--test-to`、列表、显示名或换行注入均拒绝；正常订阅定时与发送去重流程不变。真实受控收件人属于本次授权信息，不写入仓库或示例配置。
+
+`--kind weekly/monthly` 仅能搭配 `--test --test-to`，单独使用直接报错，避免旧命令忽略kind后进入整个订阅队列。无参数运行仍是生产outbox投递入口，不能拿来手动测试；原systemd timer按既有配置使用该入口。

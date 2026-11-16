@@ -841,6 +841,8 @@ def main():
         return
     if args.preview_dir or args.preview_base:
         parser.error("--preview-dir/--preview-base require --preview-json")
+    if args.kind and not args.test:
+        parser.error("--kind requires --test; it must not accidentally process the subscriber outbox")
     if args.test_to and not args.test:
         parser.error("--test-to requires --test")
     if args.test:

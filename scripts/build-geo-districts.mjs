@@ -40,6 +40,12 @@ for (const area of areas) {
   const name = String(area.name ?? "").trim();
   const city = cityNameOf(area).trim();
   if (!name || !city || name.length < 2) continue;
+  // 市辖区 only. A county-level city (昆山, 义乌, 瑞安) is a city in its own right
+  // and the picker offers it by that name; folding it into its prefecture would
+  // move an event 80 km and rename the city under the reader's feet. Counties
+  // (秦安县) stay where they are for the same reason: they are already below the
+  // prefecture and this pass is about the 区 inside a city.
+  if (!name.endsWith("区")) continue;
   // A district that carries its city's own name is not a fold: 东区 under 攀枝花
   // is still 攀枝花, but a row named 重庆 would be the city itself.
   if (name === city) continue;

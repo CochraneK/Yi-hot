@@ -50,6 +50,16 @@ test("a district folds into the city that contains it", () => {
   if (hinted.status === "resolved") assert.equal(hinted.place.name, "北京");
 });
 
+test("a county-level city stays itself", () => {
+  // 昆山 and 瑞安 are cities the picker offers by that name; folding them into
+  // 苏州 / 温州 would move the pin and rename the city under the reader's feet.
+  for (const [input, city] of [["昆山市", "昆山"], ["瑞安市", "瑞安"], ["义乌市", "义乌"]]) {
+    const result = resolvePlace(input);
+    assert.equal(result.status, "resolved", input);
+    if (result.status === "resolved") assert.equal(result.place.name, city, input);
+  }
+});
+
 test("a district name is never stripped into a different city", () => {
   // 朝阳区 is 北京 and 长春. Stripping 区 leaves 朝阳, a city in 辽宁 — the one
   // outcome worse than leaving the name unresolved.

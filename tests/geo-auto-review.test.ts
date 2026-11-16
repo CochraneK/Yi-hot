@@ -85,6 +85,43 @@ test("auto approval refuses places the gazetteer cannot settle", () => {
   assert.equal(bare.approve, false);
 });
 
+test("a village or township reusing a city name is not that city", () => {
+  // Field samples that all reached the map before this rule: 太原村 is in Fujian,
+  // 坪山乡 is in Guizhou, 园林街道 is a subdistrict of Qianjiang, 温泉镇 is a town.
+  const cases = [
+    { placeText: "太原村", evidence: "福建永泰县太原村的乡村教师坚守三十年" },
+    { placeText: "坪山乡", evidence: "启动仪式在坪山乡举行，当地孩子第一次走进绘本馆" },
+    { placeText: "园林街道", evidence: "园林街道建设街社区的张大爷点赞高龄津贴新举措" },
+    { placeText: "温泉镇", evidence: "温泉镇的乡村医生每天骑车巡诊两个村" },
+  ];
+  for (const item of cases) {
+    const decision = decideAutoApproval({ ...item, role: "event" });
+    assert.equal(decision.approve, false, `${item.placeText} must not resolve to a same-named city`);
+    assert.match(decision.reason, /sub-city unit/, item.placeText);
+  }
+});
+
+test("a city named through a full administrative chain still resolves", () => {
+  const decision = decideAutoApproval({
+    placeText: "四川省广元市朝天区李家镇望远山社区",
+    role: "event",
+    evidence: "四川省广元市朝天区李家镇望远山社区的蓝莓园里，村民们正在采摘",
+  });
+  assert.equal(decision.approve, true);
+  assert.equal(decision.place?.name.slice(0, 2), "广元");
+});
+
+test("datelines and branch offices are not event locations", () => {
+  const dateline = decideAutoApproval({ placeText: "北京", role: "event", evidence: "新华社北京10月30日电" });
+  assert.equal(dateline.approve, false);
+
+  const branch = decideAutoApproval({ placeText: "北京", role: "event", evidence: "中国红十字会北京代表处今天挂牌" });
+  assert.equal(branch.approve, false);
+
+  const police = decideAutoApproval({ placeText: "宜昌", role: "event", evidence: "宜昌市公安局西陵区分局窑湾派出所所长介绍情况" });
+  assert.equal(police.approve, false);
+});
+
 test("auto approval accepts a city with a clean event quote", () => {
   const decision = decideAutoApproval({ placeText: "成都", role: "event", evidence: "11月14日，成都在天府广场举行公益市集" });
   assert.equal(decision.approve, true);

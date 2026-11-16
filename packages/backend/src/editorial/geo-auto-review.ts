@@ -10,8 +10,10 @@
 //      affected and mentioned; anything else is not an event location.
 //   2. the place name resolves to exactly one city in the offline gazetteer.
 //   3. the quoted evidence contains the name at least once where it is not the
-//      head of an institution, outlet or policy range ("北京某基金会").
+//      head of an institution, outlet, policy range ("北京某基金会") or a dateline.
 //   4. the quote is more than a bare place name.
+//   5. the text does not name a sub-city unit that only reuses the city name
+//      ("太原村", "坪山乡", "园林街道").
 import type { GeoRole } from "@aihot/contracts/geo-review";
 import { sql } from "../db.ts";
 import { resolvePlace, type ResolvedPlace } from "./geo-gazetteer.ts";
@@ -24,12 +26,26 @@ const INSTITUTION_WORDS = [
   "公司", "集团", "企业", "工厂", "银行", "酒店", "商场", "物业",
   "大学", "学院", "学校", "中学", "小学", "幼儿园", "研究院", "研究所", "实验室",
   "医院", "卫生院", "疾控中心", "委员会", "政府", "民政局", "教育局", "卫健委",
-  "派出所", "法院", "检察院", "街道办", "居委会", "办事处", "管理中心",
+  "派出所", "法院", "检察院", "街道办", "居委会", "办事处", "代表处", "管理中心",
+  "公安局", "公安厅", "民政厅", "教育厅", "分局", "分公司", "分部", "分会", "支部", "支行",
   "报社", "杂志社", "电视台", "广播电台", "日报", "晚报", "新闻网",
 ];
 
 /** A quote that only names a place says nothing about an event happening there. */
 const BARE_PLACE_MAX = 6;
+
+/**
+ * Units below the prefecture level. "太原村" and "太原市" share a pinyin key, so
+ * the gazetteer alone cannot tell them apart: the suffix is the only signal that
+ * the text names a village or a township, not the city of the same name.
+ */
+const SUB_CITY_SUFFIXES = ["街道办事处", "街道", "社区", "村", "乡", "镇", "屯", "里"];
+
+/** Prefecture-level markers. Their presence means the head of the string is a city. */
+const CITY_MARKERS = ["省", "市", "州", "盟", "地区", "自治区", "自治州"];
+
+/** Datelines ("新华社北京10月30日电") record where a desk sits, not an event. */
+const DATELINE_AFTER_NAME = /^\s*\d{1,2}月\d{1,2}日?\s*电/;
 
 /** Ranges are not cities: they cannot support a nearby search or a map pin. */
 const RANGE_WORDS = ["全国", "各地", "多地", "全省", "全市", "全区", "全县", "海内外", "境内外"];
@@ -50,6 +66,13 @@ export function decideAutoApproval(input: { placeText: string; role: GeoRole; ev
   if (RANGE_WORDS.some(word => trimmed === word || trimmed.includes(word))) {
     return { approve: false, reason: "range, not a city" };
   }
+  // "太原村" / "坪山乡" / "园林街道" reuse a city name for a village, township or
+  // subdistrict pinyin-identical to it. Without a province or city prefix there
+  // is nothing tying the unit to that city, and the pin would land provinces away.
+  const suffix = SUB_CITY_SUFFIXES.find(item => trimmed.endsWith(item));
+  if (suffix && !CITY_MARKERS.some(marker => trimmed.slice(0, -suffix.length).includes(marker))) {
+    return { approve: false, reason: "sub-city unit, not the city" };
+  }
 
   const quote = evidence.trim();
   if (quote.length <= BARE_PLACE_MAX) return { approve: false, reason: "evidence is only a place name" };
@@ -66,13 +89,13 @@ export function decideAutoApproval(input: { placeText: string; role: GeoRole; ev
     // Look a little past the name, not only at the next characters: "北京某基金会"
     // puts 某 between the city and the institution, so startsWith would miss it.
     const after = quote.slice(index + name.length, index + name.length + 10);
-    if (!INSTITUTION_WORDS.some(word => after.includes(word))) {
+    if (!DATELINE_AFTER_NAME.test(after) && !INSTITUTION_WORDS.some(word => after.includes(word))) {
       return { approve: true, reason: "event place with clean quote", place: resolution.place };
     }
     index = quote.indexOf(name, index + 1);
   }
   if (!sawName) return { approve: false, reason: "place missing from evidence" };
-  return { approve: false, reason: "every mention is an institution or outlet" };
+  return { approve: false, reason: "every mention is an institution, outlet or dateline" };
 }
 
 export interface AutoReviewSummary {

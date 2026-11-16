@@ -207,7 +207,10 @@ function toResolved(entry: GazetteerEntry): ResolvedPlace {
     id: entry.id,
     name: entry.name,
     countryCode: entry.cc,
-    region: null,
+    // The province is what lets a city be counted into 四川 on the heat map's
+    // province view. Dropping it here is why 264 cities sat region-less and the
+    // province view only had four dots to draw.
+    region: entry.province ?? null,
     city: entry.name,
     lat: entry.lat,
     lon: entry.lon,

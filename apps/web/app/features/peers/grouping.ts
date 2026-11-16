@@ -62,10 +62,10 @@ export function filterPeerSites(sites: PeerDirectoryEntry[], query: string): Pee
  * 后端使用同一登记表过滤；这里再兜底处理短时缓存的旧 API 数据。
  * 候选与正式站按同一个 group 排列，tier 只是卡片上的状态标记。
  */
-const sourceOnlyIds = new Set(PEER_SITES.filter(s => s.directoryVisible === false).map(s => s.id));
+const excludedIds = new Set(PEER_SITES.filter(s => s.directoryVisible === false || s.requiresPaidAccess === true).map(s => s.id));
 
 export function isNeighborhoodAggregator(site: PeerDirectoryEntry): boolean {
-  return site.tier !== "resource" && !sourceOnlyIds.has(site.id);
+  return site.tier !== "resource" && !excludedIds.has(site.id);
 }
 
 export function groupNeighborhoods(sites: PeerDirectoryEntry[]): PeerGroupView[] {

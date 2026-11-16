@@ -8,7 +8,7 @@
  * changes <option> text during hydration. Unknown ISO codes remain explicit.
  */
 const COUNTRY_LABELS: Readonly<Record<string, string>> = {
-  CN: "中国", HK: "香港", MO: "澳门", TW: "台湾",
+  CN: "中国", HK: "中国香港", MO: "中国澳门", TW: "中国台湾",
   SG: "新加坡", JP: "日本", KR: "韩国", TH: "泰国",
   VN: "越南", MY: "马来西亚", GB: "英国", FR: "法国",
   DE: "德国", RU: "俄罗斯", US: "美国", KE: "肯尼亚",

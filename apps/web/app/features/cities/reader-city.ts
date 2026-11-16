@@ -42,6 +42,20 @@ export function useReaderLocation(): ReaderLocation | null {
 }
 export function useReaderCity(): string | null { return useReaderLocation()?.id ?? null; }
 
+/**
+ * The canonical city a stored reader location points at, or null when the feed
+ * cannot filter by it. A location saved before canonical place ids existed (or by
+ * the IP lookup) may carry a short id such as "beijing", which no reviewed place
+ * has; matching by name recovers those instead of filtering the feed to nothing.
+ */
+export function canonicalCity<T extends { id: string; name: string }>(
+  reader: ReaderLocation | null,
+  places: readonly T[],
+): T | null {
+  if (!reader) return null;
+  return places.find(p => p.id === reader.id) ?? places.find(p => p.name === (reader.city ?? reader.name)) ?? null;
+}
+
 /** Only a chosen city centre is stored; never an IP address or GPS location. */
 export function saveReaderLocation(value: ReaderLocation | null): void {
   if (typeof window === "undefined") return;

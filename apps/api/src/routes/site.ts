@@ -6,7 +6,7 @@ import { isCategoryKey, isChannelKey, type CategoryKey, type ChannelKey } from "
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
-import { loadVerifiedGeoPool, loadGeoHeat, parseGeoFilters } from "@aihot/backend/publication/geo";
+import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlaces, parseGeoFilters } from "@aihot/backend/publication/geo";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
 import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/groups";
@@ -139,6 +139,14 @@ export function registerSite(app: FastifyInstance) {
     const data = await loadGeoHeat(hours);
     const { generatedAt: _g, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoheat", cacheControl: "public, max-age=120, s-maxage=120", etagOf: content });
+  }));
+
+  // The cities a reader can choose from. Same gate and the same canonical ids the
+  // pool filter takes, so "my city" always resolves to a filter that matches.
+  app.get("/api/site/geo/places", siteHandler(async (req, reply) => {
+    const data = await loadGeoPlaces();
+    const { generatedAt: _g, ...content } = data;
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoplaces", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
   }));
 
   app.get("/api/site/items/:id", siteHandler(async (req, reply) => {

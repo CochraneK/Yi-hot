@@ -1,6 +1,6 @@
 import { SITE, withSubject } from "@aihot/industry/site";
-import { Link, useLoaderData } from "react-router";
-import type { HotEntryView, HotResponse } from "@aihot/contracts/site";
+import { Link, useLoaderData, useNavigate } from "react-router";
+import type { GeoHeatResponse, HotEntryView, HotResponse } from "@aihot/contracts/site";
 import { loadOr404 } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { monthDayTime, shortSourceName } from "../lib/format";
@@ -10,9 +10,16 @@ import { IconChevronDown, IconInfo } from "../components/icons";
 import { Sparkline } from "../features/hot/Sparkline";
 import { Faces } from "../features/hot/Faces";
 import { Delta } from "../features/hot/Delta";
+import { CityHeatMap } from "../features/cities/HeatMap";
 
 export async function loader({ request }: { request: Request }) {
-  return { hot: await loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }) };
+  // The map answers "where is it happening in the last two days" next to "what is
+  // being talked about" — the same two-day window the ranking already uses.
+  const [hot, heat] = await Promise.all([
+    loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }),
+    loadOr404<GeoHeatResponse>("/api/site/geo/heat?hours=48", { signal: request.signal }),
+  ]);
+  return { hot, heat };
 }
 
 export function meta() {
@@ -222,7 +229,8 @@ function Row({ e }: { e: HotEntryView }) {
 }
 
 export default function HotPage() {
-  const { hot } = useLoaderData<typeof loader>();
+  const { hot, heat } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
   const [lead, ...rest] = hot.entries;
   const runners = rest.slice(0, 2);
   const others = rest.slice(2);
@@ -246,6 +254,12 @@ export default function HotPage() {
           </p>
         )}
       </header>
+
+      {/* Same two-day window as the ranking, read geographically: what is being
+          talked about, and where it is being filed from. */}
+      <div className="mb-5">
+        <CityHeatMap compact points={heat.points} hours={heat.hours} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
+      </div>
 
       {!lead ? (
         <div className="card rounded-sheet">

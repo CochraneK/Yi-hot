@@ -190,6 +190,20 @@ export interface GeoHeatResponse {
   generatedAt: string;
 }
 
+/**
+ * One selectable city. The picker in the feed needs the same canonical ids the
+ * pool filter accepts — the older static city list used short ids ("beijing")
+ * that match no reviewed place and silently returned an empty feed.
+ */
+export interface GeoPlaceOption extends GeoEventPlace {
+  count: number;
+}
+
+export interface GeoPlacesResponse {
+  places: GeoPlaceOption[];
+  generatedAt: string;
+}
+
 export interface OutlineEntry {
   id: string;
   text: string;

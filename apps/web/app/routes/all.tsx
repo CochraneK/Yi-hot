@@ -2,7 +2,7 @@ import { SITE, withSubject } from "@aihot/industry/site";
 import { useState } from "react";
 import { Link, useLoaderData, useNavigation, useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/all";
-import type { PoolResponse } from "@aihot/contracts/site";
+import type { GeoPlacesResponse, PoolResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
 import { loadOr404, queryString } from "../lib/api.server";
 import { listPath, pageMeta } from "../lib/seo";
@@ -12,7 +12,7 @@ import { PillTabs } from "../components/ui/Tabs";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { ToggleChip } from "../components/ui/Controls";
 import { useReadSet } from "../lib/local-state";
-import { useReaderLocation } from "../features/cities/reader-city";
+import { canonicalCity, saveReaderLocation, useReaderLocation } from "../features/cities/reader-city";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
 
@@ -33,11 +33,16 @@ export async function loader({ request }: Route.LoaderArgs) {
   const place = placeParam && /^[a-z0-9][a-z0-9-]{1,79}$/.test(placeParam) ? placeParam : null;
   // Legacy deep-paging parameters (deep, anchorAt) still open a normal page.
   const page = Math.min(Math.max(Number.parseInt(url.searchParams.get("page") ?? "1", 10) || 1, 1), 50);
-  const data = await loadOr404<PoolResponse>(
-    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, place, page: page > 1 ? page : null })}`,
-    { signal: request.signal, busyRedirect: "/all/search-busy" },
-  );
-  return { data, place };
+  const [data, places] = await Promise.all([
+    loadOr404<PoolResponse>(
+      `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, place, page: page > 1 ? page : null })}`,
+      { signal: request.signal, busyRedirect: "/all/search-busy" },
+    ),
+    // Cities the reader may pick as 当地. Canonical ids only — the short ids in the
+    // old static list matched no reviewed place and filtered the feed to nothing.
+    loadOr404<GeoPlacesResponse>("/api/site/geo/places", { signal: request.signal }),
+  ]);
+  return { data, place, places: places.places };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -69,7 +74,7 @@ function pageHref(params: URLSearchParams, page: number) {
 }
 
 export default function AllPage() {
-  const { data, place } = useLoaderData<typeof loader>();
+  const { data, place, places } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const navigation = useNavigation();
   const navigate = useNavigate();
@@ -100,17 +105,28 @@ export default function AllPage() {
 
   // 只看当地 is a server filter, not a page-local one: the reader's city lives in
   // this browser, so its canonical id goes into the URL and the API decides what
-  // belongs to it. Without a chosen city the chip sends the reader to pick one.
+  // belongs to it. A stored city that predates canonical places is matched by name
+  // here, otherwise the filter would accept an id the pool has never heard of.
+  const here = canonicalCity(reader, places);
   const toggleLocal = () => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
     if (place) sp.delete("place");
-    else if (reader) sp.set("place", reader.id);
+    else if (here) sp.set("place", here.id);
     else { navigate("/cities"); return; }
     const query = sp.toString();
     navigate(query ? `/all?${query}` : "/all");
   };
-  const localLabel = place && reader ? `只看当地 · ${reader.name}` : "只看当地";
+  const chooseLocal = (id: string) => {
+    const city = places.find(p => p.id === id);
+    if (!city) return;
+    saveReaderLocation({ id: city.id, name: city.name, countryCode: city.countryCode, region: city.region, city: city.city ?? city.name, lat: city.lat, lon: city.lon });
+    const sp = new URLSearchParams(params);
+    sp.delete("page");
+    sp.set("place", city.id);
+    navigate(`/all?${sp.toString()}`);
+  };
+  const localLabel = place ? `只看当地 · ${here?.name ?? reader?.name ?? "本城"}` : "只看当地";
 
   return (
     <div className="pb-6">
@@ -159,6 +175,19 @@ export default function AllPage() {
           {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
         </span>
         <div className="flex flex-wrap items-center gap-2">
+          {!here && (
+            <select
+              aria-label="选择我的城市"
+              value=""
+              onChange={e => chooseLocal(e.target.value)}
+              className="max-w-[9.5rem] rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[12px] text-ink-2"
+            >
+              <option value="">选择我的城市…</option>
+              {places.map(city => (
+                <option key={city.id} value={city.id}>{city.name} · {city.count}</option>
+              ))}
+            </select>
+          )}
           <ToggleChip on={!!place} onToggle={toggleLocal}>
             {localLabel}
           </ToggleChip>

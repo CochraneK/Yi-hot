@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GeoEventPlace } from "@aihot/contracts/site";
-import { isLocalEvent, locationFromIpResult, readerLocation, staticReaderLocation } from "../app/features/cities/reader-city.ts";
+import { canonicalCity, isLocalEvent, locationFromIpResult, readerLocation, staticReaderLocation } from "../app/features/cities/reader-city.ts";
 import { cityCountryLabel } from "../app/features/cities/geo.ts";
 const place: GeoEventPlace = { id: "canonical-beijing", name: "北京市", countryCode: "CN", region: "北京", city: "北京市", lat: 39.9, lon: 116.4, precision: "city" };
 test("local badge uses reviewed city events, including canonical IDs outside the old dictionary", () => {
@@ -32,10 +32,25 @@ test("IP matching uses country and region and refuses ambiguous catalog names", 
 });
 
 test("country labels are stable across Node and browser ICU versions", () => {
-  assert.equal(cityCountryLabel("MO"), "澳门");
-  assert.equal(cityCountryLabel("HK"), "香港");
-  assert.equal(cityCountryLabel("TW"), "台湾");
+  assert.equal(cityCountryLabel("MO"), "中国澳门");
+  assert.equal(cityCountryLabel("HK"), "中国香港");
+  assert.equal(cityCountryLabel("TW"), "中国台湾");
   assert.equal(cityCountryLabel("CN"), "中国");
   assert.equal(cityCountryLabel("FR"), "法国");
   assert.equal(cityCountryLabel("ZZ"), "ZZ");
+});
+
+test("a stored short city id resolves to the canonical place, or to nothing", () => {
+  const places = [
+    { id: "geonames-1816670", name: "北京" },
+    { id: "geonames-1796236", name: "上海" },
+  ];
+  // Saved before canonical ids existed: the name still finds the right city.
+  const legacy = { id: "beijing", name: "北京", countryCode: "CN", region: "北京", city: "北京", lat: 39.904, lon: 116.407 };
+  assert.equal(canonicalCity(legacy, places)?.id, "geonames-1816670");
+  // Already canonical: matched by id, even when the name was renamed.
+  assert.equal(canonicalCity({ ...legacy, id: "geonames-1796236" }, places)?.id, "geonames-1796236");
+  // A city with no reviewed place cannot filter the feed, so it stays unusable.
+  assert.equal(canonicalCity({ ...legacy, id: "kunming", name: "昆明", city: "昆明" }, places), null);
+  assert.equal(canonicalCity(null, places), null);
 });

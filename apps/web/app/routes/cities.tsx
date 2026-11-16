@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Form, Link, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import type { Route } from "./+types/cities";
-import type { GeoEventPlace, GeoHeatResponse, GeoReviewedResponse, PoolResponse } from "@aihot/contracts/site";
+import type { GeoEventPlace, GeoReviewedResponse, PoolResponse } from "@aihot/contracts/site";
 import { loadOr404, queryString } from "../lib/api.server";
 import { pageMeta } from "../lib/seo";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { CITY_PLACES, cityClues, cityCountryLabel, placeById } from "../features/cities/geo";
 import { locationFromOptInIp, saveReaderLocation, staticReaderLocation, useReaderLocation } from "../features/cities/reader-city";
 import { NewsMap } from "../features/cities/NewsMap";
-import { CityHeatMap } from "../features/cities/HeatMap";
 import { EmptyState } from "../components/ui/Page";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -18,12 +17,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const clues = url.searchParams.get("reviewed") === "0" || (url.searchParams.has("city") && !url.searchParams.has("reviewed"));
   if (clues) {
     const city = placeById(url.searchParams.get("city"));
-    const [data, heat] = await Promise.all([
-      loadOr404<PoolResponse>(`/api/site/pool${queryString({ q: city?.name, page })}`,
-        { signal: request.signal, busyRedirect: "/all/search-busy" }),
-      loadOr404<GeoHeatResponse>(`/api/site/geo/heat?hours=48`, { signal: request.signal }),
-    ]);
-    return { kind: "clues" as const, data, city: city?.id ?? null, heat };
+    const data = await loadOr404<PoolResponse>(`/api/site/pool${queryString({ q: city?.name, page })}`,
+      { signal: request.signal, busyRedirect: "/all/search-busy" });
+    return { kind: "clues" as const, data, city: city?.id ?? null };
   }
   const params = new URLSearchParams();
   for (const key of ["place", "country", "region", "lat", "lon", "radius"]) {
@@ -33,13 +29,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Legacy reviewed links remain valid too, including non-static canonical IDs via place=… .
   if (!params.has("place") && url.searchParams.get("city")) params.set("place", url.searchParams.get("city")!);
   params.set("page", String(page));
-  const [data, heat] = await Promise.all([
-    loadOr404<GeoReviewedResponse>(`/api/site/geo?${params}`, { signal: request.signal }),
-    // The heat window is fixed at 48h: it answers "where is it happening now",
-    // not "everything ever filed here", so it does not follow the page filters.
-    loadOr404<GeoHeatResponse>(`/api/site/geo/heat?hours=48`, { signal: request.signal }),
-  ]);
-  return { kind: "reviewed" as const, data, city: null, heat };
+  // The national 48h heat map lives on 热点 now: this page maps the places the
+  // reader actually filtered to, so it keeps asking only for those.
+  const data = await loadOr404<GeoReviewedResponse>(`/api/site/geo?${params}`, { signal: request.signal });
+  return { kind: "reviewed" as const, data, city: null };
 }
 export function meta({ location }: Route.MetaArgs) {
   return pageMeta({ title: "城市地图", description: "从地图、地区和附近范围探索经审核的新闻事件地点。", path: "/cities", noindex: !!location.search });
@@ -63,12 +56,22 @@ export default function CitiesPage() {
   const geo = result.kind === "reviewed" ? result.data : null;
   const catalog = geo?.catalog ?? [];
   const choices = useMemo(() => {
-    const m = new Map<string, GeoEventPlace>(CITY_PLACES.map(p => [p.id, { ...staticReaderLocation(p.id)!, precision: "city" as const }]));
-    for (const p of catalog) if (p.precision === "city") m.set(p.id, p);
-    if (reader && !m.has(reader.id)) m.set(reader.id, { ...reader, precision: "city" });
-    // Registry order is stable and already groups Chinese/overseas cities; append canonical entries in API order.
-    // Avoid runtime ICU collation differences during SSR hydration.
-    return [...m.values()];
+    // Canonical places first. The static list predates canonical ids, so offering
+    // both would list 北京 twice — once with an id the feed filter cannot match.
+    const list: GeoEventPlace[] = catalog.filter(p => p.precision === "city");
+    const names = new Set(list.map(p => p.name));
+    for (const p of CITY_PLACES) {
+      const loc = staticReaderLocation(p.id);
+      if (!loc || names.has(loc.name)) continue;
+      names.add(loc.name);
+      list.push({ ...loc, precision: "city" as const });
+    }
+    if (reader && !list.some(p => p.id === reader.id || p.name === reader.name)) {
+      list.push({ ...reader, precision: "city" });
+    }
+    // API order is stable and already groups Chinese/overseas cities; appending the
+    // remaining static entries keeps it deterministic during SSR hydration.
+    return list;
   }, [catalog, reader]);
   const countries = geo?.countries ?? [...new Set(catalog.map(p => p.countryCode))].sort();
   const regions = chosenCountry === urlCountry && geo?.regions?.length ? geo.regions
@@ -91,9 +94,6 @@ export default function CitiesPage() {
   const nearbyActive = geo && params.has("radius");
   return <div className="pb-8">
     <header className="pb-4 pt-5 lg:pt-0"><h1 className="text-[23px] font-semibold text-ink">城市地图</h1><p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">看看一座城市正在发生什么，也看看与你相近的新闻。</p></header>
-    <div className="mb-4">
-      <CityHeatMap points={result.heat.points} hours={result.heat.hours} onChoose={id => navigate(`/all?place=${encodeURIComponent(id)}`)} />
-    </div>
     <section className="mb-4 space-y-3 rounded-xl border border-line-soft bg-surface p-4" aria-label="我的城市">
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="my-city" className="text-[13px] text-ink-3">我的城市</label>
@@ -134,6 +134,6 @@ export default function CitiesPage() {
     {items.length ? <div className="mt-4"><DayList items={items} todayCount={null} showTags /></div>
       : <div className="mt-4"><EmptyState title={geo ? "这个范围暂无已审核地点的新闻" : "本页没有明确的城市线索"}>地点审核还在逐步覆盖。可调整地区或范围，也可查看地名线索与完整动态。</EmptyState></div>}
     <Pagination page={result.data.page} pageCount={result.data.pageCount} href={href} />
-    <p className="mt-5 text-[12px] leading-relaxed text-ink-4">新闻地图与【当地】标签只使用人工核实的事件地点。标记采用登记的地区或城市代表点；无标记不代表当地没有新闻。</p>
+    <p className="mt-5 text-[12px] leading-relaxed text-ink-4">新闻地图与【当地】标签只使用自动核准的事件地点。标记采用登记的地区或城市代表点；无标记不代表当地没有新闻。全国近 48 小时的热力分布见 <Link to="/hot" className="text-accent">热点</Link>。</p>
   </div>;
 }

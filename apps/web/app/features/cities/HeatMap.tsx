@@ -12,10 +12,12 @@ import "leaflet/dist/leaflet.css";
  * Nothing third-party loads until the reader asks for the map, and the circles
  * are reviewed event places only — the same gate as the city page.
  */
-export function CityHeatMap({ points, hours, onChoose }: {
+export function CityHeatMap({ points, hours, onChoose, compact = false }: {
   points: GeoHeatPoint[];
   hours: number;
   onChoose: (id: string) => void;
+  /** On 热点 the page already ends with its own ranking, so the city list is dropped. */
+  compact?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState(false);
@@ -64,14 +66,14 @@ export function CityHeatMap({ points, hours, onChoose }: {
   }, [enabled, points]);
 
   const total = points.reduce((sum, p) => sum + p.count, 0);
-  const top = points.slice(0, 12);
+  const top = compact ? [] : points.slice(0, 12);
 
   return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label={`近 ${hours} 小时城市热力`}>
     <div className="flex flex-wrap items-center justify-between gap-2 p-4">
       <div>
         <h2 className="font-semibold text-ink">近 {hours} 小时，哪里在发生</h2>
         <p className="mt-1 text-[12px] text-ink-3">
-          {points.length ? `${points.length} 个城市 · ${total} 条已审核的事件新闻` : "这段时间还没有已审核的事件地点"}
+          {points.length ? `${points.length} 个城市 · ${total} 条已核准的事件新闻` : "这段时间还没有已核准的事件地点"}
         </p>
       </div>
       <button type="button" onClick={() => setEnabled(v => !v)} className="rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink">
@@ -81,7 +83,7 @@ export function CityHeatMap({ points, hours, onChoose }: {
     {enabled
       ? <div ref={host} className="relative z-0 h-[320px] w-full bg-bg-sunk sm:h-[420px]" aria-label="可拖动、缩放的城市热力地图" />
       : <div className="bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-3">
-          {points.length ? `圆点越大，近 ${hours} 小时的报道越多；点击城市可查看它的新闻。` : "等审核通过的事件地点多起来，这里会显示各城市的报道密度。"}
+          {points.length ? `圆点越大，近 ${hours} 小时的报道越多；点击城市可查看它的新闻。` : "等自动核准的事件地点多起来，这里会显示各城市的报道密度。"}
         </div>}
     {top.length > 0 && (
       <ol className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-line-soft px-4 py-3 sm:grid-cols-3">
@@ -97,7 +99,7 @@ export function CityHeatMap({ points, hours, onChoose }: {
       </ol>
     )}
     <div className="space-y-1 border-t border-line-soft p-3 text-[11.5px] text-ink-4">
-      <p>加载后 OpenStreetMap 会收到连接 IP 和本站域名。统计的是已审核的事件地点，同一篇报道只计一次。</p>
+      <p>加载后 OpenStreetMap 会收到连接 IP 和本站域名。统计的是已核准的事件地点，同一篇报道只计一次。</p>
       {failure && <p role="status">{failure}</p>}
     </div>
   </section>;

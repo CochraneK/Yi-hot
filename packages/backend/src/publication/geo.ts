@@ -1,5 +1,5 @@
 // All geographic listings share the public projection and current reviewed event gate.
-import type { GeoEventPlace, GeoHeatPoint, GeoHeatResponse, GeoReviewedResponse } from "@aihot/contracts/site";
+import type { GeoEventPlace, GeoHeatPoint, GeoHeatResponse, GeoPlaceOption, GeoPlacesResponse, GeoReviewedResponse } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { ITEM_COLUMNS, ITEM_FROM, listedCondition, toFeedItemSummary, type ItemRow } from "./items.ts";
 
@@ -87,6 +87,34 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
 }
 
 const HEAT_MAX_POINTS = 400;
+
+const PLACES_MAX = 500;
+
+/**
+ * Every city the reader could pick as "my city", with how many stories it has.
+ *
+ * The feed picker has to speak the same ids the pool filter accepts; the static
+ * city list in the web app predates canonical places and its ids match nothing.
+ * Counts are all-time (not the heat window) so a reader can still choose a city
+ * that was busy last month.
+ */
+export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse> {
+  const rows = await sql<GeoPlaceOption[]>`
+    SELECT gp.id, gp.name, gp.country_code AS "countryCode", gp.region, gp.city, gp.lat, gp.lon,
+           'city'::text AS precision, count(DISTINCT p.article_id)::int AS count
+    FROM publications p
+    JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+    JOIN analyses an ON an.id = gc.analysis_id
+    JOIN articles ar ON ar.id = p.article_id
+    JOIN geo_places gp ON gp.id = gc.place_id
+    WHERE ${listedCondition(now)} AND p.eligible
+      AND an.input_revision = ar.revision
+      AND gc.review_status = 'verified' AND gc.role = 'event'
+    GROUP BY gp.id
+    ORDER BY count DESC, gp.name
+    LIMIT ${PLACES_MAX}`;
+  return { places: rows, generatedAt: new Date().toISOString() };
+}
 
 /**
  * How many reviewed events each city had in the last N hours.

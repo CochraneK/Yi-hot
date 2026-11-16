@@ -81,33 +81,34 @@ function StoryLink({ e, className }: { e: HotEntryView; className: string }) {
 }
 
 /**
- * The lead card's picture slot when the story has no picture of its own: its day of heat, drawn large
- * on a faint wash, with where it peaked. Without enough comparable hours the text takes the width.
+ * The lead card's picture slot when the story has no picture of its own: its own window of heat,
+ * drawn large on a faint wash, with where it peaked. Without enough comparable hours the text takes
+ * the width.
  */
-function HeatPanel({ e }: { e: HotEntryView }) {
+function HeatPanel({ e, hours }: { e: HotEntryView; hours: number }) {
   const seen = e.spark.filter((v): v is number => v !== null);
   const peak = Math.max(...seen);
   const peakAt = e.spark.findIndex((v) => v === peak);
   return (
     <div className="order-first flex aspect-[2/1] flex-col rounded-panel bg-accent-softer p-4 ring-1 ring-inset ring-line-soft xl:order-none xl:aspect-[16/10] dark:bg-accent-soft">
       <div className="flex items-baseline justify-between text-[11.5px] text-ink-4">
-        <span className="font-semibold text-ink-3">24 小时热度</span>
+        <span className="font-semibold text-ink-3">{hours} 小时热度</span>
         <span>
           峰值 <span className="mono text-ink-2">{Math.round(peak)}</span>
           {peakAt >= 0 && <span> · {peakAt === e.spark.length - 1 ? "当前" : `${e.spark.length - 1 - peakAt} 小时前`}</span>}
         </span>
       </div>
-      <Sparkline values={e.spark} area stretch className="mt-2 min-h-0 w-full flex-1 text-accent" />
+      <Sparkline values={e.spark} hours={hours} area stretch className="mt-2 min-h-0 w-full flex-1 text-accent" />
       <div className="mt-2 flex justify-between text-[11px] text-ink-4">
-        <span>24 小时前</span>
+        <span>{hours} 小时前</span>
         <span>现在</span>
       </div>
     </div>
   );
 }
 
-/** No. 1: the event people are talking about most, with its picture, digest, latest turn and day of heat. */
-function Lead({ e }: { e: HotEntryView }) {
+/** No. 1: the event people are talking about most, with its picture, digest, latest turn and its window of heat. */
+function Lead({ e, hours }: { e: HotEntryView; hours: number }) {
   const panel = !e.cover && e.spark.filter((v) => v !== null).length >= 3;
   return (
     <article className="card card-hover group relative flex flex-col overflow-hidden p-5 sm:p-6">
@@ -128,10 +129,10 @@ function Lead({ e }: { e: HotEntryView }) {
             <img src={e.cover.url} srcSet={e.cover.srcSet} sizes="(min-width: 1280px) calc(28vw - 96px), (min-width: 1024px) calc(58vw - 180px), (min-width: 640px) 568px, calc(100vw - 74px)" width={e.cover.width ?? undefined} height={e.cover.height ?? undefined} alt="" loading="eager" fetchPriority="high" decoding="async" className="aspect-[16/9] size-full object-cover transition-transform duration-500 group-hover:scale-[1.02] xl:aspect-[16/10]" />
           </div>
         ) : (
-          panel && <HeatPanel e={e} />
+          panel && <HeatPanel e={e} hours={hours} />
         )}
       </div>
-      {/* Side by side while the card is wide enough; on a narrow card the day of heat and the index
+      {/* Side by side while the card is wide enough; on a narrow card the window of heat and the index
           move under the voices, to the right, instead of squeezing them into a column. */}
       <div className="mt-auto flex flex-wrap items-end gap-x-6 gap-y-4 pt-5">
         <div className="min-w-0 flex-[1_1_18rem] space-y-2.5">
@@ -147,7 +148,7 @@ function Lead({ e }: { e: HotEntryView }) {
           </div>
         </div>
         <div className="flex w-full shrink-0 items-end justify-between gap-5 sm:ml-auto sm:w-auto sm:justify-end">
-          {!panel && <Sparkline values={e.spark} area className="h-10 w-[140px] text-accent" />}
+          {!panel && <Sparkline values={e.spark} hours={hours} area className="h-10 w-[140px] text-accent" />}
           <div className="text-right">
             <div className="mono text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{Math.round(e.heat)}</div>
             <div className="mt-1 text-[11.5px] text-ink-4">热度指数</div>
@@ -159,7 +160,7 @@ function Lead({ e }: { e: HotEntryView }) {
 }
 
 /** No. 2 and 3: the same card, smaller, without the picture. */
-function Runner({ e }: { e: HotEntryView }) {
+function Runner({ e, hours }: { e: HotEntryView; hours: number }) {
   return (
     <article className="card card-hover group relative flex flex-col px-5 py-4">
       <div className="flex items-center gap-2.5">
@@ -180,7 +181,7 @@ function Runner({ e }: { e: HotEntryView }) {
           </span>
         </div>
         <div className="flex items-end gap-3">
-          <Sparkline values={e.spark} className="h-7 w-[92px] text-accent" />
+          <Sparkline values={e.spark} hours={hours} className="h-7 w-[92px] text-accent" />
           <span className="mono text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(e.heat)}</span>
         </div>
       </div>
@@ -188,8 +189,8 @@ function Runner({ e }: { e: HotEntryView }) {
   );
 }
 
-/** No. 4–10: a row each, with a line of the digest, faces, the day of heat and the index. */
-function Row({ e }: { e: HotEntryView }) {
+/** No. 4–10: a row each, with a line of the digest, faces, the window of heat and the index. */
+function Row({ e, hours }: { e: HotEntryView; hours: number }) {
   return (
     <li className="group relative grid grid-cols-[30px_minmax(0,1fr)] items-start gap-x-3 px-4 py-3 transition-colors hover:bg-bg-sunk/70 sm:px-5 lg:grid-cols-[44px_minmax(0,1fr)_auto_104px_76px] lg:items-center lg:gap-x-6 lg:px-6 lg:py-3.5 dark:hover:bg-bg-muted/40">
       <span className={`mono text-[16px] font-semibold leading-[24px] lg:text-[17px] ${rankColor(e.rank)}`} aria-label={`热度排名第 ${e.rank} 位`}>
@@ -219,7 +220,7 @@ function Row({ e }: { e: HotEntryView }) {
       <div className="hidden items-center gap-2.5 lg:flex">
         <Faces participants={e.participants} total={e.participantCount} size={20} />
       </div>
-      <Sparkline values={e.spark} className="hidden h-7 w-[104px] text-accent lg:block" />
+      <Sparkline values={e.spark} hours={hours} className="hidden h-7 w-[104px] text-accent lg:block" />
       <div className="hidden flex-col items-end gap-1 lg:flex">
         <span className="mono text-[20px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(e.heat)}</span>
         <Delta trend={e.trend} pct={e.trendPct} />
@@ -263,7 +264,7 @@ export default function HotPage() {
         <>
           <section aria-label="热度前三" className="grid gap-3 lg:grid-cols-12 lg:gap-4">
             <div className="grid lg:col-span-7 xl:col-span-8">
-              <Lead e={lead} />
+              <Lead e={lead} hours={hot.windowHours} />
             </div>
             {/* Same two-day window as the ranking, read geographically. It takes the
                 slot beside the lead story, so the 2nd and 3rd entries drop below. */}
@@ -275,7 +276,7 @@ export default function HotPage() {
           <section aria-label="热度二三名" className="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-2 lg:gap-4">
             {runners.map((e) => (
               <div key={e.story.publicId} className="grid">
-                <Runner e={e} />
+                <Runner e={e} hours={hot.windowHours} />
               </div>
             ))}
           </section>
@@ -286,11 +287,11 @@ export default function HotPage() {
                 <h2 className="text-[15px] font-semibold text-ink">
                   继续看 <span className="num font-normal text-ink-4">No.{pad(others[0]!.rank)}–{pad(others[others.length - 1]!.rank)}</span>
                 </h2>
-                <span className="hidden text-[12px] text-ink-4 lg:block">参与者 · 24 小时走势 · 热度指数</span>
+                <span className="hidden text-[12px] text-ink-4 lg:block">参与者 · {hot.windowHours} 小时走势 · 热度指数</span>
               </div>
               <ol className="card divide-y divide-line-soft overflow-hidden">
                 {others.map((e) => (
-                  <Row key={e.story.publicId} e={e} />
+                  <Row key={e.story.publicId} e={e} hours={hot.windowHours} />
                 ))}
               </ol>
             </section>
@@ -309,8 +310,8 @@ export default function HotPage() {
           </span>
         </summary>
         <div className="max-w-[760px] space-y-2 pb-2 pl-[21px] pt-2 leading-[1.75] text-ink-3">
-          <p>热度来自参与同一事件的独立账号与机构，重复采集只算一次，并按 24 小时半衰期衰减。它衡量讨论活跃程度，不是报道质量评分。</p>
-          <p>榜单统计过去 48 小时；讨论偏少的日子会往前多看一天，页头写明实际统计的窗口。趋势只比较持续覆盖的同一组信源；它反映我们的监测范围，不代表全网人数。缺少可比历史时，不展示趋势线。</p>
+          <p>热度来自参与同一事件的独立账号与机构，重复采集只算一次，并按时间衰减：每过一天，权重减半。它衡量讨论活跃程度，不是报道质量评分。</p>
+          <p>榜单和旁边的走势线用同一个窗口，都是过去 {hot.windowHours} 小时；讨论偏少的日子会往前多看一天，页头写明实际统计的窗口。趋势只比较持续覆盖的同一组信源；它反映我们的监测范围，不代表全网人数。缺少可比历史时，不展示趋势线。</p>
           <p>
             信源名单只展示可公开阅读的报道来源；讨论参与者还包括只计入热度的账号与机构。同一机构的多个渠道可能合并计数，因此参与者不一定多于信源数。点击事件可查看各方报道与观点。
           </p>

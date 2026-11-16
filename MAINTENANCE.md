@@ -3203,3 +3203,11 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 ### 城市地图·真机 Chromium 交互修正（2026-11-16）
 
 390px 触控浏览器回归曾揭示 Leaflet 浮动弹窗的新闻按钮被地图本身的「关闭地图」按钮盖住，点选会误导航。现改为点击图钉后在地图**下方**原生页面流展示所选地点、最多三条本页新闻及「查看这个地点的新闻」按钮；密集点先按缩放分组，仍可进一步按标准地点过滤。地图可以反复关闭/重开，OSM 底图仅明确同意后加载；无需允许第三方脚本或修改发布门槛。城市/国家选项中 Node 和 Chromium 的 `Intl.DisplayNames` 对 MO 等代码的中文描述不同，会触发服务端/客户端首次水合不一致；现使用静态国家/地区标签和稳定城市登记顺序。验证以 PR #64 的 Docker Chromium 390px/1440px 回归及完整 Check 为准；本条只是代码说明，**不代表已在腾讯云部署或已审核真实地点**。
+
+### 城市页去掉地图，改为选城市（2026-11-16 13:40）
+
+`/cities` 不再有交互地图：页面就是选择器加这座城市的新闻。`features/cities/NewsMap.tsx` 删除，Leaflet 只剩热点页的 `HeatMap`；页面标题、`more` 菜单与 `/all` 的入口文案由「城市地图」改为「城市 / 按城市看」。
+
+原先的国家、省份、地点三级下拉合并进 `CityPicker`（全量目录、可搜索、先选省份、含港澳台），选中即跳 `?place=`；「报道最多的城市」胶囊最多 `CHIP_LIMIT = 20` 个，其余提示走选择器。IP 估计的结果会先解析成目录 id 再跳转，旧短 id（如 `beijing`）不会落成 0 条。地名线索降到页脚入口，`?reviewed=0`、`?city=…` 与 `country/region/lat/lon/radius` 参数仍兼容，loader 未改。
+
+同时把热点页的走势线改成跟随榜单窗口：`spark` 长度 = `windowHours + 1`（48 或 72），不再固定 24；`/hot` 说明、`/api/v1/hot-topics` 的 `windowHours`、`llms.txt` 与 og 文案同步改掉写死的 48。回归见 `apps/web/tests/city-browser.test.ts`（需 `CITY_BROWSER_TEST=1` 与本机 Chromium）。

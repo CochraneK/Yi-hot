@@ -63,7 +63,7 @@ export function llmsTxt(opts: { hasDailies: boolean; hasWeekly: boolean; hasMont
   lines.push("- 页面与站内渲染不计入额度，普通阅读不受影响", "");
   lines.push("## 网站主要页面", "");
   lines.push(`- [首页 · 精选](${u("/")}): 每日精选动态`);
-  lines.push(`- [热点榜](${u("/hot")}): 过去 48 小时内被多个独立信源共同讨论的事件`);
+  lines.push(`- [热点榜](${u("/hot")}): 近两天内被多个独立信源共同讨论的事件`);
   lines.push(`- [全部动态](${u("/all")}): 全部公开资讯，可按分类筛选`);
   if (FEATURES.dailyReports && opts.hasDailies) {
     lines.push(`- [${daily}](${u("/daily")}): 每日精编汇总`);

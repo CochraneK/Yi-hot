@@ -5,9 +5,10 @@ import "leaflet/dist/leaflet.css";
 /**
  * City-level heat map for the last N hours.
  *
- * Deliberately separate from NewsMap: this view has no story list of its own and
- * draws one circle per city sized by article count, so the reader can see where
- * the last two days happened without paging through a feed.
+ * This is the site's only map now: the city page gives up its marker map in
+ * favour of a picker, so the geographic reading lives here, on 热点, next to the
+ * ranking. It draws one circle per city sized by article count, and each click
+ * opens that city's feed.
  *
  * The map is the content of this card, so it draws itself on arrival instead of
  * waiting for a click. Only reviewed event places are drawn — the same gate as

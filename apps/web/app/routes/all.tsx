@@ -154,7 +154,7 @@ export default function AllPage() {
       {/* Desktop, as on 精选: the title, then one filter row with the search field
           and the narrow filters stacked on the right. */}
       <div className="hidden lg:block">
-        <div className="flex items-center justify-between gap-3"><h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1><Link to="/cities" className="text-[12px] font-medium text-accent hover:underline">城市地图</Link></div>
+        <div className="flex items-center justify-between gap-3"><h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1><Link to="/cities" className="text-[12px] font-medium text-accent hover:underline">按城市看</Link></div>
         <div className="mb-5 mt-4 flex items-center justify-between gap-6">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0 flex-1" />
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -167,7 +167,7 @@ export default function AllPage() {
       {/* Phones: title with today's count, the search bar, then the same filter row as 精选. */}
       <div className="lg:hidden">
         <div className="flex items-baseline justify-between pb-3 pt-5">
-          <div className="flex items-center gap-2"><h1 className="text-[22px] font-bold text-ink">{title ?? "动态"}</h1><Link to="/cities" className="text-[12px] text-accent">地图</Link></div>
+          <div className="flex items-center gap-2"><h1 className="text-[22px] font-bold text-ink">{title ?? "动态"}</h1></div>
           {!f.q && (
             <span className="text-[12.5px] text-ink-4">
               今日 <span className="num">{data.todayCount}</span> 条

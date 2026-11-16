@@ -1,8 +1,9 @@
-// The small 24-hour heat line beside a hot-list entry. Hours without a comparable snapshot break the
+// The small heat line beside a hot-list entry. Hours without a comparable snapshot break the
 // line rather than being drawn as zero; with fewer than three observed hours nothing is drawn. `area`
 // lays a faint wash of the line's colour under it (the lead card); the size comes from the class, and
 // `stretch` lets the line fill any box (the end dot is drawn as a round cap so it stays round).
-export function Sparkline({ values, className = "h-6 w-[88px]", area = false, stretch = false }: { values: Array<number | null>; className?: string; area?: boolean; stretch?: boolean }) {
+// `hours` is the ranking's own window, so the line and the index beside it cover the same span.
+export function Sparkline({ values, hours = 48, className = "h-6 w-[88px]", area = false, stretch = false }: { values: Array<number | null>; hours?: number; className?: string; area?: boolean; stretch?: boolean }) {
   const W = 104;
   const H = 32;
   const pad = 3;
@@ -26,7 +27,7 @@ export function Sparkline({ values, className = "h-6 w-[88px]", area = false, st
   while (last >= 0 && values[last] === null) last--;
   const gaps = seen.length < values.length;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={stretch ? "none" : undefined} className={`overflow-visible ${className}`} role="img" aria-label={`近 24 小时热度走势${gaps ? "，部分时段缺少可比数据" : ""}`}>
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={stretch ? "none" : undefined} className={`overflow-visible ${className}`} role="img" aria-label={`近 ${hours} 小时热度走势${gaps ? "，部分时段缺少可比数据" : ""}`}>
       {area &&
         runs.map((pts) => {
           const xs = pts.split(" ").map((p) => p.split(",")[0]);

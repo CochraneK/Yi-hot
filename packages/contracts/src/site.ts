@@ -332,7 +332,7 @@ export interface HotEntryView {
   firstReportAt: string;
   representative: { id: string; url: string; sourceName: string } | null;
   participants: HotParticipant[];
-  /** Hourly heat over the 24 hours up to the ranking, oldest first; null where no comparable snapshot exists. */
+  /** Hourly heat across the ranking's own window (`windowHours`), oldest first; null where no comparable snapshot exists. */
   spark: Array<number | null>;
   /** The story's AI digest, else its fact statement. */
   summary: string | null;

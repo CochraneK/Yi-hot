@@ -8,6 +8,7 @@ import { CATEGORIES } from "@aihot/industry/taxonomy";
 import { PEER_SECTION } from "@aihot/industry/peers";
 import { peerDigest } from "../peers/digest.ts";
 import { compilePeriodInsights, periodObservationBrief } from "./insights.ts";
+import { yesterdayHotForReport } from "./yesterday-hot.ts";
 import { promptText, promptVersion } from "../editorial/prompts.ts";
 import { modelFor } from "../editorial/models.ts";
 import { addDays, beijingDate, beijingMidnight, isoWeekLabel, isoWeekRange } from "@aihot/contracts/time";
@@ -194,10 +195,13 @@ export async function composeDaily(date: string, reason = "scheduled", opts: { a
   const lead = ordered.length ? await writeLead("daily", date, ordered, model) : null;
   // 「邻域」：姊妹站已经筛好的条目，读回来引用，没有模型调用。取不到就不出现，不影响本期。
   const peers = await peerDigest("daily", date, start, end, new Set(ordered.map((e) => e.sourceUrl)));
+  // The previous Beijing calendar day, NOT the daily [08:00,08:00) editorial window.
+  const yesterdayHot = await yesterdayHotForReport(addDays(date, -1));
   const content = {
     date,
     lead: lead?.lead ?? null,
     highlights: lead?.highlights ?? [],
+    ...(yesterdayHot ? { yesterdayHot } : {}),
     sections,
     flashes,
     ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
@@ -357,6 +361,8 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     }
   }
   const peers = await peerDigest(kind, key, start, end, new Set(top.map((e) => e.sourceUrl)));
+  // Yesterday relative to the PERIOD END, not the day a backfill happened to run.
+  const yesterdayHot = await yesterdayHotForReport(endDateInclusive);
   const content = {
     kind,
     title: `公益总报 · ${kind === "weekly" ? "周报" : "月报"} · ${key}`,
@@ -366,6 +372,7 @@ async function composePeriod(kind: "weekly" | "monthly", key: string, startDate:
     ...(headline ? { headline } : {}),
     overview,
     themes,
+    ...(yesterdayHot ? { yesterdayHot } : {}),
     ...(insights.length ? { insights } : {}),
     ...(peers.length ? { peers: { label: PEER_SECTION.label, note: PEER_SECTION.note, items: peers } } : {}),
     storyOrder: top.map((e) => e.itemId),

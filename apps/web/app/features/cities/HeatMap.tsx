@@ -149,10 +149,5 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
         ))}
       </ol>
     )}
-    {hasPoints && !failed && (
-      <p className="border-t border-line-soft px-4 py-2.5 text-[11.5px] leading-relaxed text-ink-4">
-        圆点越大，近 {hours} 小时的报道越多；点城市看它的新闻。底图来自 OpenStreetMap，对方会收到你的连接 IP 和本站域名。统计只含已核准的事件地点，同一篇报道只计一次。
-      </p>
-    )}
   </section>;
 }

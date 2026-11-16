@@ -152,5 +152,11 @@ export function CityHeatMap({ points, hours, onChoose, compact = false, mapHeigh
         ))}
       </ol>
     )}
+    {hasPoints && !failed && (
+      // One line is enough: the circles explain themselves, and the credit is on the map.
+      <p className="border-t border-line-soft px-4 py-2 text-[11px] leading-relaxed text-ink-4">
+        底图来自 OpenStreetMap，对方会收到你的 IP。
+      </p>
+    )}
   </section>;
 }

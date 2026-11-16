@@ -48,9 +48,9 @@ const PERIODS = [
  * except at 区, where a story filed at city level has no county to sit in.
  */
 const LEVELS = [
-  { key: "province", label: "省", unit: "个省级地区" },
-  { key: "city", label: "市", unit: "个城市" },
-  { key: "district", label: "区", unit: "个区县" },
+  { key: "province", label: "省", unit: "个省级地区", noun: "省份" },
+  { key: "city", label: "市", unit: "个城市", noun: "城市" },
+  { key: "district", label: "区", unit: "个区县", noun: "区县" },
 ] as const;
 
 /** Module-level so an empty window is the same array on every render. */
@@ -325,11 +325,12 @@ export function CityHeatMap({
   const listPlaces = failed ? visible.slice(0, 10) : compact ? [] : visible.slice(0, 12);
   const unit = LEVELS.find(l => l.key === level)?.unit ?? "个城市";
   const levelLabel = LEVELS.find(l => l.key === level)?.label ?? "市";
+  const levelNoun = LEVELS.find(l => l.key === level)?.noun ?? "城市";
   const chip = (active: boolean) => `h-6 rounded-full px-2 text-[11.5px] leading-none transition-colors ${
     active ? "bg-ink font-semibold text-bg" : "text-ink-3 hover:text-ink"
   }`;
 
-  return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label={`${headingOf(period)}${unit}热力`}>
+  return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label={`${headingOf(period)}${levelNoun}热力`}>
     <div className="px-4 py-3">
       {/* Two rows of chips, both flush right with the card's padding: the window
           answers "how far back", the level answers "how fine", and stacking them

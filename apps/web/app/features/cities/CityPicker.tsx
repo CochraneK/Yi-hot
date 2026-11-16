@@ -223,7 +223,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                               aria-label={`${open ? "收起" : "展开"}${place.name}的区县`}
                               title={`${place.name}有 ${kids.length} 个区县`}
                               onClick={() => setExpanded(open ? null : place.id)}
-                              className={`flex shrink-0 items-center gap-0.5 px-2 text-[11px] transition-colors hover:text-ink ${open ? "text-accent" : "text-ink-4"}`}
+                              className={`ml-0.5 flex shrink-0 items-center gap-0.5 border-l border-line-soft pl-1.5 pr-2 text-[11px] transition-colors hover:text-ink ${open ? "text-accent" : "text-ink-4"}`}
                             >
                               <span className="num">{kids.length}</span>
                               <svg viewBox="0 0 12 12" aria-hidden="true" className={`size-2.5 transition-transform ${open ? "rotate-180" : ""}`}>
@@ -233,7 +233,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                           )}
                         </div>
                         {open && kids && (
-                          <ul className="mb-1 ml-3 border-l border-line-soft pl-1">
+                          <ul className="mb-1 ml-4 border-l border-line-soft pl-1.5">
                             {kids.map(kid => (
                               <li key={kid.id}>
                                 <button

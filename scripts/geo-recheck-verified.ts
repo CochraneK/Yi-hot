@@ -53,9 +53,19 @@ if (unknownArg) {
       for (const item of remaps) {
         const place = item.place;
         await sql.begin(async tx => {
-          await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+          // A county-level row carries its prefecture: the parent has to exist
+          // before the child's foreign key can point at it.
+          if (place.parent) {
+            await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+              VALUES (${place.parent.id}, ${place.parent.name}, ${place.parent.countryCode}, ${place.parent.region},
+                ${place.parent.city}, ${place.parent.lat}, ${place.parent.lon}, ${place.parent.precision},
+                ${place.parent.sourceUrl})
+              ON CONFLICT (id) DO NOTHING`;
+          }
+          await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url, parent_id, parent_name)
             VALUES (${place.id}, ${place.name}, ${place.countryCode}, ${place.region}, ${place.city},
-              ${place.lat}, ${place.lon}, ${place.precision}, ${place.sourceUrl})
+              ${place.lat}, ${place.lon}, ${place.precision}, ${place.sourceUrl},
+              ${place.parent?.id ?? null}, ${place.parent?.name ?? null})
             ON CONFLICT (id) DO NOTHING`;
           await tx`UPDATE geo_candidates SET place_id = ${place.id} WHERE id = ${item.row.id}`;
           await tx`INSERT INTO geo_review_audit (candidate_id, action, place_id, reviewer, reason)

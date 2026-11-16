@@ -34,29 +34,51 @@ test("names absent from the dump stay unknown instead of guessed", () => {
   assert.equal(resolvePlace("柳峰上岚村").status, "unknown");
 });
 
-test("a district folds into the city that contains it", () => {
+test("a district keeps its own name and carries the city it sits in", () => {
+  // The finer grain is what the story said. 江宁区 stays 江宁区; the parent is
+  // what the picker and the heat map group by, so one city never splits in two.
   for (const [input, city] of [["江宁区", "南京"], ["静安区", "上海"], ["浦东新区", "上海"], ["万州区", "重庆"], ["城阳区", "青岛"], ["天河区", "广州"]]) {
     const result = resolvePlace(input);
     assert.equal(result.status, "resolved", `${input} should resolve`);
-    if (result.status === "resolved") assert.equal(result.place.name, city, input);
+    if (result.status !== "resolved") continue;
+    assert.equal(result.place.name, input, input);
+    assert.equal(result.place.parent?.name, city, `${input} parent`);
   }
   // With the city in front the tail still wins, and the head decides between
   // same-named districts.
   const compound = resolvePlace("南京江宁区");
   assert.equal(compound.status, "resolved");
-  if (compound.status === "resolved") assert.equal(compound.place.name, "南京");
+  if (compound.status === "resolved") {
+    assert.equal(compound.place.name, "江宁区");
+    assert.equal(compound.place.parent?.name, "南京");
+  }
   const hinted = resolvePlace("北京朝阳区");
   assert.equal(hinted.status, "resolved");
-  if (hinted.status === "resolved") assert.equal(hinted.place.name, "北京");
+  if (hinted.status === "resolved") {
+    assert.equal(hinted.place.name, "朝阳区");
+    assert.equal(hinted.place.parent?.name, "北京");
+  }
 });
 
-test("a county-level city stays itself", () => {
-  // 昆山 and 瑞安 are cities the picker offers by that name; folding them into
-  // 苏州 / 温州 would move the pin and rename the city under the reader's feet.
-  for (const [input, city] of [["昆山市", "昆山"], ["瑞安市", "瑞安"], ["义乌市", "义乌"]]) {
+test("a county-level city keeps its name and its prefecture", () => {
+  // 昆山, 瑞安 and 义乌 are county-level cities. They are not folded away: the
+  // stored place is 昆山市, and the map counts it under 苏州. The bare spelling
+  // must answer the same way, or 昆山 and 昆山市 would land in two places.
+  for (const [input, name, city] of [["昆山市", "昆山市", "苏州"], ["瑞安市", "瑞安市", "温州"], ["义乌市", "义乌市", "金华"], ["昆山", "昆山市", "苏州"]]) {
     const result = resolvePlace(input);
     assert.equal(result.status, "resolved", input);
-    if (result.status === "resolved") assert.equal(result.place.name, city, input);
+    if (result.status === "resolved") {
+      assert.equal(result.place.name, name, input);
+      assert.equal(result.place.parent?.name, city, `${input} parent`);
+    }
+  }
+  // A district that borrows its city's name must not swallow the city: 东营区
+  // strips to 东营, and 东营 has to stay the city.
+  const city = resolvePlace("东营");
+  assert.equal(city.status, "resolved");
+  if (city.status === "resolved") {
+    assert.equal(city.place.name, "东营");
+    assert.equal(city.place.parent, undefined);
   }
 });
 
@@ -69,13 +91,20 @@ test("a district name is never stripped into a different city", () => {
   assert.equal(resolvePlace("鼓楼区").status, "ambiguous");
 });
 
-test("compound administrative names resolve to their city head", () => {
+test("compound administrative names resolve to the county-level unit", () => {
   const result = resolvePlace("上海市金山区");
   assert.equal(result.status, "resolved");
-  if (result.status === "resolved") assert.equal(result.place.name.slice(0, 2), "上海");
+  if (result.status === "resolved") {
+    assert.equal(result.place.name, "金山区");
+    assert.equal(result.place.parent?.name, "上海");
+  }
+  // A prefecture-level city is not in the county list, so it stays itself.
   const tibet = resolvePlace("西藏昌都");
   assert.equal(tibet.status, "resolved");
-  if (tibet.status === "resolved") assert.equal(tibet.place.name.slice(0, 2), "昌都");
+  if (tibet.status === "resolved") {
+    assert.equal(tibet.place.name.slice(0, 2), "昌都");
+    assert.equal(tibet.place.parent, undefined);
+  }
 });
 
 test("normalisation drops spacing and keeps the name intact", () => {
@@ -119,12 +148,13 @@ test("auto approval refuses places the gazetteer cannot settle", () => {
   assert.equal(bare.approve, false);
 });
 
-test("a district in a clean quote is approved as its city", () => {
+test("a district in a clean quote is approved at its own grain", () => {
   // The candidate keeps the name the model read (江宁区, so the evidence check
-  // still finds it), while the pin lands on the city that contains it.
+  // still finds it) and the place keeps it too, with 南京 as the parent.
   const decision = decideAutoApproval({ placeText: "江宁区", role: "event", evidence: "江宁区新开两条公交线路，九月起试运行" });
   assert.equal(decision.approve, true);
-  assert.equal(decision.place?.name, "南京");
+  assert.equal(decision.place?.name, "江宁区");
+  assert.equal(decision.place?.parent?.name, "南京");
 });
 
 test("a village or township reusing a city name is not that city", () => {

@@ -157,10 +157,22 @@ export async function autoApprovePending(options: { limit?: number; apply?: bool
     if (!apply) continue;
 
     await sql.begin(async tx => {
+      // A county-level row needs its prefecture to exist first: the parent is
+      // what the map groups by, and the foreign key would refuse the insert
+      // otherwise. The parent is written from the same gazetteer entry, so both
+      // rows carry one source of coordinates.
+      if (place.parent) {
+        await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+          VALUES (${place.parent.id}, ${place.parent.name}, ${place.parent.countryCode}, ${place.parent.region},
+            ${place.parent.city}, ${place.parent.lat}, ${place.parent.lon}, ${place.parent.precision},
+            ${place.parent.sourceUrl})
+          ON CONFLICT (id) DO NOTHING`;
+      }
       const inserted = await tx<{ id: string }[]>`
-        INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+        INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url, parent_id, parent_name)
         VALUES (${place.id}, ${place.name}, ${place.countryCode}, ${place.region}, ${place.city},
-          ${place.lat}, ${place.lon}, ${place.precision}, ${place.sourceUrl})
+          ${place.lat}, ${place.lon}, ${place.precision}, ${place.sourceUrl},
+          ${place.parent?.id ?? null}, ${place.parent?.name ?? null})
         ON CONFLICT (id) DO NOTHING RETURNING id`;
       if (inserted.length) summary.placesCreated += 1;
 

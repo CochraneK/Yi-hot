@@ -50,13 +50,21 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
     )))) <= ${filters.radius}` : sql``;
   const countryRegion = sql`${filters.country ? sql`AND gp.country_code = ${filters.country}` : sql``}
     ${filters.region ? sql`AND gp.region = ${filters.region}` : sql``}`;
-  const matchedPlace = sql`${filters.place ? sql`AND gp.id = ${filters.place}` : sql``} ${countryRegion} ${nearby}`;
+  // The filter speaks city: picking 南京 returns 江宁区's stories too, and a
+  // link saved against a county-level id (昆山市) still answers with 苏州, the
+  // city it belongs to. A district never becomes a filter of its own on screen.
+  const targetCity = (id: string) => sql`coalesce((SELECT coalesce(parent_id, id) FROM geo_places WHERE id = ${id}), ${id})`;
+  const matchedPlace = sql`${filters.place ? sql`AND coalesce(gp.parent_id, gp.id) = ${targetCity(filters.place)}` : sql``} ${countryRegion} ${nearby}`;
   const permitted = sql`${listedCondition(now)} AND p.eligible AND EXISTS (
     SELECT 1 FROM geo_candidates gc JOIN analyses an ON an.id = gc.analysis_id
     JOIN articles ar ON ar.id = gc.article_id JOIN geo_places gp ON gp.id = gc.place_id
     WHERE ${publicEvent} ${matchedPlace})`;
-  const columns = sql`gp.id, gp.name, gp.country_code AS "countryCode", gp.region, gp.city,
-    gp.lat, gp.lon, gp.coordinate_precision AS precision`;
+  // Aggregation is by city on purpose: 江宁区 and 南京 are one place to a reader
+  // choosing their city, and a district row would split that city's news in two.
+  // The finer row still exists for the feed, which keeps the name the story used.
+  const fromWithCity = sql`${from} JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)`;
+  const placeColumns = sql`city.id, city.name, city.country_code AS "countryCode", city.region, city.city,
+    city.lat, city.lon, city.coordinate_precision AS precision`;
   const [rows, totals, places, catalog, countries, regions] = await Promise.all([
     sql<ItemRow[]>`SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE ${permitted}
       ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC
@@ -64,11 +72,12 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
     sql<{ n: number }[]>`SELECT count(*)::int AS n FROM (
       SELECT p.article_id FROM publications p WHERE ${permitted} LIMIT ${cap + 1}
     ) bounded`,
-    sql<Array<GeoEventPlace & { count: number }>>`SELECT ${columns}, count(DISTINCT p.article_id)::int AS count
-      ${from} WHERE ${publicEvent} ${matchedPlace} GROUP BY gp.id
-      ORDER BY count DESC, gp.id LIMIT ${MAX_PLACES + 1}`,
-    sql<GeoEventPlace[]>`SELECT DISTINCT ${columns} ${from} WHERE ${publicEvent} ${countryRegion}
-      ORDER BY gp.name, gp.id LIMIT ${MAX_PLACES + 1}`,
+    sql<Array<GeoEventPlace & { count: number }>>`SELECT ${placeColumns}, count(DISTINCT p.article_id)::int AS count
+      ${fromWithCity} WHERE ${publicEvent} ${matchedPlace} GROUP BY city.id
+      ORDER BY count DESC, city.id LIMIT ${MAX_PLACES + 1}`,
+    sql<GeoEventPlace[]>`SELECT DISTINCT ${placeColumns} ${fromWithCity} WHERE ${publicEvent} ${countryRegion}
+      AND city.parent_id IS NULL
+      ORDER BY city.name, city.id LIMIT ${MAX_PLACES + 1}`,
     sql<{ code: string }[]>`SELECT DISTINCT gp.country_code AS code ${from} WHERE ${publicEvent} ORDER BY code`,
     filters.country ? sql<{ name: string }[]>`SELECT DISTINCT gp.region AS name ${from}
       WHERE ${publicEvent} AND gp.country_code = ${filters.country} AND gp.region IS NOT NULL
@@ -100,18 +109,20 @@ const PLACES_MAX = 500;
  */
 export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse> {
   const rows = await sql<GeoPlaceOption[]>`
-    SELECT gp.id, gp.name, gp.country_code AS "countryCode", gp.region, gp.city, gp.lat, gp.lon,
-           'city'::text AS precision, count(DISTINCT p.article_id)::int AS count
+    SELECT city.id, city.name, city.country_code AS "countryCode", city.region, city.city,
+           city.lat, city.lon, 'city'::text AS precision, count(DISTINCT p.article_id)::int AS count
     FROM publications p
     JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
     JOIN analyses an ON an.id = gc.analysis_id
     JOIN articles ar ON ar.id = p.article_id
     JOIN geo_places gp ON gp.id = gc.place_id
+    JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
     WHERE ${listedCondition(now)} AND p.eligible
       AND an.input_revision = ar.revision
       AND gc.review_status = 'verified' AND gc.role = 'event'
-    GROUP BY gp.id
-    ORDER BY count DESC, gp.name
+      AND city.parent_id IS NULL
+    GROUP BY city.id
+    ORDER BY count DESC, city.name
     LIMIT ${PLACES_MAX}`;
   return { places: rows, generatedAt: new Date().toISOString() };
 }
@@ -127,19 +138,20 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
 export async function loadGeoHeat(hours: number, now = new Date()): Promise<GeoHeatResponse> {
   const window = Math.min(Math.max(Math.floor(hours) || 48, 1), 168);
   const rows = await sql<Array<GeoHeatPoint & { articles: number }>>`
-    SELECT gp.id, gp.name, gp.country_code AS "countryCode", gp.lat, gp.lon,
+    SELECT city.id, city.name, city.country_code AS "countryCode", city.lat, city.lon,
            count(DISTINCT p.article_id)::int AS count
     FROM publications p
     JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
     JOIN analyses an ON an.id = gc.analysis_id
     JOIN articles ar ON ar.id = p.article_id
     JOIN geo_places gp ON gp.id = gc.place_id
+    JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
     WHERE ${listedCondition(now)} AND p.eligible
       AND an.input_revision = ar.revision
       AND gc.review_status = 'verified' AND gc.role = 'event'
       AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')
-    GROUP BY gp.id
-    ORDER BY count DESC, gp.id
+    GROUP BY city.id
+    ORDER BY count DESC, city.id
     LIMIT ${HEAT_MAX_POINTS + 1}`;
   const points = rows.slice(0, HEAT_MAX_POINTS).map(({ id, name, countryCode, lat, lon, count }) =>
     ({ id, name, countryCode, lat, lon, count }));

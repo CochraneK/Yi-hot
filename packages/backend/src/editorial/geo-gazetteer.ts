@@ -37,6 +37,12 @@ export interface ResolvedPlace {
   lon: number;
   precision: "city";
   sourceUrl: string;
+  /**
+   * The prefecture city a county-level unit belongs to. Present only when the
+   * text named a 区 / 县 / 县级市: the map and the picker read at city level, so
+   * they group by parent, while the stored place keeps the finer name.
+   */
+  parent?: ResolvedPlace;
 }
 
 export type PlaceResolution =
@@ -45,7 +51,7 @@ export type PlaceResolution =
   | { status: "unknown"; placeText: string };
 
 const GAZETTEER_PATH = path.join(REPO_ROOT, "industry/geo/gazetteer.json");
-const DISTRICTS_PATH = path.join(REPO_ROOT, "industry/geo/districts.json");
+const DIVISIONS_PATH = path.join(REPO_ROOT, "industry/geo/divisions.json");
 
 /** Suffixes stripped once to try the plain name; longest first so 新区 wins over 区. */
 const SUFFIXES = ["特别行政区", "自治区", "自治州", "自治县", "地区", "新区", "街道", "社区", "省", "市", "区", "县", "镇", "乡", "村", "旗", "盟", "州"];
@@ -85,32 +91,84 @@ function load(): { entries: GazetteerEntry[]; index: Map<string, GazetteerEntry[
 }
 
 /** Test seam: drop the parsed gazetteer so a rebuilt file is picked up. */
-export function resetGazetteerCache() { cache = null; districtCache = null; }
+export function resetGazetteerCache() { cache = null; divisionCache = null; }
 
 /**
- * District and county names, each with the prefecture cities that contain one.
- * A district is a unit inside a city, never a city of its own on this map:
- * 江宁区 is 南京, and 朝阳区 belongs to either 北京 or 长春 — never to 朝阳市,
- * which is what stripping the 区 and looking the head up would produce.
+ * County-level units: 区, 县 and 县级市, each with the prefecture city it sits
+ * in. The grain is kept on purpose — 江宁区 stays 江宁区 instead of collapsing
+ * to 南京 — because the writer named a district and that is the only detail the
+ * story carries. The parent is what the map, the picker and the heat counts use,
+ * so the finer row never splits a city's news on screen.
+ *
+ * 朝阳区 belongs to either 北京 or 长春 and never to 朝阳市, which is what
+ * stripping the 区 and looking the head up would produce.
  */
-let districtCache: Map<string, string[]> | null = null;
-
-function districts(): Map<string, string[]> {
-  if (districtCache) return districtCache;
-  const raw = JSON.parse(readFileSync(DISTRICTS_PATH, "utf8")) as { districts: Record<string, string[]> };
-  districtCache = new Map(Object.entries(raw.districts));
-  return districtCache;
+interface DivisionRow {
+  id: string;
+  name: string;
+  kind: "district" | "county" | "city";
+  cityId: string;
+  city: string;
+  province: string | null;
+  lat: number;
+  lon: number;
 }
 
-/** Cities a district name belongs to; null when the name is not a district. */
+let divisionCache: { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]> } | null = null;
+
+function divisions(): { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]> } {
+  if (divisionCache) return divisionCache;
+  const raw = JSON.parse(readFileSync(DIVISIONS_PATH, "utf8")) as { divisions: Record<string, DivisionRow[]> };
+  const byName = new Map<string, DivisionRow[]>();
+  const bareRows = new Map<string, DivisionRow[]>();
+  for (const [name, rows] of Object.entries(raw.divisions)) {
+    const key = normalizePlaceName(name);
+    byName.set(key, rows);
+    // 昆山市 must answer to 昆山 too: the source list keeps the suffix, writers
+    // do not. The bare form is registered only when one city owns it, so 朝阳
+    // (北京 and 长春) stays out and keeps whatever the gazetteer says.
+    const bare = stripSuffix(key);
+    if (!bare || bare.length < 2) continue;
+    // 东营区 strips to 东营, the city it belongs to. The bare form would then
+    // answer for the city and turn 东营 into a district of itself, so a name
+    // that equals its own prefecture keeps only the suffixed key.
+    if (rows.every(row => row.city === bare)) continue;
+    const bucket = bareRows.get(bare);
+    if (!bucket) bareRows.set(bare, [...rows]);
+    else for (const row of rows) if (!bucket.some(item => item.id === row.id)) bucket.push(row);
+  }
+  const byBare = new Map<string, DivisionRow[]>();
+  for (const [bare, rows] of bareRows) {
+    if (new Set(rows.map(row => row.cityId)).size === 1) byBare.set(bare, rows);
+  }
+  divisionCache = { byName, byBare };
+  return divisionCache;
+}
+
+/** The county-level rows a name belongs to; null when the name is not one. */
+export function divisionRows(name: string): DivisionRow[] | null {
+  const key = normalizePlaceName(name);
+  const { byName, byBare } = divisions();
+  return byName.get(key) ?? byBare.get(key) ?? null;
+}
+
+/** Cities a county-level name belongs to; null when the name is not one. */
 export function districtCities(name: string): string[] | null {
-  return districts().get(normalizePlaceName(name)) ?? null;
+  const rows = divisionRows(name);
+  return rows ? [...new Set(rows.map(row => row.city))] : null;
 }
 
-/** True when the gazetteer entry is really a district of another city. */
+/**
+ * True when a gazetteer entry is really a county-level unit of another city.
+ * 浦东新区 and 万州区 carry city-sized populations in the dump but resolve to
+ * 上海 and 重庆; offering them as pickable cities would split one city's news
+ * across two rows and leave one of them permanently empty.
+ */
 export function isDistrictPlace(name: string): boolean {
-  const cities = districtCities(name);
-  return !!cities && !cities.includes(normalizePlaceName(name));
+  const rows = divisionRows(name);
+  if (!rows) return false;
+  const bare = normalizePlaceName(name);
+  return rows.some(row => row.name !== bare || row.city !== bare);
 }
 
 /**
@@ -185,62 +243,70 @@ function splitAdministrative(name: string): string[] {
 }
 
 /**
- * Resolves a place mentioned by the model to one canonical city.
+ * County-level name → its own place row, carrying the prefecture it sits in.
  *
- * Order: exact name → exact after dropping one suffix → the leading city of a
- * compound name. Anything else is unknown; a compound head must itself be a
- * whole place ("南京东路世纪广场" never yields "南京").
+ * 江宁区 resolves to 江宁区, not to 南京: the finer name is what the story said,
+ * and it is the grain the reader can check. The parent city rides along so the
+ * map, the picker and the heat counter can group at city level without the
+ * stored place losing what the writer named.
  */
-/** The city an administrative district belongs to, or null when the name is not a district. */
-function cityEntry(name: string): GazetteerEntry | null {
-  const direct = lookup(name);
-  if (direct) return pickDominant(direct);
-  const bare = stripSuffix(name);
-  if (!bare) return null;
-  const hit = lookup(bare);
-  return hit ? pickDominant(hit) : null;
+function toDivisionPlace(row: DivisionRow): ResolvedPlace {
+  const cityUrl = `https://www.geonames.org/${row.cityId.replace("geonames-", "")}`;
+  const parent: ResolvedPlace = {
+    id: row.cityId, name: row.city, countryCode: "CN", region: row.province,
+    city: row.city, lat: row.lat, lon: row.lon, precision: "city", sourceUrl: cityUrl,
+  };
+  return {
+    id: row.id, name: row.name, countryCode: "CN", region: row.province,
+    city: row.city, lat: row.lat, lon: row.lon, precision: "city",
+    sourceUrl: cityUrl, parent,
+  };
 }
 
-function resolveDistrict(raw: string): PlaceResolution | null {
-  const index = districts();
-  let cities = index.get(raw) ?? null;
+function resolveDivision(raw: string): PlaceResolution | null {
+  const { byName, byBare } = divisions();
+  let rows = byName.get(raw) ?? null;
   let matched = raw;
-  if (!cities) {
+  if (!rows) {
     // A district can arrive with its city in front: 南京江宁区, 广西百色市田阳区.
     // The tail is the administrative unit; the head only helps choose between
     // same-named districts, never creates one.
     for (let len = Math.min(raw.length - 1, 8); len >= 2; len -= 1) {
-      const hit = index.get(raw.slice(-len));
-      if (hit) { cities = hit; matched = raw.slice(-len); break; }
+      const hit = byName.get(raw.slice(-len));
+      if (hit) { rows = hit; matched = raw.slice(-len); break; }
     }
   }
-  if (!cities) return null;
+  if (!rows) rows = byBare.get(raw) ?? null;
+  if (!rows) return null;
 
   const prefix = raw.slice(0, raw.length - matched.length);
-  let picked = cities;
+  let picked = rows;
   if (picked.length > 1) {
-    const hinted = picked.filter(city => prefix.includes(city));
+    const hinted = picked.filter(row => prefix.includes(row.city));
     if (hinted.length === 1) picked = hinted;
   }
   if (picked.length > 1) {
     // 朝阳区 is 北京 and 长春. With nothing to choose by, stay undecided rather
     // than fold it into whichever city shares the characters (朝阳市).
-    const candidateIds = picked.flatMap(city => (lookup(city) ?? []).map(entry => entry.id));
-    return { status: "ambiguous", placeText: raw, candidateIds };
+    return { status: "ambiguous", placeText: raw, candidateIds: picked.map(row => row.id) };
   }
-
-  const city = cityEntry(picked[0]!);
-  // A prefecture we do not carry (伊犁哈萨克自治州) leaves the name unresolved
-  // instead of inventing a pin: the old rules get another chance below.
-  return city ? { status: "resolved", place: toResolved(city) } : null;
+  return { status: "resolved", place: toDivisionPlace(picked[0]!) };
 }
 
+/**
+ * Resolves a place mentioned by the model to one place row.
+ *
+ * Order: county-level unit (区/县/县级市, kept at its own grain with the city as
+ * parent) → exact city name → exact after dropping one suffix → the leading city
+ * of a compound name. Anything else is unknown; a compound head must itself be a
+ * whole place ("南京东路世纪广场" never yields "南京").
+ */
 export function resolvePlace(placeText: string): PlaceResolution {
   const raw = normalizePlaceName(placeText);
   if (raw.length < 2) return { status: "unknown", placeText };
 
-  const district = resolveDistrict(raw);
-  if (district) return district;
+  const division = resolveDivision(raw);
+  if (division) return division;
 
   const direct = lookup(raw);
   if (direct) {

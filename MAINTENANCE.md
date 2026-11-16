@@ -3240,3 +3240,19 @@ FROM hot_daily WHERE day BETWEEN 2026-10-17 AND 2026-12-31 ORDER BY day;
 ```
 
 注意 `rule_version` 会变（当前两条：`heat-v1-48h-halflife24h`、`heat-v1-48h72h-halflife24h`），跨期比较热度值时必须分段，别把不同算法的数字画进同一条曲线。
+
+### 地点保留到区县，展示统一按城市（2026-11-16 16:20）
+
+`industry/geo/divisions.json`（由 `scripts/build-geo-divisions.mjs` 从 china-division 2.7.0 生成，2585 条）是**县级单位 → 所属地级市**的对照表，包含区、县、县级市三类。它取代了只折「区」的 `districts.json`：区名折城市、县与县级市各占一格，这条线本来就是随手划的，现在统一。
+
+规则分两层，不能混：
+
+- **存**：`resolvePlace()` 先查这张表，命中就返回它**自己**（`江宁区` 叫 `江宁区`，`昆山市` 叫 `昆山市`），父城市挂在 `ResolvedPlace.parent` 上。没有更细的名字时才退回城市，再退回省（省不进地图）。`geo_places` 用 `parent_id` / `parent_name` 记这层关系（迁移 `0055_geo_places_parent.sql`），坐标继承父城市，`coordinate_precision` 仍是 `city`——源数据没有区级坐标，不假装有。
+- **看**：`/all?place=`、`loadGeoPlaces`、`loadGeoHeat`、`geo-catalog` 的计数全部 `coalesce(gp.parent_id, gp.id)` 上卷到城市。选南京包含江宁区的事件；热力地图一个城市一个点；目录里只有城市，区县行不占格子。
+
+两处容易踩的坑：
+
+1. `东营区` 去后缀正好是 `东营`（它所属的市）。裸名索引遇到「裸名 == 父城市名」必须跳过，否则 `东营` 会被解析成 `东营区`。
+2. `昆山` 和 `昆山市` 必须落到同一行，所以裸名（去掉一个后缀）在**只有一个父城市**时才注册；`朝阳` 有两个（北京、长春）就不注册，留给 gazetteer 按城市处理。
+
+已核准的旧记录用 `node scripts/geo-recheck-verified.ts --apply` 重新解析回填（`id` 变了会走 `remap` 审计，仍保留原文 `place_text`）。重跑 `build-geo-divisions.mjs` 时 id 按「同一城市内按名称排序」编号，同源重建不会改号。

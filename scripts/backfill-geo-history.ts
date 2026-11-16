@@ -12,16 +12,25 @@ import { runStructure } from "@aihot/backend/editorial/analyze";
 import { loadAnalyzeInput } from "@aihot/backend/editorial/input";
 
 const args = process.argv.slice(2);
-const valid = args.every(a => a === "--apply" || /^--after=.+$/.test(a) || /^--limit=\d+$/.test(a));
+const valid = args.every(a => a === "--apply" || /^--after=.+$/.test(a) || /^--limit=\d+$/.test(a) || /^--shard=\d+\/\d+$/.test(a));
 const option = (key: string) => args.find(x => x.startsWith(key))?.slice(key.length);
 const apply = args.includes("--apply");
 const after = option("--after=") ?? "";
 const limit = Math.min(Math.max(Number(option("--limit=") ?? 50), 1), 20000);
 
+// A whole-run job is hours long on one connection. Splitting by a hash of the
+// article id gives every process a disjoint slice, so several can run at once
+// without two of them paying for the same article.
+const shardSpec = option("--shard=") ?? "0/1";
+const [shardIndex, shardTotal] = shardSpec.split("/").map(Number) as [number, number];
+
 interface Row { article_id: string; analysis_id: number; revision: number }
 
 try {
-  if (!valid) throw Error("Usage: node scripts/backfill-geo-history.ts [--limit=50] [--after=<articleId>] [--apply]. Default: dry-run.");
+  if (!valid) throw Error("Usage: node scripts/backfill-geo-history.ts [--limit=50] [--after=<articleId>] [--shard=0/3] [--apply]. Default: dry-run.");
+  if (!Number.isSafeInteger(shardTotal) || shardTotal < 1 || shardIndex < 0 || shardIndex >= shardTotal) {
+    throw Error("--shard must be index/total, e.g. --shard=0/3");
+  }
 
   const rows = await sql<Row[]>`
     SELECT p.article_id, p.analysis_id, a.revision
@@ -32,6 +41,7 @@ try {
       AND an.input_revision = a.revision
       AND NOT (an.output ? 'geography')
       AND p.article_id > ${after}
+      AND mod(abs(hashtext(p.article_id)::bigint), ${shardTotal}) = ${shardIndex}
     ORDER BY p.article_id ASC
     LIMIT ${limit}`;
 

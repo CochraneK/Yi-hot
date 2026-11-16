@@ -3256,3 +3256,33 @@ FROM hot_daily WHERE day BETWEEN 2026-10-17 AND 2026-12-31 ORDER BY day;
 2. `昆山` 和 `昆山市` 必须落到同一行，所以裸名（去掉一个后缀）在**只有一个父城市**时才注册；`朝阳` 有两个（北京、长春）就不注册，留给 gazetteer 按城市处理。
 
 已核准的旧记录用 `node scripts/geo-recheck-verified.ts --apply` 重新解析回填（`id` 变了会走 `remap` 审计，仍保留原文 `place_text`）。重跑 `build-geo-divisions.mjs` 时 id 按「同一城市内按名称排序」编号，同源重建不会改号。
+
+### 季度报告：离线出数字，缺口自己写（2026-11-16 16:45）
+
+`scripts/quarterly-report.ts` 从库里直接出报告，**不调用模型**，写两个文件：`report.md`（还需要人改的草稿）和 `figures.json`（同一批数字的原始值）。
+
+```bash
+node scripts/quarterly-report.ts --from=2026-09-30 --to=2026-12-31 --out=reports/q1
+```
+
+区间按北京自然日切（`::date::timestamp AT TIME ZONE 'Asia/Shanghai'`），`--to` 默认今天。内容顺序：总量、主题、信源分级、热榜（在榜天数 / 峰值 / 每日榜首）、城市、按周节奏。
+
+要守住的三条：
+
+1. **缺口是算出来的，不是手写的**。热榜从 `hot_daily` 的最早一天起算，地点按「带地点的报道最早日期」判断，不是按核准时间——11 月的回填可以合法地覆盖 9 月的内容，用核准时间会误报。
+2. **地点覆盖率低于 50% 就打横幅**。城市榜是下界，不是全量，这一句必须跟表一起出现。
+3. **`rule_version` 变了就别连线**。热度算法换版时，跨期比较的曲线要断开。
+
+热榜「在榜天数」与「峰值热度」排出来的第一名通常不是同一个事件：前者偏持续发酵的议题，后者偏单日爆点。写年报前先定用哪个口径。
+
+### 历史地点回填：只跑结构一步（2026-11-16）
+
+`hot_daily` 之外还有一处欠账：地点抽取是 11 月才加进结构步的，之前 8282 条入选报道的 `analyses.output` 里根本没有 `geography` 字段。
+
+`scripts/backfill-geo-history.ts` 只调 `runStructure()`——不重跑评分、不重写读者可见的标题摘要，`publications.analysis_id` 不动，只往 `analyses.output` 合并一个 `geography` 对象并插入未核准的 `geo_candidates`。默认 dry-run。
+
+成本与耗时（2026-11-16 实测）：单条约 1.4 秒、0.0016 元，8282 条约 **3.1 小时 / 13 元**。**不要用免费池跑这个**：anydoor 当时 `upstream_http_402`，5 条样本成功率 40%，失败后要等超时才降级，整体慢 30 倍以上（117 小时）。免费池的价值在预筛这类可容错的短调用，不在这种要跑几小时的批量。
+
+回填完还要走 `scripts/geo-auto-approve.ts --apply` 才会进统计，核准规则不变（证据必须能在正文里找到）。
+
+踩坑：`docker cp /dev/stdin aihot-api-1:/app/...` 在容器里留下的是**指向 `/proc/self/fd/0` 的软链**，之后所有 `docker cp` 到该路径都会报 `Could not find the file /proc/self/fd in container`。先 `docker exec aihot-api-1 rm -f` 删掉软链，再 `docker cp` 就会正常覆盖。

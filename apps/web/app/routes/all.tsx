@@ -106,9 +106,12 @@ export default function AllPage() {
 
   // 只看当地 is a server filter, not a page-local one: the reader's city lives in
   // this browser, so its canonical id goes into the URL and the API decides what
-  // belongs to it. A stored city that predates canonical places is matched by name
-  // here, otherwise the filter would accept an id the pool has never heard of.
-  const here = canonicalCity(reader, places)
+  // belongs to it. A shared `?place=` link has no stored city behind it, so the name
+  // comes from the place list first — otherwise the trigger would say 选择城市 while
+  // the feed is already showing one city.
+  const chosen = place ? places.find((p) => p.id === place) ?? null : null;
+  const here = chosen
+    ?? canonicalCity(reader, places)
     // A city picked before it had any news is not in the places list yet, but its
     // id is a canonical one, so it can filter right away.
     ?? (reader && /^geonames-\d+$/.test(reader.id) ? { id: reader.id, name: reader.name } : null);

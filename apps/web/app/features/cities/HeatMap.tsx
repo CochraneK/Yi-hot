@@ -135,8 +135,13 @@ export function CityHeatMap({
   // A failed map collapses to a list: an empty grey slab reads as a broken page.
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  // The SDK loads once; overlays are redrawn per window, so `ready` gates that.
-  const [ready, setReady] = useState(false);
+  // Bumped whenever a map instance is created. A `ready` boolean cannot drive
+  // the redraw: switching level unmounts the map (no points yet), the fetch fills
+  // the cache, and the new instance would flip ready false→true inside one batch
+  // — React never renders the false, so the flag ends where it started and the
+  // redraw effect, whose refs were just nulled, never runs. A counter always
+  // changes, so the points always land on a live instance.
+  const [mapVersion, setMapVersion] = useState(0);
   const [zoom, setZoom] = useState(4);
   const [period, setPeriod] = useState(hours);
   const [level, setLevel] = useState<GeoLevel>("city");
@@ -171,7 +176,6 @@ export function CityHeatMap({
     // timer is the only honest signal that there is no map to look at.
     let drew = false;
     const timer = window.setTimeout(() => { if (!disposed && !drew) setFailed(true); }, 10000);
-    setReady(false);
 
     loadAMap(amapKey, amapSecurityCode).then(AMap => {
       if (disposed || !host.current) return;
@@ -198,7 +202,7 @@ export function CityHeatMap({
       map.current = instance;
       ns.current = AMap;
       setZoom(instance.getZoom());
-      setReady(true);
+      setMapVersion(version => version + 1);
 
       cleanup = () => {
         window.clearTimeout(timer);
@@ -218,7 +222,10 @@ export function CityHeatMap({
   useEffect(() => {
     const instance = map.current;
     const AMap = ns.current;
-    if (!ready || !instance || !AMap) return;
+    // Both are refs, so this is the live instance, not the one this render
+    // closed over — checking `ready` here would answer for a map that may
+    // already be destroyed.
+    if (!instance || !AMap) return;
     if (circles.current.length) {
       try { instance.remove(circles.current); } catch { /* first draw has nothing to drop */ }
     }
@@ -291,7 +298,7 @@ export function CityHeatMap({
     const home = drawn.filter(({ point }) =>
       point.lon >= 73 && point.lon <= 136 && point.lat >= 3 && point.lat <= 54).map(d => d.marker);
     if (markers.length) instance.setFitView(home.length ? home : markers, false, [24, 24, 24, 24], 6);
-  }, [ready, visible, level]);
+  }, [mapVersion, visible, level]);
 
   useEffect(() => () => inFlight.current?.abort(), []);
 

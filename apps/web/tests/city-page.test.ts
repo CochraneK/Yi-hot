@@ -9,13 +9,12 @@ import { fileURLToPath } from "node:url";
 let web: ChildProcess;
 let origin = "";
 let logs = "";
-const requested: string[] = [];
 const place = { id: "reviewed-outside-dictionary", name: "合成审核城市", countryCode: "CN", region: "合成地区", city: "合成审核城市", lat: 30, lon: 104, precision: "city", count: 7 };
 const api = createServer((req,res) => {
-  const url = new URL(req.url!, "http://fixture.local"); requested.push(url.pathname + url.search);
+  const url = new URL(req.url!, "http://fixture.local");
   res.setHeader("content-type", "application/json");
   if (url.pathname === "/api/site/meta") return res.end(JSON.stringify({ changelogVersion: "test" }));
-  if (url.pathname === "/api/site/geo") return res.end(JSON.stringify({ placeId: "", items: [], places: [place], catalog: [place], placesTruncated: false, catalogTruncated: false, totalCapped: false, total: 7, page: 1, pageCount: 1, generatedAt: "test" }));
+  if (url.pathname === "/api/site/geo/places") return res.end(JSON.stringify({ places: [place], generatedAt: "test" }));
   if (url.pathname === "/api/site/pool") return res.end(JSON.stringify({ items: [], total: 0, page: 1, pageCount: 1 }));
   res.statusCode = 404; res.end("{}");
 });
@@ -32,22 +31,22 @@ before(async () => {
   });
 });
 after(async () => { if(web?.exitCode===null) { web.kill(); await once(web,"exit"); } api.closeAllConnections(); await new Promise<void>(r=>api.close(()=>r())); });
-test("city landing defaults to reviewed global index and keeps a usable non-map list", async () => {
-  const response = await fetch(`${origin}/yihot/cities`);
-  assert.equal(response.status,200);
-  const html = await response.text();
-  assert.match(html,/合成审核城市/); assert.match(html,/加载交互地图/); assert.match(html,/国家或地区/); assert.match(html,/看附近新闻/);
-  assert.ok(requested.some(u=>u.startsWith("/api/site/geo?")));
-  assert.ok(!requested.some(u=>u.startsWith("/api/site/pool")));
+
+// The city page is retired: its picker now lives in the 动态 header, so the old
+// address has to keep working as a redirect rather than start 404-ing in bookmarks.
+test("a retired city link with a canonical place lands on the filtered feed", async () => {
+  const response = await fetch(`${origin}/yihot/cities?place=${place.id}`, { redirect: "manual" });
+  assert.equal(response.status, 302);
+  const location = response.headers.get("location")!;
+  assert.match(location, /\/all\?place=reviewed-outside-dictionary$/);
 });
-test("country, region, canonical place, radius and pagination reach the server without page-only filtering",async()=> {
-  const query = new URLSearchParams({country:"CN",region:"合成地区",place:place.id,lat:"30",lon:"104",radius:"100",page:"2"});
-  assert.equal((await fetch(`${origin}/yihot/cities?${query}`)).status,200);
-  const seen = new URL(requested.filter(u=>u.startsWith("/api/site/geo")).at(-1)!,"http://fixture.local");
-  for(const [k,v] of query) assert.equal(seen.searchParams.get(k),v);
+test("a legacy city short id becomes the summary text search it always was", async () => {
+  const response = await fetch(`${origin}/yihot/cities?city=chengdu`, { redirect: "manual" });
+  assert.equal(response.status, 302);
+  assert.match(decodeURIComponent(response.headers.get("location")!), /\/all\?q=成都$/);
 });
-test("old city links remain text-clue searches and do not claim confirmed event locations",async()=> {
-  const response=await fetch(`${origin}/yihot/cities?city=chengdu`);
-  assert.equal(response.status,200); assert.match(await response.text(),/不进入新闻地图/);
-  assert.ok(requested.some(u=>u.startsWith("/api/site/pool?")&&new URL(u,"http://fixture.local").searchParams.get("q")==="成都"));
+test("the bare city address falls back to the feed itself", async () => {
+  const response = await fetch(`${origin}/yihot/cities`, { redirect: "manual" });
+  assert.equal(response.status, 302);
+  assert.match(response.headers.get("location")!, /\/all$/);
 });

@@ -3211,3 +3211,11 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 原先的国家、省份、地点三级下拉合并进 `CityPicker`（全量目录、可搜索、先选省份、含港澳台），选中即跳 `?place=`；「报道最多的城市」胶囊最多 `CHIP_LIMIT = 20` 个，其余提示走选择器。IP 估计的结果会先解析成目录 id 再跳转，旧短 id（如 `beijing`）不会落成 0 条。地名线索降到页脚入口，`?reviewed=0`、`?city=…` 与 `country/region/lat/lon/radius` 参数仍兼容，loader 未改。
 
 同时把热点页的走势线改成跟随榜单窗口：`spark` 长度 = `windowHours + 1`（48 或 72），不再固定 24；`/hot` 说明、`/api/v1/hot-topics` 的 `windowHours`、`llms.txt` 与 og 文案同步改掉写死的 48。回归见 `apps/web/tests/city-browser.test.ts`（需 `CITY_BROWSER_TEST=1` 与本机 Chromium）。
+
+### 城市页退役，选城市并入动态表头（2026-11-16 14:00）
+
+`/cities` 页面下线：`routes/cities.tsx` 只剩 loader 重定向（`place=` → `/all?place=`，旧 `?city=chengdu` → `/all?q=成都`，其余 → `/all`），不再有 UI、`reviewed=0` 地名线索视图，也没有 IP 估计与周边距离控件。选择器 `CityPicker` 移到 `/all`：桌面在标题行（原「按城市看」链接的位置），手机在搜索框下的筛选行；「只看当地」仍以 `?place=` 走服务端过滤。`more` 菜单与 `nav.ts` 的 `MORE_PATHS` 去掉城市入口，`scripts/smoke.ts` 不再探 `/cities`。
+
+测试相应改写：`city-page.test.ts` 断言 302 与 `Location`（含 `/yihot` 前缀）；`city-browser.test.ts` 改在 `/all` 上跑（fixture 增加 `/api/site/geo/places`），断言行内触发器选完即写 `place=`、当地标签只落在对应城市、手机不横向溢出、桌面触发器与标题同一行。
+
+热点页 `HeatMap` 打开时不再装下全国：先 `fitBounds`，若比例尺不足 `CORE_ZOOM = 5` 再 `setView` 到按报道量加权的重心，城市名才读得出来；被裁掉的边缘用右上角「看全国 / 看重点」一键切换。地图容器改为外层定高、内层 `absolute inset-0` 承载 Leaflet，切换按钮不进 Leaflet 接管的节点。

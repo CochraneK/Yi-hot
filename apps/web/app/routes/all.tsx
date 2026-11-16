@@ -117,7 +117,9 @@ export default function AllPage() {
     sp.delete("page");
     if (place) sp.delete("place");
     else if (here) sp.set("place", here.id);
-    else { navigate("/cities"); return; }
+    // No stored city yet: the picker is right beside this chip, so there is nothing
+    // to navigate to — the reader chooses a city first.
+    else return;
     const query = sp.toString();
     navigate(query ? `/all?${query}` : "/all");
   };
@@ -129,12 +131,15 @@ export default function AllPage() {
     navigate(`/all?${sp.toString()}`);
   };
 
-  // The narrow filters sit under the search field on desktop and under the topic
-  // row on phones. The city picker stays visible after a city is chosen, so the
-  // filter can be switched city by city instead of stranding the reader.
-  const localControls = (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <CityPicker current={here ? { id: here.id, name: here.name } : null} onPick={choosePicked} align="right" />
+  // The city picker is the way into a city's feed: it replaced the old 按城市看 link,
+  // and on desktop it sits exactly where that link used to be, in the title row. On a
+  // phone the title row carries today's count instead, so the picker stays in the row
+  // of narrow filters under the search field.
+  const cityPicker = (
+    <CityPicker current={here ? { id: here.id, name: here.name } : null} onPick={choosePicked} align="right" />
+  );
+  const narrowFilters = (
+    <>
       {here && (
         <ToggleChip on={!!place} onToggle={toggleLocal}>
           只看当地
@@ -146,15 +151,16 @@ export default function AllPage() {
       <ToggleChip on={unreadOnly} onToggle={() => setUnreadOnly((v) => !v)}>
         只看未读
       </ToggleChip>
-    </div>
+    </>
   );
+  const localControls = <div className="flex flex-wrap items-center gap-1.5">{narrowFilters}</div>;
 
   return (
     <div className="pb-6">
       {/* Desktop, as on 精选: the title, then one filter row with the search field
           and the narrow filters stacked on the right. */}
       <div className="hidden lg:block">
-        <div className="flex items-center justify-between gap-3"><h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1><Link to="/cities" className="text-[12px] font-medium text-accent hover:underline">按城市看</Link></div>
+        <div className="flex items-center justify-between gap-3"><h1 className="text-[24px] font-semibold leading-[1.3] text-ink">{title ?? "动态"}</h1>{cityPicker}</div>
         <div className="mb-5 mt-4 flex items-center justify-between gap-6">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-desk" className="min-w-0 flex-1" />
           <div className="flex shrink-0 flex-col items-end gap-2">
@@ -178,7 +184,7 @@ export default function AllPage() {
         <div className="-mx-4 mt-3 border-b border-line-soft px-4 pb-3">
           <TopicTabs base="/all" topic={topic} channel={f.channel} layoutId="all-topic-mobile" size="sm" className="min-w-0" />
         </div>
-        <div className="mb-1 mt-3">{localControls}</div>
+        <div className="mb-1 mt-3 flex flex-wrap items-center gap-1.5">{cityPicker}{narrowFilters}</div>
       </div>
 
       {f.q && (

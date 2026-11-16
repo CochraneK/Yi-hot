@@ -1,5 +1,5 @@
 // Real headless Chromium regression against the built site and synthetic HTTP data.
-// Requests to the IP provider are intercepted locally; no live news, IP lookup or external tiles.
+// Requests outside the fixture are aborted, so no live news, IP lookup or external tiles.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
@@ -11,7 +11,7 @@ import type { AddressInfo } from "node:net";
 import puppeteer from "puppeteer-core";
 const executable = process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium";
 
-test("city picker, IP opt-in, local badges and the clues view", { skip: process.env.CITY_BROWSER_TEST !== "1", timeout: 60000 }, async () => {
+test("the 动态 header picks a city and marks its events", { skip: process.env.CITY_BROWSER_TEST !== "1", timeout: 60000 }, async () => {
   assert.ok(existsSync(executable), "CITY_BROWSER_TEST requires Chromium in the isolated runner");
   const places = [
     { id: "beijing", name: "北京", countryCode: "CN", region: "北京", city: "北京", lat: 39.904, lon: 116.407, precision: "city", count: 1 },
@@ -25,16 +25,13 @@ test("city picker, IP opt-in, local badges and the clues view", { skip: process.
   const api = createServer((req,res)=> {
     const u=new URL(req.url!,"http://fixture"); res.setHeader("content-type","application/json");
     if(u.pathname==="/api/site/meta") return res.end(JSON.stringify({changelogVersion:"test"}));
-    // The picker loads this once, then filters in the browser.
+    // The feed resolves the stored city against this list; the picker uses the catalogue.
+    if(u.pathname==="/api/site/geo/places") return res.end(JSON.stringify({places: places.map(p=>({...p, count:1})), generatedAt: "test"}));
     if(u.pathname==="/api/site/geo/catalog") return res.end(JSON.stringify({
       places: places.map(p=>({...p, count: 1})),
       regions: [{ key: "CN:北京", label: "北京", cities: 1 }, { key: "CN:四川", label: "四川", cities: 1 }],
       generatedAt: "test",
     }));
-    if(u.pathname==="/api/site/geo") {
-      const scoped=places.filter(p=>(!u.searchParams.get("place")||p.id===u.searchParams.get("place"))&&(!u.searchParams.get("region")||p.region===u.searchParams.get("region")));
-      return res.end(JSON.stringify({placeId:u.searchParams.get("place")||"",items:items.filter(i=>i.eventPlaces.some(p=>scoped.some(s=>s.id===p!.id))),places:scoped,catalog:places,total:scoped.length,page:1,pageCount:1,placesTruncated:false,catalogTruncated:false,totalCapped:false,generatedAt:"test"}));
-    }
     if(u.pathname==="/api/site/pool") return res.end(JSON.stringify({items,total:3,page:1,pageCount:1}));
     res.statusCode=404;res.end("{}");
   });
@@ -57,11 +54,10 @@ test("city picker, IP opt-in, local badges and the clues view", { skip: process.
     page.on("request",request=>{
       if(request.url().startsWith(origin+"/") || request.url().startsWith("data:")) return void request.continue();
       outside.push(request.url());
-      if(request.url().startsWith("https://ipwho.is/")) return void request.respond({status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},body:JSON.stringify({success:true,city:"Beijing",region:"Beijing",country_code:"CN"})});
       void request.abort();
     });
     await page.setViewport({width:390,height:844,isMobile:true,hasTouch:true});
-    const initialResponse = await page.goto(origin+"/yihot/cities",{waitUntil:"networkidle0"});
+    const initialResponse = await page.goto(origin+"/yihot/all",{waitUntil:"networkidle0"});
     if (errors.length && initialResponse) {
       const serverHtml = await initialResponse.text();
       const diffs = await page.evaluate((html) => {
@@ -77,11 +73,15 @@ test("city picker, IP opt-in, local badges and the clues view", { skip: process.
       }, serverHtml);
       console.log("FIRST-HYDRATION-TEXT-DIFF " + JSON.stringify(diffs));
     }
-    assert.equal(outside.length,0,"opening the page must not load maps or resolve the visitor IP");
-    assert.ok(await page.$('[data-item-id="synthetic-0"]'), "fixture article should be SSR-rendered before selecting a city");
+    assert.equal(outside.length,0,"opening the feed must not load maps or resolve the visitor IP");
+    assert.ok(await page.$('[data-item-id="synthetic-0"]'), "fixture article should be SSR-rendered before choosing a city");
 
-    // Choose a city from the picker: it must land on that city's feed at once.
-    await page.locator('button[aria-haspopup="dialog"]').click();
+    // The picker in the filter row is the only city entry left: choosing one must
+    // put `place=` in the URL and hand the feed to the server.
+    await page.evaluate(() => {
+      const trigger = [...document.querySelectorAll<HTMLElement>('button[aria-haspopup="dialog"]')].find(b => b.offsetParent !== null);
+      trigger?.click();
+    });
     await page.waitForSelector('[role="dialog"] ul li button');
     await page.evaluate(() => {
       const buttons=[...document.querySelectorAll<HTMLElement>('[role="dialog"] ul li button')];
@@ -103,25 +103,21 @@ test("city picker, IP opt-in, local badges and the clues view", { skip: process.
     }
     assert.ok(!(await page.$eval('[data-item-id="synthetic-1"]',e=>e.textContent)).includes("当地"));
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),"mobile must not scroll sideways");
-    assert.equal(await page.$eval('button[aria-haspopup="dialog"]',e=>e.textContent?.trim()),"北京","the trigger keeps showing the chosen city");
+    assert.equal(
+      await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('button[aria-haspopup="dialog"]')].find(b => b.offsetParent !== null)?.textContent?.trim()),
+      "北京",
+      "the trigger keeps showing the chosen city",
+    );
 
-    await page.locator('::-p-text(按 IP 估计)').click();
-    await page.waitForFunction(()=>document.querySelector('[role="status"]')?.textContent?.includes("已估计为北京"));
-    assert.equal(outside.filter(u=>u.startsWith("https://ipwho.is/")).length,1);
-    await page.locator('::-p-text(看附近新闻)').click();
-    await page.waitForFunction(()=>location.search.includes("radius=100"));
-
+    // Same page at desktop width: the picker moves up into the title row and the
+    // layout must stay inside the viewport.
     await page.setViewport({width:1440,height:960});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));
-    assert.ok(await page.$('[aria-label="报道最多的城市"]'),"desktop keeps the quick city chips");
-
-    await page.goto(origin+"/yihot/cities?reviewed=0",{waitUntil:"networkidle0"});
-    assert.ok(!(await page.$eval('[data-item-id="synthetic-2"]',e=>e.textContent)).includes("当地"),"institution-name text cannot trigger local badge");
-    // The clues view offers a way back to the picker.
-    assert.ok(await page.$$eval('a',els=>els.some(a=>a.textContent?.trim()==="回到城市")));
-    await page.goto(origin+"/yihot/cities",{waitUntil:"networkidle0"});
-    await page.locator('::-p-text(清除我的城市)').click();
-    await page.waitForFunction(()=>!localStorage.getItem("yihot:reader-location:v2"));
+    assert.ok(await page.evaluate(() => {
+      const trigger = [...document.querySelectorAll<HTMLElement>('button[aria-haspopup="dialog"]')].find(b => b.offsetParent !== null);
+      const heading = document.querySelector("h1");
+      return !!trigger && !!heading && Math.abs(trigger.getBoundingClientRect().top - heading.getBoundingClientRect().top) < 40;
+    }), "desktop keeps the city trigger in the title row");
     assert.deepEqual(errors,[],"no client hydration errors");
   } finally {
     await browser?.close();

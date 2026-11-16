@@ -6,7 +6,7 @@ import type { loader as rootLoader } from "../root";
 import { useChangelogDot } from "../components/shell/Sidebar";
 import { pageMeta } from "../lib/seo";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
-import { IconBookmark, IconChart, IconChevronRight, IconHeart, IconHistory, IconGrid, IconMail, IconMessage, IconMoon, IconPlug, IconShield, IconUsers } from "../components/icons";
+import { IconBookmark, IconChart, IconChevronRight, IconHeart, IconHistory, IconMail, IconMessage, IconMoon, IconPlug, IconShield, IconUsers } from "../components/icons";
 
 /** Shared caches may keep this page for five minutes. */
 export function headers() {
@@ -30,7 +30,6 @@ const ROWS: Row[] = [
   { to: "/changelog", label: "更新", icon: <IconHistory size={18} /> },
   { to: "/feedback", label: "意见反馈", icon: <IconMessage size={18} /> },
   ...(FEATURES.peerDirectory ? [{ to: "/peers", label: "邻域", icon: <IconUsers size={18} /> }] : []),
-  { to: "/cities", label: "城市", icon: <IconGrid size={18} /> },
   ...(FEATURES.regulatoryRecords ? [{ to: "/records", label: "监管", icon: <IconShield size={18} /> }] : []),
   { to: "/starred", label: "收藏", icon: <IconBookmark size={18} /> },
   { to: "/agent", label: "Agent", icon: <IconPlug size={18} /> },

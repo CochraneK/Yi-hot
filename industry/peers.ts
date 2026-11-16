@@ -1,4 +1,6 @@
-// 「邻域」跨行业站点目录，不等于 YiHot 主站的信息源。
+// 「邻域」面向跨来源信息聚合站，不等于 YiHot 主站 RSS 信源库。
+// tier=resource 的资料入口不在邻域页面展示；directoryVisible=false 的纯发布站
+// （如联合国自身新闻页）只留来源登记，不单独占用邻域卡片。
 // 有些来自 AIHOT 框架，也有单独的专题/演示站，不能宣称全部使用相同技术栈。
 //
 // 准入原则（2026-11-16）：RSS/API 优先，但有价值的垂直行业站即使仅浏览也可以正式展示；
@@ -43,6 +45,8 @@ export interface PeerSite {
   family: PeerFamily;
   /** 公开展示层：候选保留原站和审计记录，但不作为正式实时资讯推荐。 */
   tier: PeerTier;
+  /** 不展示在「邻域」的纯发布源，仍保留信源与历史数据。 */
+  directoryVisible?: boolean;
   /** 综合聚合可能与其他邻域报道同一事件，仅作阅读提示，未量化重复率。 */
   overlapPossible?: boolean;
   /** 特定站的非日报更新节奏；没有填写时正式新闻站按 7 天时效核查。 */
@@ -823,6 +827,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "un-news-sdgs",
     family: "other",
     tier: "official",
+    directoryVisible: false,
     name: "联合国新闻 · 可持续发展",
     url: "https://news.un.org/en/",
     note: "联合国可持续发展目标与人道、教育、气候进展",
@@ -837,6 +842,7 @@ export const PEER_SITES: PeerSite[] = [
     id: "un-geneva-news",
     family: "other",
     tier: "official",
+    directoryVisible: false,
     name: "联合国日内瓦 · 新闻",
     url: "https://www.ungeneva.org/en/news-media",
     note: "联合国人权、公共事务、委员会会议与新闻资料",

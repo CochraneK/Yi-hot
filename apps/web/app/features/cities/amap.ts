@@ -78,6 +78,11 @@ export interface AMapInstance {
 export interface AMapNamespace {
   Map: new (container: HTMLElement, options: Record<string, unknown>) => AMapInstance;
   CircleMarker: new (options: Record<string, unknown>) => AMapOverlay;
+  /**
+   * The only overlay that draws text. `CircleMarker` accepts a `label` option and
+   * silently ignores it — measured 2026-11-16, 0 label nodes for 305 markers.
+   */
+  Text: new (options: Record<string, unknown>) => AMapOverlay;
 }
 
 const SCRIPT_ID = "amap-jsapi";

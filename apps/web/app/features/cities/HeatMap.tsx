@@ -31,6 +31,9 @@ import { loadAMap, mapStyleForTheme, wgs84ToGcj02, type AMapInstance, type AMapN
 const ZOOM_MIN = 3;
 const ZOOM_MAX = 12;
 
+/** How many cities get a name on the map itself; more would fight the base map. */
+const LABELLED_CITIES = 8;
+
 /** 48 h is the window the ranking uses, so the card opens on the same question. */
 const PERIODS = [
   { hours: 48, label: "48h", heading: "近 48 小时" },
@@ -148,7 +151,8 @@ export function CityHeatMap({
       try { instance.remove(circles.current); } catch { /* first draw has nothing to drop */ }
     }
     const max = Math.max(...visible.map(p => p.count), 1);
-    const overlays: AMapOverlay[] = visible.map(point => {
+    const drawn: Array<{ point: GeoHeatPoint; marker: AMapOverlay }> = [];
+    for (const point of visible) {
       // Area, not radius, tracks the count: a city with 4x the stories reads as
       // twice the circle instead of four times, which keeps one busy city from
       // swallowing the map.
@@ -165,16 +169,42 @@ export function CityHeatMap({
         fillOpacity: 0.28,
         bubble: true,
         cursor: "pointer",
-        label: { content: `${point.name} · ${point.count} 条`, direction: "top" },
       });
       marker.on("click", () => choose.current(point.id));
-      return marker;
-    });
-    instance.add(overlays);
-    circles.current = overlays;
-    // The card shows the whole country: every plotted city is on screen at once.
-    // Detail is the reader's call — the +/− buttons or a double-click.
-    if (overlays.length) instance.setFitView(overlays, false, [24, 24, 24, 24], 6);
+      drawn.push({ point, marker });
+    }
+    // Names, for the cities a reader can actually make out. Vector overlays drop
+    // the `label` option silently, so the name has to be its own Text overlay; eight
+    // of them answer "where is it happening" without turning the card into a list.
+    const named = [...drawn].sort((a, b) => b.point.count - a.point.count)
+      .filter(d => d.point.count >= 2).slice(0, LABELLED_CITIES);
+    for (const { point } of named) {
+      const [lng, lat] = wgs84ToGcj02(point.lon, point.lat);
+      const name = new AMap.Text({
+        text: point.name,
+        position: [lng, lat],
+        anchor: "bottom-center",
+        cursor: "pointer",
+        // White with a dark halo so the same overlay reads on both palettes.
+        style: {
+          "background-color": "transparent", border: "none", padding: "0 2px",
+          color: "#fff", "font-size": "11px", "font-weight": "600",
+          "text-shadow": "0 1px 2px rgba(0,0,0,.95), 0 0 4px rgba(0,0,0,.85)",
+        },
+      });
+      name.on("click", () => choose.current(point.id));
+      drawn.push({ point, marker: name });
+    }
+    const markers = drawn.map(d => d.marker);
+    instance.add(markers);
+    circles.current = markers;
+    // Fit the mainland, not every point. Overseas places are worth plotting — an
+    // aid story happens where it happens — but they must not set the view: fitting
+    // all 305 points on 2026-11-16 landed on [76.2, 10.3] at the minimum zoom, a
+    // card full of empty Indian Ocean. Detail is the reader's call: the +/− buttons.
+    const home = drawn.filter(({ point }) =>
+      point.lon >= 73 && point.lon <= 136 && point.lat >= 3 && point.lat <= 54).map(d => d.marker);
+    if (markers.length) instance.setFitView(home.length ? home : markers, false, [24, 24, 24, 24], 6);
   }, [ready, visible]);
 
   useEffect(() => () => inFlight.current?.abort(), []);

@@ -1,6 +1,6 @@
 import { SITE, withSubject } from "@aihot/industry/site";
 import { useState } from "react";
-import { Link, useLoaderData, useNavigation, useSearchParams } from "react-router";
+import { Link, useLoaderData, useNavigation, useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/all";
 import type { PoolResponse } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
@@ -12,6 +12,7 @@ import { PillTabs } from "../components/ui/Tabs";
 import { DayList, Pagination } from "../features/feed/DayList";
 import { ToggleChip } from "../components/ui/Controls";
 import { useReadSet } from "../lib/local-state";
+import { useReaderLocation } from "../features/cities/reader-city";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
 
@@ -26,13 +27,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   const tag = url.searchParams.get("tag")?.trim() || null;
   const q = url.searchParams.get("q")?.trim().slice(0, 200) || null;
   const tab = url.searchParams.get("tab") === "relevance" ? "relevance" : null;
+  // A canonical reviewed place id. The reader's own city is resolved on the client
+  // and written here, so the server filters the whole pool instead of one page.
+  const placeParam = url.searchParams.get("place")?.trim() || null;
+  const place = placeParam && /^[a-z0-9][a-z0-9-]{1,79}$/.test(placeParam) ? placeParam : null;
   // Legacy deep-paging parameters (deep, anchorAt) still open a normal page.
   const page = Math.min(Math.max(Number.parseInt(url.searchParams.get("page") ?? "1", 10) || 1, 1), 50);
   const data = await loadOr404<PoolResponse>(
-    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, page: page > 1 ? page : null })}`,
+    `/api/site/pool${queryString({ channel: channel === "all" ? null : channel, category, topic, tag, q, tab, place, page: page > 1 ? page : null })}`,
     { signal: request.signal, busyRedirect: "/all/search-busy" },
   );
-  return { data };
+  return { data, place };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -64,13 +69,15 @@ function pageHref(params: URLSearchParams, page: number) {
 }
 
 export default function AllPage() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, place } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const navigation = useNavigation();
+  const navigate = useNavigate();
+  const reader = useReaderLocation();
   const f = data.filters;
   const topic = f.topic ?? null;
   const busy = navigation.state === "loading" && navigation.location?.pathname === "/all";
-  const keep = { channel: f.channel === "all" ? null : f.channel, topic };
+  const keep = { channel: f.channel === "all" ? null : f.channel, topic, place };
   const searchTabHref = (tab: "time" | "relevance") => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
@@ -90,6 +97,20 @@ export default function AllPage() {
     (it) => (!unreadOnly || !readSet.has(it.id)) && (!selectedOnly || it.selected),
   );
   const hiddenCount = data.items.length - items.length;
+
+  // 只看当地 is a server filter, not a page-local one: the reader's city lives in
+  // this browser, so its canonical id goes into the URL and the API decides what
+  // belongs to it. Without a chosen city the chip sends the reader to pick one.
+  const toggleLocal = () => {
+    const sp = new URLSearchParams(params);
+    sp.delete("page");
+    if (place) sp.delete("place");
+    else if (reader) sp.set("place", reader.id);
+    else { navigate("/cities"); return; }
+    const query = sp.toString();
+    navigate(query ? `/all?${query}` : "/all");
+  };
+  const localLabel = place && reader ? `只看当地 · ${reader.name}` : "只看当地";
 
   return (
     <div className="pb-6">
@@ -138,6 +159,9 @@ export default function AllPage() {
           {unreadOnly && hiddenCount > 0 ? `已隐藏本页 ${hiddenCount} 条读过的内容` : ""}
         </span>
         <div className="flex flex-wrap items-center gap-2">
+          <ToggleChip on={!!place} onToggle={toggleLocal}>
+            {localLabel}
+          </ToggleChip>
           <ToggleChip on={selectedOnly} onToggle={() => setSelectedOnly((v) => !v)}>
             只看精选
           </ToggleChip>
@@ -173,16 +197,22 @@ export default function AllPage() {
               </EmptyState>
             ) : (
               <EmptyState
-                title="没有找到相关内容"
+                title={place ? "这个城市暂时没有已审核的新闻" : "没有找到相关内容"}
                 action={
-                  f.q && f.tab === "time" ? (
+                  place ? (
+                    <button type="button" onClick={toggleLocal} className="text-[13px] font-medium text-accent hover:underline">
+                      看全部动态
+                    </button>
+                  ) : f.q && f.tab === "time" ? (
                     <Link to={searchTabHref("relevance")} className="text-[13px] font-medium text-accent hover:underline">
                       试试“全文相关”，连正文一起搜
                     </Link>
                   ) : undefined
                 }
               >
-                {f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
+                {place
+                  ? "只有地点审核通过的新闻才会归到城市；也可以关掉「只看当地」看全部。"
+                  : f.q ? "换个说法，或者去掉筛选再试。" : "这个筛选下暂时没有内容。"}
               </EmptyState>
             )}
           </div>

@@ -6,7 +6,7 @@ import { isCategoryKey, isChannelKey, type CategoryKey, type ChannelKey } from "
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
-import { loadVerifiedGeoPool, parseGeoFilters } from "@aihot/backend/publication/geo";
+import { loadVerifiedGeoPool, loadGeoHeat, parseGeoFilters } from "@aihot/backend/publication/geo";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
 import { loadDevelopments, loadGroupReports } from "@aihot/backend/publication/groups";
@@ -110,7 +110,11 @@ export function registerSite(app: FastifyInstance) {
     const page = Math.min(Math.max(Number(q.page) || 1, 1), 50);
     const search = q.q?.trim() ? q.q.trim().slice(0, 200) : null;
     const tab = q.tab === "relevance" ? "relevance" : "time";
-    const data = await loadPool({ ...filters, q: search, tab, page });
+    // A canonical reviewed place id, not a free-text query: the same shape the
+    // geography API accepts, so "my city" links stay stable and cacheable.
+    const place = q.place?.trim() || null;
+    if (place && !/^[a-z0-9][a-z0-9-]{1,79}$/.test(place)) throw new BadRequest("invalid place id");
+    const data = await loadPool({ ...filters, place, q: search, tab, page });
     const { generatedAt: _, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "pool", cacheControl: "public, max-age=60, s-maxage=60", etagOf: content });
   }));
@@ -125,6 +129,16 @@ export function registerSite(app: FastifyInstance) {
     const data = await loadVerifiedGeoPool(filters, page);
     const { generatedAt: _g, ...content } = data;
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "geo", cacheControl: "public, max-age=60, s-maxage=60", etagOf: content });
+  }));
+
+  // City-level event counts for the last N hours. Same reviewed gate, aggregated
+  // by place, so the map can size a dot without exposing per-story rows.
+  app.get("/api/site/geo/heat", siteHandler(async (req, reply) => {
+    const q = looseQuery(req);
+    const hours = Math.min(Math.max(Number(q.hours) || 48, 1), 168);
+    const data = await loadGeoHeat(hours);
+    const { generatedAt: _g, ...content } = data;
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoheat", cacheControl: "public, max-age=120, s-maxage=120", etagOf: content });
   }));
 
   app.get("/api/site/items/:id", siteHandler(async (req, reply) => {

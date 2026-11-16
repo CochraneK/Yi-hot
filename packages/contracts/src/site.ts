@@ -171,6 +171,25 @@ export interface PoolResponse {
   generatedAt: string;
 }
 
+/** One city on the heat map: reviewed event places only, counted by article. */
+export interface GeoHeatPoint {
+  id: string;
+  name: string;
+  countryCode: string;
+  lat: number;
+  lon: number;
+  count: number;
+}
+
+export interface GeoHeatResponse {
+  hours: number;
+  points: GeoHeatPoint[];
+  /** Distinct articles behind the points, so one story is not counted twice. */
+  articles: number;
+  truncated: boolean;
+  generatedAt: string;
+}
+
 export interface OutlineEntry {
   id: string;
   text: string;

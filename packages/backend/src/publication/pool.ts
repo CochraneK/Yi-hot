@@ -118,7 +118,25 @@ export interface PoolQuery extends TimelineFilters {
   tab?: "time" | "relevance";
   page?: number;
   topicTags?: string[] | null;
+  /** Only items whose reviewed event place is this canonical id. Never a free-text match. */
+  place?: string | null;
   now?: Date;
+}
+
+/**
+ * Restricts the pool to one reviewed event place. The same gates as the public
+ * geography API apply: verified, event role, and the analysis must still be the
+ * one the publication points at with an unchanged article revision.
+ */
+export function placeCondition(place: string | null | undefined) {
+  if (!place) return sql``;
+  return sql` AND EXISTS (
+    SELECT 1 FROM geo_candidates gc
+    JOIN analyses an ON an.id = gc.analysis_id
+    JOIN articles ar ON ar.id = gc.article_id
+    WHERE gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+      AND an.input_revision = ar.revision
+      AND gc.review_status = 'verified' AND gc.role = 'event' AND gc.place_id = ${place})`;
 }
 
 export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
@@ -127,11 +145,11 @@ export async function loadPool(query: PoolQuery): Promise<PoolResponse> {
   const q = query.q?.trim() || null;
   const tab = q && query.tab === "relevance" ? "relevance" : "time";
   const terms = q ? searchTerms(q) : [];
-  const filters = sql`${channelCondition(query.channel)} ${categoryCondition(query.category)} ${tagCondition(query.tag)} ${topicCondition(query.topicTags)}`;
+  const filters = sql`${channelCondition(query.channel)} ${categoryCondition(query.category)} ${tagCondition(query.tag)} ${topicCondition(query.topicTags)} ${placeCondition(query.place)}`;
   const offset = (page - 1) * POOL_PAGE_SIZE;
   const cap = POOL_MAX_PAGES * POOL_PAGE_SIZE;
   // A fixed clock (tests, replays) never shares cached totals.
-  const filterKey = query.now ? null : JSON.stringify([query.channel, query.category, query.tag, query.topicTags ?? null]);
+  const filterKey = query.now ? null : JSON.stringify([query.channel, query.category, query.tag, query.topicTags ?? null, query.place ?? null]);
 
   // Searches go through pool_search (eligible items only): trigram indexes for longer terms, a small
   // table to scan for one- and two-character ones.

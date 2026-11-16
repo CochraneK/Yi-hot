@@ -1,5 +1,5 @@
 // All geographic listings share the public projection and current reviewed event gate.
-import type { GeoEventPlace, GeoReviewedResponse } from "@aihot/contracts/site";
+import type { GeoEventPlace, GeoHeatPoint, GeoHeatResponse, GeoReviewedResponse } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { ITEM_COLUMNS, ITEM_FROM, listedCondition, toFeedItemSummary, type ItemRow } from "./items.ts";
 
@@ -82,6 +82,54 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
     countries: countries.map(c => c.code), regions: regions.slice(0, MAX_PLACES).map(r => r.name),
     placesTruncated: places.length > MAX_PLACES, catalogTruncated: catalog.length > MAX_PLACES || regions.length > MAX_PLACES,
     totalCapped: n > cap, page, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)), total,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+const HEAT_MAX_POINTS = 400;
+
+/**
+ * How many reviewed events each city had in the last N hours.
+ *
+ * Same public gate as the listing: verified event places only, and the analysis
+ * must still match the article revision and the current publication. Counts are
+ * distinct articles, so one story filed from two places is not double-counted
+ * inside a city.
+ */
+export async function loadGeoHeat(hours: number, now = new Date()): Promise<GeoHeatResponse> {
+  const window = Math.min(Math.max(Math.floor(hours) || 48, 1), 168);
+  const rows = await sql<Array<GeoHeatPoint & { articles: number }>>`
+    SELECT gp.id, gp.name, gp.country_code AS "countryCode", gp.lat, gp.lon,
+           count(DISTINCT p.article_id)::int AS count
+    FROM publications p
+    JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+    JOIN analyses an ON an.id = gc.analysis_id
+    JOIN articles ar ON ar.id = p.article_id
+    JOIN geo_places gp ON gp.id = gc.place_id
+    WHERE ${listedCondition(now)} AND p.eligible
+      AND an.input_revision = ar.revision
+      AND gc.review_status = 'verified' AND gc.role = 'event'
+      AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')
+    GROUP BY gp.id
+    ORDER BY count DESC, gp.id
+    LIMIT ${HEAT_MAX_POINTS + 1}`;
+  const points = rows.slice(0, HEAT_MAX_POINTS).map(({ id, name, countryCode, lat, lon, count }) =>
+    ({ id, name, countryCode, lat, lon, count }));
+  const [totals] = await sql<{ n: number }[]>`
+    SELECT count(DISTINCT p.article_id)::int AS n
+    FROM publications p
+    JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+    JOIN analyses an ON an.id = gc.analysis_id
+    JOIN articles ar ON ar.id = p.article_id
+    WHERE ${listedCondition(now)} AND p.eligible
+      AND an.input_revision = ar.revision
+      AND gc.review_status = 'verified' AND gc.role = 'event'
+      AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')`;
+  return {
+    hours: window,
+    points,
+    articles: totals?.n ?? 0,
+    truncated: rows.length > HEAT_MAX_POINTS,
     generatedAt: new Date().toISOString(),
   };
 }

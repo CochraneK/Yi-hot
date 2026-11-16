@@ -123,11 +123,13 @@ test("missing routes cannot be hidden by a root-only request; errors and redirec
 });
 
 test("admin data and actions never become public cache entries", async () => {
-  const admin = await fetch(`${origin}/yihot/admin/sources.data?_routes=admin-layout`);
-  assert.equal(admin.status, 202);
-  assert.equal(admin.headers.get("Cache-Control"), "private, no-store");
-  assert.equal(admin.headers.get("X-Accel-Expires"), "0");
-  assert.match(await admin.text(), /admin\/login/);
+  for (const path of ["sources", "geo"]) {
+    const admin = await fetch(`${origin}/yihot/admin/${path}.data?_routes=admin-layout`);
+    assert.equal(admin.status, 202);
+    assert.equal(admin.headers.get("Cache-Control"), "private, no-store");
+    assert.equal(admin.headers.get("X-Accel-Expires"), "0");
+    assert.match(await admin.text(), /admin\/login/);
+  }
   const action = await fetch(`${origin}/yihot/hot.data`, { method: "POST" });
   assert.equal(action.status, 405);
   assert.equal(action.headers.get("Cache-Control"), "private, no-store");

@@ -18,11 +18,15 @@ export function validateGeoPlace(p: GeoPlaceInput): GeoPlaceInput {
   return p;
 }
 
-export async function registerGeoPlace(input: GeoPlaceInput): Promise<void> {
+export async function registerGeoPlace(input: GeoPlaceInput, review?: { actor: string; reason: string }): Promise<void> {
   const p = validateGeoPlace(input);
-  await sql`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
-    VALUES (${p.id}, ${p.name.trim()}, ${p.countryCode}, ${p.region?.trim() || null}, ${p.city?.trim() || null},
-      ${p.lat}, ${p.lon}, ${p.precision}, ${p.sourceUrl})`;
+  await sql.begin(async tx => {
+    await tx`INSERT INTO geo_places (id, name, country_code, region, city, lat, lon, coordinate_precision, source_url)
+      VALUES (${p.id}, ${p.name.trim()}, ${p.countryCode}, ${p.region?.trim() || null}, ${p.city?.trim() || null},
+        ${p.lat}, ${p.lon}, ${p.precision}, ${p.sourceUrl})`;
+    if (review) await tx`INSERT INTO audit_log (actor, action, subject, reason, before, after)
+      VALUES (${review.actor}, 'geo.place.create', ${'geo-place:'+p.id}, ${review.reason}, NULL, ${tx.json(p as never)})`;
+  });
 }
 
 export async function pendingGeoCandidates(limit = 30) {
@@ -56,12 +60,13 @@ export async function reviewGeoCandidate(input: GeoReviewInput): Promise<void> {
   const q = validateGeoReview(input);
   await sql.begin(async tx => {
     const [candidate] = await tx<{
-      id: number; review_status: string; place_id: string | null; input_revision: number; current_revision: number;
-    }[]>`SELECT g.id, g.review_status, g.place_id, an.input_revision, ar.revision AS current_revision
+      id: number; review_status: string; place_id: string | null; input_revision: number; current_revision: number; analysis_id: number; publication_analysis_id: number | null;
+    }[]>`SELECT g.id, g.review_status, g.place_id, an.input_revision, ar.revision AS current_revision, g.analysis_id, p.analysis_id AS publication_analysis_id
       FROM geo_candidates g
       JOIN analyses an ON an.id = g.analysis_id
       JOIN articles ar ON ar.id = g.article_id
-      WHERE g.id = ${q.id} FOR UPDATE OF g`;
+      LEFT JOIN publications p ON p.article_id = g.article_id
+      WHERE g.id = ${q.id} FOR UPDATE OF g, ar`;
     if (!candidate) throw Error("candidate not found");
     if (q.action === "reopen") {
       if (candidate.review_status === "pending") throw Error("candidate is already pending");
@@ -69,7 +74,8 @@ export async function reviewGeoCandidate(input: GeoReviewInput): Promise<void> {
         review_reason = NULL, reviewed_at = NULL WHERE id = ${q.id}`;
     } else {
       if (candidate.review_status !== "pending") throw Error("candidate already reviewed; reopen with reason first");
-      if (candidate.input_revision !== candidate.current_revision) throw Error("article revision changed; cannot approve stale evidence");
+      if (q.action === "approve" && candidate.input_revision !== candidate.current_revision) throw Error("article revision changed; cannot approve stale evidence");
+      if (q.action === "approve" && candidate.publication_analysis_id !== candidate.analysis_id) throw Error("current publication no longer references candidate analysis");
       if (q.action === "approve") {
         const [place] = await tx<{ id: string }[]>`SELECT id FROM geo_places WHERE id = ${q.placeId!}`;
         if (!place) throw Error("unknown place id; register a sourced canonical place first");

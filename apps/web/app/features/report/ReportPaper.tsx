@@ -365,7 +365,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const archiveCount = pages.reduce((sum, p) => sum + p.items.length, 0) + report.flashes.length + (report.peers?.items.length ?? 0);
   const index = [
     ...(report.insights?.length ? [{ id: "s-insights", label: "核心判断", n: `${report.insights.length} 则` }] : []),
-    ...(archiveCount > 0 ? [{ id: "report-archive", label: "新闻资料", n: `${archiveCount} 条` }] : []),
+    ...(archiveCount > 0 || report.yesterdayHot?.entries.length ? [{ id: "report-archive", label: "新闻资料", n: `${archiveCount} 条` }] : []),
   ];
 
   return (
@@ -532,18 +532,49 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
           <span className="shrink-0 text-[12px] font-normal text-ink-4">展开 / 收起</span>
         </summary>
         <div className="pb-8">
-          <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line pb-4 text-[12.5px]">
+          {report.yesterdayHot && report.yesterdayHot.entries.length > 0 && (
+            <section id="s-yesterday-hot" aria-label="昨日热榜" className="scroll-mt-6 border-b border-line pb-7">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-[21px] font-bold tracking-[-0.015em] text-ink">昨日热榜</h2>
+                <span className="num text-[12px] text-ink-4">{report.yesterdayHot.day}</span>
+              </div>
+              <p className="mt-2 text-[12px] leading-[1.75] text-ink-4">
+                昨日最后一份已发布热度快照；榜单是当时最热的事件，不代表全部新闻都在昨天首次发布。
+              </p>
+              <ol className="mt-3 divide-y divide-line">
+                {report.yesterdayHot.entries.map(e => (
+                  <li key={e.storyPublicId} className="flex items-baseline gap-3 py-3">
+                    <span className="num w-6 shrink-0 text-[18px] font-bold text-accent">{pad(e.rank)}</span>
+                    <div className="min-w-0 flex-1">
+                      <Link to={`/items/${e.itemId}`} className="text-[14px] font-semibold leading-[1.6] text-ink hover:text-accent">{e.title}</Link>
+                      {e.sourceName && <span className="ml-2 text-[11.5px] text-ink-4">{shortSourceName(e.sourceName)}</span>}
+                    </div>
+                    {e.heat !== null && <span className="num shrink-0 text-[11px] text-ink-4">热度 {e.heat}</span>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+          {hasNarrative && report.overview && (
+            <details id="report-overview" className="border-b border-line py-4 text-[13px] leading-[1.8] text-ink-3">
+              <summary className="cursor-pointer font-medium text-ink-2">查看本期原摘要</summary>
+              <p className="pt-3">{report.overview}</p>
+            </details>
+          )}
+          <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line py-4 text-[12.5px]">
+            {report.yesterdayHot?.entries.length ? <a href="#s-yesterday-hot" className="font-medium text-accent">昨日热榜 · {report.yesterdayHot.entries.length}</a> : null}
+            {hasNarrative && report.overview ? <a href="#report-overview" className="text-ink-3 hover:text-accent">原摘要</a> : null}
             {pages.map(p => <a key={p.id} href={`#${p.id}`} className="text-ink-3 underline-offset-4 hover:text-accent hover:underline">{p.label} · {p.items.length}</a>)}
             {report.flashes.length > 0 && <a href="#s-flash" className="text-ink-3 hover:text-accent">快讯</a>}
             {!!report.peers?.items.length && <a href="#s-peers" className="text-ink-3 hover:text-accent">{report.peers.label}</a>}
           </nav>
       {pages.map((p, i) => (
         <SectionPage key={p.id} id={p.id} no={i + 1} label={p.label}>
-          {p.summary && !hasNarrative && (
-            <p className="border-b border-line py-5 text-[15.5px] leading-[1.9] text-ink-2 @[560px]:text-justify">
-              <span className="mr-2 font-semibold text-accent">本版导读</span>
-              {p.summary}
-            </p>
+          {p.summary && (
+            <details className="border-b border-line py-4 text-[13px] leading-[1.85] text-ink-3">
+              <summary className="cursor-pointer font-medium text-ink-2">本版原摘要</summary>
+              <p className="pt-3">{p.summary}</p>
+            </details>
           )}
           <Rows items={p.items}>{(c, cell) => <Story key={`${p.id}-${keyOf(c)}`} c={c} dated={!daily} className={cell} />}</Rows>
         </SectionPage>

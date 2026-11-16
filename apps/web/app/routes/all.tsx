@@ -1,5 +1,5 @@
 import { SITE, withSubject } from "@aihot/industry/site";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLoaderData, useNavigation, useSearchParams, useNavigate } from "react-router";
 import type { Route } from "./+types/all";
 import type { GeoCatalogPlace, GeoPlacesResponse, PoolResponse } from "@aihot/contracts/site";
@@ -13,7 +13,7 @@ import { DayList, Pagination } from "../features/feed/DayList";
 import { ToggleChip } from "../components/ui/Controls";
 import { useReadSet } from "../lib/local-state";
 import { canonicalCity, saveReaderLocation, useReaderLocation } from "../features/cities/reader-city";
-import { CityPicker } from "../features/cities/CityPicker";
+import { CityPicker, loadCityCatalog } from "../features/cities/CityPicker";
 import { EmptyState } from "../components/ui/Page";
 import { RingMark } from "../components/Logo";
 
@@ -41,7 +41,15 @@ export async function loader({ request }: Route.LoaderArgs) {
     ),
     // Cities the reader may pick as 当地. Canonical ids only — the short ids in the
     // old static list matched no reviewed place and filtered the feed to nothing.
-    loadOr404<GeoPlacesResponse>("/api/site/geo/places", { signal: request.signal }),
+    //
+    // One row, and only when the URL names a place. This used to load every place
+    // the feed can filter by — 1,300 rows, 218 KB — on every visit, and React Router
+    // serialises loader data into the document: that list was 42% of the page's
+    // 522 KB HTML, spent to draw one city name in the trigger. The picker loads the
+    // full catalogue itself when it opens.
+    place
+      ? loadOr404<GeoPlacesResponse>(`/api/site/geo/places?id=${place}`, { signal: request.signal })
+      : null,
   ]);
   return {
     data: {
@@ -55,7 +63,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       freshness: data.freshness ?? "",
     },
     place,
-    places: places.places,
+    places: places?.places ?? [],
   };
 }
 
@@ -120,17 +128,38 @@ export default function AllPage() {
   // 只看当地 is a server filter, not a page-local one: the reader's city lives in
   // this browser, so its canonical id goes into the URL and the API decides what
   // belongs to it. A shared `?place=` link has no stored city behind it, so the name
-  // comes from the place list first — otherwise the trigger would say 选择城市 while
-  // the feed is already showing one city.
-  const chosen = place ? places.find((p) => p.id === place) ?? null : null;
+  // comes from the one place row the loader asked for — otherwise the trigger would
+  // say 选择城市 while the feed is already showing one city.
+  const chosen = place ? places[0] ?? null : null;
+  // A choice saved by an older build carries a short id ("beijing") or the name an
+  // IP lookup returned; neither filters anything on its own. The catalogue knows
+  // which canonical id the name stands for now, so it is fetched here — and only
+  // here, for that one case. Everyone else already has a gazetteer id.
+  const [legacyHere, setLegacyHere] = useState<{ id: string; name: string } | null>(null);
+  const canonicalId = !!reader && /^geonames-\d+(-d\d+)?$/.test(reader.id);
+  useEffect(() => {
+    if (!reader || canonicalId) { setLegacyHere(null); return; }
+    let alive = true;
+    loadCityCatalog()
+      .then(catalog => {
+        if (!alive) return;
+        const hit = canonicalCity(reader, catalog.places);
+        setLegacyHere(hit ? { id: hit.id, name: hit.name } : null);
+        // Write the gazetteer id back, so the lookup — and this 225 KB catalogue —
+        // happens once per browser rather than once per visit.
+        if (hit) saveReaderLocation({ ...reader, id: hit.id, name: hit.name });
+      })
+      .catch(() => { if (alive) setLegacyHere(null); });
+    return () => { alive = false; };
+  }, [reader, canonicalId]);
   const here = chosen
-    ?? canonicalCity(reader, places)
+    ?? legacyHere
     // A city picked before it had any news is not in the places list yet, but its
     // id is a canonical one, so it can filter right away.
     // A county keeps its own id but records the city it sits in: the local badge
     // matches an event's prefecture, so 江宁区 chosen here still lights up a story
     // filed at 南京 without knowing which county it came from.
-    ?? (reader && /^geonames-\d+(-d\d+)?$/.test(reader.id) ? { id: reader.id, name: reader.name } : null);
+    ?? (reader && canonicalId ? { id: reader.id, name: reader.name } : null);
   const toggleLocal = () => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
@@ -142,12 +171,12 @@ export default function AllPage() {
     const query = sp.toString();
     navigate(query ? `/all?${query}` : "/all");
   };
-  const choosePicked = (picked: GeoCatalogPlace) => {
+  const choosePicked = (picked: GeoCatalogPlace, parentName?: string) => {
     // `city` stays the prefecture even when a county was picked: it is the field
     // the local badge compares against, and the county's own id already carries
-    // the finer choice.
-    const parentCity = picked.parentId ? places.find(p => p.id === picked.parentId)?.name : undefined;
-    saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: parentCity ?? picked.name, lat: picked.lat, lon: picked.lon });
+    // the finer choice. The picker hands the parent name over — the catalogue is
+    // the only place that pairing is known, and this page no longer holds it.
+    saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: parentName ?? picked.name, lat: picked.lat, lon: picked.lon });
     const sp = new URLSearchParams(params);
     sp.delete("page");
     sp.set("place", picked.id);

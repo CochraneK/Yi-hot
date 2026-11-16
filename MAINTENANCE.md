@@ -3498,3 +3498,21 @@ CI：`tests/report-yesterday-hot.test.ts` 核验北京时间边界、防串日�
 `reports/q1/`（`--from=2026-09-30 --to=2026-11-16`）是首份季度报告草稿，`figures.json` 是同一批数字的原始值。要点：入选 8,323 篇 / 3,010 个事件 / 165 个信源，热榜 31 天、129 个事件进过榜，城市榜首北京 331 篇。**地点覆盖率 40.0%，低于 50% 的横幅照样打**——城市榜是下界。报告里两张表原来只写「产出最多的信源」「按父城市上卷」而不说截断，现已改成「前 15，共 165」「前 20，共 348」，避免读者把前 20 当成全部城市。
 
 回填期间 `llm` 预算临时提到 8000/小时、24000/天，跑完已还原成 **1200/小时、9000/天**（`budgets` 表，`updated_at` 同步）。
+
+### 首屏别内嵌地点目录：522 KB → 285 KB（2026-11-16 21:50）
+
+`/all` 的 loader 每次都请求 `/api/site/geo/places`（1,319 行、218 KB），并把结果放进 loader data。React Router 会把 loader data 序列化进文档，所以这 218 KB 变成 HTML 的一部分：首屏 522,569 字节里 45% 是为了一行城市名。
+
+实际用途只有三处，都不需要全量：
+
+| 用途 | 原做法 | 现做法 |
+|---|---|---|
+| 触发器写「那曲」而不是「选择城市」 | 在 1,319 行里 `find` | loader 只在 `?place=` 时请求 `/geo/places?id=<id>`，返回那一行 |
+| 把旧的短 id（`beijing`）解析成 canonical id | `canonicalCity(reader, places)` | 只在 id 不是 `geonames-` 时 lazy 拉 `/geo/catalog`，解析后把 canonical id 写回 localStorage |
+| 选到区县时记下父城市名 | 从全量列表里 `find(parentId)` | `CityPicker.onPick(place, parentName)` 直接传（目录本来就在它手里） |
+
+`loadGeoPlace()` 直接查 `geo_places`，不像 `loadGeoPlaces()` 那样 `JOIN own`（只含有报道的地点）——所以选了一个还没有新闻的城市，分享链接仍然显示城市名，而不是「选择城市」。
+
+**坑：搜索结果里的区县走的是另一条渲染分支。** 城市行（`results.map`）和展开出来的区县行（`kids.map`）各有一个 `onClick`，第一次只给后者传了 `parentName`，于是「搜江宁 → 点江宁区」存进 localStorage 的 `city` 是「江宁区」，`region` 也跟着错，当地徽章不再匹配南京的报道。两处收拢成一个 `pick(place)` 函数后正常。**测试只覆盖了「点北京」这条路径，恰好绕开**——选城市这类交互要同时测「列表里点」和「搜索里点」。
+
+改动后线上实测：`/all` 285,208 字节（-45%），首屏零请求 `geo/places` 与 `geo/catalog`，打开选择器才拉一次目录（225 KB，`catalogPromise` 缓存）；`/all?place=那曲` 260 KB、`/all?place=江宁区` 129 KB、`/hot` 78 KB 不变。ETag 前缀分别为 `geoplaces` / `geoplace-<id>`，不会互相命中。剩余 285 KB 里最大的一块是 React Router 的 loader data，27 KB；其余是卡片本身的 HTML，属于内容不是浪费。

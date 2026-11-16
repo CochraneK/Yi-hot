@@ -7,7 +7,7 @@ import type { GeoLevel } from "@aihot/contracts/site";
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
-import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlaces, parseGeoFilters, HEAT_MAX_HOURS } from "@aihot/backend/publication/geo";
+import { loadVerifiedGeoPool, loadGeoHeat, loadGeoPlace, loadGeoPlaces, parseGeoFilters, HEAT_MAX_HOURS } from "@aihot/backend/publication/geo";
 import { loadGeoCatalog } from "@aihot/backend/publication/geo-catalog";
 import { loadTimeline } from "@aihot/backend/publication/timeline";
 import { loadStoryFollowups } from "@aihot/backend/publication/followups";
@@ -150,10 +150,23 @@ export function registerSite(app: FastifyInstance) {
 
   // The cities a reader can choose from. Same gate and the same canonical ids the
   // pool filter takes, so "my city" always resolves to a filter that matches.
+  //
+  // `?id=` answers for one place instead of all of them. The feed needs exactly one
+  // row — the name of the city in its own `?place=` link — and the full list is
+  // 218 KB, most of which the page then serialises into its HTML. The picker loads
+  // the catalogue itself, on open, from /geo/catalog.
   app.get("/api/site/geo/places", siteHandler(async (req, reply) => {
-    const data = await loadGeoPlaces();
-    const { generatedAt: _g, ...content } = data;
-    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoplaces", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
+    const q = looseQuery(req);
+    const id = q.id?.trim() || null;
+    if (id && !/^[a-z0-9][a-z0-9-]{1,79}$/.test(id)) throw new BadRequest("invalid place id");
+    if (!id) {
+      const data = await loadGeoPlaces();
+      const { generatedAt: _g, ...content } = data;
+      return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoplaces", cacheControl: "public, max-age=300, s-maxage=300", etagOf: content });
+    }
+    const row = await loadGeoPlace(id);
+    const data = { places: row ? [row] : [], generatedAt: new Date().toISOString() };
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: `geoplace-${id}`, cacheControl: "public, max-age=300, s-maxage=300", etagOf: data.places });
   }));
 
   // Every place a reader may call home, including cities with nothing filed yet:

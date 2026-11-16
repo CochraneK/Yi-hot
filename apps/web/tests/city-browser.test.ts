@@ -25,8 +25,15 @@ test("the 动态 header picks a city and marks its events", { skip: process.env.
   const api = createServer((req,res)=> {
     const u=new URL(req.url!,"http://fixture"); res.setHeader("content-type","application/json");
     if(u.pathname==="/api/site/meta") return res.end(JSON.stringify({changelogVersion:"test"}));
-    // The feed resolves the stored city against this list; the picker uses the catalogue.
-    if(u.pathname==="/api/site/geo/places") return res.end(JSON.stringify({places: places.map(p=>({...p, count:1})), generatedAt: "test"}));
+    // The feed asks for one row by id (`?id=`) so the trigger can name the city in
+    // a shared link; the picker loads the whole list from /geo/catalog. Serving the
+    // full list to both would let a bug that reads rows[0] — 北京 — pass while the
+    // URL says 成都.
+    if(u.pathname==="/api/site/geo/places") {
+      const id=u.searchParams.get("id");
+      const rows=places.map(p=>({...p, count:1})).filter(p=>!id||p.id===id);
+      return res.end(JSON.stringify({places:rows, generatedAt: "test"}));
+    }
     if(u.pathname==="/api/site/geo/catalog") return res.end(JSON.stringify({
       places: places.map(p=>({...p, count: 1})),
       regions: [{ key: "CN:北京", label: "北京", cities: 1 }, { key: "CN:四川", label: "四川", cities: 1 }],

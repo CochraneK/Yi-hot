@@ -35,7 +35,14 @@ const NO_PLACES: GeoCatalogPlace[] = [];
 
 export function CityPicker({ current, onPick, className = "", align = "left", block = false }: {
   current: { id: string; name: string } | null;
-  onPick: (place: GeoCatalogPlace) => void;
+  /**
+   * The second argument is the city a county sits in. The caller stores it as
+   * `city`, because the local badge compares against the prefecture — the county
+   * id alone would never light up a story filed at 南京. The catalogue is the only
+   * place that pairing is known, so the picker hands it over rather than making
+   * the caller fetch the list again.
+   */
+  onPick: (place: GeoCatalogPlace, parentName?: string) => void;
   className?: string;
   align?: "left" | "right";
   /** Full-width trigger, for the city page's settings row. */
@@ -80,6 +87,15 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
   const q = query.trim();
 
   const byId = useMemo(() => new Map(places.map(place => [place.id, place])), [places]);
+
+  // One place, chosen. A county passes the city it sits in, because `onPick` stores
+  // that as `city` and this is the only layer that knows the pairing. Both ways in
+  // — the flat search result and the row inside an expanded city — go through here,
+  // so a county picked from search is filed exactly like one picked from its city.
+  const pick = (place: GeoCatalogPlace) => {
+    onPick(place, place.parentId ? byId.get(place.parentId)?.name : undefined);
+    setOpen(false);
+  };
 
   // Reopening with a county selected should show where it sits. Without this the
   // chevron that leads back to it is closed and the reader has to search again.
@@ -206,7 +222,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                         <div className="flex items-stretch">
                           <button
                             type="button"
-                            onClick={() => { onPick(place); setOpen(false); }}
+                            onClick={() => pick(place)}
                             className={`flex min-w-0 flex-1 items-baseline gap-2 px-3 py-2 text-left text-[13px] hover:bg-bg-sunk ${active ? "text-accent" : "text-ink-2"}`}
                           >
                             <span className="truncate">{place.name}</span>
@@ -238,7 +254,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                               <li key={kid.id}>
                                 <button
                                   type="button"
-                                  onClick={() => { onPick(kid); setOpen(false); }}
+                                  onClick={() => pick(kid)}
                                   className={`flex w-full items-baseline gap-2 py-1.5 pl-2 pr-3 text-left text-[12.5px] hover:bg-bg-sunk ${current?.id === kid.id ? "text-accent" : "text-ink-2"}`}
                                 >
                                   <span className="truncate">{kid.name}</span>

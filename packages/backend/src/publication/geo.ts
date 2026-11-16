@@ -170,6 +170,39 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
 }
 
 /**
+ * One place by id, whether or not anything is filed there.
+ *
+ * A shared `?place=` link has to name itself in the trigger on a device that
+ * never picked a city, and that used to mean shipping the whole 1,300-row list
+ * inside the page — 218 KB of the feed's 522 KB HTML for one row it needed. This
+ * answers only what the trigger draws. It reads `geo_places` directly instead of
+ * the `own` CTE above, so a place with nothing filed yet still comes back: the
+ * reader can pick 绵阳 before the first story lands there, and the link should
+ * still say 绵阳 rather than 选择城市.
+ */
+export async function loadGeoPlace(id: string): Promise<GeoPlaceOption | null> {
+  const rows = await sql<GeoPlaceOption[]>`
+    SELECT gp.id, gp.name, gp.country_code AS "countryCode",
+           coalesce(gp.region, parent.region) AS region, gp.city,
+           gp.lat, gp.lon, gp.coordinate_precision AS precision,
+           gp.parent_id AS "parentId",
+           (SELECT count(DISTINCT p.article_id)::int
+              FROM publications p
+              JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
+              JOIN analyses an ON an.id = gc.analysis_id
+              JOIN articles ar ON ar.id = p.article_id
+              JOIN geo_places g2 ON g2.id = gc.place_id
+             WHERE (g2.id = gp.id OR g2.parent_id = gp.id)
+               AND p.eligible
+               AND an.input_revision = ar.revision
+               AND gc.review_status = 'verified' AND gc.role = 'event') AS count
+    FROM geo_places gp
+    LEFT JOIN geo_places parent ON parent.id = gp.parent_id
+    WHERE gp.id = ${id}`;
+  return rows[0] ?? null;
+}
+
+/**
  * How many reviewed events each city had in the last N hours.
  *
  * Same public gate as the listing: verified event places only, and the analysis

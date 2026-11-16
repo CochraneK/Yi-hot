@@ -85,7 +85,21 @@ test("mobile/desktop map, filtering, IP opt-in, local badges and repeated map li
     assert.equal(await page.$eval(".leaflet-tile",e=>e.getAttribute("referrerpolicy")),"strict-origin-when-cross-origin");
     await page.tap('.leaflet-marker-icon[title="北京：1条新闻"]');
     await page.waitForSelector(".leaflet-popup");
-    // Target the actual popup control, not an ancestor matched by a text selector.
+    // On phones the fixed bottom navigation can cover part of a popup when the
+    // map is near the fold. Scroll the button into the visible viewport before tapping.
+    // A covered control is a real mobile accessibility failure, not a timeout to ignore.
+    await page.$eval(".leaflet-popup button", el => el.scrollIntoView({ block: "center", behavior: "instant" }));
+    const popupTarget = await page.$eval(".leaflet-popup button", el => {
+      const r = el.getBoundingClientRect();
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return {
+        visible: r.top >= 0 && r.bottom <= window.innerHeight,
+        hittable: !!(top === el || (top instanceof Element && top.closest(".leaflet-popup button") === el)),
+        covering: top?.closest("a,button,nav")?.outerHTML.slice(0,250) ?? top?.tagName ?? null,
+      };
+    });
+    assert.ok(popupTarget.visible && popupTarget.hittable,
+      "map popup action must be uncovered on a 390px phone: " + JSON.stringify(popupTarget));
     await page.locator(".leaflet-popup button").click();
     try {
       await page.waitForFunction(()=>location.search.includes("place=beijing"),{timeout:9000});

@@ -27,7 +27,7 @@ AIHOT 上游 `KKKKhazix/AIHOT` 的 fork 数持续增长；单纯 fork 数 ≠ �
 - 只覆盖 `KKKKhazix/AIHOT` 的**直接 fork**；下载源码另建仓库、通过模板创建、公开 Show and tell/Discussions 登记但不 fork 的项目目前不在自动覆盖范围。后续可加入经人工批准的社区公开登记表，不应把 GitHub 关键词搜索结果直接当真实改编。
 - `SITE.name` 使用 JS 动态计算、拆分到其他模块或不改名但仅改行业 prompts 的 fork，可能漏报；这是保守检测，不是证明没有改编。
 - 60 天窗口用于增量巡检，较早且近期无更新的老 fork 不一定覆盖。要回填历史可在具备合规 GitHub Token 的本地只读环境手动运行：`node scripts/scan-aihot-derivatives.mjs --lookback-days=365 --max-forks=3000 --max-configs=900 --dry-run`，但 900 次配置读取会增加 GitHub API 配额消耗；`--force` 会忽略 Issue 内已有的推送检查点。定时任务不自动强制重扫。
-- fork 数超过 3000、单周待检查超过 600 或个别 fork API 失败时，报告显式披露截断与延期；延期对象下一轮仍可继续尝试。API 鉴权失效或访问受限需人工处理，不能使用第三方代理或绕过限流。
+- fork 数超过 3000、单周待检查超过 400 或个别 fork API 失败时，报告显式披露截断与延期；延期对象下一轮仍可继续尝试。API 鉴权失效或访问受限需人工处理，不能使用第三方代理或绕过限流。
 - 每周定时任务可能被 GitHub 延迟、取消；请在仓库 Actions 页面核对**实际运行**，不能把 workflow 合并当作已经运行并发现新网站。
 
 ## 维护与回滚

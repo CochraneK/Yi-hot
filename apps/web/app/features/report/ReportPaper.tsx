@@ -113,52 +113,78 @@ function Original({ c, className = "" }: { c: ReportCitation; className?: string
   );
 }
 
-/** Editorial inference with explicit evidence, rival explanation and observable next check.
- * The source badges refer to current public reports, never hidden or withdrawn material.
+/** Evidence-led reading: the actual news is read inside the argument, not merely listed after it.
+ * Everything factual below comes from current public citations, not a second model rewrite.
  */
 function InsightPage({ report }: { report: ReportDetail }) {
   if (!report.insights?.length) return null;
   const isWeekly = report.kind === "weekly";
   return (
-    <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 pt-10 @[880px]:pt-14">
-      <header className="border-b border-line-strong pb-4">
-        <Kicker>{isWeekly ? "跨事件观察" : "结构性解释"}</Kicker>
-        <h2 id="s-insights-title" className="mt-2 text-[24px] font-black leading-[1.3] text-ink @[880px]:text-[28px]">
-          本期洞察
+    <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 border-t border-line-strong pt-8 @[880px]:pt-10">
+      <header className="pb-4">
+        <Kicker>{isWeekly ? "本周观察" : "本月分析"}</Kicker>
+        <h2 id="s-insights-title" className="mt-2 text-[24px] font-black leading-[1.3] text-ink @[880px]:text-[30px]">
+          {isWeekly ? "这些新闻，值得放在一起看" : "从本月新闻，看尚待检验的变化"}
         </h2>
         <p className="mt-2 max-w-[680px] text-[12.5px] leading-[1.8] text-ink-4">
-          基于本站本期公开资料形成的{isWeekly ? "跨来源观察" : "待检验的分析假设"}，不是已证实的因果结论。
-          入池来源与筛选口径会影响可见样本；点击依据可核对原文。
+          以下判断来自本站本期公开新闻，点击报道可核对原文。跨来源观察不等于行业整体趋势；没有足够证据的议题只保留在后面的新闻资料中。
         </p>
       </header>
-      <ol className="divide-y divide-line">
-        {report.insights.map((insight, index) => (
-          <li key={insight.evidence.map(e => e.itemId).join(":")} className="py-6 @[880px]:py-8">
-            <div className="flex items-baseline gap-3">
-              <span className="num w-7 shrink-0 text-[20px] font-bold text-accent">{String(index + 1).padStart(2, "0")}</span>
-              <div className="min-w-0 flex-1">
-                <div className="text-[11.5px] font-semibold text-ink-4">{isWeekly ? "观察 · 模式" : "分析 · 假设"}</div>
-                <h3 className="mt-1 text-[19px] font-bold leading-[1.5] text-ink @[880px]:text-[21px]">{insight.claim}</h3>
-                <p className="mt-3 text-[14.5px] leading-[1.9] text-ink-2">{insight.reasoning}</p>
-                <div className="mt-4 grid gap-x-9 gap-y-3 text-[13px] leading-[1.8] @[760px]:grid-cols-2">
-                  <p><span className="font-semibold text-ink">另一种解释</span><span className="ml-2 text-ink-3">{insight.alternative}</span></p>
-                  <p><span className="font-semibold text-ink">下期验证</span><span className="ml-2 text-ink-3">{insight.watchFor}</span></p>
-                </div>
-                <div className="mt-4 border-t border-line-soft pt-3">
-                  <span className="text-[11.5px] font-semibold text-ink-4">依据 · {insight.evidence.length} 条当前可公开记录</span>
-                  <ul className="mt-1.5 flex flex-col gap-1.5">
-                    {insight.evidence.map(e => (
-                      <li key={e.itemId} className="text-[12.5px] leading-[1.7]">
-                        <Link to={`/items/${e.itemId}`} className="text-ink-2 underline-offset-4 hover:text-accent hover:underline">{e.title}</Link>
-                        <span className="ml-2 text-ink-4">— {shortSourceName(e.sourceName)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+      <ol className="max-w-[800px] divide-y divide-line">
+        {report.insights.map((insight, index) => {
+          const foreground = insight.evidence.slice(0, 3);
+          const remaining = insight.evidence.slice(3);
+          return (
+            <li key={insight.evidence.map(e => e.itemId).join(":")} className="py-7 @[880px]:py-9">
+              <div className="mb-2 text-[11.5px] font-semibold text-accent">
+                {pad(index + 1)} · {isWeekly ? "跨事件观察" : "分析假设"}
               </div>
-            </div>
-          </li>
-        ))}
+              <h3 className="text-[21px] font-bold leading-[1.45] tracking-[-0.015em] text-ink @[880px]:text-[25px]">
+                {insight.claim}
+              </h3>
+              <div className="mt-4 space-y-3 text-[14px] leading-[1.85] text-ink-2">
+                {foreground.map((e, i) => (
+                  <p key={e.itemId ?? e.title}>
+                    <span className="mr-2 text-[12px] font-semibold text-ink-4">{i === 0 ? "本期报道：" : "同时，"}</span>
+                    {e.itemId
+                      ? <Link to={`/items/${e.itemId}`} className="font-semibold text-ink underline decoration-line-strong underline-offset-4 hover:text-accent">{e.title}</Link>
+                      : <span className="font-semibold text-ink">{e.title}</span>}
+                    <span className="ml-2 text-[12px] text-ink-4">（{shortSourceName(e.sourceName)}）</span>
+                    <Original c={e} className="ml-2" />
+                    {e.summary && <span className="mt-1 block line-clamp-2 text-[13px] leading-[1.75] text-ink-3">{e.summary}</span>}
+                  </p>
+                ))}
+              </div>
+              <p className="mt-4 border-l-2 border-accent pl-4 text-[14.5px] leading-[1.85] text-ink-2">
+                <span className="mr-2 font-semibold text-ink">联系与判断</span>{insight.reasoning}
+              </p>
+              <p className="mt-3 text-[12.5px] leading-[1.75] text-ink-3">
+                <span className="font-semibold text-ink-2">需要留意：</span>{insight.alternative}
+              </p>
+              <details className="group mt-3 border-t border-line-soft pt-3 text-[12.5px] leading-[1.8] text-ink-3">
+                <summary className="cursor-pointer py-1 font-medium text-ink-3 hover:text-accent">
+                  下期验证{remaining.length ? ` · 其余 ${remaining.length} 条依据` : ""}
+                </summary>
+                <div className="space-y-2 pb-2 pt-3">
+                  <p><strong className="text-ink-2">下期查看：</strong>{insight.watchFor}</p>
+                  {remaining.length > 0 && (
+                    <div>
+                      <strong className="text-ink-2">其他依据：</strong>
+                      <ul className="mt-1 space-y-1">
+                        {remaining.map(e => (
+                          <li key={e.itemId ?? e.title}>
+                            {e.itemId ? <Link to={`/items/${e.itemId}`} className="underline-offset-4 hover:text-accent hover:underline">{e.title}</Link> : e.title}
+                            <span className="ml-2 text-ink-4">— {shortSourceName(e.sourceName)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </details>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
@@ -336,11 +362,10 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const highlights = report.highlights.filter((h) => !leadStory || keyOf(h) !== keyOf(leadStory)).slice(0, 3);
   const inPage = new Set(pages.flatMap((p) => p.items.map((c) => c.itemId)).filter(Boolean));
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
+  const archiveCount = pages.reduce((sum, p) => sum + p.items.length, 0) + report.flashes.length + (report.peers?.items.length ?? 0);
   const index = [
-    ...(report.insights?.length ? [{ id: "s-insights", label: "本期洞察", n: `${report.insights.length} 则` }] : []),
-    ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 件` })),
-    ...(report.flashes.length > 0 ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
-    ...(report.peers?.items.length ? [{ id: "s-peers", label: report.peers.label, n: `${report.peers.items.length} 条` }] : []),
+    ...(report.insights?.length ? [{ id: "s-insights", label: "核心判断", n: `${report.insights.length} 则` }] : []),
+    ...(archiveCount > 0 ? [{ id: "report-archive", label: "新闻资料", n: `${archiveCount} 条` }] : []),
   ];
 
   return (
@@ -486,12 +511,13 @@ function History({ report, index }: { report: ReportDetail; index: ReportNavigat
 export function ReportPaper({ report, index }: { report: ReportDetail; index: ReportNavigationEntry[] }) {
   const daily = report.kind === "daily";
   const leadStory = leadStoryOf(report);
-  const pages = pagesOf(report, leadStory);
-  const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (leadStory ? 1 : 0);
+  const hasNarrative = !daily && !!report.insights?.length;
+  const pages = pagesOf(report, hasNarrative ? null : leadStory);
+  const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (!hasNarrative && leadStory ? 1 : 0);
   return (
     <article className="@container">
       <Masthead report={report} index={index} />
-      {count === 0 && report.flashes.length === 0 ? (
+      {hasNarrative ? null : count === 0 && report.flashes.length === 0 ? (
         // 只有邻域、没有本站条目时不算「空刊」：邻域本身也是内容。
         report.peers?.items.length ? null : <p className="py-16 text-center text-[14px] text-ink-4">本期没有入选内容。</p>
       ) : (
@@ -500,9 +526,20 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
 
       <InsightPage report={report} />
 
+      <details id="report-archive" className="group mt-8 scroll-mt-6 border-t border-line-strong">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 text-[14px] font-semibold text-ink marker:hidden">
+          <span>完整新闻资料 <span className="ml-2 font-normal text-ink-4">· {count + report.flashes.length + (report.peers?.items.length ?? 0)} 条，可按议题查阅</span></span>
+          <span className="shrink-0 text-[12px] font-normal text-ink-4">展开 / 收起</span>
+        </summary>
+        <div className="pb-8">
+          <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line pb-4 text-[12.5px]">
+            {pages.map(p => <a key={p.id} href={`#${p.id}`} className="text-ink-3 underline-offset-4 hover:text-accent hover:underline">{p.label} · {p.items.length}</a>)}
+            {report.flashes.length > 0 && <a href="#s-flash" className="text-ink-3 hover:text-accent">快讯</a>}
+            {!!report.peers?.items.length && <a href="#s-peers" className="text-ink-3 hover:text-accent">{report.peers.label}</a>}
+          </nav>
       {pages.map((p, i) => (
         <SectionPage key={p.id} id={p.id} no={i + 1} label={p.label}>
-          {p.summary && (
+          {p.summary && !hasNarrative && (
             <p className="border-b border-line py-5 text-[15.5px] leading-[1.9] text-ink-2 @[560px]:text-justify">
               <span className="mr-2 font-semibold text-accent">本版导读</span>
               {p.summary}
@@ -537,6 +574,9 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
       {report.peers && report.peers.items.length > 0 && (
         <PeerPage block={report.peers} no={pages.length + (report.flashes.length > 0 ? 2 : 1)} />
       )}
+
+        </div>
+      </details>
 
       <Neighbours report={report} index={index} />
       {!daily && <History report={report} index={index} />}

@@ -10,7 +10,7 @@ AIHOT 上游 `KKKKhazix/AIHOT` 的 fork 数持续增长；单纯 fork 数 ≠ �
 
 - `.github/workflows/aihot-derivative-audit.yml`：每周一 **03:23 UTC / 北京 11:23** 自动执行，也可在 GitHub Actions 中选择 **AIHOT derivative discovery → Run workflow** 手动立即执行。
 - 只用 Actions 自带 `GITHUB_TOKEN`（仅 `contents:read`、`issues:write`），不需要用户提供个人 Token；不使用 YiHot 生产数据库/模型/服务器密钥。
-- `scripts/scan-aihot-derivatives.mjs`：自动枚举上游**直接 forks**（默认最多 3,000），筛选近 60 天推送或创建的，检查最多 600 个新增/有变更的配置，调用 GitHub REST API 读取 `site/site.ts`，旧布局回退 `industry/site.ts`。不读取私有仓库。
+- `scripts/scan-aihot-derivatives.mjs`：自动枚举上游**直接 forks**（默认最多 3,000），筛选近 60 天推送或创建的，检查最多 400 个新增/有变更的配置（考虑旧结构回退时每 fork 最多两次读取，预留 GitHub Actions Token 请求配额），调用 GitHub REST API 读取 `site/site.ts`，旧布局回退 `industry/site.ts`。不读取私有仓库。
 - `scripts/lib/aihot-derivatives.mjs`：仅提取文本字面量 `SITE.name / SITE.subject / SITE.defaultUrl`，过滤 MyHOT/AIHOT 模板原值；比对 `industry/peers.ts` 的已登记站名/网址；识别公开官网**线索**，不主动连接任意候选站域名。
 - 首次运行创建 **「AIHOT 衍生站自动巡检 · 待审线索」** Issue，此后只更新**同一 Issue** 的候选列表和内部压缩状态，避免每周生成大量新 Issue；JSON 状态记录已看过的仓库和最近 `pushed_at`，无变化不重复读配置、无实质变化不重复提醒。
 - 每次保留 `report.md`、`result.json` 为 GitHub Actions Artifact（30 天）；Issue 显示按最近推送排序的至多 60 项未收录候选，Artifact 可看全量。运行异常明确标记不完整，失败时不假装全量完成。
@@ -27,7 +27,7 @@ AIHOT 上游 `KKKKhazix/AIHOT` 的 fork 数持续增长；单纯 fork 数 ≠ �
 - 只覆盖 `KKKKhazix/AIHOT` 的**直接 fork**；下载源码另建仓库、通过模板创建、公开 Show and tell/Discussions 登记但不 fork 的项目目前不在自动覆盖范围。后续可加入经人工批准的社区公开登记表，不应把 GitHub 关键词搜索结果直接当真实改编。
 - `SITE.name` 使用 JS 动态计算、拆分到其他模块或不改名但仅改行业 prompts 的 fork，可能漏报；这是保守检测，不是证明没有改编。
 - 60 天窗口用于增量巡检，较早且近期无更新的老 fork 不一定覆盖。要回填历史可在具备合规 GitHub Token 的本地只读环境手动运行：`node scripts/scan-aihot-derivatives.mjs --lookback-days=365 --max-forks=3000 --max-configs=900 --dry-run`，但 900 次配置读取会增加 GitHub API 配额消耗；`--force` 会忽略 Issue 内已有的推送检查点。定时任务不自动强制重扫。
-- fork 数超过 3000、单周待检查超过 600 或个别 fork API 失败时，报告显式披露截断与延期；延期对象下一轮仍可继续尝试。API 鉴权失效或访问受限需人工处理，不能使用第三方代理或绕过限流。
+- fork 数超过 3000、单周待检查超过 400 或个别 fork API 失败时，报告显式披露截断与延期；延期对象下一轮仍可继续尝试。API 鉴权失效或访问受限需人工处理，不能使用第三方代理或绕过限流。
 - 每周定时任务可能被 GitHub 延迟、取消；请在仓库 Actions 页面核对**实际运行**，不能把 workflow 合并当作已经运行并发现新网站。
 
 ## 维护与回滚

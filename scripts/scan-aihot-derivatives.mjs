@@ -24,7 +24,8 @@ const numOption = (name, fallback, max) => {
 };
 const maxForks = numOption("max-forks", 3000, 10000);
 const lookbackDays = numOption("lookback-days", 60, 3650);
-const maxConfigs = numOption("max-configs", 600, 900);
+// 400 configs * up to 2 layout paths + fork pages fits the ~1000 request/hour Actions token limit.
+const maxConfigs = numOption("max-configs", 400, 900);
 const outDir = resolve("artifacts/aihot-derivatives");
 const errors = [];
 

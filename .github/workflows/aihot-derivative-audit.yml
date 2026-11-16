@@ -33,7 +33,7 @@ jobs:
       - name: Scan new and changed AIHOT forks, update one review-only Issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/scan-aihot-derivatives.mjs --lookback-days=60 --max-forks=3000 --max-configs=600
+        run: node scripts/scan-aihot-derivatives.mjs --lookback-days=60 --max-forks=3000 --max-configs=400
       - name: Attach full audit evidence even when discovery has incomplete coverage
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

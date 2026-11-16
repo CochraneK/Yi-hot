@@ -63,6 +63,14 @@ function load(): { entries: GazetteerEntry[]; index: Map<string, GazetteerEntry[
     const bucket = index.get(name);
     if (bucket) { if (!bucket.includes(entry)) bucket.push(entry); }
     else index.set(name, [entry]);
+    // 大理市 must answer to 大理州: register the suffix-free form too, so a
+    // writer's 州/地区 wording does not turn a known city into an unknown one.
+    const bare = stripSuffix(name);
+    if (bare && bare.length >= 2 && !index.get(bare)?.includes(entry)) {
+      const existing = index.get(bare);
+      if (existing) existing.push(entry);
+      else index.set(bare, [entry]);
+    }
   };
   for (const entry of raw.places) {
     add(entry.name, entry);
@@ -78,15 +86,16 @@ export function resetGazetteerCache() { cache = null; }
 
 /**
  * A name that many places share is only auto-resolved when one of them clearly
- * dominates; otherwise the caller must leave it unresolved. 5x is deliberately
- * strict — the cost of a wrong city on a public map is higher than a missing one.
+ * dominates. 3x with a 100k floor keeps 长沙 (3.09M vs 688k) while still refusing
+ * two similarly sized places that happen to share a name. The cost of a wrong
+ * city on a public map is higher than a missing one.
  */
 function pickDominant(entries: GazetteerEntry[]): GazetteerEntry | null {
   if (entries.length === 1) return entries[0]!;
   const sorted = [...entries].sort((a, b) => b.pop - a.pop);
   const best = sorted[0]!;
   const second = sorted[1]!;
-  if (best.pop >= 100000 && best.pop >= second.pop * 5) return best;
+  if (best.pop >= 100000 && best.pop >= second.pop * 3) return best;
   return null;
 }
 

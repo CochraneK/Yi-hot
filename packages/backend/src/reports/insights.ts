@@ -1,3 +1,5 @@
+import type { ReportCitation, ReportInsight } from "@aihot/contracts/site";
+
 // A report insight is an evidence-linked editorial inference, not another item summary.
 // The model may propose it, but all references and minimum independent-source support
 // are checked against the exact material supplied in the same generation call.
@@ -111,4 +113,37 @@ export function periodObservationBrief(
   return basics + "以下是本站去重候选的构成占比（每100条中的份额，非社会发生率）："+
     shifts.map(s => `${s.name} ${s.prior}%→${s.current}%`).join("；") +
     "。只允许称‘本站样本占比变化’，不可称社会事件或公益资金整体变化；因来源与筛选口径、迟到稿件不同，因果和未来走向均需另证。";
+}
+
+/** Applied again when reading the report, as cited articles can be withdrawn later.
+ * This has no DB access; callers must provide the current public citation state.
+ */
+export function projectPeriodInsights(
+  kind: "weekly" | "monthly",
+  raw: unknown,
+  sources: Map<string, { citation: ReportCitation; sourceId: string; factId: string | null }>,
+): ReportInsight[] {
+  if (!Array.isArray(raw)) return [];
+  const expectedLevel: InsightLevel = kind === "weekly" ? "pattern" : "hypothesis";
+  const result: ReportInsight[] = [];
+  for (const value of raw.slice(0, 3)) {
+    if (!value || typeof value !== "object") continue;
+    const insight = value as Partial<StoredReportInsight>;
+    const ids = insight.evidenceIds;
+    if (insight.level !== expectedLevel ||
+        !Array.isArray(ids) || ids.length < 2 || ids.length > 8 ||
+        ids.some(id => typeof id !== "string") || new Set(ids).size !== ids.length ||
+        [insight.claim, insight.reasoning, insight.alternative, insight.watchFor].some(v => typeof v !== "string" || !v.trim())) continue;
+    const entries = ids.map(id => sources.get(id));
+    if (!entries.every((entry): entry is NonNullable<typeof entry> => !!entry && entry.citation.available)) continue;
+    if (new Set(entries.map(e => e.sourceId)).size < 2 ||
+        new Set(entries.map(e => e.factId ?? e.citation.itemId)).size < 2) continue;
+    result.push({
+      level: expectedLevel,
+      claim: insight.claim!, reasoning: insight.reasoning!,
+      alternative: insight.alternative!, watchFor: insight.watchFor!,
+      evidence: entries.map(e => e.citation),
+    });
+  }
+  return result;
 }

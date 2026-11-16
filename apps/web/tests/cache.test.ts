@@ -235,7 +235,8 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   assert.match(html, /本版原摘要/, "keep former section summary available under a foldout");
   assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("查看本期原摘要"),
     "put historic ranking before the legacy summary");
-    assert.match(html, /00 · (本周观察|本期分析)/, "analysis is page 00");
+    assert.match(html, /00 ·/, "analysis has the reserved page 00");
+  assert.match(html, /本周观察/, "00 is the evidence-led weekly analysis");
   assert.match(html, /<section id="report-archive"[^>]*>/,
     "the website's 01+ news pages must be visible without opening an outer foldout");
   assert.doesNotMatch(html, /<details id="report-archive"/);

@@ -560,7 +560,7 @@ def render(report, base, unsubscribe_url="", hot=None, brief=None):
         + ('<p style="margin:24px 0 0"><a href="' + esc(url, quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">在 Yi-Hot 查看完整总报</a></p>'
            if kind != "daily"
            else '<p style="margin:24px 0 0"><a href="' + esc(base.rstrip("/") + "/all", quote=True) + '" style="display:inline-block;background:' + BRAND_RED + ';color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;font-size:14px">查看 Yi-Hot 最新动态</a></p>')
-        '</div>'
+        + '</div>'
         '<p style="text-align:center;color:#6b7280;font-size:12px;line-height:1.9;margin:16px 0 0">你收到此邮件，是因为该地址已确认订阅 Yi-Hot 公益总报。' + unsub + '</p>'
         '</main></body></html>'
     )

@@ -46,6 +46,11 @@ jobs:
 
       - name: Source registry audit (offline, no third-party calls)
         run: npm run sources:audit:check
+      - name: AIHOT derivative discovery safety tests (offline, no external requests)
+        run: |
+          node --check scripts/lib/aihot-derivatives.mjs
+          node --check scripts/scan-aihot-derivatives.mjs
+          node --test tests/aihot-derivatives.test.mjs
       - name: Release notes check (offline)
         # latestVersion drives the sidebar dot and the page renders the array unsorted,
         # so a missing bump or a bottom-appended entry fails here instead of going unnoticed.

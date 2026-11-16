@@ -103,7 +103,7 @@ export function resetGazetteerCache() { cache = null; divisionCache = null; }
  * 朝阳区 belongs to either 北京 or 长春 and never to 朝阳市, which is what
  * stripping the 区 and looking the head up would produce.
  */
-interface DivisionRow {
+export interface DivisionRow {
   id: string;
   name: string;
   kind: "district" | "county" | "city";
@@ -114,9 +114,9 @@ interface DivisionRow {
   lon: number;
 }
 
-let divisionCache: { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]> } | null = null;
+let divisionCache: { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]>; all: DivisionRow[] } | null = null;
 
-function divisions(): { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]> } {
+function divisions(): { byName: Map<string, DivisionRow[]>; byBare: Map<string, DivisionRow[]>; all: DivisionRow[] } {
   if (divisionCache) return divisionCache;
   const raw = JSON.parse(readFileSync(DIVISIONS_PATH, "utf8")) as { divisions: Record<string, DivisionRow[]> };
   const byName = new Map<string, DivisionRow[]>();
@@ -141,8 +141,24 @@ function divisions(): { byName: Map<string, DivisionRow[]>; byBare: Map<string, 
   for (const [bare, rows] of bareRows) {
     if (new Set(rows.map(row => row.cityId)).size === 1) byBare.set(bare, rows);
   }
-  divisionCache = { byName, byBare };
+  // One entry per id, for the picker: the same county is reachable by its full
+  // name and by the bare form, and 朝阳区 exists in two cities.
+  const all: DivisionRow[] = [];
+  const seen = new Set<string>();
+  for (const rows of byName.values()) {
+    for (const row of rows) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      all.push(row);
+    }
+  }
+  divisionCache = { byName, byBare, all };
   return divisionCache;
+}
+
+/** Every county-level row, one entry per id. Used to hang counties under cities. */
+export function allDivisions(): DivisionRow[] {
+  return divisions().all;
 }
 
 /** The county-level rows a name belongs to; null when the name is not one. */

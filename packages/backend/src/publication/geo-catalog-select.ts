@@ -9,7 +9,7 @@
 //      call home. Hong Kong, Macao and Taiwan are curated instead: their dumps are
 //      full of housing estates, and the useful picks are the well-known divisions.
 import type { GeoCatalogPlace, GeoCatalogRegion } from "@aihot/contracts/site";
-import { isDistrictPlace, type GazetteerEntry } from "../editorial/geo-gazetteer.ts";
+import { isDistrictPlace, type DivisionRow, type GazetteerEntry } from "../editorial/geo-gazetteer.ts";
 
 /** Mainland entries below this are townships; 昆山 and 义乌 are well above it. */
 const CN_MIN_POP = 50_000;
@@ -65,19 +65,21 @@ const CURATED: Record<string, Array<{ id: string; name: string }>> = {
   ],
 };
 
-const PLACE_LIMIT = 1600;
+const PLACE_LIMIT = 3600;
 
 /** Pure: gazetteer rows + event counts → the rows the picker shows. */
 export function selectCatalogPlaces(
   entries: readonly GazetteerEntry[],
   counts: ReadonlyMap<string, number>,
+  counties: readonly DivisionRow[] = [],
 ): GeoCatalogPlace[] {
   const places: GeoCatalogPlace[] = [];
   for (const entry of entries) {
     if (entry.cc !== "CN") continue;
     if (!entry.province || entry.pop < CN_MIN_POP || !CJK.test(entry.name)) continue;
     // 浦东新区 and 万州区 carry city-sized populations in the dump but are districts
-    // of 上海 and 重庆; offering them would split one city's news across two entries.
+    // of 上海 and 重庆; offering them as cities would split one city's news across
+    // two entries. They come back below as counties of the city that contains them.
     if (isDistrictPlace(entry.name)) continue;
     places.push({
       id: entry.id,
@@ -87,6 +89,25 @@ export function selectCatalogPlaces(
       lat: entry.lat,
       lon: entry.lon,
       count: counts.get(entry.id) ?? 0,
+    });
+  }
+  // Counties hang under the cities already listed: a county whose prefecture the
+  // gazetteer does not carry would be unreachable, so it is left out rather than
+  // promoted to a city of its own.
+  const known = new Map(places.map(place => [place.id, place]));
+  for (const row of counties) {
+    const city = known.get(row.cityId);
+    if (!city || !CJK.test(row.name)) continue;
+    places.push({
+      id: row.id,
+      name: row.name,
+      region: row.province ?? city.region,
+      countryCode: "CN",
+      lat: row.lat,
+      lon: row.lon,
+      count: counts.get(row.id) ?? 0,
+      parentId: row.cityId,
+      level: "district",
     });
   }
   // Busiest first inside a province; the dump order is not reliable after merging.
@@ -117,7 +138,9 @@ export function catalogRegions(places: readonly GeoCatalogPlace[]): GeoCatalogRe
   for (const place of places) {
     const key = `${place.countryCode}:${place.region}`;
     const found = groups.get(key);
-    if (found) found.cities += 1;
+    // The count beside a province is cities, not rows: "四川 · 25" is a promise
+    // a reader can scan, while "四川 · 153" counts counties they never open.
+    if (found) { if (!place.parentId) found.cities += 1; }
     else groups.set(key, { key, label: place.region, countryCode: place.countryCode, cities: 1 });
   }
   const rank = (region: GeoCatalogRegion) => {

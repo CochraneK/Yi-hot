@@ -3,6 +3,7 @@
 import { FEATURES } from "@aihot/industry/features";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { isCategoryKey, isChannelKey, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
+import type { GeoLevel } from "@aihot/contracts/site";
 import { InvalidCursorError } from "@aihot/backend/lib/cursor";
 import { exportMarkdown, loadItemDetail, siteItemDetail } from "@aihot/backend/publication/detail";
 import { loadPool, SearchBusyError } from "@aihot/backend/publication/pool";
@@ -132,17 +133,19 @@ export function registerSite(app: FastifyInstance) {
     return sendJsonWithEtag(req, reply, data, { etagPrefix: "geo", cacheControl: "public, max-age=60, s-maxage=60", etagOf: content });
   }));
 
-  // City-level event counts for the last N hours. Same reviewed gate, aggregated
-  // by place, so the map can size a dot without exposing per-story rows.
+  // Event counts for the last N hours, grouped by province, city or county.
+  // Same reviewed gate at every level, aggregated before it leaves the server,
+  // so the map can size a dot without exposing per-story rows.
   app.get("/api/site/geo/heat", siteHandler(async (req, reply) => {
     const q = looseQuery(req);
     // 48 h by default; the card also asks for a week and a month, so the ceiling
     // is a month. Anything longer is clamped rather than refused: the answer is
     // still a valid map, just not the window that was asked for.
     const hours = Math.min(Math.max(Number(q.hours) || 48, 1), HEAT_MAX_HOURS);
-    const data = await loadGeoHeat(hours);
+    const level: GeoLevel = q.level === "province" || q.level === "district" ? q.level : "city";
+    const data = await loadGeoHeat(hours, level);
     const { generatedAt: _g, ...content } = data;
-    return sendJsonWithEtag(req, reply, data, { etagPrefix: "geoheat", cacheControl: "public, max-age=120, s-maxage=120", etagOf: content });
+    return sendJsonWithEtag(req, reply, data, { etagPrefix: `geoheat-${level}`, cacheControl: "public, max-age=120, s-maxage=120", etagOf: content });
   }));
 
   // The cities a reader can choose from. Same gate and the same canonical ids the

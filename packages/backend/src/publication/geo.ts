@@ -1,5 +1,5 @@
 // All geographic listings share the public projection and current reviewed event gate.
-import type { GeoEventPlace, GeoHeatPoint, GeoHeatResponse, GeoPlaceOption, GeoPlacesResponse, GeoReviewedResponse } from "@aihot/contracts/site";
+import type { GeoEventPlace, GeoHeatPoint, GeoHeatResponse, GeoLevel, GeoPlaceOption, GeoPlacesResponse, GeoReviewedResponse } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { ITEM_COLUMNS, ITEM_FROM, listedCondition, toFeedItemSummary, type ItemRow } from "./items.ts";
 
@@ -50,21 +50,35 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
     )))) <= ${filters.radius}` : sql``;
   const countryRegion = sql`${filters.country ? sql`AND gp.country_code = ${filters.country}` : sql``}
     ${filters.region ? sql`AND gp.region = ${filters.region}` : sql``}`;
-  // The filter speaks city: picking 南京 returns 江宁区's stories too, and a
-  // link saved against a county-level id (昆山市) still answers with 苏州, the
-  // city it belongs to. A district never becomes a filter of its own on screen.
-  const targetCity = (id: string) => sql`coalesce((SELECT coalesce(parent_id, id) FROM geo_places WHERE id = ${id}), ${id})`;
-  const matchedPlace = sql`${filters.place ? sql`AND coalesce(gp.parent_id, gp.id) = ${targetCity(filters.place)}` : sql``} ${countryRegion} ${nearby}`;
+  // Picking a city returns its counties' stories too, and picking a county
+  // returns only that county. One predicate covers both: 江宁区 has no children
+  // of its own, 南京 does, so `gp.id = X OR gp.parent_id = X` widens exactly at
+  // the level the reader chose and nowhere else.
+  const matchedPlace = sql`${filters.place ? sql`AND (gp.id = ${filters.place} OR gp.parent_id = ${filters.place})` : sql``} ${countryRegion} ${nearby}`;
+  // Whether the picked place is a county decides what the list beside the feed
+  // is grouped by: a city sums its counties into one row, a county stands alone
+  // under its own name instead of being relabelled as the city above it.
+  const target = filters.place
+    ? (await sql<{ parent_id: string | null }[]>`SELECT parent_id FROM geo_places WHERE id = ${filters.place}`)[0]
+    : undefined;
+  const byCounty = !!target?.parent_id;
   const permitted = sql`${listedCondition(now)} AND p.eligible AND EXISTS (
     SELECT 1 FROM geo_candidates gc JOIN analyses an ON an.id = gc.analysis_id
     JOIN articles ar ON ar.id = gc.article_id JOIN geo_places gp ON gp.id = gc.place_id
     WHERE ${publicEvent} ${matchedPlace})`;
-  // Aggregation is by city on purpose: 江宁区 and 南京 are one place to a reader
-  // choosing their city, and a district row would split that city's news in two.
-  // The finer row still exists for the feed, which keeps the name the story used.
+  // Without a filter the list groups by city: 江宁区 and 南京 are one place to a
+  // reader choosing their city, and a district row would split that city's news
+  // in two. The finer row still exists for the feed, which keeps the name the
+  // story used — and once a county is picked, that row is the one shown.
   const fromWithCity = sql`${from} JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)`;
-  const placeColumns = sql`city.id, city.name, city.country_code AS "countryCode", city.region, city.city,
+  const cityColumns = sql`city.id, city.name, city.country_code AS "countryCode", city.region, city.city,
     city.lat, city.lon, city.coordinate_precision AS precision`;
+  const placeFrom = byCounty ? from : fromWithCity;
+  const placeColumns = byCounty
+    ? sql`gp.id, gp.name, gp.country_code AS "countryCode", gp.region, gp.city,
+        gp.lat, gp.lon, gp.coordinate_precision AS precision`
+    : cityColumns;
+  const placeGroup = byCounty ? sql`gp.id` : sql`city.id`;
   const [rows, totals, places, catalog, countries, regions] = await Promise.all([
     sql<ItemRow[]>`SELECT ${ITEM_COLUMNS} ${ITEM_FROM} WHERE ${permitted}
       ORDER BY coalesce(p.published_at, p.timeline_at) DESC, p.article_id DESC
@@ -73,9 +87,9 @@ export async function loadVerifiedGeoPool(input: string | GeoFilters = {}, wante
       SELECT p.article_id FROM publications p WHERE ${permitted} LIMIT ${cap + 1}
     ) bounded`,
     sql<Array<GeoEventPlace & { count: number }>>`SELECT ${placeColumns}, count(DISTINCT p.article_id)::int AS count
-      ${fromWithCity} WHERE ${publicEvent} ${matchedPlace} GROUP BY city.id
-      ORDER BY count DESC, city.id LIMIT ${MAX_PLACES + 1}`,
-    sql<GeoEventPlace[]>`SELECT DISTINCT ${placeColumns} ${fromWithCity} WHERE ${publicEvent} ${countryRegion}
+      ${placeFrom} WHERE ${publicEvent} ${matchedPlace} GROUP BY ${placeGroup}
+      ORDER BY count DESC, ${placeGroup} LIMIT ${MAX_PLACES + 1}`,
+    sql<GeoEventPlace[]>`SELECT DISTINCT ${cityColumns} ${fromWithCity} WHERE ${publicEvent} ${countryRegion}
       AND city.parent_id IS NULL
       ORDER BY city.name, city.id LIMIT ${MAX_PLACES + 1}`,
     sql<{ code: string }[]>`SELECT DISTINCT gp.country_code AS code ${from} WHERE ${publicEvent} ORDER BY code`,
@@ -115,9 +129,14 @@ const PLACES_MAX = 500;
  * that was busy last month.
  */
 export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse> {
+  // One row per place the feed can actually filter by, counties included: a
+  // `?place=` link to 江宁区 has to come back with its name, not "选择城市".
+  // The parent id is what lets the picker show a county under its city.
   const rows = await sql<GeoPlaceOption[]>`
-    SELECT city.id, city.name, city.country_code AS "countryCode", city.region, city.city,
-           city.lat, city.lon, 'city'::text AS precision, count(DISTINCT p.article_id)::int AS count
+    SELECT gp.id, gp.name, gp.country_code AS "countryCode",
+           coalesce(gp.region, city.region) AS region, gp.city,
+           gp.lat, gp.lon, gp.coordinate_precision AS precision,
+           gp.parent_id AS "parentId", count(DISTINCT p.article_id)::int AS count
     FROM publications p
     JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
     JOIN analyses an ON an.id = gc.analysis_id
@@ -127,9 +146,8 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
     WHERE ${listedCondition(now)} AND p.eligible
       AND an.input_revision = ar.revision
       AND gc.review_status = 'verified' AND gc.role = 'event'
-      AND city.parent_id IS NULL
-    GROUP BY city.id
-    ORDER BY count DESC, city.name
+    GROUP BY gp.id, city.region
+    ORDER BY count DESC, gp.name
     LIMIT ${PLACES_MAX}`;
   return { places: rows, generatedAt: new Date().toISOString() };
 }
@@ -142,38 +160,68 @@ export async function loadGeoPlaces(now = new Date()): Promise<GeoPlacesResponse
  * distinct articles, so one story filed from two places is not double-counted
  * inside a city.
  */
-export async function loadGeoHeat(hours: number, now = new Date()): Promise<GeoHeatResponse> {
+export async function loadGeoHeat(hours: number, level: GeoLevel = "city", now = new Date()): Promise<GeoHeatResponse> {
   const window = Math.min(Math.max(Math.floor(hours) || 48, 1), HEAT_MAX_HOURS);
-  const rows = await sql<Array<GeoHeatPoint & { articles: number }>>`
-    SELECT city.id, city.name, city.country_code AS "countryCode", city.lat, city.lon,
-           count(DISTINCT p.article_id)::int AS count
-    FROM publications p
+  // The gate is identical at every level, so it is written once. Switching the
+  // level regroups these rows; it never adds or drops a story except at 区,
+  // where only stories filed at a county can appear at all.
+  const from = sql`FROM publications p
     JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
     JOIN analyses an ON an.id = gc.analysis_id
     JOIN articles ar ON ar.id = p.article_id
-    JOIN geo_places gp ON gp.id = gc.place_id
-    JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
-    WHERE ${listedCondition(now)} AND p.eligible
-      AND an.input_revision = ar.revision
-      AND gc.review_status = 'verified' AND gc.role = 'event'
-      AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')
-    GROUP BY city.id
-    ORDER BY count DESC, city.id
-    LIMIT ${HEAT_MAX_POINTS + 1}`;
-  const points = rows.slice(0, HEAT_MAX_POINTS).map(({ id, name, countryCode, lat, lon, count }) =>
-    ({ id, name, countryCode, lat, lon, count }));
+    JOIN geo_places gp ON gp.id = gc.place_id`;
+  const where = sql`WHERE ${listedCondition(now)} AND p.eligible
+    AND an.input_revision = ar.revision
+    AND gc.review_status = 'verified' AND gc.role = 'event'
+    AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')`;
+
+  const rows = level === "province"
+    // A province has no coordinates of its own in any source we trust, so the
+    // dot sits at the mean of the city centres behind it — inside the province,
+    // pulled toward wherever the stories actually are.
+    ? await sql<GeoHeatPoint[]>`
+        SELECT 'province:' || city.region AS id, city.region AS name,
+               min(city.country_code) AS "countryCode", city.region AS region,
+               avg(city.lat)::float8 AS lat, avg(city.lon)::float8 AS lon,
+               count(DISTINCT p.article_id)::int AS count
+        ${from}
+        JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
+        ${where} AND coalesce(city.region, '') <> ''
+        GROUP BY city.region
+        ORDER BY count DESC, city.region
+        LIMIT ${HEAT_MAX_POINTS + 1}`
+    : level === "district"
+    // Counties carry their prefecture's coordinates — the source has no county
+    // centroids — so the map spreads them around that point by index instead of
+    // pretending to know where inside the city they are.
+    ? await sql<GeoHeatPoint[]>`
+        SELECT gp.id, gp.name, gp.country_code AS "countryCode",
+               coalesce(gp.region, city.region) AS region, gp.lat, gp.lon,
+               count(DISTINCT p.article_id)::int AS count
+        ${from}
+        JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
+        ${where} AND gp.parent_id IS NOT NULL
+        GROUP BY gp.id, city.region
+        ORDER BY count DESC, gp.id
+        LIMIT ${HEAT_MAX_POINTS + 1}`
+    : await sql<GeoHeatPoint[]>`
+        SELECT city.id, city.name, city.country_code AS "countryCode", city.region, city.lat, city.lon,
+               count(DISTINCT p.article_id)::int AS count
+        ${from}
+        JOIN geo_places city ON city.id = coalesce(gp.parent_id, gp.id)
+        ${where}
+        GROUP BY city.id
+        ORDER BY count DESC, city.id
+        LIMIT ${HEAT_MAX_POINTS + 1}`;
+
+  const points = rows.slice(0, HEAT_MAX_POINTS).map(({ id, name, countryCode, region, lat, lon, count }) =>
+    ({ id, name, countryCode, region, lat, lon, count }));
   const [totals] = await sql<{ n: number }[]>`
     SELECT count(DISTINCT p.article_id)::int AS n
-    FROM publications p
-    JOIN geo_candidates gc ON gc.article_id = p.article_id AND gc.analysis_id = p.analysis_id
-    JOIN analyses an ON an.id = gc.analysis_id
-    JOIN articles ar ON ar.id = p.article_id
-    WHERE ${listedCondition(now)} AND p.eligible
-      AND an.input_revision = ar.revision
-      AND gc.review_status = 'verified' AND gc.role = 'event'
-      AND coalesce(p.published_at, p.timeline_at) >= ${now}::timestamptz - (${window} * interval '1 hour')`;
+    ${from} ${where}`;
   return {
     hours: window,
+    level,
     points,
     articles: totals?.n ?? 0,
     truncated: rows.length > HEAT_MAX_POINTS,

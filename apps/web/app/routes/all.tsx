@@ -43,7 +43,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     // old static list matched no reviewed place and filtered the feed to nothing.
     loadOr404<GeoPlacesResponse>("/api/site/geo/places", { signal: request.signal }),
   ]);
-  return { data, place, places: places.places };
+  return {
+    data: {
+      ...data,
+      // The pool response normally carries its own filters back. When it does not —
+      // an older API still behind a proxy after a partial rollout — reading
+      // `data.filters.topic` threw and took the whole feed down with a 500. The
+      // page already knows what it asked for, so it can answer from the URL.
+      filters: data.filters ?? { channel, category, tag, topic, q, tab: tab ?? "time" },
+      todayCount: data.todayCount ?? 0,
+      freshness: data.freshness ?? "",
+    },
+    place,
+    places: places.places,
+  };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -114,7 +127,10 @@ export default function AllPage() {
     ?? canonicalCity(reader, places)
     // A city picked before it had any news is not in the places list yet, but its
     // id is a canonical one, so it can filter right away.
-    ?? (reader && /^geonames-\d+$/.test(reader.id) ? { id: reader.id, name: reader.name } : null);
+    // A county keeps its own id but records the city it sits in: the local badge
+    // matches an event's prefecture, so 江宁区 chosen here still lights up a story
+    // filed at 南京 without knowing which county it came from.
+    ?? (reader && /^geonames-\d+(-d\d+)?$/.test(reader.id) ? { id: reader.id, name: reader.name } : null);
   const toggleLocal = () => {
     const sp = new URLSearchParams(params);
     sp.delete("page");
@@ -127,7 +143,11 @@ export default function AllPage() {
     navigate(query ? `/all?${query}` : "/all");
   };
   const choosePicked = (picked: GeoCatalogPlace) => {
-    saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: picked.name, lat: picked.lat, lon: picked.lon });
+    // `city` stays the prefecture even when a county was picked: it is the field
+    // the local badge compares against, and the county's own id already carries
+    // the finer choice.
+    const parentCity = picked.parentId ? places.find(p => p.id === picked.parentId)?.name : undefined;
+    saveReaderLocation({ id: picked.id, name: picked.name, countryCode: picked.countryCode, region: picked.region, city: parentCity ?? picked.name, lat: picked.lat, lon: picked.lon });
     const sp = new URLSearchParams(params);
     sp.delete("page");
     sp.set("place", picked.id);

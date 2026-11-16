@@ -2,12 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { GeoCatalogPlace, GeoCatalogResponse } from "@aihot/contracts/site";
 
 /**
- * City picker with 省 → 市 and a search box.
+ * City picker with 省 → 市 → 区 and a search box.
  *
- * The list is the full gazetteer catalogue, not just the cities that already have
- * news: a reader in 绵阳 should be able to say so today, and the feed starts
- * matching by itself once an event is filed there. Ids are canonical, so the
- * choice survives the wait.
+ * The list is the full gazetteer catalogue, not just the places that already
+ * have news: a reader in 绵阳 — or in 江宁区 — should be able to say so today,
+ * and the feed starts matching by itself once an event is filed there. Ids are
+ * canonical, so the choice survives the wait.
+ *
+ * Counties hang under their city rather than sitting in one flat list: 2550 of
+ * them would bury the 878 cities, and a reader scrolling for their city does not
+ * want to pass 玄武区 秦淮区 建邺区 on the way. The chevron opens one city at a
+ * time; the search box still finds a county by name.
  *
  * Data policy: one cached request for the whole catalogue, filtered in the browser.
  * Per-keystroke requests would cost more and still need the same list.
@@ -25,6 +30,8 @@ export function loadCityCatalog(): Promise<GeoCatalogResponse> {
 
 const keyOf = (place: GeoCatalogPlace) => `${place.countryCode}:${place.region}`;
 const RESULT_LIMIT = 40;
+/** Stable empty list, so memos keyed on `places` do not rerun on every render. */
+const NO_PLACES: GeoCatalogPlace[] = [];
 
 export function CityPicker({ current, onPick, className = "", align = "left", block = false }: {
   current: { id: string; name: string } | null;
@@ -39,6 +46,9 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
   const [error, setError] = useState(false);
   const [query, setQuery] = useState("");
   const [regionKey, setRegionKey] = useState("all");
+  // Which city's counties are open. One at a time: two open lists in a 19rem
+  // scroller push the rest of the catalogue off screen.
+  const [expanded, setExpanded] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -65,13 +75,41 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
     };
   }, [open]);
 
-  const places = catalog?.places ?? [];
+  const places = catalog?.places ?? NO_PLACES;
   const regions = catalog?.regions ?? [];
   const q = query.trim();
 
+  const byId = useMemo(() => new Map(places.map(place => [place.id, place])), [places]);
+
+  // Reopening with a county selected should show where it sits. Without this the
+  // chevron that leads back to it is closed and the reader has to search again.
+  useEffect(() => {
+    if (!open) return;
+    const own = current ? byId.get(current.id) : null;
+    if (own?.parentId) setExpanded(own.parentId);
+  }, [open, current, byId]);
+
+  // Counties by the city they belong to, busiest first. The catalogue carries
+  // them flat (that is what makes search work), so the nesting is done here.
+  const counties = useMemo(() => {
+    const grouped = new Map<string, GeoCatalogPlace[]>();
+    for (const place of places) {
+      if (!place.parentId) continue;
+      const bucket = grouped.get(place.parentId);
+      if (bucket) bucket.push(place);
+      else grouped.set(place.parentId, [place]);
+    }
+    for (const bucket of grouped.values()) {
+      bucket.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "zh-Hans-CN"));
+    }
+    return grouped;
+  }, [places]);
+
   const results = useMemo(() => {
     const scoped = regionKey === "all" ? places : places.filter(place => keyOf(place) === regionKey);
-    if (!q) return scoped.slice(0, RESULT_LIMIT);
+    // Browsing shows cities only; counties are one chevron away. A flat list
+    // with all 2550 of them buried the cities a reader was actually scanning.
+    if (!q) return scoped.filter(place => !place.parentId).slice(0, RESULT_LIMIT);
     // A province name in the search box is a shortcut to that whole province.
     return scoped
       .filter(place => place.name.includes(q) || place.region.includes(q))
@@ -79,7 +117,11 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
       .slice(0, RESULT_LIMIT);
   }, [places, regionKey, q]);
 
-  const scopedTotal = regionKey === "all" ? places.length : places.filter(place => keyOf(place) === regionKey).length;
+  // The province dropdown counts cities, so the "共 N 个" line must too — a
+  // county is reached through its city, not counted beside it.
+  const scopedTotal = regionKey === "all"
+    ? places.filter(place => !place.parentId).length
+    : places.filter(place => keyOf(place) === regionKey && !place.parentId).length;
 
   return (
     <div ref={box} className={`relative min-w-0 ${className}`}>
@@ -116,8 +158,8 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
               ref={input}
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder="搜索城市或省份，如 绵阳 / 四川"
-              aria-label="搜索城市"
+              placeholder="搜索城市、区县或省份，如 绵阳 / 江宁 / 四川"
+              aria-label="搜索城市或区县"
               maxLength={40}
               className="h-9 w-full rounded-lg bg-bg-sunk px-3 text-[13px] text-ink outline-none ring-1 ring-inset ring-line-soft placeholder:text-ink-4 focus:ring-accent"
             />
@@ -154,19 +196,58 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
                 <ul>
                   {results.map(place => {
                     const active = current?.id === place.id;
+                    // A county row never carries a chevron: there is nothing
+                    // below it, and 2550 leaves of a 19rem list is not a menu.
+                    const kids = place.parentId ? undefined : counties.get(place.id);
+                    const open = expanded === place.id;
+                    const inCity = place.parentId ? byId.get(place.parentId)?.name : undefined;
                     return (
                       <li key={place.id}>
-                        <button
-                          type="button"
-                          onClick={() => { onPick(place); setOpen(false); }}
-                          className={`flex w-full items-baseline gap-2 px-3 py-2 text-left text-[13px] hover:bg-bg-sunk ${active ? "text-accent" : "text-ink-2"}`}
-                        >
-                          <span className="truncate">{place.name}</span>
-                          {place.region !== place.name && (
-                            <span className="shrink-0 text-[11.5px] text-ink-4">{place.region}</span>
+                        <div className="flex items-stretch">
+                          <button
+                            type="button"
+                            onClick={() => { onPick(place); setOpen(false); }}
+                            className={`flex min-w-0 flex-1 items-baseline gap-2 px-3 py-2 text-left text-[13px] hover:bg-bg-sunk ${active ? "text-accent" : "text-ink-2"}`}
+                          >
+                            <span className="truncate">{place.name}</span>
+                            {/* A county names the city it is in; a city names its province. */}
+                            {(inCity ?? place.region) !== place.name && (
+                              <span className="shrink-0 text-[11.5px] text-ink-4">{inCity ?? place.region}</span>
+                            )}
+                            <span className="num ml-auto shrink-0 text-[11.5px] text-ink-4">{place.count > 0 ? `${place.count} 条` : "还没有"}</span>
+                          </button>
+                          {kids && kids.length > 0 && (
+                            <button
+                              type="button"
+                              aria-expanded={open}
+                              aria-label={`${open ? "收起" : "展开"}${place.name}的区县`}
+                              title={`${place.name}有 ${kids.length} 个区县`}
+                              onClick={() => setExpanded(open ? null : place.id)}
+                              className={`flex shrink-0 items-center gap-0.5 px-2 text-[11px] transition-colors hover:text-ink ${open ? "text-accent" : "text-ink-4"}`}
+                            >
+                              <span className="num">{kids.length}</span>
+                              <svg viewBox="0 0 12 12" aria-hidden="true" className={`size-2.5 transition-transform ${open ? "rotate-180" : ""}`}>
+                                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
                           )}
-                          <span className="num ml-auto shrink-0 text-[11.5px] text-ink-4">{place.count > 0 ? `${place.count} 条` : "还没有"}</span>
-                        </button>
+                        </div>
+                        {open && kids && (
+                          <ul className="mb-1 ml-3 border-l border-line-soft pl-1">
+                            {kids.map(kid => (
+                              <li key={kid.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => { onPick(kid); setOpen(false); }}
+                                  className={`flex w-full items-baseline gap-2 py-1.5 pl-2 pr-3 text-left text-[12.5px] hover:bg-bg-sunk ${current?.id === kid.id ? "text-accent" : "text-ink-2"}`}
+                                >
+                                  <span className="truncate">{kid.name}</span>
+                                  <span className="num ml-auto shrink-0 text-[11px] text-ink-4">{kid.count > 0 ? `${kid.count} 条` : "还没有"}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}
@@ -179,7 +260,7 @@ export function CityPicker({ current, onPick, className = "", align = "left", bl
           </div>
 
           <p className="border-t border-line-soft px-3 py-2 text-[11px] leading-relaxed text-ink-4">
-            城市只记在这台设备上；还没有报道的城市也可以先选，等有了会自己出现。
+            城市或区县只记在这台设备上；还没有报道的也可以先选，等有了会自己出现。
           </p>
         </div>
       )}

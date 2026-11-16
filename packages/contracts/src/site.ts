@@ -171,11 +171,19 @@ export interface PoolResponse {
   generatedAt: string;
 }
 
-/** One city on the heat map: reviewed event places only, counted by article. */
+/**
+ * How coarse the map draws China. The same stories are behind all three: a
+ * province dot is the sum of its cities, a city dot the sum of its counties,
+ * so switching level changes the grouping and never the total.
+ */
+export type GeoLevel = "province" | "city" | "district";
+
+/** One dot on the heat map: reviewed event places only, counted by article. */
 export interface GeoHeatPoint {
   id: string;
   name: string;
   countryCode: string;
+  region: string | null;
   lat: number;
   lon: number;
   count: number;
@@ -183,6 +191,7 @@ export interface GeoHeatPoint {
 
 export interface GeoHeatResponse {
   hours: number;
+  level: GeoLevel;
   points: GeoHeatPoint[];
   /** Distinct articles behind the points, so one story is not counted twice. */
   articles: number;
@@ -197,6 +206,8 @@ export interface GeoHeatResponse {
  */
 export interface GeoPlaceOption extends GeoEventPlace {
   count: number;
+  /** The city a county-level row belongs to; absent for a city. */
+  parentId?: string | null;
 }
 
 export interface GeoPlacesResponse {
@@ -220,6 +231,13 @@ export interface GeoCatalogPlace {
   lat: number;
   lon: number;
   count: number;
+  /**
+   * The city a county-level row belongs to. Absent for a city, so a reader of
+   * the old list — or a stored choice — still sees it as one.
+   */
+  parentId?: string | null;
+  /** "district" for 区/县/县级市 rows; absent means a city. */
+  level?: "city" | "district";
 }
 
 export interface GeoCatalogRegion {

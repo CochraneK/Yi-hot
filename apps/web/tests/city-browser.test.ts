@@ -32,7 +32,14 @@ test("the 动态 header picks a city and marks its events", { skip: process.env.
       regions: [{ key: "CN:北京", label: "北京", cities: 1 }, { key: "CN:四川", label: "四川", cities: 1 }],
       generatedAt: "test",
     }));
-    if(u.pathname==="/api/site/pool") return res.end(JSON.stringify({items,total:3,page:1,pageCount:1}));
+    // The pool DTO is not just `items`: the page reads its filters, today count and
+    // freshness straight off it. A fixture that omits them tests a shape the API
+    // never sends — and would pass only while the page keeps a fallback for it.
+    if(u.pathname==="/api/site/pool") return res.end(JSON.stringify({
+      items, total:3, page:1, pageCount:1, todayCount:3,
+      freshness:"2026-11-16T00:00:00Z", generatedAt:"test",
+      filters:{channel:"all",category:null,tag:null,topic:null,q:null,tab:"time"},
+    }));
     res.statusCode=404;res.end("{}");
   });
   api.listen(0,"127.0.0.1"); await once(api,"listening");

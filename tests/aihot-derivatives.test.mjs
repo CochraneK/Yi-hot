@@ -33,8 +33,6 @@ test("untrusted homepages are never contacted or rendered as internal network li
     "file:///etc/passwd", "javascript:alert(1)", "https://user:pass@example.com",
     "http://fakesite.local", "", "not-a-url", "https://example.invalid",
   ]) {
-    // Private RFC1918 hosts must be excluded even though no request is issued.
-    if (invalid.includes("192.168.1.2")) continue; // covered separately after URL guard extension
     assert.equal(publicSiteUrl(invalid), null, invalid);
   }
   assert.equal(publicSiteUrl("https://robot.example.org/products#section"), "https://robot.example.org/products");
@@ -85,7 +83,7 @@ test("report is transparent about no live verification, caps rows and exposes in
   assert.match(report, /候选不等于已上线或免费/);
   assert.match(report, /fork 分页截断：是/);
   assert.match(report, /留待下轮：475/);
-  assert.match(report, /X   injected/);
+  assert.match(report, /X injected/);
   assert.match(report, /检查未完成/);
   assert.ok(!report.includes("X | injected"));
 });

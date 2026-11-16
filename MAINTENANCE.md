@@ -3165,3 +3165,15 @@ NewsIQ、AI4SciHOT、三禹智能、发射窗口重新进入正式区；x-octo �
 - 验收 `tests/peers.test.ts` 与 `apps/web/tests/peer-grouping.test.ts`，并检查 TypeScript、Web build/test、PostgreSQL、Docker、原日报选稿；生产部署与移动/电脑真实页面另行核对。回滚 UI 分组、后端目录筛选和 `directoryVisible` 即可，源数据及历史稿件不改。
 
 **与旧手册冲突的前台目录描述以本条为准。** 这不是将所有 RSS 加入主站采集，也不是让现有待审源自动开始烧模型预算。
+
+
+## 邻域公开目录：核心付费站点不展示（2026-11-16）
+
+用户最新准入要求：**不展示需付费才能获取核心信息聚合/分析价值的站点**；仅有自愿赞助、其他无关增值业务或免费可充分阅读的站点不能未经核实一概认定为付费。需有可复查的价格/访问限制证据才能在登记表标注 `requiresPaidAccess:true`。本次既有登记表仅 AimFast 明确注明「深度分析需付费」，故从邻域移出；不声称其所有公开文章均收费。其他站点核心付费情况尚未逐一现场核实。
+
+- `industry/peers.ts` 保留 AimFast `id/url/family/tier/strategy/enabled` 等资料，新增 `requiresPaidAccess:true` 为唯一事实源；**不删除源记录，不修改 worker 抓取配置、主站 `industry/sources.json`、历史稿件或预算开关**。
+- 后端 `loadPeerDirectory` 和前端旧 API 缓存兼容过滤均排除 `requiresPaidAccess:true`；不改变主题分组、搜索、移动布局或免费候选在主题内显示的逻辑。
+- 页面理论展示数由 38 降至 **37（正式 34 + 免费候选 3；同系 32 / 其他 5）**；这是配置计数，不是生产实时可用性。原 56 条登记数据仍保留。
+- 验收：前端旧缓存回归、注册表和主 RSS 的不可变性断言、typecheck、Web build/tests、backend/PG/Docker CI；生产需另外部署核验。回滚仅还原 `requiresPaidAccess` 标记及两个目录过滤条件与测试，不需迁移数据库。
+
+此前「付费深度服务仍作为候选信息展示」等表述已由本条覆盖。

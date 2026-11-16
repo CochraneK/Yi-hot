@@ -362,11 +362,10 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const highlights = report.highlights.filter((h) => !leadStory || keyOf(h) !== keyOf(leadStory)).slice(0, 3);
   const inPage = new Set(pages.flatMap((p) => p.items.map((c) => c.itemId)).filter(Boolean));
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
+  const archiveCount = pages.reduce((sum, p) => sum + p.items.length, 0) + report.flashes.length + (report.peers?.items.length ?? 0);
   const index = [
-    ...(report.insights?.length ? [{ id: "s-insights", label: "本期洞察", n: `${report.insights.length} 则` }] : []),
-    ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 件` })),
-    ...(report.flashes.length > 0 ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
-    ...(report.peers?.items.length ? [{ id: "s-peers", label: report.peers.label, n: `${report.peers.items.length} 条` }] : []),
+    ...(report.insights?.length ? [{ id: "s-insights", label: "核心判断", n: `${report.insights.length} 则` }] : []),
+    ...(archiveCount > 0 ? [{ id: "report-archive", label: "新闻资料", n: `${archiveCount} 条` }] : []),
   ];
 
   return (
@@ -512,12 +511,13 @@ function History({ report, index }: { report: ReportDetail; index: ReportNavigat
 export function ReportPaper({ report, index }: { report: ReportDetail; index: ReportNavigationEntry[] }) {
   const daily = report.kind === "daily";
   const leadStory = leadStoryOf(report);
-  const pages = pagesOf(report, leadStory);
+  const hasNarrative = !daily && !!report.insights?.length;
+  const pages = pagesOf(report, hasNarrative ? null : leadStory);
   const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (leadStory ? 1 : 0);
   return (
     <article className="@container">
       <Masthead report={report} index={index} />
-      {count === 0 && report.flashes.length === 0 ? (
+      {hasNarrative ? null : count === 0 && report.flashes.length === 0 ? (
         // 只有邻域、没有本站条目时不算「空刊」：邻域本身也是内容。
         report.peers?.items.length ? null : <p className="py-16 text-center text-[14px] text-ink-4">本期没有入选内容。</p>
       ) : (
@@ -526,9 +526,20 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
 
       <InsightPage report={report} />
 
+      <details id="report-archive" className="group mt-8 scroll-mt-6 border-t border-line-strong">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 text-[14px] font-semibold text-ink marker:hidden">
+          <span>完整新闻资料 <span className="ml-2 font-normal text-ink-4">· ${count + report.flashes.length + (report.peers?.items.length ?? 0)} 条，可按议题查阅</span></span>
+          <span className="shrink-0 text-[12px] font-normal text-ink-4">展开 / 收起</span>
+        </summary>
+        <div className="pb-8">
+          <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line pb-4 text-[12.5px]">
+            {pages.map(p => <a key={p.id} href={`#${p.id}`} className="text-ink-3 underline-offset-4 hover:text-accent hover:underline">{p.label} · {p.items.length}</a>)}
+            {report.flashes.length > 0 && <a href="#s-flash" className="text-ink-3 hover:text-accent">快讯</a>}
+            {!!report.peers?.items.length && <a href="#s-peers" className="text-ink-3 hover:text-accent">{report.peers.label}</a>}
+          </nav>
       {pages.map((p, i) => (
         <SectionPage key={p.id} id={p.id} no={i + 1} label={p.label}>
-          {p.summary && (
+          {p.summary && !hasNarrative && (
             <p className="border-b border-line py-5 text-[15.5px] leading-[1.9] text-ink-2 @[560px]:text-justify">
               <span className="mr-2 font-semibold text-accent">本版导读</span>
               {p.summary}
@@ -563,6 +574,9 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
       {report.peers && report.peers.items.length > 0 && (
         <PeerPage block={report.peers} no={pages.length + (report.flashes.length > 0 ? 2 : 1)} />
       )}
+
+        </div>
+      </details>
 
       <Neighbours report={report} index={index} />
       {!daily && <History report={report} index={index} />}

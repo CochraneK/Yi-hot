@@ -268,6 +268,17 @@ test("guards: an entity the input does not name is not written in; long summarie
   assert.ok(compactAnswerFirstSummary(long).length <= 190);
   assert.deepEqual(parseTranslateOutput("title_zh: 标题\nsummary_zh: 第一句。\n第二句。"), { titleZh: "标题", summaryZh: "第一句。\n第二句。", bodyZh: "" });
   assert.equal(parseTranslateOutput("title_zh: 标题\nbody_zh: 我们懂你。\n\n来源：X：壹基金 (@OneFoundation)").bodyZh, "我们懂你。", "a repeated prompt line is dropped");
+  // A model that answers with English markdown labels instead of title_zh/summary_zh used to
+  // fall through to the unlabelled path, which wrote "**Title:**" and "**Summary:**" into the
+  // feed (7 publications, 2026-11-15/16).
+  assert.deepEqual(
+    parseTranslateOutput("**Title:** 中国青少年公益\n**Summary:** 2026-11-17 00:19 一场大赛在呼和浩特举行。"),
+    { titleZh: "中国青少年公益", summaryZh: "2026-11-17 00:19 一场大赛在呼和浩特举行。", bodyZh: "" },
+  );
+  assert.deepEqual(
+    parseTranslateOutput("标题：某基金会发布年报\n摘要：年报显示支出 1.2 亿元。"),
+    { titleZh: "某基金会发布年报", summaryZh: "年报显示支出 1.2 亿元。", bodyZh: "" },
+  );
 });
 
 test("organization subjects require source ownership or a headline mention", () => {

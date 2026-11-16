@@ -323,9 +323,13 @@ export default function ItemPage() {
           {!isX && <h1 className="text-[26px] font-bold leading-[1.38] tracking-[-0.01em] text-ink lg:text-[32px] lg:leading-[1.34] xl:text-[36px] xl:leading-[1.3]">{item.title}</h1>}
           {!isX && item.originalTitle && <p className="mt-2.5 text-[14px] leading-relaxed text-ink-4">{item.originalTitle}</p>}
 
-          {item.summary && (
+          {/* A single article brings its own body, and a 导读 above it is the same
+              paragraphs said twice — the generated copy is not reliably better
+              than the source. Keep it only where there is nothing to read
+              underneath: a summary-only source, or a body we could not extract. */}
+          {item.summary && (summaryOnly || !item.body) && (
             <section className={isX ? "mt-4" : "mt-7 xl:mt-8"}>
-              <div className="mb-2 text-[12px] font-semibold text-accent">{summaryOnly ? "摘要" : "AI 导读"}</div>
+              <div className="mb-2 text-[12px] font-semibold text-accent">摘要</div>
               <p className="text-[18px] leading-[1.7] text-ink xl:text-[20px] xl:leading-[1.7]">{item.summary}</p>
             </section>
           )}

@@ -142,6 +142,16 @@ export function CityHeatMap({
   // redraw effect, whose refs were just nulled, never runs. A counter always
   // changes, so the points always land on a live instance.
   const [mapVersion, setMapVersion] = useState(0);
+  // Whether the card has ever had something to draw. Swapping level starts with
+  // an empty array until the answer lands, and gating the container on "has
+  // points right now" unmounted it: the instance was destroyed, the tiles
+  // reloaded, and the card lost its height for a frame — the page below,
+  // 继续看 No.01 included, jumped up and came back. Once a map exists it stays.
+  const [solid, setSolid] = useState(points.length > 0);
+  // setFitView is a camera move, and it used to run on every redraw: switching
+  // 窗口 or 层级 yanked a reader who had zoomed into their province back out to
+  // the whole country. The fit belongs to the first draw of an instance only.
+  const fitted = useRef(false);
   const [zoom, setZoom] = useState(4);
   const [period, setPeriod] = useState(hours);
   const [level, setLevel] = useState<GeoLevel>("city");
@@ -162,7 +172,13 @@ export function CityHeatMap({
   const total = visible.reduce((sum, p) => sum + p.count, 0);
 
   useEffect(() => {
-    if (failed || !hasPoints || !host.current) return;
+    if (hasPoints) setSolid(true);
+  }, [hasPoints]);
+
+  useEffect(() => {
+    // `solid`, not `hasPoints`: the container is what has to exist, and it
+    // survives an empty window from here on.
+    if (failed || !solid || !host.current) return;
     if (!amapKey) {
       // Deployment without a key: log it for the operator, show the reader the list.
       console.warn("[heat-map] AMAP_JS_KEY is empty — drawing the city list instead of a map.");
@@ -211,11 +227,12 @@ export function CityHeatMap({
         map.current = null;
         ns.current = null;
         circles.current = [];
+        fitted.current = false;
       };
     }).catch(() => { if (!disposed) setFailed(true); });
 
     return () => { disposed = true; window.clearTimeout(timer); cleanup(); };
-  }, [failed, attempt, hasPoints, amapKey, amapSecurityCode]);
+  }, [failed, attempt, solid, amapKey, amapSecurityCode]);
 
   // Circles follow the window; the base map is never rebuilt, so a reader who has
   // zoomed into their province stays there while the numbers change.
@@ -226,6 +243,10 @@ export function CityHeatMap({
     // closed over — checking `ready` here would answer for a map that may
     // already be destroyed.
     if (!instance || !AMap) return;
+    // Between the click and the answer `visible` is empty. Leaving the previous
+    // circles up keeps the card still; wiping them paints a bare map for a frame
+    // or two, which is the other half of the flash.
+    if (!visible.length && waitingFor !== null) return;
     if (circles.current.length) {
       try { instance.remove(circles.current); } catch { /* first draw has nothing to drop */ }
     }
@@ -297,8 +318,11 @@ export function CityHeatMap({
     // card full of empty Indian Ocean. Detail is the reader's call: the +/− buttons.
     const home = drawn.filter(({ point }) =>
       point.lon >= 73 && point.lon <= 136 && point.lat >= 3 && point.lat <= 54).map(d => d.marker);
-    if (markers.length) instance.setFitView(home.length ? home : markers, false, [24, 24, 24, 24], 6);
-  }, [mapVersion, visible, level]);
+    if (!fitted.current && markers.length) {
+      instance.setFitView(home.length ? home : markers, false, [24, 24, 24, 24], 6);
+      fitted.current = true;
+    }
+  }, [mapVersion, visible, level, waitingFor]);
 
   useEffect(() => () => inFlight.current?.abort(), []);
 
@@ -390,7 +414,7 @@ export function CityHeatMap({
       </p>
       {note && <p className="mt-1 text-[12px] text-ink-4">{note}</p>}
     </div>
-    {!hasPoints ? null : failed ? (
+    {!solid ? null : failed ? (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-soft px-4 py-3 text-[12.5px] leading-relaxed text-ink-3">
         <span>地图没加载出来，先按城市看。</span>
         <button type="button" onClick={() => { setFailed(false); setAttempt(n => n + 1); }} className="font-medium text-accent hover:underline">重试</button>
@@ -440,7 +464,7 @@ export function CityHeatMap({
         ))}
       </ol>
     )}
-    {hasPoints && !failed && (
+    {solid && !failed && (
       // One line is enough: the circles explain themselves, and 高德's own credit is on the map.
       <p className="border-t border-line-soft px-4 py-2 text-[11px] leading-relaxed text-ink-4">
         底图由高德地图提供，会收到你的 IP。

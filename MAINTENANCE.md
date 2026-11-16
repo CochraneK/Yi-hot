@@ -3516,3 +3516,38 @@ CI：`tests/report-yesterday-hot.test.ts` 核验北京时间边界、防串日�
 **坑：搜索结果里的区县走的是另一条渲染分支。** 城市行（`results.map`）和展开出来的区县行（`kids.map`）各有一个 `onClick`，第一次只给后者传了 `parentName`，于是「搜江宁 → 点江宁区」存进 localStorage 的 `city` 是「江宁区」，`region` 也跟着错，当地徽章不再匹配南京的报道。两处收拢成一个 `pick(place)` 函数后正常。**测试只覆盖了「点北京」这条路径，恰好绕开**——选城市这类交互要同时测「列表里点」和「搜索里点」。
 
 改动后线上实测：`/all` 285,208 字节（-45%），首屏零请求 `geo/places` 与 `geo/catalog`，打开选择器才拉一次目录（225 KB，`catalogPromise` 缓存）；`/all?place=那曲` 260 KB、`/all?place=江宁区` 129 KB、`/hot` 78 KB 不变。ETag 前缀分别为 `geoplaces` / `geoplace-<id>`，不会互相命中。剩余 285 KB 里最大的一块是 React Router 的 loader data，27 KB；其余是卡片本身的 HTML，属于内容不是浪费。
+
+### 日预算是滚动 24 小时，撞线后不会零点自愈（2026-11-17 06:45）
+
+告警「Budget for llm exhausted (day)」持续了 8 小时 35 分钟，起因是我 11-16 21:05 把 `per_day` 从 24,000 改回 9,000 时，滚动窗口里已经躺着 **9,039** 次调用（回填吃掉的）。上限被改到当前用量之下，从那秒起每一次请求都被拒，而窗口只能靠记录自然老化变小——不是等零点。
+
+`checkBudget()` 的口径：
+
+```sql
+SELECT count(*) FROM receipt_attempts
+ WHERE service = $1 AND origin = 'live' AND started_at > now() - interval '1 day'
+```
+
+撞日线抛 `BudgetExceededError(service, "day", 3600)`，`afterFailure()` 把它当成「不是文章的错」：`processing_state='new'`、`processing_retry_at = now() + 1 小时`。所以它每小时试一次、每次都被拒，卡片上的「新内容」就一条也进不来。
+
+**降 `per_day` 之前先读一眼窗口用量**，别照着「原来是多少」填：
+
+```bash
+ssh yihot "sudo docker exec -i aihot-db-1 psql -U aihot -d aihot" <<'SQL'
+SELECT count(*) FROM receipt_attempts
+ WHERE service='llm' AND origin='live' AND started_at > now() - interval '1 day';
+SQL
+```
+
+这次的回填用了 8,400 次，落在 11-16 16:00 / 17:00 / 20:00（北京）三个桶里。由于窗口是滚动的，这三个桶分别要到 **11-17 的 16:00 / 17:00 / 20:00** 才滚出去；也就是说，即使我 11-17 一早想改回 9,000，只要用量不到 9,000 以下就还是锁死一整天。**一个晚上的批量活儿，能顶掉第二天的正常分析**，这是这个设计的代价。
+
+处置（已执行）：`per_day` 临时放宽到 **15,000**（`budgets.note` 写明了还原时间），并把 736 篇卡住的 `processing_retry_at` 直接置为 `now()`——原本它们各自被推到 1 小时后，要等一小时才被扫到。恢复时间点取 **11-17 22:00（北京）之后**，那时回填的三个桶全部出窗，窗口里只剩当天的新调用，改回 9,000 才是安全的。
+
+两条容易误判的观察：
+
+- **`pgboss.job` 里 `content.analyze` 全是 `completed` 时，不代表没事干**。等待中的文章根本不在队列里，而是躺在 `articles.processing_state='new'` 上等 `cron.content.sweep`（每 5 分钟）捞。看积压要看 `articles`，不是看 `pgboss`。
+- **不需要人工排优先级**。`sweepUnprocessed()` 是 `ORDER BY discovered_at DESC`，且高峰时段会用 `skipHistory` 把陈旧的回填稿滤掉，当日新闻天然排在前面。
+
+单位成本：近 7 天 24,360 次调用共 ¥45.17，均价 **¥0.001854/次**。9,000 次/天 ≈ ¥17。也就是说 `per_day` 是**防失控循环的闸**，不是省钱手段——遇到一次性批量活儿，正确做法是临时抬闸再按时还原，而不是让它去卡当天的正常分析。
+
+顺带一提：排空期间会零星出现 `HTTP 429: Free model capacity exhausted`（anydoor 免费池被打满），那是可重试的，`afterFailure()` 按 `RETRY_MINUTES` 退避，不用管。

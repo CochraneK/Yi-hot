@@ -349,6 +349,40 @@ export function stripEcho(text: string): string {
   return lines.join("\n").trim();
 }
 
+/**
+ * The label the prompt asked for, and the ones models answer with instead.
+ * `**Title:**` leaked into 7 publications on 2026-11-15/16 because only
+ * `title_zh:`/`summary_zh:` were recognised: the answer fell through to the
+ * unlabelled path, which took line one as the title and the rest as the summary
+ * — labels, asterisks and all. A summary that begins with `**Summary:**` is a
+ * parsing failure, not a style choice.
+ */
+const TITLE_LABEL = /^\*{0,2}\s*(?:title_zh|title|标题|中文标题)\s*[:：]\s*\*{0,2}\s*(.*)$/i;
+const SUMMARY_LABEL = /^\*{0,2}\s*(?:summary_zh|summary|摘要|导读|中文摘要)\s*[:：]\s*\*{0,2}\s*(.*)$/i;
+const BODY_LABEL = /^\*{0,2}\s*(?:body_zh|body|正文|译文)\s*[:：]\s*\*{0,2}\s*(.*)$/i;
+const isLabelLine = (line: string) => TITLE_LABEL.test(line) || SUMMARY_LABEL.test(line) || BODY_LABEL.test(line);
+/** A value the model wrapped in bold, e.g. `**标题**`. */
+const unwrapBold = (value: string) => value.replace(/^\*\*(.+?)\*\*$/s, "$1").trim();
+
+/**
+ * Output that is not copy at all. On 2026-11-15/16 a model answered with its
+ * own reasoning ("1. **Analyze the Request:** - Role: Senior …"), with the
+ * prompt's instructions ("80-160字，最多3句"), or with a label still attached;
+ * 83 publications carry one of those. None was selected — selection reads the
+ * score, not the blurb — but each has a public item page. An empty field falls
+ * back to the source title and no summary, which is what a reader can trust.
+ */
+const NOT_COPY = /\*\*|绝不译成|最多\s*3\s*句|80-160\s*字|Analyze (?:the )?(?:User )?Request|(?:^|\n)\s*[-*•]?\s*Roles?\s*[:：]/i;
+
+/** Blank rather than publish the model's notes. Applied at parse time so each caller's own fallback still runs. */
+function usableCopy(text: string, kind: "title" | "summary"): string {
+  if (!text) return text;
+  if (NOT_COPY.test(text)) return "";
+  // A Chinese blurb written entirely in ASCII is the wrong language, not a translation.
+  if (kind === "summary" && text.length >= 40 && !/[一-鿿]/.test(text)) return "";
+  return text;
+}
+
 /** `title_zh:` / `summary_zh:` / `body_zh:` lines, with fallbacks for answers that drop the labels. */
 export function parseTranslateOutput(text: string): { titleZh: string; summaryZh: string; bodyZh: string } {
   let titleZh = "";
@@ -360,12 +394,12 @@ export function parseTranslateOutput(text: string): { titleZh: string; summaryZh
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
     const t = lines[i]!.trim();
-    const title = t.match(/^title_zh\s*[:：]\s*(.*)$/);
-    if (title) { titleZh = title[1]!.trim(); titleLine = i; continue; }
-    const summary = t.match(/^summary_zh\s*[:：]\s*(.*)$/);
-    if (summary) { summaryZh = summary[1]!.trim(); summaryLine = i; continue; }
-    const body = t.match(/^body_zh\s*[:：]\s*(.*)$/);
-    if (body) { bodyZh = body[1]!.trim(); bodyLine = i; continue; }
+    const title = t.match(TITLE_LABEL);
+    if (title) { titleZh = unwrapBold(title[1]!); titleLine = i; continue; }
+    const summary = t.match(SUMMARY_LABEL);
+    if (summary) { summaryZh = unwrapBold(summary[1]!); summaryLine = i; continue; }
+    const body = t.match(BODY_LABEL);
+    if (body) { bodyZh = unwrapBold(body[1]!); bodyLine = i; continue; }
   }
   // A title without a labelled summary or body: the lines after it are the summary.
   if (titleZh && !summaryZh && bodyLine < 0 && titleLine >= 0) {
@@ -378,7 +412,7 @@ export function parseTranslateOutput(text: string): { titleZh: string; summaryZh
     for (let i = summaryLine + 1; i < lines.length; i += 1) {
       const t = lines[i]!.trim();
       if (!t) continue;
-      if (/^(title_zh|summary_zh|body_zh)\s*[:：]/.test(t)) break;
+      if (isLabelLine(t)) break;
       more.push(t);
     }
     const parts = [summaryZh, ...more].filter(Boolean);
@@ -388,7 +422,7 @@ export function parseTranslateOutput(text: string): { titleZh: string; summaryZh
   if (bodyLine >= 0) {
     const more: string[] = [];
     for (let i = bodyLine + 1; i < lines.length; i += 1) {
-      if (/^(title_zh|summary_zh|body_zh)\s*[:：]/.test(lines[i]!.trim())) break;
+      if (isLabelLine(lines[i]!.trim())) break;
       more.push(lines[i]!);
     }
     while (more.length && more[more.length - 1]!.trim() === "") more.pop();
@@ -398,11 +432,15 @@ export function parseTranslateOutput(text: string): { titleZh: string; summaryZh
   if (!titleZh && !summaryZh && !bodyZh) {
     const rest = text.trim().split(/\r?\n/).filter(Boolean);
     if (rest.length >= 2) {
-      titleZh = rest[0]!.trim();
+      titleZh = unwrapBold(rest[0]!.trim());
       summaryZh = rest.slice(1).join("\n").trim();
     } else if (rest.length === 1) {
-      titleZh = rest[0]!.trim();
+      titleZh = unwrapBold(rest[0]!.trim());
     }
   }
-  return { titleZh, summaryZh: stripEcho(summaryZh), bodyZh: stripEcho(bodyZh) };
+  return {
+    titleZh: usableCopy(titleZh, "title"),
+    summaryZh: stripEcho(usableCopy(summaryZh, "summary")),
+    bodyZh: stripEcho(bodyZh),
+  };
 }

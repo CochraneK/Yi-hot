@@ -7,6 +7,8 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
   const host = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState(false);
   const [failure, setFailure] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const selectedPlaces = places.filter(p => selectedIds.includes(p.id));
   const choose = useRef(onChoose);
   choose.current = onChoose;
   useEffect(() => {
@@ -40,41 +42,15 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
             alt: clustered ? `${group.length}个地点` : p.name,
             icon: L.divIcon({ className: "yihot-map-marker", html: `<span>${label}</span>`, iconSize: [42, 42], iconAnchor: [21, 21] }),
           }).addTo(layer);
-          const popup = document.createElement("div");
-          for (const place of group) {
-            const heading = document.createElement("strong");
-            heading.textContent = `${place.name} · ${place.count} 条新闻`;
-            popup.append(heading, document.createElement("br"));
-            const button = document.createElement("button");
-            button.textContent = "查看这个地点的新闻";
-            button.type = "button";
-            button.className = "text-accent underline py-2";
-            button.onclick = () => choose.current(place.id);
-            popup.append(button, document.createElement("br"));
-            for (const item of items.filter(i => i.eventPlaces?.some(p => p.id === place.id)).slice(0, 3)) {
-              const a = document.createElement("a");
-              a.href = `/yihot/items/${encodeURIComponent(item.id)}`;
-              a.textContent = item.title;
-              a.className = "block py-1";
-              popup.append(a);
-            }
-          }
-          // On a 340px-tall phone map the popup used to extend above the map
-          // viewport, underneath the adjacent "关闭地图" button. Reserve
-          // room both above and below so Leaflet auto-pans to a hittable popup.
-          marker.bindPopup(popup, {
-            maxWidth: 280,
-            maxHeight: 160,
-            autoPan: true,
-            autoPanPaddingTopLeft: L.point(18, 82),
-            autoPanPaddingBottomRight: L.point(18, 48),
-          });
-          // bindPopup's normal click handler opens the list at maximum zoom, even
-          // when distinct places have the same coordinates. At lower zoom expand.
-          if (clustered) marker.on("click", () => {
-            if (map.getZoom() < 16) {
-              marker.closePopup();
-              map.fitBounds(L.latLngBounds(group.map(p => [p.lat, p.lon])), { padding: [30, 30], maxZoom: map.getZoom() + 3, animate: false });
+          // Leaflet popups extended outside the 340px mobile map and could sit
+          // underneath the map's own close button. Instead select the map pin
+          // and render its accessible news actions in normal document flow below.
+          marker.on("click", () => {
+            setSelectedIds(group.map(place => place.id));
+            if (clustered && map.getZoom() < 16) {
+              map.fitBounds(L.latLngBounds(group.map(place => [place.lat, place.lon])), {
+                padding: [30, 30], maxZoom: map.getZoom() + 3, animate: false,
+              });
             }
           });
         }
@@ -92,10 +68,29 @@ export function NewsMap({ places, items, onChoose }: { places: MapPlace[]; items
   return <section className="overflow-hidden rounded-xl border border-line bg-surface" aria-label="新闻地图">
     <div className="flex flex-wrap items-center justify-between gap-2 p-4">
       <div><h2 className="font-semibold text-ink">地图上的新闻</h2><p className="mt-1 text-[12px] text-ink-3">已审核的事件地点 · 标记为登记的城市或地区代表点</p></div>
-      <button type="button" onClick={() => setEnabled(v => !v)} className="rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink">{enabled ? "关闭地图" : "加载交互地图"}</button>
+      <button type="button" onClick={() => { setSelectedIds([]); setEnabled(v => !v); }} className="rounded-full border border-line-strong px-4 py-2 text-[12px] text-ink">{enabled ? "关闭地图" : "加载交互地图"}</button>
     </div>
     {enabled ? <div ref={host} className="relative z-0 h-[340px] w-full bg-bg-sunk sm:h-[430px]" aria-label="可拖动、缩放的新闻地图" />
       : <div className="bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-3">{places.length ? `${places.length} 个地点已有新闻，可加载地图探索。` : "还没有审核通过的事件地点。"}</div>}
+    {enabled && selectedPlaces.length > 0 && (
+      <div role="region" aria-label="所选地图地点" className="space-y-3 border-t border-line-soft bg-surface px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[13px] font-semibold text-ink">所选地点</h3>
+          <button type="button" onClick={() => setSelectedIds([])} className="rounded-full px-3 py-2 text-[12px] text-ink-3">取消选择</button>
+        </div>
+        {selectedPlaces.map(place => (
+          <div key={place.id} className="space-y-1 border-t border-line-soft pt-2 first:border-0">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[13px] font-medium text-ink">{place.name} · {place.count} 条新闻</span>
+              <button type="button" onClick={() => onChoose(place.id)} className="min-h-10 rounded-full bg-bg-sunk px-3 text-[12px] font-medium text-accent">查看这个地点的新闻</button>
+            </div>
+            {items.filter(item => item.eventPlaces?.some(p => p.id === place.id)).slice(0,3).map(item => (
+              <a key={item.id} href={`/yihot/items/${encodeURIComponent(item.id)}`} className="block py-1 text-[12.5px] leading-relaxed text-ink-2 underline-offset-2 hover:underline">{item.title}</a>
+            ))}
+          </div>
+        ))}
+      </div>
+    )}
     <div className="space-y-1 border-t border-line-soft p-3 text-[11.5px] text-ink-4">
       <p>加载后 OpenStreetMap 会收到连接 IP 和本站域名；不发送你的城市选择。可拖动、双击或用加减按钮缩放，圆点数字为该地点的新闻数。</p>
       {failure && <p role="status">{failure}</p>}

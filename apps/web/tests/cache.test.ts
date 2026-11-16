@@ -30,6 +30,10 @@ const api = createServer((req, res) => {
     res.setHeader("Cache-Control", "public, max-age=30, s-maxage=30");
     return res.end(JSON.stringify({ filters, cards: [], nextCursor: null, refreshAt, dayCounts: [], hot: null, generatedAt: "2026-09-28T00:00:00Z" }));
   }
+  // /all also loads the reviewed-city picker. Keep the synthetic fixture in
+  // sync with the real loader so unrelated cache assertions are not false 404s.
+  if (url.pathname === "/api/site/geo/places")
+    return res.end(JSON.stringify({ places: [], generatedAt: "2026-09-28T00:00:00Z" }));
   if (url.pathname === "/api/site/pool") {
     const filters = { channel: "all", category: url.searchParams.get("category"), tag: url.searchParams.get("tag"), q: url.searchParams.get("q"), tab: "time" };
     return res.end(JSON.stringify({ filters, items: [], page: 1, pageCount: 1, total: 0, todayCount: 0, freshness: "2026-09-28T00:00:00Z", generatedAt: "2026-09-28T00:00:00Z" }));

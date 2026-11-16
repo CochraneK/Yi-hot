@@ -466,6 +466,22 @@ export interface ReportInsight {
   evidence: ReportCitation[];
 }
 
+/** Historical published heat ranking pinned to the report's prior Beijing day.
+ * These are ranking snapshots, NOT a list of articles first published yesterday.
+ */
+export interface ReportYesterdayHot {
+  day: string;
+  computedAt: string;
+  entries: Array<{
+    rank: number;
+    storyPublicId: string;
+    itemId: string;
+    title: string;
+    sourceName: string | null;
+    heat: number | null;
+  }>;
+}
+
 export interface ReportDetail {
   kind: ReportKind;
   key: string;
@@ -478,6 +494,8 @@ export interface ReportDetail {
   overview: string | null;
   /** Empty for legacy issues, or when corroborating citations were withdrawn. */
   insights?: ReportInsight[];
+  /** Optional in legacy issues and when no historical ranking snapshot exists. */
+  yesterdayHot?: ReportYesterdayHot | null;
   highlights: ReportCitation[];
   /** As edited: daily categories, weekly and monthly themes. */
   sections: Array<{ label: string; summary: string | null; items: ReportCitation[] }>;

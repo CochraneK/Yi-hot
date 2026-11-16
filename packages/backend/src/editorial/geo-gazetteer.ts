@@ -305,6 +305,13 @@ export function resolvePlace(placeText: string): PlaceResolution {
   const raw = normalizePlaceName(placeText);
   if (raw.length < 2) return { status: "unknown", placeText };
 
+  // A neighbourhood is not a city, and neither is the city-name-shaped tail of
+  // one: 袁州区昌黎社区 is in 江西宜春, but splitting at 区 and looking the tail
+  // up finds 河北昌黎 — a pin 1500 km away. The neighbourhood segment is dropped
+  // before any candidate is tried; the city segments in front of it still count,
+  // which is how 四川省广元市朝天区李家镇望远山社区 resolves to 广元.
+  const neighbourhood = /(社区|村委会|居委会|街道)$/u.test(raw);
+
   const division = resolveDivision(raw);
   if (division) return division;
 
@@ -316,7 +323,7 @@ export function resolvePlace(placeText: string): PlaceResolution {
       : { status: "ambiguous", placeText, candidateIds: direct.map(e => e.id) };
   }
 
-  const stripped = stripSuffix(raw);
+  const stripped = neighbourhood ? null : stripSuffix(raw);
   if (stripped) {
     const hit = lookup(stripped);
     if (hit) {
@@ -330,7 +337,10 @@ export function resolvePlace(placeText: string): PlaceResolution {
   // Compound names: only an exact head counts, and only at city level. The tail
   // is ignored on purpose — 金山区 belongs to 上海市, but 南京东路 is not 南京.
   const parts = splitAdministrative(raw);
-  for (const part of parts) {
+  const usable = neighbourhood && /(社区|村委会|居委会|街道)$/u.test(parts[parts.length - 1] ?? "")
+    ? parts.slice(0, -1)
+    : parts;
+  for (const part of usable) {
     const candidate = normalizePlaceName(part).replace(/(特别行政区|自治区|自治州|地区|新区|街道|社区|省|市|区|县|镇|乡|村|旗|盟|州)$/u, "");
     if (candidate.length < 2) continue;
     const hit = lookup(candidate);

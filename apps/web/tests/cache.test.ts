@@ -50,6 +50,9 @@ const api = createServer((req, res) => {
       highlights: [], sections: [{ label: "合成议题归档", summary: "旧的主题摘要不应在首屏重复", items: refs }],
       stories: refs.map(r => ({ ...r, label: "合成议题归档" })),
       flashes: [], peers: null, cover: null,
+      yesterdayHot: { day: "2026-11-15", computedAt: "2026-11-15T15:30:00Z",
+        entries: [{ rank: 1, storyPublicId: "story-a", itemId: "fixture-policy",
+          title: "昨日热榜合成头条", sourceName: "合成官方信源", heat: 18.7 }] },
       metrics: { totalStories: 2, sourcesCount: 2 },
       readingMinutes: 1, prev: null, next: null,
     };
@@ -218,7 +221,15 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   assert.match(html, /href="https:\/\/example\.org\/policy"/);
   assert.match(html, /href="https:\/\/example\.org\/evaluation"/);
   assert.match(html, /需要留意：/);
-  assert.match(html, /<details id="report-archive"[^>]*>/);
+  assert.match(html, /昨日热榜合成头条/);
+  assert.match(html, /热度<!-- --> 18\.7|热度 18\.7/);
+  assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("合成议题归档"),
+    "historical leaderboard must come before the story archive");
+  assert.match(html, /<details id="report-overview"[^>]*>/, "keep original overview available as a foldout");
+  assert.match(html, /本版原摘要/, "keep former section summary available under a foldout");
+  assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("查看本期原摘要"),
+    "put historic ranking before the legacy summary");
+    assert.match(html, /<details id="report-archive"[^>]*>/);
   assert.doesNotMatch(html, /<details id="report-archive"[^>]*\sopen(?:\s|>|=)/);
   assert.ok(html.indexOf("项目评价开始关注结果与反馈") < html.indexOf('id="report-archive"'),
     "evidence-driven body should appear before the full list of news");

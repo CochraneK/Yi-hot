@@ -513,7 +513,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
   const leadStory = leadStoryOf(report);
   const hasNarrative = !daily && !!report.insights?.length;
   const pages = pagesOf(report, hasNarrative ? null : leadStory);
-  const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (leadStory ? 1 : 0);
+  const count = pages.reduce((sum, p) => sum + p.items.length, 0) + (!hasNarrative && leadStory ? 1 : 0);
   return (
     <article className="@container">
       <Masthead report={report} index={index} />
@@ -528,7 +528,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
 
       <details id="report-archive" className="group mt-8 scroll-mt-6 border-t border-line-strong">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 text-[14px] font-semibold text-ink marker:hidden">
-          <span>完整新闻资料 <span className="ml-2 font-normal text-ink-4">· ${count + report.flashes.length + (report.peers?.items.length ?? 0)} 条，可按议题查阅</span></span>
+          <span>完整新闻资料 <span className="ml-2 font-normal text-ink-4">· {count + report.flashes.length + (report.peers?.items.length ?? 0)} 条，可按议题查阅</span></span>
           <span className="shrink-0 text-[12px] font-normal text-ink-4">展开 / 收起</span>
         </summary>
         <div className="pb-8">

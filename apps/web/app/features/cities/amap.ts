@@ -65,6 +65,8 @@ export interface AMapInstance {
   on(event: "complete", handler: () => void): void;
   add(overlays: AMapOverlay[]): void;
   setFitView(overlays?: AMapOverlay[], immediately?: boolean, avoid?: [number, number, number, number], maxZoom?: number): void;
+  /** Repaints the base map in another built-in style without rebuilding the overlays. */
+  setMapStyle(style: string): void;
   destroy(): void;
 }
 
@@ -108,4 +110,23 @@ export function loadAMap(key: string, securityCode?: string): Promise<AMapNamesp
     script.addEventListener("error", fail, { once: true });
     document.head.appendChild(script);
   });
+}
+
+/**
+ * The two base-map palettes. The site is dual-theme and the map is the largest
+ * unbroken surface on 热点, so on a dark shell a white slab is the first thing a
+ * night reader sees — the style follows the shell, it does not keep the SDK default.
+ */
+export const MAP_STYLE_LIGHT = "amap://styles/whitesmoke";
+export const MAP_STYLE_DARK = "amap://styles/dark";
+
+/**
+ * The shell writes `data-theme` before paint (THEME_BOOT_SCRIPT), so that
+ * attribute is the truth; the media query is only the fallback for the moment
+ * before the boot script has run.
+ */
+export function mapStyleForTheme(): string {
+  const attr = document.documentElement.getAttribute("data-theme");
+  const dark = attr ? attr === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return dark ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
 }

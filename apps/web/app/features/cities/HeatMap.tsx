@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GeoHeatPoint } from "@aihot/contracts/site";
-import { loadAMap, wgs84ToGcj02, type AMapOverlay } from "./amap";
+import { loadAMap, mapStyleForTheme, wgs84ToGcj02, type AMapOverlay } from "./amap";
 
 /**
  * City-level heat map for the last N hours.
@@ -68,10 +68,17 @@ export function CityHeatMap({
         viewMode: "2D",
         resizeEnable: true,
         scrollWheelZoom: false,
-        // The site is grey-white; 高德's default palette is far too loud beside it.
-        mapStyle: "amap://styles/whitesmoke",
+        // The site is grey-white by day and near-black at night; the default
+        // palette is loud beside the first and a white slab inside the second.
+        mapStyle: mapStyleForTheme(),
       });
       map.on("complete", () => { drew = true; window.clearTimeout(timer); });
+
+      // The theme switch repaints the shell live, so the base map has to follow
+      // it — rebuilding the map would throw away the overlays and recentre.
+      const followTheme = () => { try { map.setMapStyle(mapStyleForTheme()); } catch { /* style is cosmetic */ } };
+      const themeWatcher = new MutationObserver(followTheme);
+      themeWatcher.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
       const max = Math.max(...points.map(p => p.count), 1);
       const overlays: AMapOverlay[] = [];
@@ -105,6 +112,7 @@ export function CityHeatMap({
 
       cleanup = () => {
         window.clearTimeout(timer);
+        themeWatcher.disconnect();
         try { map.destroy(); } catch { /* the container may already be gone */ }
       };
     }).catch(() => { if (!disposed) setFailed(true); });

@@ -495,7 +495,7 @@ def _email_folded_sections(report, base, theme):
 
 
 def render(report, base, unsubscribe_url="", hot=None, brief=None):
-    esc = lambda v: html.escape(str(v or ""))
+    esc = lambda v, quote=True: html.escape(str(v or ""), quote=quote)
     kind = report.get("kind", "daily")
     kind_name = {"daily": "日报", "weekly": "周报", "monthly": "月报"}.get(kind, "公益总报")
     theme = KIND_THEME.get(kind, KIND_THEME["daily"])

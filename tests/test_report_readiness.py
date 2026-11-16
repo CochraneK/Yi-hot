@@ -37,7 +37,7 @@ class PreviewTests(unittest.TestCase):
             self.assertFalse(result["sent"])
             self.assertEqual(result["modelCalls"], 0)
             body = pathlib.Path(result["html"]).read_text()
-            self.assertLess(body.index("00 · 本期分析"), body.index("01 · 昨日热榜"))
+            self.assertLess(body.index("本期分析"), body.index("01 · 昨日热榜"))
             self.assertIn("05 · 邻域", body)
             with self.assertRaises(FileExistsError): mail.preview_from_json(source, out, "https://reports.example.org/yihot")
             with patch.object(sys, "argv", ["send_reports.py", "--preview-json", str(source), "--preview-dir", str(tmp / "cli"), "--preview-base", "https://reports.example.org/yihot"]), \

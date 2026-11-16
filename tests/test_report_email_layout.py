@@ -59,7 +59,7 @@ class MailReportTests(unittest.TestCase):
         body, plain = mail.render(report, BASE, "https://reports.example.org/unsubscribe",
                                   hot=[{"title": "DO_NOT_USE_CURRENT_LIVE_HOT"}],
                                   brief="DO_NOT_OVERRIDE_AUDITED_INSIGHT")
-        self.assertLess(body.index("00 · 本期分析"), body.index("01 · 昨日热榜"))
+        self.assertLess(body.index("本期分析"), body.index("01 · 昨日热榜"))
         self.assertLess(body.index("01 · 昨日热榜"), body.index("02 · 项目与执行"))
         self.assertLess(body.index("02 · 项目与执行"), body.index("03 · 制度与监管"))
         self.assertLess(body.index("03 · 制度与监管"), body.index("04 · 快讯"))
@@ -83,7 +83,7 @@ class MailReportTests(unittest.TestCase):
     def test_daily_private_page_never_claims_full_report_url_and_keeps_article_links(self):
         report = fixture("daily", with_insights=False)
         body, plain = mail.render(report, BASE, brief="合成的一分钟日报编辑要点")
-        self.assertIn("00 · 今日要点", body)
+        self.assertIn("今日要点", body)
         self.assertIn("合成的一分钟日报编辑要点", body)
         self.assertIn("01 · 昨日热榜", body)
         self.assertIn(BASE + "/items/a", body)
@@ -96,7 +96,7 @@ class MailReportTests(unittest.TestCase):
     def test_old_period_without_audited_insights_keeps_factual_fallback(self):
         report = fixture("weekly", with_insights=False)
         body, _ = mail.render(report, BASE, brief=None)
-        self.assertIn("00 · 本期要点", body)
+        self.assertIn("本期要点", body)
         self.assertIn("旧版较长的周报摘要", body)
         self.assertIn("05 · 邻域", body)
 
@@ -115,7 +115,7 @@ class MailReportTests(unittest.TestCase):
             mail.deliver_outbox(item, BASE, None, {})
         smtp.assert_called_once()
         html_body = smtp.call_args.args[1]
-        self.assertIn("00 · 本期分析", html_body)
+        self.assertIn("本期分析", html_body)
 
     def test_html_escape_for_untrusted_news_titles(self):
         report = fixture()

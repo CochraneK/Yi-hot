@@ -122,7 +122,7 @@ function InsightPage({ report }: { report: ReportDetail }) {
   return (
     <section id="s-insights" aria-labelledby="s-insights-title" className="scroll-mt-6 border-t border-line-strong pt-8 @[880px]:pt-10">
       <header className="pb-4">
-        <Kicker>00 · {isWeekly ? "本周观察" : "本月分析"}</Kicker>
+        <Kicker>{isWeekly ? "本周观察" : "本月分析"}</Kicker>
         <h2 id="s-insights-title" className="mt-2 text-[24px] font-black leading-[1.3] text-ink @[880px]:text-[30px]">
           {isWeekly ? "这些新闻，值得放在一起看" : "从本月新闻，看尚待检验的变化"}
         </h2>
@@ -364,7 +364,6 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   const period = daily ? "今日" : report.kind === "weekly" ? "本周" : "本月";
   const hasHot = !!report.yesterdayHot?.entries.length;
   const index = [
-    { id: "report-start", label: "本期要点", n: "" },
     ...(hasHot ? [{ id: "s-yesterday-hot", label: "昨日热榜", n: `${report.yesterdayHot!.entries.length} 条` }] : []),
     ...pages.map((p) => ({ id: p.id, label: p.label, n: `${p.items.length} 条` })),
     ...(report.flashes.length ? [{ id: "s-flash", label: "快讯", n: `${report.flashes.length} 条` }] : []),
@@ -374,7 +373,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
   return (
     <section aria-label="头版" className="grid @[880px]:grid-cols-[minmax(0,1fr)_300px] @[1040px]:grid-cols-[minmax(0,1fr)_340px]">
       <div id={leadStory ? (anchorOf(leadStory) ?? undefined) : undefined} className="min-w-0 scroll-mt-6 py-7 @[880px]:border-r @[880px]:border-line @[880px]:py-10 @[880px]:pr-10">
-        <Kicker>00 · {daily ? "今日要点" : "本期导读"}</Kicker>
+        <Kicker>{daily ? "头条" : "本期导读"}</Kicker>
         {cover && wide && <LeadPicture cover={cover} onError={() => setBroken(cover.url)} priority className="mt-5" />}
         <h2 className="mt-4 text-[32px] font-black leading-[1.28] tracking-[-0.03em] text-ink [text-wrap:balance] @[520px]:text-[40px] @[1040px]:text-[48px] @[1040px]:leading-[1.22]">
           {leadStory?.itemId ? (
@@ -436,7 +435,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
               {index.map((p, i) => (
                 <li key={p.id}>
                   <a href={`#${p.id}`} className="group flex items-baseline gap-2 py-1.5 text-[13.5px]">
-                    <span className="num w-7 shrink-0 text-[14px] font-bold text-ink">{pad(i)}</span>
+                    <span className="num w-7 shrink-0 text-[14px] font-bold text-ink">{pad(i + 1)}</span>
                     <span className="min-w-0 flex-1 truncate text-ink-2 transition-colors group-hover:text-accent">{p.label}</span>
                     <span className="num shrink-0 text-[12px] text-ink-4">{p.n}</span>
                   </a>

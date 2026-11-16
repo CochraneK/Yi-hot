@@ -358,7 +358,7 @@ def _analysis_00(report, base, theme, brief, intro):
     """HTML and plain text for the main 00 page. No model calls here."""
     esc = html.escape
     insights = _report_insights(report)
-    heading = "00 · 本期分析" if insights else ("00 · 今日要点" if report.get("kind") == "daily" else "00 · 本期要点")
+    heading = "本期分析" if insights else ("今日要点" if report.get("kind") == "daily" else "本期要点")
     parts = ['<section style="margin:22px 0 24px">', _section_label(heading, theme)]
     lines = [heading]
     if insights:

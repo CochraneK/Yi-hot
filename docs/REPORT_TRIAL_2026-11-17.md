@@ -94,3 +94,28 @@ M1质量和成本闸门仍在Issue #68：至少30条候选逐条核对证据、�
 代码/脚本不匹配则重新对齐可信源码并按原流程部署；API可读但镜像未核查保持unverified。生成失败先查看授权的任务/模型回执，不能用手动重复生成来掩盖故障。SMTP结果unknown不得盲目重发。
 
 回滚恢复此前共用镜像和独立邮件脚本，不删reports/revisions/subscriptions/outbox，不改旧报告日期，不关闭隐私边界。预览输出可在验收后删除，不属于已发送记录；预览工具/核查脚本可独立移除而不影响正常投递。
+
+## 实际部署记录（2026-11-16 19:41–20:06，UTC+8）
+
+第一次把新版报告与独立邮件脚本同时落到生产。此前本文档里的「未部署」状态到此结束，但**报告质量仍未验收**：新字段只对将来生成的期刊生效，W46/10月都没有 insights 与 yesterdayHot。
+
+| 项 | 值 |
+| --- | --- |
+| 源码 | `main` @ `81052f0`（GitHub 与 `/opt/yihot` 同一份，`git archive` 同步） |
+| 镜像 | `aihot-app` `555aaede1060`，api / worker / web 三容器同镜像 |
+| 独立邮件脚本 | sha256 `92993404c54cbff3…`（46,657 B），旧版备份为 `send_reports.py.bak.20261116`（37,914 B） |
+| 数据库备份 | `/opt/yihot-archive/base/yihot-20261116-1955.dump`（417 MB，部署前） |
+| 迁移 | 无。生产已在 `0056_geo_auto_scan`，本轮没有新迁移 |
+| 上线核查 | `check_report_deployment.py --runtime --web-build-root <新镜像内 build>` → `deploymentVerified: true`（api/web/worker 与 mail 四项 verified，89 个 web build 文件比对一致，ctime 均早于容器启动） |
+| 离线预览 | 真实公共 DTO：周报 `2026-W46`（18 KB HTML）、月报 `2026-10`（30 KB）；`insights: 0`、`hasYesterdayHot: false`，`modelCalls: 0`、`sent: false` |
+| Python 测试 | 服务器上 `python3 -m unittest discover -s tests -p 'test_report_*.py'` 10 项全通过 |
+| 未做 | 未发送任何邮件、未重编历史期刊、未改 `.env`／订阅人／outbox／调度 |
+
+**邮件脚本替换方式**：`sudo tee` 写入同目录隐藏临时文件 → `chmod 700` + `chown root:root` → `py_compile` 通过 → `mv` 原子改名（timer 每 30 分钟读一次，避免读到半份脚本）。`ExecStart` 本来指向该路径，未改 unit。
+
+**当天顺带修的两处**：
+
+- 合并后 `/all` 在「pool 响应缺 `filters`」时会 `TypeError: reading 'topic'` 整页 500（`5535940`）：页面改为用 URL 自己的参数兜底，回归 fixture 也补齐真实 DTO 的字段。
+- 月报残余块按固定 20 条切分会把 21 条切成「（1）20 条 / （2）1 条」（`81052f0`）：改为等分（11/10），上限不变。
+
+**回滚点**：镜像 `aihot-app` 上一版 ID、`send_reports.py.bak.20261116`、上述 dump。回滚不删 reports/revisions/subscriptions/outbox，不改旧期日期。

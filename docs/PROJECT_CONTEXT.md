@@ -44,6 +44,15 @@
 - Dockerfile 是 `COPY . .` → **`industry/` 与 `data/` 会被烘焙进镜像**，改动它们必须 rebuild。
 - 路径前缀：vite `base: "/yihot/"` + react-router `basename: "/yihot/"`（**尾斜杠必须**，否则 SSR manifest 会拼出 `/yihotassets/`）；`server.ts` 负责剥前缀、把旧 URL 301 到带前缀的地址。**前端里引用静态资源必须带 `/yihot/` 前缀。**
 
+### 最近变更（2026-11-16 ~ 11-17）——冷启动先读这四份
+
+这两天落地的东西都会改变你对站点的第一印象，别按旧拓扑去判断：
+
+- **热点地图换底图**：从 Leaflet + OSM 换成**高德 JS API 2.0**（国内 OSM 瓦片实测 12s 超时，且境内公开地图需有审图号的底图）。组件 `apps/web/app/features/cities/HeatMap.tsx`，key 是 `.env` 的 `AMAP_JS_KEY`（必须是「Web 端(JS API)」平台 key，Web 服务 key 不能用）。三档窗口 48h / 周 / 月，三档粒度 省份 / 城市 / 区县，`+`/`−` 自绘。坑与配置见 `MAINTENANCE.md` 的地图章节。
+- **地理核准队列**：`/admin/geo` 人工审核 + 每小时自动核准（`geo_candidates.auto_reviewed_at` 做游标，别再写成裸 `ORDER BY id LIMIT n`，会头部阻塞）。当前口径与覆盖率见 `docs/CITIES_MVP_2026-11-16.md`、`docs/GEO_OFFLINE_BACKFILL_2026-11-16.md`、`docs/GEO_REVIEWED_INDEX_2026-11-16.md`。
+- **总报增量上线**：日报多一块「昨日热榜」（01，程序算，不花模型钱），周报/月报多一页「跨事件洞察」（最多 3 条，每条必须引用 ≥2 条真实报道）。部署状态、首日验收与两个坑见 `docs/REPORT_TRIAL_2026-11-17.md`。
+- **报告文字长度**：已被恢复成原值（总摘要 150–300 / 200–400 字、分节摘要 80–180 字、日报导语 ≤150 字）。**不要再压小**，压了只让新期比旧期薄。
+
 ## 2. 部署流程
 
 ```sh
@@ -135,7 +144,7 @@ publications.timeline_at / publications.sort_at   ← 发布时物化的值
 
 ## 5. 后台页面
 
-`/yihot/admin` 下：内容诊断、信源（含「发现候选」「新建信源」）、反馈、运行、**用量与成本**、模型与评测、SelectBench、设置、审计记录。
+`/yihot/admin` 下：内容诊断、信源（含「发现候选」「新建信源」）、反馈、运行、**地点审核**（`/admin/geo`，见 §最近变更）、**用量与成本**、模型与评测、SelectBench、设置、审计记录。
 
 - **用量与成本**（`/admin/usage`）：按日与按用途统计 token 与估算费用，并可**在线编辑单价**（`service_prices`）——新增/编辑/删除都走 ReasonDialog 并写审计，保存后金额立刻重算。后端 `packages/backend/src/admin/usage.ts`（统计）与 `admin/models.ts`（单价读写），接口 `GET /api/admin/usage?days=`、`POST /api/admin/usage/prices`、`DELETE /api/admin/usage/prices`。
   - ⚠️ 页面上的日期是**模型调用的发生日（北京）**，不是内容发布时间——一篇旧文今天才被分析，token 就记在今天。

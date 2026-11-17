@@ -231,7 +231,8 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   assert.ok(html.includes("热度") && html.includes("18.7"), "historic snapshot must retain its measured heat value");
   assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("合成议题归档"),
     "historical leaderboard must come before the story archive");
-  assert.match(html, /<details id="report-overview"[^>]*>/, "keep original overview available as a foldout");
+  // 总摘要自 11-17 起直接展示（`9a07bef`），只有分节 summary 还折叠；读周报第一眼要读到的就是它。
+  assert.doesNotMatch(html, /<details id="report-overview"/, "the overview is set in full, not folded");
   assert.match(html, /本版原摘要/, "keep former section summary available under a foldout");
   assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("查看本期原摘要"),
     "put historic ranking before the legacy summary");

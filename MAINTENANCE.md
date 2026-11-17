@@ -3573,3 +3573,31 @@ SQL
 单位成本：近 7 天 24,360 次调用共 ¥45.17，均价 **¥0.001854/次**。9,000 次/天 ≈ ¥17。也就是说 `per_day` 是**防失控循环的闸**，不是省钱手段——遇到一次性批量活儿，正确做法是临时抬闸再按时还原，而不是让它去卡当天的正常分析。
 
 顺带一提：排空期间会零星出现 `HTTP 429: Free model capacity exhausted`（anydoor 免费池被打满），那是可重试的，`afterFailure()` 按 `RETRY_MINUTES` 退避，不用管。
+
+### 单篇页去掉「AI 导读」，摘要解析的两个雷（2026-11-17 07:25）
+
+单篇页正文之上原本还有一段「AI 导读」，与正文说的是同一件事。现在只在**没有正文可读**时才出摘要：条件是 `summaryOnly || !item.body`，标签统一叫「摘要」。X 帖子有 body，也不再重复。这块是 `877d6d5`（2026-09-29 项目初始版）加的，不是后来的改动，`git blame` 才看得出来。
+
+同轮修的是产生这段导读的两个解析雷，它们在 `packages/backend/src/editorial/writing.ts`：
+
+- **标签认不出**。prompt 要求 `title_zh:` / `summary_zh:`，模型常答 `**Title:**` / `**Summary:**`。旧正则只认下划线标签，匹配失败就走「无标签兜底」：第一行当标题、其余当摘要，**标签原文一起入库**。现在接受 `title_zh|title|标题|中文标题` 与 `summary_zh|summary|摘要|导读|中文摘要`，星号可以出现在冒号**两侧**（只写冒号前会漏掉 `Title:**` 的尾随星号），值再 `unwrapBold` 去包裹。
+- **内容本身是废的**。模型会把推理过程（`1. **Analyze the Request:** - Role: Senior …`）、prompt 指令（`80-160字，最多3句`）、整段英文当摘要交上来。`usableCopy()` 在**解析时**就清空这些，让各调用方的兜底（原文标题 / 无摘要）自动生效——不用改调用方。`selected` 只看相关性与分数、**不读 summary**，所以清空不会误伤入选。
+
+数据修复 86 条：`title = articles.title`、`summary = NULL`。11-15/16 那批全部 `selected=false`，所以没有脏导读进过精选。
+
+遗留：`tests/analyze.test.ts` 新增了两条断言，但本机没有 `*_test` 数据库（`DATABASE_URL` 未设会直接抛 invariant），只在容器外用手写用例验过。
+
+### 地图切档不再整块重建（2026-11-17 07:40）
+
+症状：点「区」时地图和下面 `No.01` 一起跳一下。根因是容器被 gate 在「此刻有点」上——`{!hasPoints ? null : …}`。切档后新档还没缓存，`visible=[]`，容器卸载、实例 `destroy()`、卡片高度从约 430px 塌到约 90px，`继续看 No.0x` 以下全部上移，数据回来再长回去。
+
+四处改动（`apps/web/app/features/cities/HeatMap.tsx`）：
+
+- 新增 `solid`（一旦有过点就永久为真），容器与创建 effect 都只依赖它，不再依赖「此刻有点」；
+- 红绘 effect 加 `if (!visible.length && waitingFor !== null) return;`，等新档时**保留旧圆点**；
+- 脚注的 `hasPoints` 同样换成 `solid`，否则等待期间那行消失又是一次高度抖动；
+- `mapVersion` 单调递增、实例建成即 +1 并作为重绘依赖。**effect 里直接查 ref，不要查 state**：`setReady(false)` 与 `setReady(true)` 可能落在同一批被 React 合并，`ready` 从 true 到 true 没有净变化，依赖数组不变，重绘 effect 又会因为 refs 刚被 null 过提前 return——计数正确但一个圆都没有。
+
+`setFitView` 改成只在实例**第一次**绘制时调用（`fitted` ref 控制）。原来每次红绘都调，切窗口/切层级会把读者放大到的省拉回全国，与文件头「switching the window only replaces the circles」自相矛盾。
+
+实测（Puppeteer + 本机反代）：点「区」后 45/45 次采样都是同一个 DOM 节点，卡片高度 delta 0，`继续看` 的 top delta 0，零 4xx、零 pageerror。唯一的高度变化是 +18px，来自区县脚注多一行，一次性，不是闪烁。

@@ -1457,6 +1457,12 @@ sudo docker exec aihot-worker-1 node -e "fetch('http://werss:8001/feed/MP_WXS_23
 
 最后用 Git blob SHA 核对本地、GitHub `main` 和服务器 `/opt/yihot`，不要用 commit SHA 判断三方一致。
 
+### 三条现场纪律（2026-11-16 ~ 17 实测，都是踩过才写下的）
+
+1. **push 之前先 `git fetch` 再 rebase。** 远端不止一个人/一条线在推：`docs(pdf)` 是自动提交，另外还有别的 agent 在推 `geo:`、`reports:` 小改。11-16 一天撞了四次，每次都得 rebase 后重推、提交号跟着变（`8f61d9a` → `ee074c0`、`5c8dc5a` → `a038ad2`）。**判断「推上去了没有」只认 `git ls-remote origin main` 的 sha**，不要看本地的 `origin/main` ref——沙箱里有时写不进远端追踪 ref，`git fetch` 明明报了新分支，`git status` 却显示 `[gone]`。
+2. **`ssh yihot "sudo cat > /path"` 会失败。** 重定向由**非 root 的本地 shell**先建立，然后才轮到 `sudo`，所以是 `Permission denied`。写宿主上的 root 文件用 `sudo tee`；像邮件脚本这种「每 30 分钟会被 timer 读一次」的文件，还要先写同目录的隐藏临时文件、`chmod`+`chown`、`py_compile` 通过后再 `mv` 原子改名——否则可能读到半份脚本。
+3. **提交信息里带反引号会被 shell 吞掉。** 用 `git commit -m` 直接给消息时，消息里的反引号会被当成命令替换，进库的是执行结果或空串。一律改用 `git commit -F 消息文件`（消息文件放 `.workbuddy/tmp/`，它不进 git）。
+
 ## 十三、备份、换电脑和交接
 
 | 内容 | 位置 | 用途 |
@@ -3331,7 +3337,9 @@ AMAP_JS_KEY=…          # 高德控制台 → 应用管理 → 新建，服务�
 AMAP_SECURITY_CODE=…   # 2021-12 之后创建的 key 配套的安全密钥，两样都要填
 ```
 
-key 会出现在页面 HTML 里——前端 key 本来就得公开，滥用靠高德后台的配额和「域名白名单」约束，不要指望保密。站点目前用 IP 访问（`49.233.72.222`），若高德的域名白名单不收 IP，就只靠安全密钥 + 配额兜。
+key 会出现在页面 HTML 里——前端 key 本来就得公开，滥用靠高德后台的配额和「域名白名单」约束，不要指望保密。
+
+**拿到一把 key，先确认它是不是 JS API 的**：用 `curl "https://restapi.amap.com/v3/ip?key=<key>"` 探一下，返回 `10009 USERKEY_PLAT_NOMATCH` 说明它是「Web端(JS API)」类型（对，报错才是对的，restapi 不认这一类 key）；返回 `10000` 则说明它是 **Web 服务** key，前端用不了——威海项目里那把就是这样，看起来像地图 key，其实一放进页面就出不了图。站点目前用 IP 访问（`49.233.72.222`），若高德的域名白名单不收 IP，就只靠安全密钥 + 配额兜。
 
 **验证**：`cd apps/web && npx tsc -p .`；`node --test apps/web/tests/cities.test.ts`（新增坐标断言：天安门 WGS-84 `116.3912/39.9063` → GCJ-02 `116.39744/39.90770`）。**真实渲染必须带 key 在浏览器里看一次**，typecheck 证明不了高德画出来了。
 

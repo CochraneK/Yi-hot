@@ -9,10 +9,15 @@ const REASONING_COPY = [
   /(?:^|[\n。！？])\s*(?:首先[，,：:]?\s*)?(?:分析|理解)(?:原始|原文)标题\s*[:：]/,
 ];
 
-/** 空值让调用者沿用原文标题或省略摘要；发布层也用于拦截历史分析字段。 */
+/** 纯内容检测供写作和发布共用，不改变旧入库文案的语言处理规则。 */
+export function isNonCopy(text: string): boolean {
+  return NOT_COPY.test(text) || REASONING_COPY.some((pattern) => pattern.test(text));
+}
+
+/** 空值让调用者沿用原文标题或省略摘要。 */
 export function usableCopy(text: string, kind: "title" | "summary" | "body"): string {
   if (!text) return text;
-  if (NOT_COPY.test(text) || REASONING_COPY.some((pattern) => pattern.test(text))) return "";
+  if (isNonCopy(text)) return "";
   if (kind !== "title" && text.length >= 40 && !/[一-鿿]/.test(text)) return "";
   return text;
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { usableCopy } from "../packages/backend/src/lib/text.ts";
+import { isNonCopy, usableCopy } from "../packages/backend/src/lib/text.ts";
 import { finalizeCopy, parseTranslateOutput } from "../packages/backend/src/editorial/writing.ts";
 
 const title = '涞水县1542名女童收到“春蕾健康包”';
@@ -73,6 +73,13 @@ for (const normal of [
     for (const kind of ["title", "summary", "body"] as const) assert.equal(usableCopy(normal, kind), normal);
   });
 }
+
+test("发布层的纯检测不以英文长度判定历史字段为推理", () => {
+  const english = 'First, volunteers distributed health kits and held a workshop for girls.';
+  assert.equal(isNonCopy(english), false);
+  assert.equal(isNonCopy(leak), true);
+  assert.equal(usableCopy(english, "summary"), "", '新写作仍沿用中文摘要要求');
+});
 
 test("正常文案仍经过长度与身份规则", () => {
   const result = finalizeCopy(input, { titleZh: title, summaryZh: summary });

@@ -98,8 +98,8 @@ const skipArticle = async (marker: string) =>
   } as never)).articleId;
 const calls = (marker: string) => requests.filter((r) => r.marker === marker).map((r) => r.step);
 const row = async (id: string) =>
-  (await sql<{ selected: boolean; relevance: string; score: string | null; title_zh: string; reason_zh: string | null; category: string | null; tags: string[]; subjects: string[]; receipt_ids: string[]; output: Record<string, any> }[]>`
-    SELECT selected, relevance, score, title_zh, reason_zh, category, tags, subjects, receipt_ids, output FROM analyses WHERE article_id = ${id} ORDER BY id DESC LIMIT 1`)[0]!;
+  (await sql<{ selected: boolean; relevance: string; score: string | null; title_zh: string; summary_zh: string; reason_zh: string | null; category: string | null; tags: string[]; subjects: string[]; receipt_ids: string[]; output: Record<string, any> }[]>`
+    SELECT selected, relevance, score, title_zh, summary_zh, reason_zh, category, tags, subjects, receipt_ids, output FROM analyses WHERE article_id = ${id} ORDER BY id DESC LIMIT 1`)[0]!;
 
 test("every prompt in the pack renders, and the site's name replaces AIHOT's", () => {
   const dir = new URL("../industry/prompts/", import.meta.url);
@@ -266,7 +266,7 @@ test("understand JSON 与短推文 body_zh 的推理文本不会进入分析文�
   assert.equal(result!.output!.titleZh, `NOTEJSON 女童收到健康包 ${T}`);
   assert.equal(result!.output!.summaryZh, "");
   assert.equal(result!.output!.relevance, "unknown");
-  assert.equal((await row(id)).output.summaryZh, "");
+  assert.equal((await row(id)).summary_zh, "");
   assert.equal(calls("NOTEJSON").filter((s) => s === "understand").length, 1);
 
   const text = `NOTEBODY Girls receive health kits ${T}`;

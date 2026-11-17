@@ -6,7 +6,7 @@ import { toPublicApiCategory } from "@aihot/contracts/taxonomy";
 import { config } from "../config.ts";
 import { one, sql, type Tx } from "../db.ts";
 import { sha256, stableJson } from "../lib/ids.ts";
-import { collapseWhitespace, usableCopy } from "../lib/text.ts";
+import { collapseWhitespace, isNonCopy } from "../lib/text.ts";
 import { itemUrl } from "./links.ts";
 import { enqueue, QUEUES, shutdownSignal } from "../jobs/queue.ts";
 import {
@@ -179,8 +179,10 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
   const zhTitle = analysis?.title_zh?.trim() ? analysis.title_zh : null;
   const sourceTitle = isChineseTitle || article.x_post ? collapseWhitespace(article.title) : null;
   // 旧 analyses 与人工覆盖同样经过检测；只重建公开投影，不重跑模型。
-  const title = usableCopy(pickString(f.title, zhTitle) ?? "", "title") || sourceTitle;
-  const summary = usableCopy(pickString(f.summary, analysis?.summary_zh ?? null) ?? "", "summary") || null;
+  const candidateTitle = pickString(f.title, zhTitle);
+  const candidateSummary = pickString(f.summary, analysis?.summary_zh ?? null);
+  const title = candidateTitle && !isNonCopy(candidateTitle) ? candidateTitle : sourceTitle;
+  const summary = candidateSummary && !isNonCopy(candidateSummary) ? candidateSummary : null;
   const category = pickString(f.category, analysis?.category ?? null);
   const tags = Array.isArray(f.tags) ? (f.tags as string[]) : [...new Set([...(analysis?.tags ?? []), ...(analysis?.subjects ?? []).map((s) => `entity:${s}`)])];
   const score = typeof f.score === "number" ? f.score : analysis?.score ?? null;

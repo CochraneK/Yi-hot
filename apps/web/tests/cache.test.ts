@@ -234,8 +234,9 @@ test("weekly report leads with cited real-source fields; full summaries stay in 
   // 总摘要自 11-17 起直接展示（`9a07bef`），只有分节 summary 还折叠；读周报第一眼要读到的就是它。
   assert.doesNotMatch(html, /<details id="report-overview"/, "the overview is set in full, not folded");
   assert.match(html, /本版原摘要/, "keep former section summary available under a foldout");
-  assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("查看本期原摘要"),
-    "put historic ranking before the legacy summary");
+  // 折叠按钮的文案自 `9a07bef` 起只有「本版原摘要」；「查看本期原摘要」是总摘要折叠时代留下的旧词。
+  assert.ok(html.indexOf("昨日热榜合成头条") < html.indexOf("本版原摘要"),
+    "put historic ranking before the archived section summaries");
     assert.doesNotMatch(html, /00 ·/, "the analysis page stays unnumbered");
     assert.match(html, /本周观察/, "the weekly analysis stays evidence-led");
   assert.match(html, /<section id="report-archive"[^>]*>/,

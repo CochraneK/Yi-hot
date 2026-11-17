@@ -405,7 +405,7 @@ def _analysis_00(report, base, theme, brief, intro):
             parts.append('<p style="font-size:14.5px;line-height:1.85;color:#374151;margin:9px 0 0">'
                          + esc(text[:380]) + '</p>')
             lines.append(text[:380])
-        refs = [e for e in (report.get("highlights") or []) if isinstance(e, dict) and e.get("available", True)][:3]
+        refs = [e for e in (report.get("highlights") or []) if isinstance(e, dict) and e.get("available", True)][:5]
         for e in refs:
             url = _safe_issue_link(base, e)
             title = str(e.get("title") or "").strip()

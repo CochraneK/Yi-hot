@@ -240,7 +240,7 @@ export async function loadReport(kind: ReportKind, key: string): Promise<ReportD
   const highlightIds: string[] = c.highlights ?? [];
   const highlights = highlightIds.length
     ? highlightIds.map((id) => all.find((x: ReportCitation) => x.itemId === id)).filter((x): x is ReportCitation => !!x)
-    : all.slice(0, 3);
+    : all.slice(0, kind === "daily" ? 5 : 3);
   const text = [c.lead?.leadParagraph ?? "", c.overview ?? "", ...all.map((i: ReportCitation) => `${i.title}${i.summary ?? ""}`)].join("");
   // A weekly or monthly's picture comes from its first highlight and is captioned with that story.
   const leadItem = kind === "daily" ? leadItemOf(c.lead?.title, highlights, all) : (highlights[0] ?? all[0]);

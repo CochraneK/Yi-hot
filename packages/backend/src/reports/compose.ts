@@ -139,10 +139,11 @@ async function writeLead(kind: string, key: string, entries: ReportEntry[], mode
     system: promptText("report-daily-lead"),
     user: list, schema: LeadSchema, temperature: 0.3, maxTokens: 800,
   });
-  const highlights = res.data.highlights
+  // 编号去重：模型偶尔把同一条列两次，重复 itemId 会让前端的 key 撞车。
+  const highlights = [...new Set(res.data.highlights
     .map((h) => entries[Number(h) - 1])
     .filter((e): e is ReportEntry => !!e)
-    .map((e) => e.itemId);
+    .map((e) => e.itemId))];
   return { lead: { title: res.data.title, leadParagraph: res.data.leadParagraph }, highlights, receiptId: res.receiptId };
 }
 

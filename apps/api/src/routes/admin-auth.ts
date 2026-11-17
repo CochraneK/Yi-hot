@@ -19,8 +19,13 @@ import {
 } from "@aihot/backend/admin/auth";
 import { sendProblem } from "../http/respond.ts";
 
-/** Cookies are Secure whenever the site is served over HTTPS. */
-const secure = () => config.siteUrl.startsWith("https://");
+/**
+ * A cookie is Secure when the request itself arrived over HTTPS: the browser judges it against the
+ * page's origin, so a plain-HTTP entry (a LAN address, a published container port) drops a Secure
+ * cookie at sign-in and the session never sticks. Behind a TLS-terminating proxy, trustProxy makes
+ * `req.protocol` reflect X-Forwarded-Proto, so the public HTTPS entry keeps its Secure cookie.
+ */
+const secure = (req: FastifyRequest) => req.protocol === "https";
 
 /**
  * Password attempts: at most 10 per client address and 50 in all per 15 minutes. The overall cap holds
@@ -87,7 +92,7 @@ export function registerAdminAuth(app: FastifyInstance) {
     if (tooManyAttempts(String(req.ip))) return reply.redirect(loginPage(returnTo, "too-many"), 303);
     try {
       const { token, returnTo: target } = await passwordLogin(String(b.password ?? ""), returnTo, req.headers["user-agent"]);
-      reply.header("Set-Cookie", cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400, secure()));
+      reply.header("Set-Cookie", cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400, secure(req)));
       return reply.redirect(target, 303);
     } catch (error) {
       if (!(error instanceof LoginRejected)) req.log.error({ err: error }, "admin login failed");
@@ -100,7 +105,7 @@ export function registerAdminAuth(app: FastifyInstance) {
     const returnTo = String((req.query as Record<string, string>).return ?? "/admin");
     if (!feishuLoginConfigured()) return reply.redirect(loginPage(returnTo), 302);
     const { url, stateCookie } = loginRedirect(returnTo);
-    reply.header("Set-Cookie", cookie(STATE_COOKIE, stateCookie, 600, secure())).header("Cache-Control", "no-store");
+    reply.header("Set-Cookie", cookie(STATE_COOKIE, stateCookie, 600, secure(req))).header("Cache-Control", "no-store");
     return reply.redirect(url, 302);
   });
 
@@ -110,7 +115,7 @@ export function registerAdminAuth(app: FastifyInstance) {
     reply.header("Cache-Control", "no-store");
     try {
       const { token, returnTo } = await completeLogin(String(q.code ?? ""), String(q.state ?? ""), parseCookies(req.headers.cookie)[STATE_COOKIE], req.headers["user-agent"]);
-      reply.header("Set-Cookie", [cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400, secure()), cookie(STATE_COOKIE, "", 0, secure())]);
+      reply.header("Set-Cookie", [cookie(SESSION_COOKIE, token, SESSION_DAYS * 86400, secure(req)), cookie(STATE_COOKIE, "", 0, secure(req))]);
       return reply.redirect(returnTo, 302);
     } catch (error) {
       const message = error instanceof LoginRejected ? error.message : "登录失败，请稍后再试";
@@ -129,7 +134,7 @@ export function registerAdminAuth(app: FastifyInstance) {
 
   app.post("/api/auth/logout", async (req, reply) => {
     await endSession(req.headers.cookie);
-    reply.header("Set-Cookie", cookie(SESSION_COOKIE, "", 0, secure())).header("Cache-Control", "no-store");
+    reply.header("Set-Cookie", cookie(SESSION_COOKIE, "", 0, secure(req))).header("Cache-Control", "no-store");
     return reply.redirect("/", 303);
   });
 

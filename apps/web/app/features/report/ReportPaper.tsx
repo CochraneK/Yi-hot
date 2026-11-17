@@ -386,14 +386,7 @@ function FrontPage({ report, pages, leadStory, count }: { report: ReportDetail; 
         </h2>
         {dek && (
           <div className={cover && !wide ? "mt-6 grid gap-6 @[640px]:grid-cols-[minmax(0,1fr)_minmax(0,38%)] @[880px]:mt-7" : ""}>
-            {daily ? (
-              <p className={`text-[16.5px] leading-[1.9] text-ink-2 @[880px]:text-[17.5px] ${cover && !wide ? "" : "mt-6 @[560px]:text-justify @[880px]:mt-7"}`}>{dek}</p>
-            ) : (
-              <details className="mt-6 border-t border-line-soft py-3 text-[14px] leading-[1.8] text-ink-3">
-                <summary className="cursor-pointer font-medium text-ink-2">查看本期原摘要</summary>
-                <p className="pt-3">{dek}</p>
-              </details>
-            )}
+            <p className={`text-[16.5px] leading-[1.9] text-ink-2 @[880px]:text-[17.5px] ${cover && !wide ? "" : "mt-6 @[560px]:text-justify @[880px]:mt-7"}`}>{dek}</p>
             {cover && !wide && <LeadPicture cover={cover} onError={() => setBroken(cover.url)} />}
           </div>
         )}
@@ -565,10 +558,7 @@ export function ReportPaper({ report, index }: { report: ReportDetail; index: Re
             </SectionPage>
           )}
           {hasNarrative && report.overview && (
-            <details id="report-overview" className="border-b border-line py-4 text-[13px] leading-[1.8] text-ink-3">
-              <summary className="cursor-pointer font-medium text-ink-2">查看本期原摘要</summary>
-              <p className="pt-3">{report.overview}</p>
-            </details>
+            <p id="report-overview" className="border-b border-line py-4 text-[16.5px] leading-[1.9] text-ink-2 @[560px]:text-justify @[880px]:text-[17.5px]">{report.overview}</p>
           )}
           <nav aria-label="新闻资料目录" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-line py-4 text-[12.5px]">
             {report.yesterdayHot?.entries.length ? <a href="#s-yesterday-hot" className="font-medium text-accent">01 昨日热榜 · {report.yesterdayHot.entries.length}</a> : null}

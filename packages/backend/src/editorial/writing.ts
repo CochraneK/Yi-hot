@@ -3,6 +3,7 @@
 // wording lives in the industry pack (industry/prompts/); a failed guard falls back without a repair call.
 import { CATEGORY_TAGS, ENTITY_TAGS, IDENTITY_CONTEXT_ALIASES, IDENTITY_LEXICON, PUBLISHER_DOMAINS, TOPIC_TAGS } from "@aihot/industry/taxonomy";
 import { onlyXArticleLink } from "../sources/x.ts";
+import { usableCopy } from "../lib/text.ts";
 import type { AnalyzeInputArticle } from "./input.ts";
 import { promptText } from "./prompts.ts";
 
@@ -298,9 +299,11 @@ export const isShortTweetInput = (input: TranslateInput) => input.sourceKind ===
 
 /** The length rule (compacted without another call) and the identity guard, for any writing model. */
 export function finalizeCopy(input: TranslateInput, copy: { titleZh: string; summaryZh: string }) {
-  let summaryZh = copy.summaryZh;
+  // 先检查完整字段，避免压缩先截掉尾部推理而放行污染内容（含 understand JSON）。
+  const titleZh = usableCopy(copy.titleZh, "title") || (looksZh(input.title) ? input.title : "");
+  let summaryZh = usableCopy(copy.summaryZh, "summary");
   if (!isShortTweetInput(input) && summaryZh && !answerFirstSummaryLengthOk(summaryZh, input)) summaryZh = compactAnswerFirstSummary(summaryZh);
-  return enforceIdentity(input, { titleZh: copy.titleZh, summaryZh });
+  return enforceIdentity(input, { titleZh, summaryZh });
 }
 
 // ── Title/summary prompts for items the content understanding does not write ─────────────────
@@ -364,25 +367,6 @@ const isLabelLine = (line: string) => TITLE_LABEL.test(line) || SUMMARY_LABEL.te
 /** A value the model wrapped in bold, e.g. `**标题**`. */
 const unwrapBold = (value: string) => value.replace(/^\*\*(.+?)\*\*$/s, "$1").trim();
 
-/**
- * Output that is not copy at all. On 2026-11-15/16 a model answered with its
- * own reasoning ("1. **Analyze the Request:** - Role: Senior …"), with the
- * prompt's instructions ("80-160字，最多3句"), or with a label still attached;
- * 83 publications carry one of those. None was selected — selection reads the
- * score, not the blurb — but each has a public item page. An empty field falls
- * back to the source title and no summary, which is what a reader can trust.
- */
-const NOT_COPY = /\*\*|绝不译成|最多\s*3\s*句|80-160\s*字|Analyze (?:the )?(?:User )?Request|(?:^|\n)\s*[-*•]?\s*Roles?\s*[:：]/i;
-
-/** Blank rather than publish the model's notes. Applied at parse time so each caller's own fallback still runs. */
-function usableCopy(text: string, kind: "title" | "summary"): string {
-  if (!text) return text;
-  if (NOT_COPY.test(text)) return "";
-  // A Chinese blurb written entirely in ASCII is the wrong language, not a translation.
-  if (kind === "summary" && text.length >= 40 && !/[一-鿿]/.test(text)) return "";
-  return text;
-}
-
 /** `title_zh:` / `summary_zh:` / `body_zh:` lines, with fallbacks for answers that drop the labels. */
 export function parseTranslateOutput(text: string): { titleZh: string; summaryZh: string; bodyZh: string } {
   let titleZh = "";
@@ -441,6 +425,6 @@ export function parseTranslateOutput(text: string): { titleZh: string; summaryZh
   return {
     titleZh: usableCopy(titleZh, "title"),
     summaryZh: stripEcho(usableCopy(summaryZh, "summary")),
-    bodyZh: stripEcho(bodyZh),
+    bodyZh: stripEcho(usableCopy(bodyZh, "body")),
   };
 }

@@ -27,9 +27,10 @@ const SKIP_SOURCE = `test-analyze-skip-${T}`;
 type Step = "prefilter" | "score" | "understand" | "summarize" | "structure";
 interface Req { step: Step; marker: string; system: string; user: string; body: Record<string, any> }
 const requests: Req[] = [];
-const MARKERS = ["CLEAR", "GEO", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "SKIP", "DIRECT", "推文"];
+const LEAK = 'We need to produce title_zh and summary_zh. First, understand the original title: 女童收到健康包。';
+const MARKERS = ["NOTEJSON", "NOTEBODY", "CLEAR", "GEO", "RESCUE", "LOW", "FAINT", "OFFTOPIC", "BARE", "VAGUE", "THIN", "SENSITIVE", "SKIP", "DIRECT", "推文"];
 // Fixture scores are picked to land on the intended side of 2 × the T1 threshold (2 × 35 = 70).
-const scoreAnswers: Record<string, number[]> = { CLEAR: [78, 72], GEO: [79, 73], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], SKIP: [78, 72], DIRECT: [78, 72], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
+const scoreAnswers: Record<string, number[]> = { NOTEJSON: [78, 72], NOTEBODY: [30, 30], CLEAR: [78, 72], GEO: [79, 73], RESCUE: [56, 50], LOW: [30, 30], FAINT: [12], THIN: [70, 70], SENSITIVE: [80, 80], SKIP: [78, 72], DIRECT: [78, 72], 推文: [30, 30], BARE: [30, 34], VAGUE: [60, 62] };
 
 const stepOf = (system: string, user: string): Step =>
   system.includes("宽召回的公益相关性预筛") ? "prefilter" : system.includes("事件注意力评分器") ? "score"
@@ -48,7 +49,9 @@ const provider = await stub((_hit, req) => {
   const answer = (content: unknown) => ({ id: `stub-${requests.length}`, model: "stub", choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }], usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 } });
   if (step === "prefilter") return answer({ label: marker === "OFFTOPIC" || marker === "BARE" ? "BLOCK" : marker === "VAGUE" ? "UNKNOWN" : "PASS", reason: "测试" });
   if (step === "score") return answer({ attentionScore: scoreAnswers[marker]!.shift() });
+  if (step === "summarize" && marker === "NOTEBODY") return answer(`title_zh: 女童收到健康包\nbody_zh: ${LEAK}`);
   if (step === "understand") {
+    if (marker === "NOTEJSON") return answer({ itemType: "project_update", authorRole: "principal", tags: ["志愿者"], editorialJudgment: "介绍健康项目", titleZh: LEAK, summaryZh: LEAK });
     if (marker === "SENSITIVE") return new Reply(400, { contentFilter: [{ level: 1, role: "user" }], error: { code: "1301", message: "系统检测到输入或生成内容可能包含不安全或敏感内容" } });
     return answer({ itemType: "policy_release", authorRole: "principal", tags: ["政策/监管", "政策", "志愿者", "不存在的标签"], editorialJudgment: `理由 ${marker}`, titleZh: `理解标题 ${marker}`, summaryZh: `理解摘要 ${marker}。第二句补充一个关键数字。` });
   }
@@ -255,6 +258,26 @@ test("a short post in Chinese is its own copy; a content-filter refusal is trans
   const sensitive = await analyzeArticle(await article("SENSITIVE"));
   assert.deepEqual([sensitive!.output!.selected, sensitive!.output!.titleZh], [true, "翻译标题 SENSITIVE"]);
   assert.deepEqual(calls("SENSITIVE").filter((s) => s === "understand" || s === "summarize"), ["understand", "summarize"]);
+});
+
+test("understand JSON 与短推文 body_zh 的推理文本不会进入分析文案", async () => {
+  const id = await article("NOTEJSON", { title: `NOTEJSON 女童收到健康包 ${T}` });
+  const result = await analyzeArticle(id);
+  assert.equal(result!.output!.titleZh, `NOTEJSON 女童收到健康包 ${T}`);
+  assert.equal(result!.output!.summaryZh, "");
+  assert.equal(result!.output!.relevance, "unknown");
+  assert.equal((await row(id)).output.summaryZh, "");
+  assert.equal(calls("NOTEJSON").filter((s) => s === "understand").length, 1);
+
+  const text = `NOTEBODY Girls receive health kits ${T}`;
+  const { articleId } = await upsertMaterial({
+    sourceId: X_SOURCE, url: `https://x.com/test/status/NOTEBODY-${T}`, title: text, via: "fetch", publishedAt: new Date(),
+    xPost: { tweetId: `NOTEBODY-${T}`, authorName: "测试", handle: "test", text },
+  });
+  const post = await analyzeArticle(articleId);
+  assert.equal(post!.output!.summaryZh, "");
+  assert.equal(post!.output!.relevance, "unknown");
+  assert.ok(calls("NOTEBODY").includes("summarize"));
 });
 
 test("guards: an entity the input does not name is not written in; long summaries are cut at sentences", () => {

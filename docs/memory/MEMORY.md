@@ -55,5 +55,6 @@
 - **单篇页没有「AI 导读」**（11-17 去掉）：`item.tsx` 只在 `summaryOnly || !item.body` 时显示，标签统一「摘要」。
 - **摘要解析两个雷**：① 模型答 `**Title:**` 而 prompt 要 `title_zh:` → 正则需接受 `title|标题|中文标题` / `summary|摘要|导读|中文摘要`，星号可在冒号两侧，值再 `unwrapBold`；② 模型会把推理过程、prompt 指令、整段英文当摘要，`usableCopy()` 在解析时清空让兜底生效（`selected` 不读 summary，不误伤入选）。
 - 飞书默认 `FEISHU_PUSH_MODE=daily`（20:30 热榜卡），改 mode/cron 必须重建 worker；`19007` 是群侧拒收。仓库 fork `CochraneK/Yi-hot`，只 cherry-pick 不 merge 上游。
+- **改版面文案/折叠结构必须跑 `node --test apps/web/tests/*.test.ts`**：`tsc` 抓不到字符串断言。`9a07bef` 之后两条过时断言（`report-overview` 折叠、「查看本期原摘要」）让 Check 红了两天，改 docs 的提交照样标红。
 - 站点对 HeadlessChrome 返 403：验收要覆盖 UA；puppeteer-core + `%LOCALAPPDATA%\ms-playwright\chromium-1248\chrome-win64\chrome.exe` 直连可用（`--no-proxy-server`）。改结构文件先 Write 成 `.workbuddy/tmp/*.cjs` 再跑，别用 `node -e` 内联。
 - 待决：`privacy.md` 三处「请填写」；`/daily` 是否导航露出；canonical 是否切 https；PR #398 是否审。

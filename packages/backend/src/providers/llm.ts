@@ -121,6 +121,25 @@ export interface ChatJsonResult<T> {
 
 export class ModelOutputError extends Error {}
 
+/** 先校验响应信封，再允许 JSON 或宽松文本解析接触最终正文。 */
+export function finalContent(response: unknown): string {
+  const data = response as { choices?: Array<{ finish_reason?: string | null; message?: { content?: unknown; reasoning_content?: unknown } }> } | null;
+  const choice = data?.choices?.[0];
+  if (!choice?.message) throw new ModelOutputError("Missing assistant message");
+  // 部分兼容服务不提供完成原因；明确截断、过滤或工具调用都不构成完整答案。
+  if (choice.finish_reason != null && choice.finish_reason !== "stop") {
+    throw new ModelOutputError(`Incomplete assistant answer (${choice.finish_reason})`);
+  }
+  const content = choice.message.content;
+  if (typeof content !== "string" || !content.trim()) throw new ModelOutputError("Missing final content");
+  const reasoning = choice.message.reasoning_content;
+  // 已见网关把推理复制到 content（也可能拼在最终答案前）；不能把它交给首行回退解析。
+  if (typeof reasoning === "string" && reasoning.trim() && content.trim().startsWith(reasoning.trim())) {
+    throw new ModelOutputError("Reasoning content copied into final content");
+  }
+  return content;
+}
+
 function extractJson(text: string): unknown {
   let t = text.trim();
   const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(t);
@@ -237,9 +256,9 @@ export async function chatJson<S extends z.ZodType>(opts: ChatJsonOptions<S>): P
     );
 
     const response = receipt.response as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }>; usage?: Record<string, unknown> };
-    const content = response.choices?.[0]?.message?.content ?? "";
     let parsed: z.infer<S>;
     try {
+      const content = finalContent(response);
       parsed = opts.schema.parse(opts.parse ? opts.parse(content) : extractJson(content));
     } catch (error) {
       // Unusable output: record it and let a later attempt pay for a fresh answer.

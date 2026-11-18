@@ -7,7 +7,8 @@ import { after, before, test } from "node:test";
 import { z } from "zod";
 import { config } from "@aihot/backend/config";
 import { closeDb, sql } from "@aihot/backend/db";
-import { chatJson, ModelOutputError } from "@aihot/backend/providers/llm";
+import { chatJson, finalContent, ModelOutputError } from "@aihot/backend/providers/llm";
+import { parseTranslateOutput } from "@aihot/backend/editorial/writing";
 import { embeddingsAvailable } from "@aihot/backend/providers/embeddings";
 import { BudgetExceededError, paidRequest, ProviderRejectedError, ReceiptUnknownError } from "@aihot/backend/providers/receipts";
 import { autoReleaseUnknownReceipts } from "@aihot/backend/admin/runs";
@@ -47,6 +48,58 @@ test("an answer already received is reused instead of bought again", async () =>
   assert.equal(first.reused, false);
   assert.equal(second.reused, true);
   assert.equal(second.receiptId, first.receiptId);
+});
+
+test("生产回执140569形态：截断推理被复制到正文时拒绝解析并使用已有备用模型", async () => {
+  const reasoning = 'We need to produce title_zh and summary_zh.\n\nFirst, understand the original title: "女童收到健康包".';
+  const title = "女童收到健康包";
+  const summary = "公益项目为女童提供健康用品与青春期健康知识，帮助她们了解身体变化，培养健康生活习惯。";
+  const good = `title_zh: ${title}\nsummary_zh: ${summary}`;
+  const saved = Object.fromEntries(["ANYDOOR_BASE_URL", "ANYDOOR_API_KEY", "LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL"].map((key) => [key, process.env[key]]));
+  let badResponse: unknown;
+  const broken = await stub(() => badResponse);
+  const backup = await stub(() => ({ choices: [{ finish_reason: "stop", message: { content: good } }], usage }));
+  Object.assign(process.env, { ANYDOOR_BASE_URL: broken.url, ANYDOOR_API_KEY: "test-key", LLM_BASE_URL: backup.url, LLM_API_KEY: "test-key", LLM_MODEL: "test-backup" });
+  try {
+    for (const [name, choice] of [
+      ["token-exhausted", { finish_reason: "length", message: { content: reasoning, reasoning_content: reasoning } }],
+      ["reasoning-duplicated", { finish_reason: "stop", message: { content: reasoning, reasoning_content: reasoning } }],
+      ["reasoning-prefixed", { finish_reason: "stop", message: { content: `${reasoning}\n${good}`, reasoning_content: reasoning } }],
+      ["valid-json-truncated", { finish_reason: "length", message: { content: '{"titleZh":"女童收到健康包","summaryZh":"健康教育"}' } }],
+    ] as const) {
+      badResponse = { model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", choices: [choice], usage: { completion_tokens: 2048, completion_tokens_details: { reasoning_tokens: 2048 } } };
+      const subject = `copy-boundary-${name}-${tag()}`;
+      const parsedInputs: string[] = [];
+      const result = await chatJson({ model: "anydoor-auto", purpose: "summarize_article", subject, promptVersion: "copy-boundary-test", system: "", user: subject, maxTokens: 2048,
+        schema: z.object({ titleZh: z.string(), summaryZh: z.string(), bodyZh: z.string() }),
+        parse: (content) => { parsedInputs.push(content); return parseTranslateOutput(content); },
+      });
+      assert.equal(result.model, "default");
+      assert.deepEqual(result.data, { titleZh: title, summaryZh: summary, bodyZh: "" });
+      assert.deepEqual(parsedInputs, [good], "错误信封不能进入宽松首行解析");
+      const rows = await sql<{ service: string; status: string; response: unknown }[]>`SELECT service, status, response FROM receipts WHERE subject = ${subject} ORDER BY id`;
+      assert.deepEqual(rows.map((r) => [r.service, r.status]), [["anydoor", "failed"], ["llm", "received"]]);
+      assert.deepEqual(rows[0]!.response, { ...(badResponse as object), _latencyMs: (rows[0]!.response as { _latencyMs: number })._latencyMs }, "保留原始故障响应供审计");
+    }
+    assert.equal(broken.hits(), 4);
+    assert.equal(backup.hits(), 4, "每次故障只使用现有的一次备用调用");
+  } finally {
+    for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+    await broken.close();
+    await backup.close();
+  }
+});
+
+test("正常专业正文、分离推理与无完成原因的兼容响应保留", () => {
+  const content = "title_zh: 公益机构发布健康用品生产质量研究\nsummary_zh: 研究分析生产流程及健康教育效果，说明数据和推理方法。";
+  assert.equal(finalContent({ choices: [{ finish_reason: "stop", message: { content, reasoning_content: "检查材料，组织摘要。" } }] }), content);
+  assert.equal(finalContent({ choices: [{ message: { content } }] }), content);
+  for (const choice of [
+    { finish_reason: "stop", message: { content: null, reasoning_content: "只有推理" } },
+    { finish_reason: "stop", message: { content: [] } },
+    { finish_reason: "content_filter", message: { content } },
+    { finish_reason: "tool_calls", message: { content } },
+  ]) assert.throws(() => finalContent({ choices: [choice] }), ModelOutputError);
 });
 
 test("retries of unusable answers stop at the budget, and every request sent is counted", async () => {

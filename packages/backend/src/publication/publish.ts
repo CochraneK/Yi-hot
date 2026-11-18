@@ -6,7 +6,7 @@ import { toPublicApiCategory } from "@aihot/contracts/taxonomy";
 import { config } from "../config.ts";
 import { one, sql, type Tx } from "../db.ts";
 import { sha256, stableJson } from "../lib/ids.ts";
-import { collapseWhitespace } from "../lib/text.ts";
+import { collapseWhitespace, isNonCopy } from "../lib/text.ts";
 import { itemUrl } from "./links.ts";
 import { enqueue, QUEUES, shutdownSignal } from "../jobs/queue.ts";
 import {
@@ -177,8 +177,12 @@ export async function publishArticleTx(tx: Tx, articleId: string, options: Publi
   // An X post carries its Chinese in the summary and translation; without a Chinese title its own
   // text is the title, where an article would still be a half-finished card.
   const zhTitle = analysis?.title_zh?.trim() ? analysis.title_zh : null;
-  const title = pickString(f.title, zhTitle ?? (isChineseTitle || article.x_post ? collapseWhitespace(article.title) : null));
-  const summary = pickString(f.summary, analysis?.summary_zh ?? null);
+  const sourceTitle = isChineseTitle || article.x_post ? collapseWhitespace(article.title) : null;
+  // 旧 analyses 与人工覆盖同样经过检测；只重建公开投影，不重跑模型。
+  const candidateTitle = pickString(f.title, zhTitle);
+  const candidateSummary = pickString(f.summary, analysis?.summary_zh ?? null);
+  const title = candidateTitle && !isNonCopy(candidateTitle) ? candidateTitle : sourceTitle;
+  const summary = candidateSummary && !isNonCopy(candidateSummary) ? candidateSummary : null;
   const category = pickString(f.category, analysis?.category ?? null);
   const tags = Array.isArray(f.tags) ? (f.tags as string[]) : [...new Set([...(analysis?.tags ?? []), ...(analysis?.subjects ?? []).map((s) => `entity:${s}`)])];
   const score = typeof f.score === "number" ? f.score : analysis?.score ?? null;

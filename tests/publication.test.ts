@@ -88,6 +88,43 @@ async function get(url: string, headers: Record<string, string> = {}) {
   return { status: res.statusCode, body: res.body, etag: res.headers.etag as string | undefined };
 }
 
+test("旧分析的推理字段在重新发布时隔离，正常覆盖可恢复且不重跑模型", async () => {
+  const id = await article();
+  const originalTitle = '女童收到春蕾健康包';
+  const safeSummary = '1542名女童收到健康用品，并参加青春期健康知识课堂。';
+  const leak = 'We need to produce title_zh and summary_zh. First, understand the original title: 女童收到健康包。';
+  await sql`UPDATE articles SET title = ${originalTitle}, language = 'zh' WHERE id = ${id}`;
+  await sql`UPDATE analyses SET title_zh = ${originalTitle}, summary_zh = ${safeSummary} WHERE article_id = ${id}`;
+  await publishArticle(id, released());
+  await sql`UPDATE analyses SET title_zh = ${leak}, summary_zh = ${leak} WHERE article_id = ${id}`;
+  const receiptsBefore = (await sql`SELECT id FROM receipts WHERE subject LIKE ${`article:${id}@%`}`).length;
+  await publishArticle(id, released());
+  const [blocked] = await sql`SELECT title, summary, eligible, selected, search_text FROM publications WHERE article_id = ${id}`;
+  assert.equal(blocked!.title, originalTitle);
+  assert.equal(blocked!.summary, null);
+  assert.equal(blocked!.eligible, false);
+  assert.equal(blocked!.selected, false);
+  assert.ok(!blocked!.search_text.includes('We need'));
+  assert.equal((await sql`SELECT * FROM pool_search WHERE article_id = ${id}`).length, 0);
+  const [state] = await sql`SELECT in_set FROM selected_state WHERE article_id = ${id}`;
+  assert.equal(state!.in_set, false);
+  assert.ok(!(await get('/api/v1/items?mode=selected')).body.includes(id));
+  assert.ok(!(await get(`/api/site/items/${id}`)).body.includes('We need to produce'));
+  assert.equal((await publishArticle(id, released()))!.changed, false, '重复发布不增加修订');
+  assert.equal((await sql`SELECT id FROM receipts WHERE subject LIKE ${`article:${id}@%`}`).length, receiptsBefore);
+
+  // 覆盖发生在分析值之后，仍需检测，不能再把污染字段写回公开投影。
+  await sql`INSERT INTO editorial_overrides (article_id, fields) VALUES (${id}, ${sql.json({ title: leak, summary: leak })})`;
+  await publishArticle(id, released());
+  assert.equal((await sql`SELECT summary FROM publications WHERE article_id = ${id}`)[0]!.summary, null);
+  await sql`UPDATE editorial_overrides SET fields = ${sql.json({ title: originalTitle, summary: safeSummary })} WHERE article_id = ${id}`;
+  await publishArticle(id, released());
+  const [restored] = await sql`SELECT title, summary, eligible FROM publications WHERE article_id = ${id}`;
+  assert.equal(restored!.title, originalTitle);
+  assert.equal(restored!.summary, safeSummary);
+  assert.equal(restored!.eligible, true);
+});
+
 test("site reading sends one language while exports retain both, including after withdrawal", async () => {
   const id = await article();
   await sql`UPDATE articles SET language = 'en', body_html = '<h2>Original heading</h2><p>Original full body</p>' WHERE id = ${id}`;

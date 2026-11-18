@@ -1,3 +1,27 @@
+// 只匹配模型任务自述和推理标记；普通 First、报道中的引语不构成拦截依据。
+const NOT_COPY = /\*\*|绝不译成|最多\s*3\s*句|80-160\s*字|Analyze (?:the )?(?:User )?Request|(?:^|\n)\s*[-*•]?\s*Roles?\s*[:：]/i;
+const REASONING_COPY = [
+  /(?:^|[\s。！？.!?])\s*<\/?(?:think|thinking|analysis)\b[^>]*>/i,
+  /(?:^|[\n。！？.!?])\s*first[,，:：]\s*(?:understand|analy[sz]e|examine)\s+(?:the\s+)?original\s+title\s*[:：]/i,
+  /(?:^|[\n。！？.!?])\s*(?:(?:first|next|now)[,，:：]\s*)?(?:we|i)\s+(?:need to|must|should|will|have to|am going to)\s+(?:produce|generate|write|return|output|translate)\s+(?:(?:a|the|chinese)\s+)*(?:(?:title_zh|summary_zh|title|summary)\b|中文标题|中文摘要)/i,
+  /(?:^|[\n。！？.!?])\s*(?:(?:first|next|now)[,，:：]\s*)?(?:let['’]s|let us)\s+(?:understand|analy[sz]e|examine)\s+(?:the\s+)?original\s+(?:title|request|article)\b/i,
+  /(?:^|[\n。！？])\s*(?:首先[，,：:]?\s*)?(?:我(?:们)?(?:需要|必须|应该|将要)|接下来我(?:们)?(?:要|将))\s*(?:生成|输出|撰写|翻译|总结|分析|理解)\s*(?:中文标题|中文摘要|原文标题|原始标题|title_zh|summary_zh)/,
+  /(?:^|[\n。！？])\s*(?:首先[，,：:]?\s*)?(?:分析|理解)(?:原始|原文)标题\s*[:：]/,
+];
+
+/** 纯内容检测供写作和发布共用，不改变旧入库文案的语言处理规则。 */
+export function isNonCopy(text: string): boolean {
+  return NOT_COPY.test(text) || REASONING_COPY.some((pattern) => pattern.test(text));
+}
+
+/** 空值让调用者沿用原文标题或省略摘要。 */
+export function usableCopy(text: string, kind: "title" | "summary" | "body"): string {
+  if (!text) return text;
+  if (isNonCopy(text)) return "";
+  if (kind !== "title" && text.length >= 40 && !/[一-鿿]/.test(text)) return "";
+  return text;
+}
+
 export function collapseWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }

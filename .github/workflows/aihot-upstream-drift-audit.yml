@@ -7,11 +7,14 @@
 collect.ts、group.ts 等），机械 cherry-pick 会冲突或造成降级（例如把已经升到 undici
 8.12.3 的锁文件摘回 7.30.1）。所以对齐方式定为「自动发现 + 自动判定 + 人工摘入」。
 
+对比范围是「本仓库 main 落后上游的提交」（HEAD..UPSTREAM）。早期版本用 vendor..upstream，
+vendor 一旦跟上上游就恒为空，导致报告永远说「无需处理」——账号系统就是这样漏掉的。
+
 判定方法（按可信度排序）：
-1. patch-id 命中   → 等价补丁已在（git cherry 显示 `-`）
-2. 关键词命中      → 该修复的函数/正则/文案已在本仓库出现（可配置关键词表）
-3. 文件不存在      → 上游改的模块我们没有，标记 skip
-4. 其余            → 标记 need-review，附上游 diff 链接
+1. patch-id 命中   → 等价补丁已在（git cherry 显示 `-`），唯一可下结论的强证据
+2. 文件全部不存在  → new-module：可能是整块新功能，优先核查（不再当 skip 跳过）
+3. 关键词命中      → hinted：只是线索，需人工确认，不能当作「不用摘」
+4. 其余            → review：需要人看，附改动领域与上游 diff 链接
 
 name: AIHOT upstream drift audit
 
@@ -51,6 +54,11 @@ jobs:
           git remote add aihot-public https://github.com/KKKKhazix/AIHOT.git
           git fetch --no-tags aihot-public +refs/heads/main:refs/remotes/aihot-public/main
           git fetch --no-tags origin +refs/heads/vendor/aihot-main:refs/remotes/origin/vendor/aihot-main || true
+
+      - name: Check drift-audit verdict rules
+        run: |
+          set -euo pipefail
+          node scripts/audit-upstream-drift.mjs --self-test
 
       - name: Compute per-commit landing status
         env:

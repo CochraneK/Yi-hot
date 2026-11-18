@@ -23,18 +23,34 @@ if (!token || !repo) {
   process.exit(0);
 }
 
-const label = { review: "需要人看", landed: "本仓库已有等价实现", same: "等价补丁已在", skip: "模块不存在" };
-const order = ["review", "landed", "same", "skip"];
+const label = {
+  "new-module": "疑似整块新功能（优先核查）",
+  review: "需要人看",
+  hinted: "疑似已有线索（需确认）",
+  same: "等价补丁已在",
+};
+const order = ["new-module", "review", "hinted", "same"];
 
 const body = [
   "> 本 Issue 由 `aihot-upstream-drift-audit` 每天自动改写，只报告不自动改代码。",
   "",
   `**生成时间**：${summary.generatedAt}`,
-  `**回看**：最近 ${summary.lookback} 个上游提交`,
+  `**回看**：本仓库 main 落后上游的 ${summary.lookback} 个提交` +
+    (summary.vendorLag == null ? "" : `（vendor 镜像另落后 ${summary.vendorLag} 个）`),
+  "",
+  "> 判定纪律：只有 patch-id 命中才算「等价补丁已在」；新增文件和关键词只是线索，一律需要人工确认。",
   "",
   "| 判定 | 数量 |",
   "|---|---|",
   ...order.filter((k) => summary.counts[k]).map((k) => `| ${label[k]} | ${summary.counts[k]} |`),
+  "",
+  "## 疑似整块新功能（优先核查）",
+  "",
+  ...(summary.results.filter((r) => r.verdict === "new-module").length
+    ? summary.results
+        .filter((r) => r.verdict === "new-module")
+        .map((r) => `- [\`${r.short}\`](https://github.com/KKKKhazix/AIHOT/commit/${r.sha}) ${r.subject}\n  - ${r.reason}`)
+    : ["- 暂无"]),
   "",
   "## 需要人看",
   "",
@@ -44,16 +60,10 @@ const body = [
         .map((r) => `- [\`${r.short}\`](https://github.com/KKKKhazix/AIHOT/commit/${r.sha}) ${r.subject}\n  - ${r.reason}`)
     : ["- 暂无"]),
   "",
-  "## 本仓库已有等价实现（不用摘）",
+  "## 疑似已有线索（需确认）",
   "",
-  ...(summary.results.filter((r) => r.verdict === "landed").length
-    ? summary.results.filter((r) => r.verdict === "landed").map((r) => `- \`${r.short}\` ${r.subject} — ${r.reason}`)
-    : ["- 暂无"]),
-  "",
-  "## 模块不存在（跳过）",
-  "",
-  ...(summary.results.filter((r) => r.verdict === "skip").length
-    ? summary.results.filter((r) => r.verdict === "skip").map((r) => `- \`${r.short}\` ${r.subject}`)
+  ...(summary.results.filter((r) => r.verdict === "hinted").length
+    ? summary.results.filter((r) => r.verdict === "hinted").map((r) => `- \`${r.short}\` ${r.subject} — ${r.reason}`)
     : ["- 暂无"]),
   "",
   "<details><summary>完整结果</summary>",

@@ -3,6 +3,7 @@ import type { HotParticipant, HotStripEntry } from "@aihot/contracts/site";
 import { sql } from "../db.ts";
 import { proxiedImage, proxiedImageSet } from "../media/imgproxy.ts";
 import { restrictedStoryCopy } from "../publication/story-copy.ts";
+import { listedCondition } from "../publication/items.ts";
 
 export interface HotEntry {
   rank: number;
@@ -82,7 +83,9 @@ async function readExtras(ranking: HotRanking): Promise<Extras> {
 
 async function queryExtras(ranking: HotRanking): Promise<Extras> {
   const ids = ranking.entries.map((e) => e.storyId);
-  const [faces, texts] = await Promise.all([
+  const representativeByStory = new Map(ranking.entries.map((e) => [e.storyId, e.representativeItemId]));
+  const representativeIds = ranking.entries.map((e) => e.representativeItemId).filter((id): id is string => !!id);
+  const [faces, texts, reports] = await Promise.all([
     // A participant's face: the source's icon, else the avatar on that account's latest post in the story.
     sql<{ name: string; icon_url: string | null; avatar: string | null }[]>`
       SELECT DISTINCT ON (s.id) s.name, s.icon_url, a.x_post->>'avatarUrl' AS avatar
@@ -92,13 +95,29 @@ async function queryExtras(ranking: HotRanking): Promise<Extras> {
       ORDER BY s.id, (a.id IS NULL), a.discovered_at DESC`,
     sql<{ id: number; digest: string | null; summary: string | null; latest: string | null }[]>`
       SELECT id, digest, summary, latest FROM stories WHERE id = ANY(${ids}::bigint[])`,
+    // Representatives were public at compute time; recheck the live release gate before reusing their summaries.
+    sql<{ id: string; summary: string | null }[]>`
+      SELECT p.article_id AS id, p.summary FROM publications p
+      WHERE p.article_id = ANY(${representativeIds}::text[]) AND ${listedCondition(new Date())} AND p.eligible`,
   ]);
+  const reportSummaries = new Map(reports.map((r) => [r.id, r.summary]));
+  const textByStory: Extras["texts"] = new Map();
+  for (const t of texts) {
+    const storyId = Number(t.id);
+    const itemId = representativeByStory.get(storyId);
+    const fallback = itemId ? reportSummaries.get(itemId) ?? null : null;
+    textByStory.set(storyId, { summary: t.digest ?? t.summary ?? fallback, latest: t.latest });
+  }
   const extras: Extras = {
     faces: new Map(faces.map((f) => [f.name, f.icon_url ?? f.avatar])),
-    texts: new Map(texts.map((t) => [Number(t.id), { summary: t.digest ?? t.summary, latest: t.latest }])),
+    texts: textByStory,
   };
-  for (const t of texts) if ((t.digest || t.summary || t.latest) && await restrictedStoryCopy(Number(t.id))) {
-    extras.texts.set(Number(t.id), { summary: null, latest: null });
+  for (const t of texts) {
+    const storyId = Number(t.id);
+    const text = extras.texts.get(storyId);
+    if ((text?.summary || text?.latest) && await restrictedStoryCopy(storyId)) {
+      extras.texts.set(storyId, { summary: null, latest: null });
+    }
   }
   extrasCache = { rankingId: ranking.id, extras };
   return extras;
